@@ -25,11 +25,16 @@ export const Route = createFileRoute("/_app/chat/$id")({
 });
 
 type Base = { id: string; from: "me" | "them"; at: Date; status?: "sent" | "delivered" | "read" };
-type Message =
-  | (Base & { kind: "text"; text: string })
-  | (Base & { kind: "image"; url: string; caption?: string })
-  | (Base & { kind: "audio"; durationSec: number })
-  | (Base & { kind: "location"; label: string; proximity: string });
+type MText = Base & { kind: "text"; text: string };
+type MImage = Base & { kind: "image"; url: string; caption?: string };
+type MAudio = Base & { kind: "audio"; durationSec: number };
+type MLocation = Base & { kind: "location"; label: string; proximity: string };
+type Message = MText | MImage | MAudio | MLocation;
+type MessageInput =
+  | Pick<MText, "from" | "kind" | "text">
+  | Pick<MImage, "from" | "kind" | "url" | "caption">
+  | Pick<MAudio, "from" | "kind" | "durationSec">
+  | Pick<MLocation, "from" | "kind" | "label" | "proximity">;
 
 const cannedReplies = [
   "Adorei a ideia! 😊",
@@ -58,7 +63,7 @@ function Chat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
 
-  const push = (m: Omit<Message, "id" | "at" | "status">) => {
+  const push = (m: MessageInput) => {
     const full = { ...m, id: crypto.randomUUID(), at: new Date(), status: "sent" as const } as Message;
     setMessages((prev) => [...prev, full]);
     if (full.from === "me") {
@@ -100,8 +105,8 @@ function Chat() {
   );
 }
 
-function ChatHeader({ person }: { person: ReturnType<typeof people[number] extends infer T ? () => T : never> extends never ? typeof people[number] : never }) {
-  const p = person as typeof people[number];
+function ChatHeader({ person }: { person: typeof people[number] }) {
+  const p = person;
   return (
     <header className="px-3 pt-1 pb-2 flex items-center gap-2 bg-surface/95 backdrop-blur border-b border-border">
       <Link to="/connecta" className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary">
@@ -225,7 +230,7 @@ function TypingBubble({ name }: { name: string }) {
 function Composer({
   onSend, personDistance,
 }: {
-  onSend: (m: Omit<Message, "id" | "at" | "status">) => void;
+  onSend: (m: MessageInput) => void;
   personDistance: number;
 }) {
   const [text, setText] = useState("");
