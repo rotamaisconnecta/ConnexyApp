@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bell, ChevronDown, Search } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { MapCanvas } from "@/components/map-canvas";
 import { people, places, notifications, currentUser } from "@/lib/mock-data";
+import { proximityLabel } from "@/lib/proximity";
+import { PresenceDot } from "@/components/presence-dot";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({
