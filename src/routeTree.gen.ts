@@ -9,38 +9,293 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as LocalizacaoRouteImport } from './routes/localizacao'
+import { Route as InteressesRouteImport } from './routes/interesses'
+import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRotaRouteImport } from './routes/_app.rota'
+import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
+import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
+import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
+import { Route as AppMatchingRouteImport } from './routes/_app.matching'
+import { Route as AppLocaisRouteImport } from './routes/_app.locais'
+import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
+import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
+import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
+import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
+import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
+import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocalizacaoRoute = LocalizacaoRouteImport.update({
+  id: '/localizacao',
+  path: '/localizacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InteressesRoute = InteressesRouteImport.update({
+  id: '/interesses',
+  path: '/interesses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRotaRoute = AppRotaRouteImport.update({
+  id: '/rota',
+  path: '/rota',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPrivacidadeRoute = AppPrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificacoesRoute = AppNotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatchingRoute = AppMatchingRouteImport.update({
+  id: '/matching',
+  path: '/matching',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLocaisRoute = AppLocaisRouteImport.update({
+  id: '/locais',
+  path: '/locais',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCorridaRoute = AppCorridaRouteImport.update({
+  id: '/corrida',
+  path: '/corrida',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConnectaRoute = AppConnectaRouteImport.update({
+  id: '/connecta',
+  path: '/connecta',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAvaliarRoute = AppAvaliarRouteImport.update({
+  id: '/avaliar',
+  path: '/avaliar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSolicitacaoIdRoute = AppSolicitacaoIdRouteImport.update({
+  id: '/solicitacao/$id',
+  path: '/solicitacao/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLocalIdRoute = AppLocalIdRouteImport.update({
+  id: '/local/$id',
+  path: '/local/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatIdRoute = AppChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cadastro': typeof CadastroRoute
+  '/interesses': typeof InteressesRoute
+  '/localizacao': typeof LocalizacaoRoute
+  '/welcome': typeof WelcomeRoute
+  '/avaliar': typeof AppAvaliarRoute
+  '/connecta': typeof AppConnectaRoute
+  '/corrida': typeof AppCorridaRoute
+  '/home': typeof AppHomeRoute
+  '/locais': typeof AppLocaisRoute
+  '/matching': typeof AppMatchingRoute
+  '/notificacoes': typeof AppNotificacoesRoute
+  '/perfil': typeof AppPerfilRoute
+  '/privacidade': typeof AppPrivacidadeRoute
+  '/rota': typeof AppRotaRoute
+  '/chat/$id': typeof AppChatIdRoute
+  '/local/$id': typeof AppLocalIdRoute
+  '/solicitacao/$id': typeof AppSolicitacaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cadastro': typeof CadastroRoute
+  '/interesses': typeof InteressesRoute
+  '/localizacao': typeof LocalizacaoRoute
+  '/welcome': typeof WelcomeRoute
+  '/avaliar': typeof AppAvaliarRoute
+  '/connecta': typeof AppConnectaRoute
+  '/corrida': typeof AppCorridaRoute
+  '/home': typeof AppHomeRoute
+  '/locais': typeof AppLocaisRoute
+  '/matching': typeof AppMatchingRoute
+  '/notificacoes': typeof AppNotificacoesRoute
+  '/perfil': typeof AppPerfilRoute
+  '/privacidade': typeof AppPrivacidadeRoute
+  '/rota': typeof AppRotaRoute
+  '/chat/$id': typeof AppChatIdRoute
+  '/local/$id': typeof AppLocalIdRoute
+  '/solicitacao/$id': typeof AppSolicitacaoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/cadastro': typeof CadastroRoute
+  '/interesses': typeof InteressesRoute
+  '/localizacao': typeof LocalizacaoRoute
+  '/welcome': typeof WelcomeRoute
+  '/_app/avaliar': typeof AppAvaliarRoute
+  '/_app/connecta': typeof AppConnectaRoute
+  '/_app/corrida': typeof AppCorridaRoute
+  '/_app/home': typeof AppHomeRoute
+  '/_app/locais': typeof AppLocaisRoute
+  '/_app/matching': typeof AppMatchingRoute
+  '/_app/notificacoes': typeof AppNotificacoesRoute
+  '/_app/perfil': typeof AppPerfilRoute
+  '/_app/privacidade': typeof AppPrivacidadeRoute
+  '/_app/rota': typeof AppRotaRoute
+  '/_app/chat/$id': typeof AppChatIdRoute
+  '/_app/local/$id': typeof AppLocalIdRoute
+  '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/cadastro'
+    | '/interesses'
+    | '/localizacao'
+    | '/welcome'
+    | '/avaliar'
+    | '/connecta'
+    | '/corrida'
+    | '/home'
+    | '/locais'
+    | '/matching'
+    | '/notificacoes'
+    | '/perfil'
+    | '/privacidade'
+    | '/rota'
+    | '/chat/$id'
+    | '/local/$id'
+    | '/solicitacao/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/cadastro'
+    | '/interesses'
+    | '/localizacao'
+    | '/welcome'
+    | '/avaliar'
+    | '/connecta'
+    | '/corrida'
+    | '/home'
+    | '/locais'
+    | '/matching'
+    | '/notificacoes'
+    | '/perfil'
+    | '/privacidade'
+    | '/rota'
+    | '/chat/$id'
+    | '/local/$id'
+    | '/solicitacao/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/cadastro'
+    | '/interesses'
+    | '/localizacao'
+    | '/welcome'
+    | '/_app/avaliar'
+    | '/_app/connecta'
+    | '/_app/corrida'
+    | '/_app/home'
+    | '/_app/locais'
+    | '/_app/matching'
+    | '/_app/notificacoes'
+    | '/_app/perfil'
+    | '/_app/privacidade'
+    | '/_app/rota'
+    | '/_app/chat/$id'
+    | '/_app/local/$id'
+    | '/_app/solicitacao/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  CadastroRoute: typeof CadastroRoute
+  InteressesRoute: typeof InteressesRoute
+  LocalizacaoRoute: typeof LocalizacaoRoute
+  WelcomeRoute: typeof WelcomeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/localizacao': {
+      id: '/localizacao'
+      path: '/localizacao'
+      fullPath: '/localizacao'
+      preLoaderRoute: typeof LocalizacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interesses': {
+      id: '/interesses'
+      path: '/interesses'
+      fullPath: '/interesses'
+      preLoaderRoute: typeof InteressesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +303,142 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/rota': {
+      id: '/_app/rota'
+      path: '/rota'
+      fullPath: '/rota'
+      preLoaderRoute: typeof AppRotaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/privacidade': {
+      id: '/_app/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof AppPrivacidadeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notificacoes': {
+      id: '/_app/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof AppNotificacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/matching': {
+      id: '/_app/matching'
+      path: '/matching'
+      fullPath: '/matching'
+      preLoaderRoute: typeof AppMatchingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/locais': {
+      id: '/_app/locais'
+      path: '/locais'
+      fullPath: '/locais'
+      preLoaderRoute: typeof AppLocaisRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/corrida': {
+      id: '/_app/corrida'
+      path: '/corrida'
+      fullPath: '/corrida'
+      preLoaderRoute: typeof AppCorridaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/connecta': {
+      id: '/_app/connecta'
+      path: '/connecta'
+      fullPath: '/connecta'
+      preLoaderRoute: typeof AppConnectaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/avaliar': {
+      id: '/_app/avaliar'
+      path: '/avaliar'
+      fullPath: '/avaliar'
+      preLoaderRoute: typeof AppAvaliarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/solicitacao/$id': {
+      id: '/_app/solicitacao/$id'
+      path: '/solicitacao/$id'
+      fullPath: '/solicitacao/$id'
+      preLoaderRoute: typeof AppSolicitacaoIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/local/$id': {
+      id: '/_app/local/$id'
+      path: '/local/$id'
+      fullPath: '/local/$id'
+      preLoaderRoute: typeof AppLocalIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chat/$id': {
+      id: '/_app/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof AppChatIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAvaliarRoute: typeof AppAvaliarRoute
+  AppConnectaRoute: typeof AppConnectaRoute
+  AppCorridaRoute: typeof AppCorridaRoute
+  AppHomeRoute: typeof AppHomeRoute
+  AppLocaisRoute: typeof AppLocaisRoute
+  AppMatchingRoute: typeof AppMatchingRoute
+  AppNotificacoesRoute: typeof AppNotificacoesRoute
+  AppPerfilRoute: typeof AppPerfilRoute
+  AppPrivacidadeRoute: typeof AppPrivacidadeRoute
+  AppRotaRoute: typeof AppRotaRoute
+  AppChatIdRoute: typeof AppChatIdRoute
+  AppLocalIdRoute: typeof AppLocalIdRoute
+  AppSolicitacaoIdRoute: typeof AppSolicitacaoIdRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAvaliarRoute: AppAvaliarRoute,
+  AppConnectaRoute: AppConnectaRoute,
+  AppCorridaRoute: AppCorridaRoute,
+  AppHomeRoute: AppHomeRoute,
+  AppLocaisRoute: AppLocaisRoute,
+  AppMatchingRoute: AppMatchingRoute,
+  AppNotificacoesRoute: AppNotificacoesRoute,
+  AppPerfilRoute: AppPerfilRoute,
+  AppPrivacidadeRoute: AppPrivacidadeRoute,
+  AppRotaRoute: AppRotaRoute,
+  AppChatIdRoute: AppChatIdRoute,
+  AppLocalIdRoute: AppLocalIdRoute,
+  AppSolicitacaoIdRoute: AppSolicitacaoIdRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  CadastroRoute: CadastroRoute,
+  InteressesRoute: InteressesRoute,
+  LocalizacaoRoute: LocalizacaoRoute,
+  WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
