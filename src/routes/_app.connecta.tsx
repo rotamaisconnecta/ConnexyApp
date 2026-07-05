@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
+import { proximityLabel, proximityRadius, proximityTone } from "@/lib/proximity";
+import { PresenceDot } from "@/components/presence-dot";
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 
@@ -38,11 +40,16 @@ function Connecta() {
           <li key={p.id} className="rounded-2xl bg-surface border border-border p-3 shadow-soft flex items-center gap-3">
             <div className="relative">
               <img src={p.photo} alt={p.name} className="h-14 w-14 rounded-full object-cover" />
-              <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-success ring-2 ring-surface" />
+              <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm">{p.name}, {p.age}</div>
-              <div className="text-[11px] text-muted-foreground">{p.distance} de você</div>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${proximityTone(p.distanceMeters)}`}>
+                  {proximityLabel(p.distanceMeters)}
+                </span>
+                <span className="text-[10px] text-muted-foreground">· {proximityRadius(p.distanceMeters)}</span>
+              </div>
               <div className="mt-1 flex flex-wrap gap-1">
                 {p.interests.slice(0, 2).map((t) => (
                   <span key={t} className="rounded-full bg-accent text-primary text-[10px] font-semibold px-2 py-0.5">{t}</span>
