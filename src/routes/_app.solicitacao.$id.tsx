@@ -43,7 +43,7 @@ function Solicitacao() {
         <div className="px-6 py-5 flex-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Interesses em comum</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {p.interests.map((t) => (
+            {p.interests.map((t: string) => (
               <span key={t} className="rounded-full bg-accent text-primary text-xs font-semibold px-3 py-1">{t}</span>
             ))}
           </div>

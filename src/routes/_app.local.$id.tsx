@@ -4,7 +4,7 @@ import { places } from "@/lib/mock-data";
 import { ChevronLeft, Star, Phone, Navigation, Bookmark, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/local/$id")({
-  head: ({ loaderData }) => ({
+  head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
     meta: [
       { title: loaderData ? `${loaderData.name} — RotaMais Connecta` : "Local — RotaMais Connecta" },
       ...(loaderData ? [{ property: "og:title", content: loaderData.name }, { property: "og:image", content: loaderData.cover }] : []),
