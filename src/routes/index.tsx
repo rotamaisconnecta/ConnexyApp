@@ -1,24 +1,47 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { PhoneFrame } from "@/components/phone-frame";
+import { Logo } from "@/components/logo";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Splash,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Splash() {
+  const nav = useNavigate();
+  useEffect(() => {
+    const t = setTimeout(() => nav({ to: "/welcome" }), 1800);
+    return () => clearTimeout(t);
+  }, [nav]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <PhoneFrame>
+      <div className="flex-1 grid place-items-center bg-[#0f0a1f] text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-40"
+             style={{ background: "radial-gradient(600px 400px at 50% 30%, rgba(108,59,255,0.6), transparent)" }} />
+        <motion.div
+          initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          className="relative flex flex-col items-center gap-4"
+        >
+          <div className="grid h-24 w-24 place-items-center rounded-[2rem] bg-gradient-brand text-white font-black text-4xl shadow-elegant">R+</div>
+          <div className="text-center">
+            <div className="font-display text-3xl font-bold">RotaMais</div>
+            <div className="text-primary-glow text-lg font-semibold -mt-1">Connecta</div>
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
+          className="absolute bottom-16 flex items-center gap-1.5"
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.span key={i} className="h-1.5 w-1.5 rounded-full bg-white/70"
+              animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }} />
+          ))}
+        </motion.div>
+        <Logo size={0} variant="light" />
+      </div>
+    </PhoneFrame>
   );
 }
