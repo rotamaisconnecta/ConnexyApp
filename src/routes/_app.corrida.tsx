@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MapCanvas } from "@/components/map-canvas";
 import { StatusBar } from "@/components/phone-frame";
 import { drivers, places } from "@/lib/mock-data";
+import { proximityLabel } from "@/lib/proximity";
 import { MessageCircle, Shield, Users } from "lucide-react";
 import { useState } from "react";
 

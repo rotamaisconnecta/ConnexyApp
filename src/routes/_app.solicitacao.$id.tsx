@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
+import { proximityLabel, proximityRadius } from "@/lib/proximity";
+import { PresenceDot } from "@/components/presence-dot";
 import { X, Check, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -33,11 +35,16 @@ function Solicitacao() {
         initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         className="mx-6 rounded-3xl bg-surface shadow-elegant border border-border overflow-hidden flex-1 flex flex-col">
         <div className="pt-8 pb-6 px-6 text-center bg-gradient-brand text-white">
-          <div className="mx-auto h-24 w-24 rounded-full overflow-hidden ring-4 ring-white/40">
-            <img src={p.photo} alt={p.name} className="h-full w-full object-cover" />
+          <div className="relative mx-auto h-24 w-24">
+            <div className="h-24 w-24 rounded-full overflow-hidden ring-4 ring-white/40">
+              <img src={p.photo} alt={p.name} className="h-full w-full object-cover" />
+            </div>
+            <PresenceDot online={p.online} size={16} className="absolute bottom-1 right-1" />
           </div>
           <h2 className="mt-4 font-display text-xl font-bold">{p.name} quer conversar com você!</h2>
-          <p className="mt-1 text-sm opacity-90">{p.distance} de você</p>
+          <p className="mt-1 text-sm opacity-90">
+            {proximityLabel(p.distanceMeters)} · {proximityRadius(p.distanceMeters)} de você
+          </p>
         </div>
 
         <div className="px-6 py-5 flex-1">

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { MapCanvas } from "@/components/map-canvas";
 import { places } from "@/lib/mock-data";
+import { proximityLabel } from "@/lib/proximity";
 import { Search, Star } from "lucide-react";
 import { useState } from "react";
 

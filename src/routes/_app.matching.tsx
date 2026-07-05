@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft, Star, MoreHorizontal } from "lucide-react";
 import { drivers } from "@/lib/mock-data";
+import { proximityLabel } from "@/lib/proximity";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_app/matching")({
