@@ -36,7 +36,7 @@ function Matching() {
                   <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {d.rating}
                 </span>
               </div>
-              <div className="text-[11px] text-muted-foreground">{d.eta} · {d.distance}</div>
+              <div className="text-[11px] text-muted-foreground">{d.eta} · {proximityLabel(d.distanceMeters)}</div>
               <div className="text-[11px] text-muted-foreground truncate">{d.car}</div>
             </div>
             <div className="text-right">

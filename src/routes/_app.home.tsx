@@ -64,10 +64,10 @@ function Home() {
                   className="shrink-0 w-24 flex flex-col items-center gap-1.5">
               <div className="relative">
                 <img src={p.photo} alt={p.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/40" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-success ring-2 ring-surface" />
+                <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
               </div>
               <span className="text-xs font-semibold truncate w-full text-center">{p.name}</span>
-              <span className="text-[10px] text-muted-foreground -mt-1">{p.distance}</span>
+              <span className="text-[10px] text-primary font-semibold -mt-1">{proximityLabel(p.distanceMeters)}</span>
             </Link>
           ))}
         </div>
@@ -86,7 +86,7 @@ function Home() {
               <div className="text-[11px] uppercase font-semibold text-primary">Evento</div>
               <div className="font-display font-bold text-sm">{places[1].name}</div>
               <div className="text-xs text-muted-foreground">Parque Ibirapuera · {places[1].hours}</div>
-              <div className="text-[11px] mt-1 text-muted-foreground">📍 {places[1].distance}</div>
+              <div className="text-[11px] mt-1 text-muted-foreground">📍 {proximityLabel(places[1].distanceMeters)}</div>
             </div>
           </div>
         </Link>

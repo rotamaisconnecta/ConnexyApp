@@ -76,7 +76,7 @@ function RideActive() {
             <img src={places[0].cover} className="h-20 w-24 object-cover" alt="" />
             <div className="flex-1 p-2.5">
               <div className="font-semibold text-sm">{places[0].name}</div>
-              <div className="text-[11px] text-muted-foreground">{places[0].distance} · ⭐ {places[0].rating}</div>
+              <div className="text-[11px] text-muted-foreground">{proximityLabel(places[0].distanceMeters)} · ⭐ {places[0].rating}</div>
               <div className="text-[11px] text-primary font-semibold mt-0.5">20% OFF · ver no mapa</div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { places } from "@/lib/mock-data";
+import { proximityLabel } from "@/lib/proximity";
 import { ChevronLeft, Star, Phone, Navigation, Bookmark, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/local/$id")({
@@ -43,7 +44,7 @@ function LocalDetail() {
         <h1 className="font-display text-2xl font-bold">{p.name}</h1>
         <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
           <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.rating} ({p.reviews} avaliações)</span>
-          <span>·</span><span>{p.distance}</span><span>·</span><span>{p.hours}</span>
+          <span>·</span><span>{proximityLabel(p.distanceMeters)}</span><span>·</span><span>{p.hours}</span>
         </div>
 
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{p.description}</p>
