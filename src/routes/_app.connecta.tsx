@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
-import { proximityLabel, proximityRadius, proximityTone } from "@/lib/proximity";
+import { proximityTone, personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
@@ -46,9 +46,14 @@ function Connecta() {
               <div className="font-semibold text-sm">{p.name}, {p.age}</div>
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${proximityTone(p.distanceMeters)}`}>
-                  {proximityLabel(p.distanceMeters)}
+                  {personProximityLabel(p.distanceMeters)}
                 </span>
-                <span className="text-[10px] text-muted-foreground">· {proximityRadius(p.distanceMeters)}</span>
+                {(() => {
+                  const radius = personProximityRadius(p.distanceMeters);
+                  return radius ? (
+                    <span className="text-[10px] text-muted-foreground">· {radius}</span>
+                  ) : null;
+                })()}
               </div>
               <div className="mt-1 flex flex-wrap gap-1">
                 {p.interests.slice(0, 2).map((t) => (

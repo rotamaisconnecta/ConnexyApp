@@ -1,24 +1,48 @@
-## Reordenar a Home priorizando o social
+# Plano: privacidade de proximidade para pessoas até 2 km
 
-Reorganizar `src/routes/_app.home.tsx` para que o foco seja descoberta social, e o bloco de mobilidade (mapa + "Para onde você vai?") vá para o final da tela, como uma ação secundária tipo Uber.
+## Objetivo
+Aplicar a regra de segurança: **pessoas dentro de 2 km não devem exibir sua distância exata**. Em vez das categorias atuais ("Bem pertinho", "Muito perto", "Perto", "Nas redondezas"), esses usuários verão um texto genérico. A distância continua visível normalmente para lugares, eventos e motoristas.
 
-### Nova ordem das seções
+## Decisões já confirmadas
+- **Texto substituto:** label genérico (proposta: "Próximo de você" — pode ser ajustado).
+- **Escopo:** todas as telas que mostram pessoas (Home, Connecta, Solicitação de chat).
+- **Corte:** 2 km (tiers `here`, `veryClose`, `close`, `around` do `proximity.ts`).
 
-1. **Header** — localização atual + sino de notificações (sem mudança)
-2. **Pessoas próximas** — carrossel horizontal de avatares com PresenceDot e badge de proximidade (movido para o topo, com mais destaque visual)
-3. **Eventos perto de você** — card do evento em destaque + link "Ver todos"
-4. **Locais próximos** — nova mini-seção (hoje não existe explicitamente): carrossel/lista com 2–3 lugares de `places` (Café Central, Burger House, Vinil & Cia), cada card com capa, nome, categoria e badge de proximidade, linkando para `/local/$id`
-5. **Promoções para você** — card gradiente do Café Central (mantido)
-6. **Ao seu redor agora** — preview de notificações (mantido)
-7. **Para onde você vai? (RotaMais)** — última seção: card com o `MapCanvas` (altura ~140) e a barra "Para onde você vai?" sobreposta, agora agindo como CTA para `/rota`. Rótulo da seção: "Precisa de uma corrida?" para deixar claro que é o módulo de mobilidade.
+## Mudanças
 
-### Detalhes de UI
+### 1. `src/lib/proximity.ts` — novo helper para pessoas
+Criar funções específicas para exibição de proximidade de pessoas:
+- `personProximityLabel(meters)`
+  - Até 2 km → `"Próximo de você"`
+  - Acima de 2 km → mantém o label atual (`proximityLabel`).
+- `personProximityRadius(meters)`
+  - Até 2 km → retorna `null` (não exibe raio)
+  - Acima de 2 km → mantém o raio atual (`proximityRadius`).
+- Manter `proximityLabel`, `proximityRadius`, `proximityTone` e `isNearby` inalterados para locais, eventos e motoristas.
 
-- Aumentar levemente o destaque de "Pessoas próximas": título maior, mostrar até 6 avatares no carrossel em vez de 4.
-- "Locais próximos" usa o mesmo estilo de card horizontal do evento atual, com badge de proximidade via `proximityLabel`.
-- O card de mobilidade no fim recebe um leve destaque (borda + sombra) e o `MapCanvas` continua clicável, envolvido por um `Link to="/rota"`.
-- Nenhuma mudança em outras rotas, dados ou componentes compartilhados.
+### 2. `src/routes/_app.home.tsx` — carrossel "Pessoas próximas"
+Substituir `proximityLabel(p.distanceMeters)` por `personProximityLabel(p.distanceMeters)` no carrossel de pessoas.
+Resultado: cards de pessoas até 2 km mostram apenas "Próximo de você".
 
-### Arquivos afetados
+### 3. `src/routes/_app.connecta.tsx` — lista de pessoas
+- Usar `personProximityLabel` no badge de proximidade.
+- Usar `personProximityRadius` no texto secundário; quando retornar `null`, omitir o "· até X m/km".
+- Manter o tom visual (`proximityTone`) para não perder a identificação de cor.
 
-- `src/routes/_app.home.tsx` (única edição)
+### 4. `src/routes/_app.solicitacao.$id.tsx` — tela de solicitação de chat
+- Substituir `proximityLabel` e `proximityRadius` pelos helpers de pessoa.
+- Quando a pessoa estiver até 2 km, exibir apenas "Próximo de você" (sem "· até 2 km de você").
+
+### 5. `src/routes/_app.matching.tsx` — motoristas
+**Não alterar.** A tela mostra motoristas do RotaMais, não pessoas da rede social. A distância/ETA dos motoristas continua visível para a experiência de corrida.
+
+## Fora do escopo
+- Locais, eventos e promoções continuam mostrando a categoria de proximidade normalmente.
+- O sistema de tiers e cores em `proximity.ts` não é removido, apenas encapsulado por um helper de privacidade para pessoas.
+
+## Validação
+Após implementação:
+1. Abrir **Home** → carrossel de pessoas: usuários até 2 km exibem "Próximo de você".
+2. Abrir **Connecta** → lista: usuários até 2 km exibem "Próximo de você" sem raio; acima de 2 km mantêm as categorias.
+3. Abrir **Solicitação de chat** para uma pessoa até 2 km → header mostra "Próximo de você" sem distância.
+4. Confirmar que **Locais** e **Matching** (motoristas) ainda mostram distância normalmente.
