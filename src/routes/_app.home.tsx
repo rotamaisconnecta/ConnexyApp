@@ -3,7 +3,7 @@ import { Bell, ChevronDown, Search } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { MapCanvas } from "@/components/map-canvas";
 import { people, places, notifications, currentUser } from "@/lib/mock-data";
-import { personProximityLabel } from "@/lib/proximity";
+import { proximityLabel, personProximityLabel } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
 
 export const Route = createFileRoute("/_app/home")({
@@ -48,7 +48,7 @@ function Home() {
                 <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
               </div>
               <span className="text-xs font-semibold truncate w-full text-center">{p.name}</span>
-              <span className="text-[10px] text-primary font-semibold -mt-1 text-center leading-tight">{proximityLabel(p.distanceMeters)}</span>
+              <span className="text-[10px] text-primary font-semibold -mt-1 text-center leading-tight">{personProximityLabel(p.distanceMeters)}</span>
             </Link>
           ))}
         </div>

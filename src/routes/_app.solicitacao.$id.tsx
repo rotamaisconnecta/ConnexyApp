@@ -43,7 +43,11 @@ function Solicitacao() {
           </div>
           <h2 className="mt-4 font-display text-xl font-bold">{p.name} quer conversar com você!</h2>
           <p className="mt-1 text-sm opacity-90">
-            {proximityLabel(p.distanceMeters)} · {proximityRadius(p.distanceMeters)} de você
+            {(() => {
+              const label = personProximityLabel(p.distanceMeters);
+              const radius = personProximityRadius(p.distanceMeters);
+              return radius ? `${label} · ${radius} de você` : label;
+            })()}
           </p>
         </div>
 
