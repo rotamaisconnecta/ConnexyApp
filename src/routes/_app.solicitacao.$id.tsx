@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
-import { proximityLabel, proximityRadius } from "@/lib/proximity";
+import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
 import { X, Check, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";

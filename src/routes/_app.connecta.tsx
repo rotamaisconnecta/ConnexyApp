@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
-import { proximityLabel, proximityRadius, proximityTone } from "@/lib/proximity";
+import { proximityTone, personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";

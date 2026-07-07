@@ -64,3 +64,14 @@ export function isNearby(meters: number): boolean {
   const t = proximityTier(meters);
   return t === "here" || t === "veryClose" || t === "close";
 }
+
+// Privacy-aware helpers for people: hide exact distance/radius within 2 km.
+export function personProximityLabel(meters: number): string {
+  if (meters <= 2000) return "Próximo de você";
+  return proximityLabel(meters);
+}
+
+export function personProximityRadius(meters: number): string | null {
+  if (meters <= 2000) return null;
+  return proximityRadius(meters);
+}
