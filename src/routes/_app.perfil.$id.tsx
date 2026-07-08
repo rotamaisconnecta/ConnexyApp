@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { PresenceDot } from "@/components/presence-dot";
-import { findPerson, findPlace, commonGround, currentUser, type Moment } from "@/lib/mock-data";
+import { findPerson, findPlace, commonGround, currentUser, type Moment, type Person } from "@/lib/mock-data";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { ChevronLeft, MoreVertical, MapPin, Music, BookOpen, Film, Heart, Sparkles, Users, Handshake, CalendarCheck } from "lucide-react";
 import { motion } from "framer-motion";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_app/perfil/$id")({
 });
 
 function Perfil() {
-  const p = Route.useLoaderData();
+  const p = Route.useLoaderData() as Person;
   const { from } = Route.useSearch();
   const nav = useNavigate();
   const cg = commonGround(p);

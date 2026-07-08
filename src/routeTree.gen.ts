@@ -26,6 +26,7 @@ import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
 import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
+import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
 import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
 
@@ -113,6 +114,11 @@ const AppSolicitacaoIdRoute = AppSolicitacaoIdRouteImport.update({
   path: '/solicitacao/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPerfilIdRoute = AppPerfilIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppPerfilRoute,
+} as any)
 const AppLocalIdRoute = AppLocalIdRouteImport.update({
   id: '/local/$id',
   path: '/local/$id',
@@ -137,11 +143,12 @@ export interface FileRoutesByFullPath {
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
-  '/perfil': typeof AppPerfilRoute
+  '/perfil': typeof AppPerfilRouteWithChildren
   '/privacidade': typeof AppPrivacidadeRoute
   '/rota': typeof AppRotaRoute
   '/chat/$id': typeof AppChatIdRoute
   '/local/$id': typeof AppLocalIdRoute
+  '/perfil/$id': typeof AppPerfilIdRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
 }
 export interface FileRoutesByTo {
@@ -157,11 +164,12 @@ export interface FileRoutesByTo {
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
-  '/perfil': typeof AppPerfilRoute
+  '/perfil': typeof AppPerfilRouteWithChildren
   '/privacidade': typeof AppPrivacidadeRoute
   '/rota': typeof AppRotaRoute
   '/chat/$id': typeof AppChatIdRoute
   '/local/$id': typeof AppLocalIdRoute
+  '/perfil/$id': typeof AppPerfilIdRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
 }
 export interface FileRoutesById {
@@ -179,11 +187,12 @@ export interface FileRoutesById {
   '/_app/locais': typeof AppLocaisRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
-  '/_app/perfil': typeof AppPerfilRoute
+  '/_app/perfil': typeof AppPerfilRouteWithChildren
   '/_app/privacidade': typeof AppPrivacidadeRoute
   '/_app/rota': typeof AppRotaRoute
   '/_app/chat/$id': typeof AppChatIdRoute
   '/_app/local/$id': typeof AppLocalIdRoute
+  '/_app/perfil/$id': typeof AppPerfilIdRoute
   '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
 }
 export interface FileRouteTypes {
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/rota'
     | '/chat/$id'
     | '/local/$id'
+    | '/perfil/$id'
     | '/solicitacao/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/rota'
     | '/chat/$id'
     | '/local/$id'
+    | '/perfil/$id'
     | '/solicitacao/$id'
   id:
     | '__root__'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/_app/rota'
     | '/_app/chat/$id'
     | '/_app/local/$id'
+    | '/_app/perfil/$id'
     | '/_app/solicitacao/$id'
   fileRoutesById: FileRoutesById
 }
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSolicitacaoIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/perfil/$id': {
+      id: '/_app/perfil/$id'
+      path: '/$id'
+      fullPath: '/perfil/$id'
+      preLoaderRoute: typeof AppPerfilIdRouteImport
+      parentRoute: typeof AppPerfilRoute
+    }
     '/_app/local/$id': {
       id: '/_app/local/$id'
       path: '/local/$id'
@@ -397,6 +416,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppPerfilRouteChildren {
+  AppPerfilIdRoute: typeof AppPerfilIdRoute
+}
+
+const AppPerfilRouteChildren: AppPerfilRouteChildren = {
+  AppPerfilIdRoute: AppPerfilIdRoute,
+}
+
+const AppPerfilRouteWithChildren = AppPerfilRoute._addFileChildren(
+  AppPerfilRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
   AppConnectaRoute: typeof AppConnectaRoute
@@ -405,7 +436,7 @@ interface AppRouteChildren {
   AppLocaisRoute: typeof AppLocaisRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
-  AppPerfilRoute: typeof AppPerfilRoute
+  AppPerfilRoute: typeof AppPerfilRouteWithChildren
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AppRotaRoute: typeof AppRotaRoute
   AppChatIdRoute: typeof AppChatIdRoute
@@ -421,7 +452,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLocaisRoute: AppLocaisRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
-  AppPerfilRoute: AppPerfilRoute,
+  AppPerfilRoute: AppPerfilRouteWithChildren,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AppRotaRoute: AppRotaRoute,
   AppChatIdRoute: AppChatIdRoute,
