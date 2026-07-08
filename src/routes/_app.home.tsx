@@ -41,7 +41,7 @@ function Home() {
         </div>
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-1">
           {people.slice(0, 6).map((p) => (
-            <Link to="/solicitacao/$id" params={{ id: p.id }} key={p.id}
+            <Link to="/perfil/$id" params={{ id: p.id }} search={{ from: "home" }} key={p.id}
                   className="shrink-0 w-24 flex flex-col items-center gap-1.5">
               <div className="relative">
                 <img src={p.photo} alt={p.name} className="h-18 w-18 rounded-full object-cover ring-2 ring-primary/40" style={{ height: 72, width: 72 }} />

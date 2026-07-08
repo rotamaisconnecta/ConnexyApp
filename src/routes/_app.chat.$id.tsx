@@ -7,10 +7,11 @@ import { proximityLabel, proximityRadius } from "@/lib/proximity";
 import {
   ChevronLeft, Phone, Video, MoreVertical,
   Smile, Paperclip, Camera, Send, Mic, MapPin, Image as ImageIcon,
-  X, Check, CheckCheck, Play, Trash2,
+  X, Check, CheckCheck, Play, Trash2, Users2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { MeetupSheet, type MeetupPick } from "@/components/chat/meetup-sheet";
 
 export const Route = createFileRoute("/_app/chat/$id")({
   head: () => ({ meta: [{ title: "Chat — Connecta" }] }),
@@ -58,6 +59,7 @@ function Chat() {
   ]);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [meetupOpen, setMeetupOpen] = useState(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -83,9 +85,9 @@ function Chat() {
   };
 
   return (
-    <div className="flex-1 flex flex-col" style={{ background: "linear-gradient(180deg,#f4efff 0%,#faf7ff 100%)" }}>
+    <div className="flex-1 flex flex-col relative" style={{ background: "linear-gradient(180deg,#f4efff 0%,#faf7ff 100%)" }}>
       <StatusBar />
-      <ChatHeader person={p} />
+      <ChatHeader person={p} onOpenMeetup={() => setMeetupOpen(true)} />
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
         <div className="mx-auto rounded-full bg-white/70 backdrop-blur px-3 py-1 text-[10px] text-muted-foreground w-max shadow-soft">
           Hoje · vocês aceitaram conversar
@@ -96,38 +98,68 @@ function Chat() {
           ))}
         </AnimatePresence>
         {typing && <TypingBubble name={p.name} />}
-        <div className="mx-auto mt-3 rounded-xl bg-accent/70 text-[11px] text-primary text-center py-1.5 px-3 w-max shadow-soft">
+        <button
+          onClick={() => setMeetupOpen(true)}
+          className="mx-auto mt-3 rounded-xl bg-accent/70 text-[11px] text-primary text-center py-1.5 px-3 w-max shadow-soft inline-flex items-center gap-1.5 hover:bg-accent"
+        >
+          <MapPin className="h-3 w-3" />
           Vocês estão {proximityLabel(p.distanceMeters).toLowerCase()} — que tal se encontrar?
-        </div>
+        </button>
       </div>
-      <Composer onSend={push} personDistance={p.distanceMeters} />
+      <Composer
+        onSend={push}
+        personDistance={p.distanceMeters}
+        onOpenMeetup={() => setMeetupOpen(true)}
+      />
+      <MeetupSheet
+        open={meetupOpen}
+        onClose={() => setMeetupOpen(false)}
+        personName={p.name}
+        onSuggest={(pick: MeetupPick) => {
+          push({ from: "me", kind: "location", label: pick.placeName, proximity: pick.proximity });
+          setMeetupOpen(false);
+        }}
+        onShareMyLocation={() => {
+          push({
+            from: "me", kind: "location",
+            label: "Minha localização atual",
+            proximity: `${proximityLabel(p.distanceMeters)} · ${proximityRadius(p.distanceMeters)}`,
+          });
+          setMeetupOpen(false);
+        }}
+      />
     </div>
   );
 }
 
-function ChatHeader({ person }: { person: typeof people[number] }) {
+function ChatHeader({ person, onOpenMeetup }: { person: typeof people[number]; onOpenMeetup: () => void }) {
   const p = person;
   return (
     <header className="px-3 pt-1 pb-2 flex items-center gap-2 bg-surface/95 backdrop-blur border-b border-border">
       <Link to="/connecta" className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary">
         <ChevronLeft className="h-5 w-5" />
       </Link>
-      <div className="relative">
-        <img src={p.photo} alt="" className="h-10 w-10 rounded-full object-cover" />
-        <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" size={11} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold text-sm leading-tight">{p.name}</div>
-        <div className="text-[11px] text-muted-foreground leading-tight">
-          {p.online ? (
-            <span className="text-success font-medium">online</span>
-          ) : (
-            <span>visto {p.lastSeen ?? "há pouco"}</span>
-          )}
-          <span className="mx-1">·</span>
-          <span>{proximityLabel(p.distanceMeters)}</span>
+      <Link to="/perfil/$id" params={{ id: p.id }} search={{ from: "chat" }} className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-90">
+        <div className="relative">
+          <img src={p.photo} alt="" className="h-10 w-10 rounded-full object-cover" />
+          <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" size={11} />
         </div>
-      </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-sm leading-tight">{p.name}</div>
+          <div className="text-[11px] text-muted-foreground leading-tight">
+            {p.online ? (
+              <span className="text-success font-medium">online</span>
+            ) : (
+              <span>visto {p.lastSeen ?? "há pouco"}</span>
+            )}
+            <span className="mx-1">·</span>
+            <span>{proximityLabel(p.distanceMeters)}</span>
+          </div>
+        </div>
+      </Link>
+      <button onClick={onOpenMeetup} className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary text-primary" aria-label="Encontrar-se">
+        <Users2 className="h-4 w-4" />
+      </button>
       <button className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary text-primary"><Video className="h-4 w-4" /></button>
       <button className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary text-primary"><Phone className="h-4 w-4" /></button>
       <button className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary"><MoreVertical className="h-4 w-4" /></button>
@@ -228,10 +260,11 @@ function TypingBubble({ name }: { name: string }) {
 }
 
 function Composer({
-  onSend, personDistance,
+  onSend, personDistance, onOpenMeetup,
 }: {
   onSend: (m: MessageInput) => void;
   personDistance: number;
+  onOpenMeetup: () => void;
 }) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -297,10 +330,11 @@ function Composer({
         )}
         {showAttach && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="absolute bottom-full left-2 mb-2 rounded-2xl bg-surface border border-border p-2 shadow-elegant grid grid-cols-3 gap-2 w-64">
+            className="absolute bottom-full left-2 mb-2 rounded-2xl bg-surface border border-border p-2 shadow-elegant grid grid-cols-4 gap-2 w-80">
             <AttachTile icon={ImageIcon} label="Imagem" color="bg-pink/15 text-pink" onClick={() => fileRef.current?.click()} />
             <AttachTile icon={Camera} label="Câmera" color="bg-primary/15 text-primary" onClick={() => camRef.current?.click()} />
             <AttachTile icon={MapPin} label="Localização" color="bg-success/15 text-success" onClick={shareLocation} />
+            <AttachTile icon={Users2} label="Encontro" color="bg-accent text-primary" onClick={() => { setShowAttach(false); onOpenMeetup(); }} />
           </motion.div>
         )}
       </AnimatePresence>

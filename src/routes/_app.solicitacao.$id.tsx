@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { people } from "@/lib/mock-data";
+import { people, commonGround, type Person } from "@/lib/mock-data";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
-import { X, Check, ChevronLeft } from "lucide-react";
+import { X, Check, ChevronLeft, UserRound, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/_app/solicitacao/$id")({
@@ -20,7 +20,8 @@ export const Route = createFileRoute("/_app/solicitacao/$id")({
 
 function Solicitacao() {
   const nav = useNavigate();
-  const p = Route.useLoaderData();
+  const p = Route.useLoaderData() as Person;
+  const cg = commonGround(p);
   return (
     <div className="flex-1 flex flex-col relative"
          style={{ background: "linear-gradient(180deg, #efeaff 0%, #fff 60%)" }}>
@@ -51,14 +52,42 @@ function Solicitacao() {
           </p>
         </div>
 
-        <div className="px-6 py-5 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Interesses em comum</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {p.interests.map((t: string) => (
-              <span key={t} className="rounded-full bg-accent text-primary text-xs font-semibold px-3 py-1">{t}</span>
-            ))}
+        <div className="px-6 py-5 flex-1 space-y-4">
+          {(cg.sharedInterests.length + cg.sharedVibe.length > 0) && (
+            <div className="rounded-2xl bg-accent/60 border border-primary/20 p-3">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <p className="text-xs font-semibold text-primary">Terreno em comum</p>
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {cg.sharedInterests.slice(0, 3).map((t) => (
+                  <span key={t} className="rounded-full bg-primary text-white text-[11px] font-semibold px-2.5 py-1">{t}</span>
+                ))}
+                {cg.sharedVibe.slice(0, 1).map((t) => (
+                  <span key={t} className="rounded-full bg-surface text-primary border border-primary/30 text-[11px] font-semibold px-2.5 py-1">✦ {t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Interesses</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {p.interests.map((t: string) => (
+                <span key={t} className="rounded-full bg-accent text-primary text-xs font-semibold px-3 py-1">{t}</span>
+              ))}
+            </div>
           </div>
-          {p.bio && <p className="mt-4 text-sm text-muted-foreground italic">"{p.bio}"</p>}
+          {p.bio && <p className="text-sm text-muted-foreground italic">"{p.bio}"</p>}
+
+          <Link
+            to="/perfil/$id"
+            params={{ id: p.id }}
+            search={{ from: "solicitacao" }}
+            className="w-full h-11 rounded-2xl bg-secondary text-foreground text-sm font-semibold inline-flex items-center justify-center gap-2"
+          >
+            <UserRound className="h-4 w-4" />
+            Ver perfil de {p.name.split(" ")[0]}
+          </Link>
         </div>
 
         <div className="p-4 flex gap-3">
