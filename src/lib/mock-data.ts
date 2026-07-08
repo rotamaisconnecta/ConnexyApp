@@ -6,6 +6,17 @@ export const currentUser = {
   trips: 23,
   connections: 48,
   interests: ["Viagens", "Socializar", "Eventos", "Música", "Tecnologia"],
+  vibeTags: ["explorador de bairro", "cinéfilo", "café antes de tudo"],
+  favoritePlaceIds: ["cafe-central", "vinil-store"],
+};
+
+export type Moment = {
+  id: string;
+  text: string;
+  photo?: string;
+  placeId?: string;
+  createdAgo: string;
+  likes: number;
 };
 
 export type Person = {
@@ -18,16 +29,107 @@ export type Person = {
   photo: string;
   interests: string[];
   bio?: string;
+  handle?: string;
+  headline?: string;
+  mood?: { emoji: string; text: string };
+  nowPlaying?: { kind: "music" | "reading" | "watching"; title: string; subtitle?: string };
+  vibeTags?: string[];
+  favoritePlaceIds?: string[];
+  looksFor?: string[];
+  stats?: { connections: number; meetups: number; joinedAt: string };
+  moments?: Moment[];
 };
 
 export const people: Person[] = [
-  { id: "beatriz", name: "Beatriz", age: 26, distanceMeters: 15,   online: true,  photo: "https://i.pravatar.cc/200?img=47", interests: ["Música", "Viagens"], bio: "Amante de vinis e cafés escondidos." },
-  { id: "rafael",  name: "Rafael",  age: 30, distanceMeters: 80,   online: true,  photo: "https://i.pravatar.cc/200?img=13", interests: ["Esportes", "Tecnologia"], bio: "Dev, corredor, sempre buscando um novo trail." },
-  { id: "juliana", name: "Juliana", age: 27, distanceMeters: 350,  online: true,  photo: "https://i.pravatar.cc/200?img=45", interests: ["Café", "Eventos"], bio: "Curadora cultural, adora um pocket show." },
-  { id: "carlos",  name: "Carlos",  age: 29, distanceMeters: 1400, online: false, lastSeen: "há 12 min", photo: "https://i.pravatar.cc/200?img=15", interests: ["Viagens", "Negócios"], bio: "Empreendedor de bairro." },
-  { id: "marina",  name: "Marina",  age: 24, distanceMeters: 3200, online: true,  photo: "https://i.pravatar.cc/200?img=48", interests: ["Arte", "Moda"], bio: "Ilustradora freelancer." },
-  { id: "diego",   name: "Diego",   age: 32, distanceMeters: 9800, online: false, lastSeen: "há 1 h",   photo: "https://i.pravatar.cc/200?img=52", interests: ["Games", "Tecnologia"], bio: "Streamer nas horas vagas." },
+  {
+    id: "beatriz", name: "Beatriz", age: 26, distanceMeters: 15, online: true,
+    photo: "https://i.pravatar.cc/200?img=47",
+    interests: ["Música", "Viagens", "Café", "Arte"],
+    bio: "Amante de vinis e cafés escondidos.",
+    handle: "bea.vinil",
+    headline: "Vinil, café e caminhadas sem destino",
+    mood: { emoji: "🎧", text: "modo playlist infinita" },
+    nowPlaying: { kind: "music", title: "Blonde", subtitle: "Frank Ocean" },
+    vibeTags: ["curadora de playlists", "explorador de bairro", "corujão"],
+    favoritePlaceIds: ["cafe-central", "vinil-store"],
+    looksFor: ["amizade", "parceria de rolês", "trocar indicações"],
+    stats: { connections: 132, meetups: 18, joinedAt: "mar/2024" },
+    moments: [
+      { id: "b1", text: "Descoberta da semana: novo blend da casa 🤎", photo: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800", placeId: "cafe-central", createdAgo: "há 2 h", likes: 24 },
+      { id: "b2", text: "Achei um compacto de 1978 que estava caçando faz meses.", photo: "https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?w=800", placeId: "vinil-store", createdAgo: "ontem", likes: 41 },
+      { id: "b3", text: "Alguém topa um sunset amanhã? Prometo boas playlists.", createdAgo: "há 2 d", likes: 12 },
+    ],
+  },
+  {
+    id: "rafael", name: "Rafael", age: 30, distanceMeters: 80, online: true,
+    photo: "https://i.pravatar.cc/200?img=13",
+    interests: ["Esportes", "Tecnologia", "Café", "Viagens"],
+    bio: "Dev, corredor, sempre buscando um novo trail.",
+    handle: "rafa.run",
+    headline: "Código de manhã, trilha à tarde",
+    mood: { emoji: "🏃", text: "pós-treino, com fome" },
+    nowPlaying: { kind: "reading", title: "Shape Up", subtitle: "Ryan Singer" },
+    vibeTags: ["madrugador", "trilheiro", "coffee nerd"],
+    favoritePlaceIds: ["burger-house", "cafe-central"],
+    looksFor: ["parceiros de corrida", "papo de tech"],
+    stats: { connections: 88, meetups: 22, joinedAt: "jan/2024" },
+    moments: [
+      { id: "r1", text: "10k antes do café. Nada mal pra segunda.", photo: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800", createdAgo: "há 4 h", likes: 33 },
+      { id: "r2", text: "Melhor smash da região, aceito ser convencido do contrário.", placeId: "burger-house", createdAgo: "há 3 d", likes: 19 },
+    ],
+  },
+  {
+    id: "juliana", name: "Juliana", age: 27, distanceMeters: 350, online: true,
+    photo: "https://i.pravatar.cc/200?img=45",
+    interests: ["Café", "Eventos", "Arte", "Música"],
+    bio: "Curadora cultural, adora um pocket show.",
+    handle: "juu.curadora",
+    headline: "Vivo por pocket shows e feiras de bairro",
+    mood: { emoji: "✨", text: "modo descoberta" },
+    nowPlaying: { kind: "watching", title: "Perfect Days", subtitle: "Wim Wenders" },
+    vibeTags: ["cinéfila", "explorador de bairro", "socializadora nata"],
+    favoritePlaceIds: ["cafe-central", "sunset-parque"],
+    looksFor: ["amizade", "companhia pra eventos"],
+    stats: { connections: 210, meetups: 47, joinedAt: "out/2023" },
+    moments: [
+      { id: "j1", text: "Sunset hoje tá impecável. Vem quem quer.", photo: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800", placeId: "sunset-parque", createdAgo: "há 1 h", likes: 58 },
+      { id: "j2", text: "Café + livro = domingo bem gasto ☕📖", placeId: "cafe-central", createdAgo: "há 5 d", likes: 27 },
+    ],
+  },
+  {
+    id: "carlos", name: "Carlos", age: 29, distanceMeters: 1400, online: false, lastSeen: "há 12 min",
+    photo: "https://i.pravatar.cc/200?img=15",
+    interests: ["Viagens", "Negócios", "Gastronomia"],
+    bio: "Empreendedor de bairro.",
+    handle: "carlos.br",
+    headline: "Toco um pequeno negócio na esquina",
+    mood: { emoji: "☕", text: "reunião atrás de reunião" },
+    vibeTags: ["networker", "gastro curioso"],
+    favoritePlaceIds: ["burger-house"],
+    looksFor: ["network local", "parcerias"],
+    stats: { connections: 64, meetups: 9, joinedAt: "abr/2024" },
+    moments: [
+      { id: "c1", text: "Testando um novo fornecedor de pão. Aceito voluntários.", createdAgo: "há 6 h", likes: 8 },
+    ],
+  },
+  { id: "marina", name: "Marina", age: 24, distanceMeters: 3200, online: true, photo: "https://i.pravatar.cc/200?img=48", interests: ["Arte", "Moda"], bio: "Ilustradora freelancer.", handle: "mari.ink", headline: "Rabisco, portanto existo", vibeTags: ["criativa", "corujão"] },
+  { id: "diego", name: "Diego", age: 32, distanceMeters: 9800, online: false, lastSeen: "há 1 h", photo: "https://i.pravatar.cc/200?img=52", interests: ["Games", "Tecnologia"], bio: "Streamer nas horas vagas.", handle: "dg.plays" },
 ];
+
+export function findPerson(id: string): Person | undefined {
+  return people.find((p) => p.id === id);
+}
+
+export function commonGround(person: Person): {
+  sharedInterests: string[];
+  sharedVibe: string[];
+  sharedPlaces: string[];
+} {
+  const sharedInterests = person.interests.filter((i) => currentUser.interests.includes(i));
+  const sharedVibe = (person.vibeTags ?? []).filter((v) => (currentUser.vibeTags ?? []).includes(v));
+  const sharedPlaces = (person.favoritePlaceIds ?? []).filter((p) => (currentUser.favoritePlaceIds ?? []).includes(p));
+  return { sharedInterests, sharedVibe, sharedPlaces };
+}
 
 export type Driver = {
   id: string;
@@ -66,6 +168,10 @@ export const places: Place[] = [
   { id: "burger-house",  name: "Burger House",     category: "Restaurantes", distanceMeters: 500,  rating: 4.5, reviews: 890,  hours: "Aberto até 00:00", cover: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800", promo: "Combo duplo por R$ 39", description: "Smash burgers, batata rústica e chopes gelados." },
   { id: "vinil-store",   name: "Vinil & Cia",      category: "Lojas",        distanceMeters: 900,  rating: 4.7, reviews: 210,  hours: "Aberto até 20:00", cover: "https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?w=800", description: "Discos raros, toca-discos e acessórios." },
 ];
+
+export function findPlace(id: string): Place | undefined {
+  return places.find((p) => p.id === id);
+}
 
 export const suggestions = [
   { label: "Shopping Ibirapuera", distance: "2,4 km", icon: "🛍️" },
