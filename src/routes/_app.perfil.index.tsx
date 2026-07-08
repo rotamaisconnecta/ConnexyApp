@@ -3,7 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { currentUser } from "@/lib/mock-data";
 import { ChevronRight, MapPinned, Users, Bookmark, Settings, EyeOff } from "lucide-react";
 
-export const Route = createFileRoute("/_app/perfil")({
+export const Route = createFileRoute("/_app/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — RotaMais Connecta" }] }),
   component: Profile,
 });

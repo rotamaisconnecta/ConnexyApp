@@ -17,7 +17,6 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
 import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
-import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
 import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
 import { Route as AppMatchingRouteImport } from './routes/_app.matching'
 import { Route as AppLocaisRouteImport } from './routes/_app.locais'
@@ -25,6 +24,7 @@ import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
+import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
 import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
@@ -69,11 +69,6 @@ const AppPrivacidadeRoute = AppPrivacidadeRouteImport.update({
   path: '/privacidade',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPerfilRoute = AppPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppNotificacoesRoute = AppNotificacoesRouteImport.update({
   id: '/notificacoes',
   path: '/notificacoes',
@@ -109,15 +104,20 @@ const AppAvaliarRoute = AppAvaliarRouteImport.update({
   path: '/avaliar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
+  id: '/perfil/',
+  path: '/perfil/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSolicitacaoIdRoute = AppSolicitacaoIdRouteImport.update({
   id: '/solicitacao/$id',
   path: '/solicitacao/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPerfilIdRoute = AppPerfilIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppPerfilRoute,
+  id: '/perfil/$id',
+  path: '/perfil/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppLocalIdRoute = AppLocalIdRouteImport.update({
   id: '/local/$id',
@@ -143,13 +143,13 @@ export interface FileRoutesByFullPath {
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
-  '/perfil': typeof AppPerfilRouteWithChildren
   '/privacidade': typeof AppPrivacidadeRoute
   '/rota': typeof AppRotaRoute
   '/chat/$id': typeof AppChatIdRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
+  '/perfil/': typeof AppPerfilIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -164,13 +164,13 @@ export interface FileRoutesByTo {
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
-  '/perfil': typeof AppPerfilRouteWithChildren
   '/privacidade': typeof AppPrivacidadeRoute
   '/rota': typeof AppRotaRoute
   '/chat/$id': typeof AppChatIdRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
+  '/perfil': typeof AppPerfilIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,13 +187,13 @@ export interface FileRoutesById {
   '/_app/locais': typeof AppLocaisRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
-  '/_app/perfil': typeof AppPerfilRouteWithChildren
   '/_app/privacidade': typeof AppPrivacidadeRoute
   '/_app/rota': typeof AppRotaRoute
   '/_app/chat/$id': typeof AppChatIdRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
   '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
+  '/_app/perfil/': typeof AppPerfilIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -210,13 +210,13 @@ export interface FileRouteTypes {
     | '/locais'
     | '/matching'
     | '/notificacoes'
-    | '/perfil'
     | '/privacidade'
     | '/rota'
     | '/chat/$id'
     | '/local/$id'
     | '/perfil/$id'
     | '/solicitacao/$id'
+    | '/perfil/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -231,13 +231,13 @@ export interface FileRouteTypes {
     | '/locais'
     | '/matching'
     | '/notificacoes'
-    | '/perfil'
     | '/privacidade'
     | '/rota'
     | '/chat/$id'
     | '/local/$id'
     | '/perfil/$id'
     | '/solicitacao/$id'
+    | '/perfil'
   id:
     | '__root__'
     | '/'
@@ -253,13 +253,13 @@ export interface FileRouteTypes {
     | '/_app/locais'
     | '/_app/matching'
     | '/_app/notificacoes'
-    | '/_app/perfil'
     | '/_app/privacidade'
     | '/_app/rota'
     | '/_app/chat/$id'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
     | '/_app/solicitacao/$id'
+    | '/_app/perfil/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -329,13 +329,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPrivacidadeRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/perfil': {
-      id: '/_app/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AppPerfilRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/notificacoes': {
       id: '/_app/notificacoes'
       path: '/notificacoes'
@@ -385,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAvaliarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/perfil/': {
+      id: '/_app/perfil/'
+      path: '/perfil'
+      fullPath: '/perfil/'
+      preLoaderRoute: typeof AppPerfilIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/solicitacao/$id': {
       id: '/_app/solicitacao/$id'
       path: '/solicitacao/$id'
@@ -394,10 +394,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/perfil/$id': {
       id: '/_app/perfil/$id'
-      path: '/$id'
+      path: '/perfil/$id'
       fullPath: '/perfil/$id'
       preLoaderRoute: typeof AppPerfilIdRouteImport
-      parentRoute: typeof AppPerfilRoute
+      parentRoute: typeof AppRoute
     }
     '/_app/local/$id': {
       id: '/_app/local/$id'
@@ -416,18 +416,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AppPerfilRouteChildren {
-  AppPerfilIdRoute: typeof AppPerfilIdRoute
-}
-
-const AppPerfilRouteChildren: AppPerfilRouteChildren = {
-  AppPerfilIdRoute: AppPerfilIdRoute,
-}
-
-const AppPerfilRouteWithChildren = AppPerfilRoute._addFileChildren(
-  AppPerfilRouteChildren,
-)
-
 interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
   AppConnectaRoute: typeof AppConnectaRoute
@@ -436,12 +424,13 @@ interface AppRouteChildren {
   AppLocaisRoute: typeof AppLocaisRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
-  AppPerfilRoute: typeof AppPerfilRouteWithChildren
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AppRotaRoute: typeof AppRotaRoute
   AppChatIdRoute: typeof AppChatIdRoute
   AppLocalIdRoute: typeof AppLocalIdRoute
+  AppPerfilIdRoute: typeof AppPerfilIdRoute
   AppSolicitacaoIdRoute: typeof AppSolicitacaoIdRoute
+  AppPerfilIndexRoute: typeof AppPerfilIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -452,12 +441,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppLocaisRoute: AppLocaisRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
-  AppPerfilRoute: AppPerfilRouteWithChildren,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AppRotaRoute: AppRotaRoute,
   AppChatIdRoute: AppChatIdRoute,
   AppLocalIdRoute: AppLocalIdRoute,
+  AppPerfilIdRoute: AppPerfilIdRoute,
   AppSolicitacaoIdRoute: AppSolicitacaoIdRoute,
+  AppPerfilIndexRoute: AppPerfilIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
