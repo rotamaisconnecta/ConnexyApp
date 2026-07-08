@@ -7,10 +7,11 @@ import { proximityLabel, proximityRadius } from "@/lib/proximity";
 import {
   ChevronLeft, Phone, Video, MoreVertical,
   Smile, Paperclip, Camera, Send, Mic, MapPin, Image as ImageIcon,
-  X, Check, CheckCheck, Play, Trash2,
+  X, Check, CheckCheck, Play, Trash2, Users2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { MeetupSheet, type MeetupPick } from "@/components/chat/meetup-sheet";
 
 export const Route = createFileRoute("/_app/chat/$id")({
   head: () => ({ meta: [{ title: "Chat — Connecta" }] }),
