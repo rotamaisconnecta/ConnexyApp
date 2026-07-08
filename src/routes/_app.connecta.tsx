@@ -38,10 +38,10 @@ function Connecta() {
       <ul className="mt-4 px-5 space-y-3 pb-4">
         {people.map((p) => (
           <li key={p.id} className="rounded-2xl bg-surface border border-border p-3 shadow-soft flex items-center gap-3">
-            <div className="relative">
+            <Link to="/perfil/$id" params={{ id: p.id }} search={{ from: "connecta" }} className="relative shrink-0" aria-label={`Ver perfil de ${p.name}`}>
               <img src={p.photo} alt={p.name} className="h-14 w-14 rounded-full object-cover" />
               <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
-            </div>
+            </Link>
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm">{p.name}, {p.age}</div>
               <div className="mt-0.5 flex items-center gap-1.5">
