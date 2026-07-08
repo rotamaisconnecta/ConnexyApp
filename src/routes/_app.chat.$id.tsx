@@ -260,10 +260,11 @@ function TypingBubble({ name }: { name: string }) {
 }
 
 function Composer({
-  onSend, personDistance,
+  onSend, personDistance, onOpenMeetup,
 }: {
   onSend: (m: MessageInput) => void;
   personDistance: number;
+  onOpenMeetup: () => void;
 }) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -329,10 +330,11 @@ function Composer({
         )}
         {showAttach && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="absolute bottom-full left-2 mb-2 rounded-2xl bg-surface border border-border p-2 shadow-elegant grid grid-cols-3 gap-2 w-64">
+            className="absolute bottom-full left-2 mb-2 rounded-2xl bg-surface border border-border p-2 shadow-elegant grid grid-cols-4 gap-2 w-80">
             <AttachTile icon={ImageIcon} label="Imagem" color="bg-pink/15 text-pink" onClick={() => fileRef.current?.click()} />
             <AttachTile icon={Camera} label="Câmera" color="bg-primary/15 text-primary" onClick={() => camRef.current?.click()} />
             <AttachTile icon={MapPin} label="Localização" color="bg-success/15 text-success" onClick={shareLocation} />
+            <AttachTile icon={Users2} label="Encontro" color="bg-accent text-primary" onClick={() => { setShowAttach(false); onOpenMeetup(); }} />
           </motion.div>
         )}
       </AnimatePresence>
