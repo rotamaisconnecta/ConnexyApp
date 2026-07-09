@@ -14,7 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bio_posts: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          media_kind: string | null
+          media_url: string | null
+          place_id: string | null
+          text: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          media_kind?: string | null
+          media_url?: string | null
+          place_id?: string | null
+          text: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          media_kind?: string | null
+          media_url?: string | null
+          place_id?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bio_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bio_posts_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      places: {
+        Row: {
+          category: string | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          owner_id: string | null
+          slug: string | null
+        }
+        Insert: {
+          category?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          owner_id?: string | null
+          slug?: string | null
+        }
+        Update: {
+          category?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          owner_id?: string | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          bio: string | null
+          created_at: string
+          handle: string | null
+          headline: string | null
+          id: string
+          interests: string[]
+          looks_for: string[]
+          mood_emoji: string | null
+          mood_text: string | null
+          name: string | null
+          now_playing_kind: string | null
+          now_playing_subtitle: string | null
+          now_playing_title: string | null
+          photo_url: string | null
+          updated_at: string
+          vibe_tags: string[]
+        }
+        Insert: {
+          age?: number | null
+          bio?: string | null
+          created_at?: string
+          handle?: string | null
+          headline?: string | null
+          id: string
+          interests?: string[]
+          looks_for?: string[]
+          mood_emoji?: string | null
+          mood_text?: string | null
+          name?: string | null
+          now_playing_kind?: string | null
+          now_playing_subtitle?: string | null
+          now_playing_title?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          vibe_tags?: string[]
+        }
+        Update: {
+          age?: number | null
+          bio?: string | null
+          created_at?: string
+          handle?: string | null
+          headline?: string | null
+          id?: string
+          interests?: string[]
+          looks_for?: string[]
+          mood_emoji?: string | null
+          mood_text?: string | null
+          name?: string | null
+          now_playing_kind?: string | null
+          now_playing_subtitle?: string | null
+          now_playing_title?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          vibe_tags?: string[]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
