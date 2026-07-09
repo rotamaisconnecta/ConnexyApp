@@ -1,13 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { MapCanvas } from "@/components/map-canvas";
-import { PresenceDot } from "@/components/presence-dot";
 import { people } from "@/lib/mock-data";
-import { proximityLabel, proximityRadius } from "@/lib/proximity";
+import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import {
-  ChevronLeft, Phone, Video, MoreVertical,
-  Smile, Paperclip, Camera, Send, Mic, MapPin, Image as ImageIcon,
-  X, Check, CheckCheck, Play, Trash2, Users2,
+  ChevronLeft, Phone, Video, MoreVertical, Plus, Mic, MapPin, Camera,
+  Check, CheckCheck, Play, Image as ImageIcon, User, Users2, BadgeCheck,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,25 +23,17 @@ export const Route = createFileRoute("/_app/chat/$id")({
   component: Chat,
 });
 
-type Base = { id: string; from: "me" | "them"; at: Date; status?: "sent" | "delivered" | "read" };
+type Base = { id: string; from: "me" | "them"; at: Date; status?: "sent" | "delivered" | "read"; reaction?: string };
 type MText = Base & { kind: "text"; text: string };
-type MImage = Base & { kind: "image"; url: string; caption?: string };
 type MAudio = Base & { kind: "audio"; durationSec: number };
-type MLocation = Base & { kind: "location"; label: string; proximity: string };
-type Message = MText | MImage | MAudio | MLocation;
+type MLocation = Base & { kind: "location"; label: string; proximity: string; cover?: string };
+type MImage = Base & { kind: "image"; url: string };
+type Message = MText | MAudio | MLocation | MImage;
 type MessageInput =
   | Pick<MText, "from" | "kind" | "text">
-  | Pick<MImage, "from" | "kind" | "url" | "caption">
   | Pick<MAudio, "from" | "kind" | "durationSec">
-  | Pick<MLocation, "from" | "kind" | "label" | "proximity">;
-
-const cannedReplies = [
-  "Adorei a ideia! 😊",
-  "Bora sim!",
-  "Combinado, te chamo daqui a pouco.",
-  "kkkk que massa",
-  "Tô aqui pertinho também.",
-];
+  | Pick<MLocation, "from" | "kind" | "label" | "proximity" | "cover">
+  | Pick<MImage, "from" | "kind" | "url">;
 
 function fmtTime(d: Date) {
   return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -53,13 +43,18 @@ function Chat() {
   const p = Route.useLoaderData();
   const now = new Date();
   const [messages, setMessages] = useState<Message[]>([
-    { id: "m1", from: "them", kind: "text", text: `Oi! Vi que também curte ${p.interests[0]?.toLowerCase() ?? "as mesmas coisas"} 🎶`, at: new Date(now.getTime() - 1000 * 60 * 8), status: "read" },
-    { id: "m2", from: "me",   kind: "text", text: "Oi! Curto sim. Vai no Sunset hoje?", at: new Date(now.getTime() - 1000 * 60 * 7), status: "read" },
-    { id: "m3", from: "them", kind: "text", text: "Estava pensando nisso! Quer marcar por lá?", at: new Date(now.getTime() - 1000 * 60 * 6), status: "read" },
+    { id: "m1", from: "them", kind: "text", text: `Oi! Vi que você também vai para o evento no sábado 🎉`, at: new Date(now.getTime() - 1000 * 60 * 30), status: "read", reaction: "😍" },
+    { id: "m2", from: "me",   kind: "text", text: `Oi ${p.name.split(" ")[0]}! Sim, vou sim 😄`, at: new Date(now.getTime() - 1000 * 60 * 29), status: "read" },
+    { id: "m3", from: "them", kind: "text", text: `Que legal! 🙌\nVai de carro ou transporte?`, at: new Date(now.getTime() - 1000 * 60 * 28), status: "read" },
+    { id: "m4", from: "me",   kind: "audio", durationSec: 12, at: new Date(now.getTime() - 1000 * 60 * 27), status: "read" },
+    { id: "m5", from: "me",   kind: "text", text: `Ainda não decidi. Talvez peça uma corrida pelo Movea.`, at: new Date(now.getTime() - 1000 * 60 * 27), status: "read" },
+    { id: "m6", from: "them", kind: "text", text: `Boa! Se quiser, a gente pode ir junto, moro perto de você.`, at: new Date(now.getTime() - 1000 * 60 * 26), status: "read", reaction: "💛" },
+    { id: "m7", from: "me",   kind: "text", text: `Top demais! Chama lá no dia 😃`, at: new Date(now.getTime() - 1000 * 60 * 25), status: "read" },
   ]);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [meetupOpen, setMeetupOpen] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -69,7 +64,6 @@ function Chat() {
     const full = { ...m, id: crypto.randomUUID(), at: new Date(), status: "sent" as const } as Message;
     setMessages((prev) => [...prev, full]);
     if (full.from === "me") {
-      // mock deliver/read + reply
       setTimeout(() => setMessages((prev) => prev.map((x) => x.id === full.id ? { ...x, status: "delivered" } : x)), 500);
       setTimeout(() => setMessages((prev) => prev.map((x) => x.id === full.id ? { ...x, status: "read" } : x)), 1200);
       setTimeout(() => setTyping(true), 1400);
@@ -77,92 +71,130 @@ function Chat() {
         setTyping(false);
         setMessages((prev) => [...prev, {
           id: crypto.randomUUID(), from: "them", kind: "text",
-          text: cannedReplies[Math.floor(Math.random() * cannedReplies.length)],
-          at: new Date(), status: "read",
+          text: "Combinado! 🙌", at: new Date(), status: "read",
         }]);
       }, 2600);
     }
   };
 
+  const label = personProximityLabel(p.distanceMeters);
+  const radius = personProximityRadius(p.distanceMeters);
+
   return (
-    <div className="flex-1 flex flex-col relative" style={{ background: "linear-gradient(180deg,#f4efff 0%,#faf7ff 100%)" }}>
+    <div className="flex-1 flex flex-col relative bg-gradient-to-b from-[#f5f0ff] via-[#faf7ff] to-[#fdfbff]">
       <StatusBar />
-      <ChatHeader person={p} onOpenMeetup={() => setMeetupOpen(true)} />
+      <ChatHeader person={p} />
+
+      {/* Distance banner */}
+      <div className="mx-4 mt-2 rounded-2xl bg-surface border border-border shadow-soft p-3 flex items-center gap-3">
+        <div className="h-10 w-10 grid place-items-center rounded-xl bg-accent text-primary">
+          <MapPin className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold leading-tight">
+            {radius ? `Vocês estão a ${radius} de distância` : "Vocês estão próximos"}
+          </div>
+          <div className="text-[11px] text-muted-foreground leading-tight">{label}</div>
+        </div>
+        <button
+          onClick={() => setShowMap(true)}
+          className="rounded-full border border-primary/30 text-primary text-xs font-semibold px-3 py-1.5"
+        >Ver no mapa</button>
+      </div>
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
-        <div className="mx-auto rounded-full bg-white/70 backdrop-blur px-3 py-1 text-[10px] text-muted-foreground w-max shadow-soft">
-          Hoje · vocês aceitaram conversar
+        <div className="flex items-center gap-2 my-2">
+          <div className="h-px bg-border flex-1" />
+          <span className="rounded-full bg-accent/60 text-primary text-[10px] font-bold px-3 py-1 tracking-wider">HOJE</span>
+          <div className="h-px bg-border flex-1" />
         </div>
         <AnimatePresence initial={false}>
           {messages.map((m, i) => (
-            <Bubble key={m.id} m={m} prevFrom={messages[i - 1]?.from} />
+            <Bubble
+              key={m.id}
+              m={m}
+              prevFrom={messages[i - 1]?.from}
+              nextFrom={messages[i + 1]?.from}
+              personPhoto={p.photo}
+            />
           ))}
         </AnimatePresence>
-        {typing && <TypingBubble name={p.name} />}
-        <button
-          onClick={() => setMeetupOpen(true)}
-          className="mx-auto mt-3 rounded-xl bg-accent/70 text-[11px] text-primary text-center py-1.5 px-3 w-max shadow-soft inline-flex items-center gap-1.5 hover:bg-accent"
-        >
-          <MapPin className="h-3 w-3" />
-          Vocês estão {proximityLabel(p.distanceMeters).toLowerCase()} — que tal se encontrar?
-        </button>
+        {typing && <TypingBubble name={p.name} photo={p.photo} />}
       </div>
-      <Composer
-        onSend={push}
-        personDistance={p.distanceMeters}
-        onOpenMeetup={() => setMeetupOpen(true)}
-      />
+
+      <Composer onSend={push} onOpenMeetup={() => setMeetupOpen(true)} />
+
       <MeetupSheet
         open={meetupOpen}
         onClose={() => setMeetupOpen(false)}
         personName={p.name}
         onSuggest={(pick: MeetupPick) => {
-          push({ from: "me", kind: "location", label: pick.placeName, proximity: pick.proximity });
+          push({ from: "me", kind: "location", label: pick.placeName, proximity: pick.proximity, cover: pick.cover });
           setMeetupOpen(false);
         }}
         onShareMyLocation={() => {
           push({
             from: "me", kind: "location",
             label: "Minha localização atual",
-            proximity: `${proximityLabel(p.distanceMeters)} · ${proximityRadius(p.distanceMeters)}`,
+            proximity: label,
           });
           setMeetupOpen(false);
         }}
       />
+
+      <AnimatePresence>
+        {showMap && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowMap(false)} className="absolute inset-0 bg-foreground/40 z-40" />
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 260 }}
+              className="absolute inset-x-0 bottom-0 z-50 rounded-t-3xl bg-surface p-4 pb-6 shadow-elegant">
+              <div className="pt-1 pb-2 flex justify-center"><span className="h-1.5 w-10 rounded-full bg-border" /></div>
+              <h3 className="font-display font-bold text-base mb-2">Vocês no mapa</h3>
+              <MapCanvas height={260} pins={[
+                { x: 30, y: 70, kind: "user", label: "Você" },
+                { x: 65, y: 40, kind: "person", label: p.name.split(" ")[0] },
+              ]} />
+              <p className="text-xs text-muted-foreground text-center mt-2">{label}{radius ? ` · aproximadamente ${radius}` : ""}</p>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function ChatHeader({ person, onOpenMeetup }: { person: typeof people[number]; onOpenMeetup: () => void }) {
+function ChatHeader({ person }: { person: typeof people[number] }) {
   const p = person;
   return (
-    <header className="px-3 pt-1 pb-2 flex items-center gap-2 bg-surface/95 backdrop-blur border-b border-border">
-      <Link to="/connecta" className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary">
+    <header className="px-3 pt-1 pb-2 flex items-center gap-2">
+      <Link to="/connecta" className="h-11 w-11 grid place-items-center rounded-2xl bg-surface shadow-soft border border-border">
         <ChevronLeft className="h-5 w-5" />
       </Link>
-      <Link to="/perfil/$id" params={{ id: p.id }} search={{ from: "chat" }} className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-90">
+      <Link to="/perfil/$id" params={{ id: p.id }} search={{ from: "chat" }} className="flex items-center gap-2.5 flex-1 min-w-0">
         <div className="relative">
-          <img src={p.photo} alt="" className="h-10 w-10 rounded-full object-cover" />
-          <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" size={11} />
+          <img src={p.photo} alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/30" />
+          {p.online && <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success ring-2 ring-surface" />}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm leading-tight">{p.name}</div>
-          <div className="text-[11px] text-muted-foreground leading-tight">
+          <div className="font-display font-bold text-base leading-tight flex items-center gap-1">
+            {p.name} <BadgeCheck className="h-4 w-4 text-primary fill-primary text-white" />
+          </div>
+          <div className="text-[11px] leading-tight flex items-center gap-1">
             {p.online ? (
-              <span className="text-success font-medium">online</span>
+              <><span className="h-1.5 w-1.5 rounded-full bg-success" /><span className="text-success font-medium">Online agora</span></>
             ) : (
-              <span>visto {p.lastSeen ?? "há pouco"}</span>
+              <span className="text-muted-foreground">visto {p.lastSeen ?? "há pouco"}</span>
             )}
-            <span className="mx-1">·</span>
-            <span>{proximityLabel(p.distanceMeters)}</span>
           </div>
         </div>
       </Link>
-      <button onClick={onOpenMeetup} className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary text-primary" aria-label="Encontrar-se">
-        <Users2 className="h-4 w-4" />
-      </button>
-      <button className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary text-primary"><Video className="h-4 w-4" /></button>
-      <button className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary text-primary"><Phone className="h-4 w-4" /></button>
-      <button className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary"><MoreVertical className="h-4 w-4" /></button>
+      <div className="flex items-center gap-1.5">
+        <button className="h-10 w-10 grid place-items-center rounded-xl bg-surface shadow-soft border border-border text-primary"><Phone className="h-4 w-4" /></button>
+        <button className="h-10 w-10 grid place-items-center rounded-xl bg-surface shadow-soft border border-border text-primary"><Video className="h-4 w-4" /></button>
+        <button className="h-10 w-10 grid place-items-center rounded-xl bg-surface shadow-soft border border-border"><MoreVertical className="h-4 w-4" /></button>
+      </div>
     </header>
   );
 }
@@ -171,57 +203,68 @@ function TickIcon({ status }: { status?: Message["status"] }) {
   if (!status) return null;
   if (status === "sent") return <Check className="inline h-3 w-3 opacity-80" />;
   if (status === "delivered") return <CheckCheck className="inline h-3 w-3 opacity-80" />;
-  return <CheckCheck className="inline h-3 w-3 text-sky-300" />;
+  return <CheckCheck className="inline h-3 w-3" />;
 }
 
-function Bubble({ m, prevFrom }: { m: Message; prevFrom?: "me" | "them" }) {
+function Bubble({
+  m, prevFrom, nextFrom, personPhoto,
+}: {
+  m: Message; prevFrom?: "me" | "them"; nextFrom?: "me" | "them"; personPhoto: string;
+}) {
   const mine = m.from === "me";
-  const grouped = prevFrom === m.from;
-  const base = "max-w-[78%] px-3 py-2 text-sm shadow-soft";
-  const tail = mine
-    ? `rounded-2xl ${grouped ? "rounded-tr-2xl" : "rounded-tr-md"} rounded-br-sm bg-gradient-brand text-white`
-    : `rounded-2xl ${grouped ? "rounded-tl-2xl" : "rounded-tl-md"} rounded-bl-sm bg-surface text-foreground border border-border`;
+  const groupedTop = prevFrom === m.from;
+  const groupedBottom = nextFrom === m.from;
+  const showAvatar = !mine && !groupedBottom;
 
-  const meta = (
-    <span className={`ml-2 float-right text-[10px] mt-0.5 inline-flex items-center gap-0.5 ${mine ? "text-white/80" : "text-muted-foreground"}`}>
-      {fmtTime(m.at)} {mine && <TickIcon status={m.status} />}
-    </span>
-  );
+  const bubbleClass = mine
+    ? `bg-gradient-brand text-white ${groupedBottom ? "rounded-3xl" : "rounded-3xl rounded-br-md"} shadow-soft`
+    : `bg-surface text-foreground border border-border ${groupedBottom ? "rounded-3xl" : "rounded-3xl rounded-bl-md"} shadow-soft`;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      className={`flex ${mine ? "justify-end" : "justify-start"} ${grouped ? "mt-0.5" : "mt-2"}`}
+      className={`flex ${mine ? "justify-end" : "justify-start"} ${groupedTop ? "mt-0.5" : "mt-2.5"} gap-2`}
     >
-      <div className={`${base} ${tail}`}>
-        {m.kind === "text" && <><span>{m.text}</span>{meta}</>}
-        {m.kind === "image" && (
-          <div className="-m-1">
-            <img src={m.url} alt="" className="rounded-xl max-h-56 w-full object-cover" />
-            {m.caption && <div className="px-2 pt-1.5">{m.caption}</div>}
-            <div className="px-2 pb-1">{meta}</div>
-          </div>
-        )}
-        {m.kind === "audio" && (
-          <div className="flex items-center gap-2 min-w-[180px]">
-            <button className={`h-8 w-8 rounded-full grid place-items-center ${mine ? "bg-white/25" : "bg-primary/10 text-primary"}`}>
-              <Play className="h-3.5 w-3.5" />
-            </button>
-            <Waveform mine={mine} />
-            <span className={`text-[11px] ${mine ? "text-white/80" : "text-muted-foreground"}`}>
-              {String(Math.floor(m.durationSec / 60)).padStart(1, "0")}:{String(m.durationSec % 60).padStart(2, "0")}
-            </span>
-            {meta}
-          </div>
-        )}
-        {m.kind === "location" && (
-          <div className="-m-1 w-56">
-            <MapCanvas height={110} pins={[{ x: 50, y: 60, kind: "user", label: "Aqui" }]} />
-            <div className={`px-2 py-1.5 text-xs ${mine ? "text-white" : "text-foreground"}`}>
-              <div className="font-semibold flex items-center gap-1"><MapPin className="h-3 w-3" /> {m.label}</div>
-              <div className={`text-[11px] ${mine ? "text-white/80" : "text-muted-foreground"}`}>{m.proximity}</div>
-              <div className="mt-0.5">{meta}</div>
+      {!mine && (
+        <div className="w-8 shrink-0 self-end">
+          {showAvatar && <img src={personPhoto} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20" />}
+        </div>
+      )}
+      <div className={`max-w-[75%] ${mine ? "items-end" : "items-start"} flex flex-col`}>
+        <div className={`${bubbleClass} px-4 py-2.5`}>
+          {m.kind === "text" && <p className="text-[15px] leading-snug whitespace-pre-line">{m.text}</p>}
+          {m.kind === "image" && <img src={m.url} alt="" className="rounded-2xl max-h-56 w-full object-cover -mx-1" />}
+          {m.kind === "audio" && (
+            <div className="flex items-center gap-2 min-w-[200px] py-0.5">
+              <button className={`h-8 w-8 rounded-full grid place-items-center ${mine ? "bg-white/25" : "bg-primary/10 text-primary"}`}>
+                <Play className="h-3.5 w-3.5" />
+              </button>
+              <Waveform mine={mine} />
+              <span className={`text-[11px] ${mine ? "text-white/85" : "text-muted-foreground"}`}>
+                0:{String(m.durationSec).padStart(2, "0")}
+              </span>
             </div>
+          )}
+          {m.kind === "location" && (
+            <div className="-mx-2 -my-1 w-64">
+              {m.cover ? (
+                <img src={m.cover} alt="" className="rounded-t-2xl h-24 w-full object-cover" />
+              ) : (
+                <MapCanvas height={100} pins={[{ x: 50, y: 55, kind: "place", label: m.label }]} />
+              )}
+              <div className={`px-3 py-2 ${mine ? "text-white" : "text-foreground"}`}>
+                <div className="font-semibold text-sm flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {m.label}</div>
+                <div className={`text-[11px] mt-0.5 ${mine ? "text-white/85" : "text-muted-foreground"}`}>{m.proximity}</div>
+              </div>
+            </div>
+          )}
+          <div className={`text-[10px] mt-1 flex items-center gap-1 ${mine ? "justify-end text-white/80" : "justify-start text-muted-foreground"}`}>
+            {fmtTime(m.at)} {mine && <TickIcon status={m.status} />}
+          </div>
+        </div>
+        {m.reaction && (
+          <div className={`-mt-2 ${mine ? "self-end mr-3" : "self-start ml-3"} rounded-full bg-surface border border-border shadow-soft px-2 py-0.5 text-[11px] font-semibold flex items-center gap-1`}>
+            <span>{m.reaction}</span><span className="text-muted-foreground">1</span>
           </div>
         )}
       </div>
@@ -230,7 +273,7 @@ function Bubble({ m, prevFrom }: { m: Message; prevFrom?: "me" | "them" }) {
 }
 
 function Waveform({ mine }: { mine: boolean }) {
-  const bars = [3, 6, 4, 8, 10, 6, 9, 5, 7, 4, 8, 5, 3];
+  const bars = [3, 6, 4, 8, 10, 6, 9, 5, 7, 4, 8, 5, 3, 7, 9, 5];
   return (
     <div className="flex items-center gap-0.5 flex-1">
       {bars.map((h, i) => (
@@ -240,18 +283,16 @@ function Waveform({ mine }: { mine: boolean }) {
   );
 }
 
-function TypingBubble({ name }: { name: string }) {
+function TypingBubble({ name, photo }: { name: string; photo: string }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start mt-2">
-      <div className="rounded-2xl rounded-bl-sm bg-surface border border-border px-3 py-2 shadow-soft flex items-center gap-1.5">
-        <span className="text-[11px] text-muted-foreground">{name} digitando</span>
+    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start mt-2 gap-2">
+      <img src={photo} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/20 self-end" />
+      <div className="rounded-3xl rounded-bl-md bg-surface border border-border px-4 py-3 shadow-soft flex items-center gap-1.5">
+        <span className="text-[11px] text-muted-foreground">{name.split(" ")[0]} digitando</span>
         <span className="flex gap-0.5">
           {[0, 1, 2].map((i) => (
-            <motion.span
-              key={i} className="h-1.5 w-1.5 rounded-full bg-primary/70"
-              animate={{ y: [0, -3, 0] }}
-              transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
-            />
+            <motion.span key={i} className="h-1.5 w-1.5 rounded-full bg-primary/70"
+              animate={{ y: [0, -3, 0] }} transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }} />
           ))}
         </span>
       </div>
@@ -259,25 +300,13 @@ function TypingBubble({ name }: { name: string }) {
   );
 }
 
-function Composer({
-  onSend, personDistance, onOpenMeetup,
-}: {
-  onSend: (m: MessageInput) => void;
-  personDistance: number;
-  onOpenMeetup: () => void;
-}) {
+function Composer({ onSend, onOpenMeetup }: { onSend: (m: MessageInput) => void; onOpenMeetup: () => void }) {
   const [text, setText] = useState("");
-  const [showEmoji, setShowEmoji] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [recSec, setRecSec] = useState(0);
-  const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
-  const recTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => () => { if (recTimer.current) clearInterval(recTimer.current); }, []);
-
-  const sendText = () => {
+  const send = () => {
     const t = text.trim();
     if (!t) return;
     onSend({ from: "me", kind: "text", text: t });
@@ -287,133 +316,63 @@ function Composer({
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const url = URL.createObjectURL(f);
-    onSend({ from: "me", kind: "image", url });
+    onSend({ from: "me", kind: "image", url: URL.createObjectURL(f) });
     e.target.value = "";
     setShowAttach(false);
   };
 
-  const shareLocation = () => {
-    onSend({
-      from: "me", kind: "location",
-      label: "Minha localização atual",
-      proximity: `${proximityLabel(personDistance)} · ${proximityRadius(personDistance)}`,
-    });
-    setShowAttach(false);
-  };
-
-  const startRec = () => {
-    setRecording(true); setRecSec(0);
-    recTimer.current = setInterval(() => setRecSec((s) => s + 1), 1000);
-  };
-  const stopRec = (send: boolean) => {
-    if (recTimer.current) clearInterval(recTimer.current);
-    const dur = recSec;
-    setRecording(false); setRecSec(0);
-    if (send && dur > 0) onSend({ from: "me", kind: "audio", durationSec: dur });
-  };
-
-  const emojis = ["😀","😂","😊","😍","🥰","😎","🤔","😅","🙌","👏","🔥","💜","✨","🎉","☕","🍔","🎶","📍","👋","❤️"];
-
   return (
-    <div className="px-2 pt-2 pb-3 bg-surface/95 backdrop-blur border-t border-border relative">
+    <div className="px-3 pt-2 pb-3">
+      {/* Composer input */}
+      <div className="rounded-full bg-surface border border-border shadow-soft flex items-center gap-2 pl-1 pr-2 py-1">
+        <button
+          onClick={() => setShowAttach((s) => !s)}
+          className="h-10 w-10 grid place-items-center rounded-full bg-primary/10 text-primary"
+          aria-label="Anexar"
+        ><Plus className="h-5 w-5" /></button>
+        <input
+          value={text} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="Digite uma mensagem..."
+          className="flex-1 bg-transparent outline-none text-sm py-2 placeholder:text-muted-foreground"
+        />
+        <button
+          onClick={send}
+          className="h-9 w-9 grid place-items-center rounded-full bg-primary/15 text-primary"
+          aria-label={text.trim() ? "Enviar" : "Gravar áudio"}
+        ><Mic className="h-4 w-4" /></button>
+      </div>
+
+      {/* Attach tiles */}
       <AnimatePresence>
-        {showEmoji && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="absolute bottom-full left-2 right-2 mb-2 rounded-2xl bg-surface border border-border p-2 shadow-elegant grid grid-cols-10 gap-1">
-            {emojis.map((e) => (
-              <button key={e} onClick={() => { setText((t) => t + e); }} className="text-xl h-8 w-8 grid place-items-center rounded-lg hover:bg-secondary">
-                {e}
-              </button>
-            ))}
-          </motion.div>
-        )}
         {showAttach && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-            className="absolute bottom-full left-2 mb-2 rounded-2xl bg-surface border border-border p-2 shadow-elegant grid grid-cols-4 gap-2 w-80">
-            <AttachTile icon={ImageIcon} label="Imagem" color="bg-pink/15 text-pink" onClick={() => fileRef.current?.click()} />
-            <AttachTile icon={Camera} label="Câmera" color="bg-primary/15 text-primary" onClick={() => camRef.current?.click()} />
-            <AttachTile icon={MapPin} label="Localização" color="bg-success/15 text-success" onClick={shareLocation} />
-            <AttachTile icon={Users2} label="Encontro" color="bg-accent text-primary" onClick={() => { setShowAttach(false); onOpenMeetup(); }} />
+            className="mt-3 grid grid-cols-6 gap-2">
+            <AttachTile icon={ImageIcon} label="Galeria" onClick={() => fileRef.current?.click()} />
+            <AttachTile icon={Camera} label="Câmera" onClick={() => camRef.current?.click()} />
+            <AttachTile icon={Mic} label="Áudio" onClick={() => { onSend({ from: "me", kind: "audio", durationSec: 8 }); setShowAttach(false); }} />
+            <AttachTile icon={MapPin} label="Local" primary onClick={() => { setShowAttach(false); onOpenMeetup(); }} />
+            <AttachTile icon={User} label="Contato" onClick={() => setShowAttach(false)} />
+            <AttachTile icon={Users2} label="Encontro" onClick={() => { setShowAttach(false); onOpenMeetup(); }} />
           </motion.div>
         )}
       </AnimatePresence>
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFile} />
       <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFile} />
-
-      {recording ? (
-        <div className="flex items-center gap-3 h-11 rounded-full bg-secondary px-3">
-          <button onClick={() => stopRec(false)} className="h-8 w-8 grid place-items-center rounded-full bg-destructive/10 text-destructive">
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <span className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
-          <span className="text-xs font-mono text-muted-foreground">
-            {String(Math.floor(recSec / 60)).padStart(2, "0")}:{String(recSec % 60).padStart(2, "0")}
-          </span>
-          <div className="flex-1 flex items-center gap-0.5">
-            {Array.from({ length: 22 }).map((_, i) => (
-              <motion.span key={i} className="w-0.5 rounded-full bg-primary/60"
-                animate={{ height: [4, 4 + Math.random() * 14, 4] }}
-                transition={{ duration: 0.6 + (i % 4) * 0.1, repeat: Infinity }}
-              />
-            ))}
-          </div>
-          <button onClick={() => stopRec(true)} className="h-10 w-10 grid place-items-center rounded-full bg-gradient-brand text-white shadow-soft">
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-end gap-2">
-          <div className="flex-1 flex items-center gap-1 bg-secondary rounded-3xl pl-2 pr-1 py-1">
-            <button onClick={() => { setShowEmoji((s) => !s); setShowAttach(false); }}
-                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:text-primary">
-              <Smile className="h-5 w-5" />
-            </button>
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") sendText(); }}
-              placeholder="Mensagem"
-              className="flex-1 bg-transparent outline-none text-sm py-1.5"
-            />
-            <button onClick={() => { setShowAttach((s) => !s); setShowEmoji(false); }}
-                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:text-primary">
-              {showAttach ? <X className="h-5 w-5" /> : <Paperclip className="h-5 w-5" />}
-            </button>
-            <button onClick={() => camRef.current?.click()}
-                    className="h-9 w-9 grid place-items-center rounded-full text-muted-foreground hover:text-primary">
-              <Camera className="h-5 w-5" />
-            </button>
-          </div>
-          {text.trim() ? (
-            <button onClick={sendText} className="h-11 w-11 grid place-items-center rounded-full bg-gradient-brand text-white shadow-soft">
-              <Send className="h-5 w-5" />
-            </button>
-          ) : (
-            <button
-              onPointerDown={startRec}
-              onPointerUp={() => stopRec(true)}
-              onPointerLeave={() => recording && stopRec(true)}
-              className="h-11 w-11 grid place-items-center rounded-full bg-gradient-brand text-white shadow-soft select-none"
-              aria-label="Segurar para gravar áudio"
-            >
-              <Mic className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-function AttachTile({ icon: Icon, label, color, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; color: string; onClick: () => void }) {
+function AttachTile({ icon: Icon, label, onClick, primary }: {
+  icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void; primary?: boolean;
+}) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1.5 py-2 rounded-xl hover:bg-secondary">
-      <span className={`h-11 w-11 grid place-items-center rounded-full ${color}`}>
+    <button onClick={onClick} className="flex flex-col items-center gap-1.5">
+      <span className={`h-12 w-12 grid place-items-center rounded-2xl border shadow-soft ${primary ? "bg-gradient-brand text-white border-transparent" : "bg-surface text-primary border-border"}`}>
         <Icon className="h-5 w-5" />
       </span>
-      <span className="text-[11px] font-semibold">{label}</span>
+      <span className="text-[10px] font-semibold text-muted-foreground">{label}</span>
     </button>
   );
 }
