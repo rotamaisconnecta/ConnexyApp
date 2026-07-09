@@ -13,6 +13,7 @@ import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as LocalizacaoRouteImport } from './routes/localizacao'
 import { Route as InteressesRouteImport } from './routes/interesses'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
@@ -21,6 +22,7 @@ import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
 import { Route as AppMatchingRouteImport } from './routes/_app.matching'
 import { Route as AppLocaisRouteImport } from './routes/_app.locais'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppGerenciarRouteImport } from './routes/_app.gerenciar'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
@@ -48,6 +50,11 @@ const InteressesRoute = InteressesRouteImport.update({
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -87,6 +94,11 @@ const AppLocaisRoute = AppLocaisRouteImport.update({
 const AppHomeRoute = AppHomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGerenciarRoute = AppGerenciarRouteImport.update({
+  id: '/gerenciar',
+  path: '/gerenciar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCorridaRoute = AppCorridaRouteImport.update({
@@ -132,6 +144,7 @@ const AppChatIdRoute = AppChatIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
@@ -139,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/avaliar': typeof AppAvaliarRoute
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
+  '/gerenciar': typeof AppGerenciarRoute
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
@@ -153,6 +167,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
@@ -160,6 +175,7 @@ export interface FileRoutesByTo {
   '/avaliar': typeof AppAvaliarRoute
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
+  '/gerenciar': typeof AppGerenciarRoute
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
@@ -176,6 +192,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
@@ -183,6 +200,7 @@ export interface FileRoutesById {
   '/_app/avaliar': typeof AppAvaliarRoute
   '/_app/connecta': typeof AppConnectaRoute
   '/_app/corrida': typeof AppCorridaRoute
+  '/_app/gerenciar': typeof AppGerenciarRoute
   '/_app/home': typeof AppHomeRoute
   '/_app/locais': typeof AppLocaisRoute
   '/_app/matching': typeof AppMatchingRoute
@@ -199,6 +217,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/cadastro'
     | '/interesses'
     | '/localizacao'
@@ -206,6 +225,7 @@ export interface FileRouteTypes {
     | '/avaliar'
     | '/connecta'
     | '/corrida'
+    | '/gerenciar'
     | '/home'
     | '/locais'
     | '/matching'
@@ -220,6 +240,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/cadastro'
     | '/interesses'
     | '/localizacao'
@@ -227,6 +248,7 @@ export interface FileRouteTypes {
     | '/avaliar'
     | '/connecta'
     | '/corrida'
+    | '/gerenciar'
     | '/home'
     | '/locais'
     | '/matching'
@@ -242,6 +264,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/auth'
     | '/cadastro'
     | '/interesses'
     | '/localizacao'
@@ -249,6 +272,7 @@ export interface FileRouteTypes {
     | '/_app/avaliar'
     | '/_app/connecta'
     | '/_app/corrida'
+    | '/_app/gerenciar'
     | '/_app/home'
     | '/_app/locais'
     | '/_app/matching'
@@ -265,6 +289,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
   CadastroRoute: typeof CadastroRoute
   InteressesRoute: typeof InteressesRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
@@ -299,6 +324,13 @@ declare module '@tanstack/react-router' {
       path: '/cadastro'
       fullPath: '/cadastro'
       preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -355,6 +387,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/gerenciar': {
+      id: '/_app/gerenciar'
+      path: '/gerenciar'
+      fullPath: '/gerenciar'
+      preLoaderRoute: typeof AppGerenciarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/corrida': {
@@ -420,6 +459,7 @@ interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
   AppConnectaRoute: typeof AppConnectaRoute
   AppCorridaRoute: typeof AppCorridaRoute
+  AppGerenciarRoute: typeof AppGerenciarRoute
   AppHomeRoute: typeof AppHomeRoute
   AppLocaisRoute: typeof AppLocaisRoute
   AppMatchingRoute: typeof AppMatchingRoute
@@ -437,6 +477,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAvaliarRoute: AppAvaliarRoute,
   AppConnectaRoute: AppConnectaRoute,
   AppCorridaRoute: AppCorridaRoute,
+  AppGerenciarRoute: AppGerenciarRoute,
   AppHomeRoute: AppHomeRoute,
   AppLocaisRoute: AppLocaisRoute,
   AppMatchingRoute: AppMatchingRoute,
@@ -455,6 +496,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
   CadastroRoute: CadastroRoute,
   InteressesRoute: InteressesRoute,
   LocalizacaoRoute: LocalizacaoRoute,
