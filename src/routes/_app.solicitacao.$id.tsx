@@ -83,11 +83,19 @@ function Solicitacao() {
             to="/perfil/$id"
             params={{ id: p.id }}
             search={{ from: "solicitacao" }}
-            className="w-full h-11 rounded-2xl bg-secondary text-foreground text-sm font-semibold inline-flex items-center justify-center gap-2"
+            className="block rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-accent/60 to-surface p-3 hover:border-primary/60 transition-colors"
           >
-            <UserRound className="h-4 w-4" />
-            Ver perfil de {p.name.split(" ")[0]}
+            <div className="flex items-center gap-3">
+              <img src={p.photo} alt="" className="h-12 w-12 rounded-xl object-cover ring-2 ring-primary/30" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] uppercase font-bold text-primary tracking-wide">Preview da bio pública</div>
+                <div className="font-semibold text-sm truncate">{p.headline ?? "Toque para ver a bio completa"}</div>
+                <div className="text-[11px] text-muted-foreground">Momentos, interesses e locais favoritos</div>
+              </div>
+              <UserRound className="h-5 w-5 text-primary" />
+            </div>
           </Link>
+
         </div>
 
         <div className="p-4 flex gap-3">
