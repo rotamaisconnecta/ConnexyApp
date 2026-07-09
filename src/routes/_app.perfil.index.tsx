@@ -34,6 +34,7 @@ function Profile() {
       </div>
 
       <div className="mt-5 mx-5 rounded-2xl bg-surface border border-border divide-y divide-border">
+        <Link to="/gerenciar"><Item icon={Settings} label="Gerenciar minha bio" hint="Edite bio, posts, humor e interesses" /></Link>
         <Item icon={MapPinned} label="Minhas viagens" hint="Histórico e avaliações" />
         <Item icon={Users} label="Conexões" hint="Pessoas que você conectou" />
         <Item icon={Bookmark} label="Locais favoritos" hint="Seus lugares salvos" />
