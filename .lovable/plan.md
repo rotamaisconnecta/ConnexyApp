@@ -1,149 +1,148 @@
 
-# Fase 1 — Bio editável, posts, redesign do chat e compartilhar lugar
+# Reels Connecta — espaço de vídeos verticais contextuais
 
-Escopo focado no que você marcou como prioridade. Eventos, ofertas com geofence, corrida aceita, notificações push simuladas e substituição de "Rota" por "Lugares" ficam para a **Fase 2** (planejo separadamente ao final desta).
-
----
-
-## 1. Ativar Lovable Cloud
-
-Cloud liga banco + auth + storage para posts/mídia. Sem isso, a bio editável e o feed pessoal se perdem ao recarregar.
-
-Após ligar, na mesma leva de migrações crio:
-
-### Tabelas (schema `public`, com GRANTs + RLS)
-
-- **`profiles`** (1↔1 com `auth.users`)
-  - `id uuid pk` (= `auth.uid()`), `handle text unique`, `name`, `age`, `photo_url`, `bio`, `headline`, `mood_emoji`, `mood_text`, `now_playing_kind`, `now_playing_title`, `now_playing_subtitle`, `interests text[]`, `vibe_tags text[]`, `looks_for text[]`, `created_at`.
-  - Trigger `handle_new_user` cria linha em `profiles` no signup.
-  - RLS: SELECT `TO anon, authenticated USING (true)` (bio é pública, este era o pedido); INSERT/UPDATE só do próprio (`auth.uid() = id`).
-
-- **`bio_posts`**
-  - `id`, `author_id → profiles(id)`, `text`, `media_url`, `media_kind` (`image|video|null`), `place_id → places(id) null`, `created_at`.
-  - RLS: SELECT público; INSERT/UPDATE/DELETE só do autor.
-
-- **`places`** (para permitir "compartilhar lugar no chat" com dados reais)
-  - `id`, `name`, `description`, `category`, `cover_url`, `lat`, `lng`, `owner_id null`, `created_at`.
-  - Seed inicial via migration com os locais que já existem em `mock-data.ts`.
-  - RLS: SELECT público; INSERT/UPDATE só do `owner_id`.
-
-- **`user_roles`** + enum `app_role` + função `has_role(uuid, app_role)` (padrão do template — necessário para futuras rotas admin).
-
-Storage bucket `bio-media` (público read, upload autenticado) para imagens/vídeos dos posts.
-
-> Eventos e ofertas ficam para Fase 2. Adianto os `places` agora porque o chat já precisa deles.
+Inspirado na referência (movea), mas com a personalidade do Connecta: cada reel é **ancorado a um lugar/evento real** e a pessoas próximas. Não é só vídeo — é um momento geolocalizado que conecta.
 
 ---
 
-## 2. Auth mínima
+## 1. Diferencial Connecta (não é cópia do Instagram)
 
-- Nova rota pública `/auth` (email/senha + Google via `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`).
-- `src/routes/_authenticated/route.tsx` gerenciado (não vou editá-lo).
-- Rotas que passam a exigir auth (movidas para `_authenticated/`): perfil próprio, painel de gerenciamento, chat e solicitação. Home, `/perfil/$id`, `/local/$id` e `/locais` continuam públicas para preservar link compartilhável de bio.
-- Bearer attacher já registrado em `src/start.ts` (verifico e mantenho).
+Cada reel carrega três camadas exclusivas sobrepostas ao vídeo:
 
----
+- **Chip de local** (topo-esq): "Vila Madalena, SP · 2,3 km de você" — clicável, leva para `/local/$id`.
+- **Chip de evento/vibe** (abaixo do local, quando existir): "Evento Hoje · Festa Sunset · 18:00 · 1,2 km".
+- **Pill "Com {nomes} +N pessoas"** acima do áudio — mostra outras pessoas do Connecta que estavam no mesmo lugar/evento. Clicar abre mini-lista com atalho "Enviar solicitação de chat".
 
-## 3. Bio pública dinâmica (`/perfil/$id`)
-
-A tela já existe com layout "Vibe Card". Migração para dados reais:
-
-- Loader passa a chamar um `getPublicProfile.functions.ts` (server fn público com cliente publishable) que devolve `profile` + `bio_posts` + `favorite_places`.
-- `commonGround` migra para função que compara `interests`/`vibe_tags` do perfil visto com os do `useCurrentUser()` (do lado cliente).
-- Feed de "Momentos" agora vem de `bio_posts` real, com suporte a foto **e vídeo** (`<video controls playsInline>` quando `media_kind='video'`).
-- Regra de privacidade ≤2 km continua respeitada.
+Isso transforma o reel em **prova social de presença** — o motor do app.
 
 ---
 
-## 4. Painel do criador — bio editável (Fase 1 apenas para posts)
+## 2. Navegação
 
-Nova rota `/_authenticated/gerenciar` com abas:
-
-- **Perfil**: editar `name`, `handle`, `photo_url`, `bio`, `headline`, `mood`, `nowPlaying`, `interests[]` (chips), `vibe_tags[]`, `looks_for[]`.
-- **Meus posts**: listar `bio_posts` do usuário atual + botão "Novo post" (texto obrigatório; upload opcional para bucket `bio-media`; vincular a um `place` opcional). Editar/apagar inline.
-
-Botão "Editar bio" no `/_authenticated/perfil` leva para o painel.
-
-*(Aba Eventos e aba Empresa/Ofertas entram na Fase 2.)*
+- Novo item no bottom nav: **Reels** (ícone `Clapperboard` ou `Play`), substituindo nada por enquanto — inserido entre Home e Connecta (5 itens viram 5 mantendo os atuais; se preferir 4, ver alternativa no fim).
+- Rota `/_app/reels` (pública, dentro do layout já existente com `PhoneFrame`).
+- Também acessível como aba dentro de `/home` no topo ("Reels" / "Amigos") em versão futura — Fase 1 entrega só a página dedicada.
 
 ---
 
-## 5. Redesign completo do chat (`/_authenticated/chat/$id`) — conforme imagem
+## 3. Layout da tela `/reels`
 
-Reescrita do layout preservando o `PhoneFrame`:
+Snap scroll vertical fullscreen dentro do `PhoneFrame`:
 
-- **Header**: avatar 44 px com anel roxo + ponto verde, nome grande + selo `BadgeCheck`, "Online agora"/"visto há…". Botões redondos brancos com sombra para telefone / vídeo / menu.
-- **Banner de distância**: card branco arredondado logo abaixo, ícone `MapPin` em círculo lilás, "Vocês estão a X km de distância" + "Bairro …" (para ≤2 km mostra "Próximo de você" e esconde a distância exata, seguindo a regra de privacidade); botão outline "Ver no mapa" abre bottom sheet com `MapCanvas`.
-- **Chip de data** "HOJE" centralizado com linhas laterais.
-- **Balões**:
-  - Outros: fundo branco, texto foreground, cantos `rounded-3xl` com canto inferior esquerdo `rounded-md`, sombra suave, timestamp cinza, reações abaixo em pill branca.
-  - Meus: `bg-gradient-brand` roxo, texto branco, canto inferior direito `rounded-md`, ticks `Check`/`CheckCheck`.
-  - Avatares só nos balões do outro; agrupamento por autor (sem repetir avatar em sequências).
-- **Áudio**: waveform sintética (barras animadas), botão play circular, duração.
-- **Composer**: input pill grande "Digite uma mensagem…", botão `+` roxo à esquerda, botão de microfone lilás à direita.
-- **Attach tiles** (Galeria, Câmera, Áudio, Localização, Contato, Mais) em cards brancos com sombra, ícone roxo, exatamente como na referência.
-- Renderers `MText`, `MLocation`, `MAudio` refeitos; `MeetupSheet` mantém API mas UI ganha o mesmo skin.
+- **Header transparente** sobre o vídeo: logo Connecta centralizada, `Search` e ícone de mensagens (badge) à direita, tabs "Reels" / "Amigos" abaixo.
+- **Vídeo** em `object-cover` ocupando toda a tela, com gradiente inferior para legibilidade.
+- **Coluna de ações à direita** (vertical, como referência):
+  - Avatar do autor com botão `+` roxo para seguir.
+  - `Heart` + contagem (curtir).
+  - `MessageCircle` + contagem (comentários — abre bottom sheet).
+  - `Send` (compartilhar via chat interno — abre `MeetupSheet`-like para escolher conversa).
+  - `Bookmark` (salvar).
+  - `MoreHorizontal` (menu: denunciar, não me interessa).
+  - Miniatura do áudio girando (link para "Ver mais reels com este som").
+- **Bloco inferior esquerdo**:
+  - Linha autor: avatar + nome + `BadgeCheck` + botão outline "Seguir".
+  - Legenda com emojis, truncada em 2 linhas + "mais".
+  - Pill "Com Juliana, Pedro e +12 pessoas" (nova, marca Connecta).
+  - Linha de áudio "♪ The Nights – Avicii" com marquee sutil.
+- **Barra de progresso** segmentada no rodápe (5 segmentos, ativo com `bg-gradient-brand`).
+- **Snap scroll** com `snap-y snap-mandatory` — cada reel é uma section `h-full snap-start`.
 
----
-
-## 6. Compartilhar localização no chat com confirmação
-
-Fluxo:
-
-1. Attach tile "Localização" ou botão `MapPin` no header abrem a `MeetupSheet`.
-2. Sheet lista `places` (do banco) ordenados por distância ao usuário.
-3. Cada card tem "Sugerir aqui" e "Ver local".
-4. Clicar em "Sugerir aqui" abre uma **AlertDialog de confirmação** ("Compartilhar esta localização com {nome}?") — botões "Cancelar" / "Compartilhar". Só após confirmar, o balão `MLocation` é renderizado no chat com nome/endereço/mapa mini + link "Ver local".
-5. "Compartilhar minha localização atual" também passa por confirmação.
-
-*Mensagens de chat continuam em estado local nesta fase — persistência real de mensagens fica para Fase 2 para não estourar o escopo.*
+Cores: **fundo preto** só nesta tela (o app é claro). Adiciono token `--reel-surface: #0a0a0a` no `styles.css` e uso `bg-[hsl(var(--reel-surface))]` apenas neste escopo, sem quebrar o resto.
 
 ---
 
-## 7. Solicitação de chat — preview de bio
+## 4. Interações
 
-Já existe. Ajustes:
-
-- Card de preview no topo com foto grande, nome, `headline` e 3 chips de "terreno em comum" — visualmente igual a um mini "Vibe Card" clicável.
-- Card inteiro é link para `/perfil/$id?from=solicitacao`.
-- Botões "Recusar" / "Aceitar" preservados.
-
----
-
-## 8. Detalhes técnicos
-
-- **Server functions** (todas em `src/lib/*.functions.ts`, client-safe):
-  - `getPublicProfile({ id })` — publishable client.
-  - `getMyProfile()`, `updateMyProfile(input)` — `requireSupabaseAuth`.
-  - `listMyBioPosts()`, `createBioPost(input)`, `updateBioPost(input)`, `deleteBioPost({id})` — `requireSupabaseAuth`.
-  - `listPlaces()` — publishable client (usado no chat).
-- **Uploads** de mídia: `supabase.storage.from('bio-media').upload(...)` direto do cliente autenticado.
-- **Query**: `useSuspenseQuery` + `ensureQueryData` no loader, seguindo o padrão do template.
-- **Design tokens**: só `bg-surface`, `bg-gradient-brand`, `text-primary`, `text-muted-foreground`, `bg-accent`, `border-border`, `shadow-soft/elegant`. Zero cor hard-coded.
-- **Animações**: `framer-motion` para entrada de balões, sheet e cards.
-- **Bottom nav**: mantido como está nesta fase (a troca "Rota → Lugares" é da Fase 2 conforme sua priorização).
-- **Notificações globais / toasts / geofence / corrida aceita**: Fase 2.
+- **Play/pause** ao tocar no vídeo.
+- **Double-tap** curte (animação coração roxo `framer-motion`).
+- **Mute/unmute** com ícone flutuante que aparece 1.5s.
+- **Autoplay** do reel visível via `IntersectionObserver` (threshold 0.7); pausa quando sai da viewport.
+- **Prefetch** do próximo vídeo (`<video preload="metadata">` no próximo item).
+- **Regra de privacidade ≤2 km**: no chip de local, se distância < 2 km mostra "Próximo de você" em vez do valor exato (mantém padrão do app).
 
 ---
 
-## 9. Validação (Playwright + build)
+## 5. Botão "Criar reel"
 
-1. Signup → linha em `profiles` criada por trigger.
-2. `/gerenciar` → edito bio, adiciono post com imagem, apago post.
-3. `/perfil/{outro-id}` público (deslogado) mostra os posts que o outro publicou.
-4. Solicitação → card de preview leva à bio; aceitar leva ao chat redesenhado.
-5. Chat: header + banner de distância + balões + composer batem com a referência; abrir `MeetupSheet` → "Sugerir aqui" → **AlertDialog** → confirmar → balão de localização aparece.
-6. Regra ≤2 km: em todas as telas, distância exata só aparece acima de 2 km.
-7. `bun run build` limpo.
+- Na tela de reels: FAB circular `bg-gradient-brand` com `+` (canto inferior direito, acima da bottom nav).
+- Também em `/gerenciar` → nova aba **Reels** listando os do usuário + botão "Novo reel".
+- **Composer** (`/_authenticated/gerenciar/novo-reel` ou modal): upload de vídeo (mp4/webm, ≤60s, validado client-side), preview, campos: legenda, `place_id` (select de `places`), `event_id` opcional (Fase 2), tags de pessoas presentes (autocomplete de amigos), trilha (texto livre nesta fase).
 
 ---
 
-## Fora do escopo (planejo separado para Fase 2)
+## 6. Backend (Lovable Cloud)
 
-Assim que Fase 1 estiver aprovada e mergeada, entrego em plano próprio:
-- Eventos (schema + CRUD + descoberta).
-- Empresas/lugares próprios + ofertas ativas com raio de geofence + toggle ativa/desativa.
-- Simulação de geofencing em background + notificação push local.
-- Bottom sheet "Corrida aceita" com dados do motorista + ETA.
-- Central de notificações global (toasts + badge no ícone).
-- Substituir "Rota" por "Lugares" no bottom nav e migrar rota.
+Nova tabela `reels` + storage bucket:
+
+- **`reels`**: `id`, `author_id → profiles(id)`, `video_url`, `poster_url`, `caption`, `place_id → places(id) null`, `audio_label`, `tagged_user_ids uuid[]`, `duration_s int`, `created_at`.
+  - RLS: SELECT `TO anon, authenticated USING (true)`; INSERT/UPDATE/DELETE só do autor.
+  - GRANT SELECT em `anon, authenticated`; ALL em `service_role`.
+- **`reel_likes`**: `reel_id`, `user_id`, PK composta. RLS: SELECT público; INSERT/DELETE só do próprio user.
+- **`reel_comments`**: `id`, `reel_id`, `author_id`, `text`, `created_at`. RLS: SELECT público; INSERT do autenticado; DELETE só do autor.
+- **Storage bucket `reels-media`**: público read, upload autenticado (mp4/webm/poster jpg).
+
+Contagens (likes/comments) via **view materializada** ou `count` inline em query (Fase 1 usa `count` inline — simples).
+
+---
+
+## 7. Server functions (client-safe `.functions.ts`)
+
+- `listReels({ cursor })` — publishable client, ordena por `created_at desc`, paginado 10 em 10, join com `profiles` e `places`.
+- `getReelDetail({ id })` — publishable client (para deep-link `/reel/$id`, Fase 2).
+- `createReel(input)` — `requireSupabaseAuth`.
+- `deleteReel({ id })` — `requireSupabaseAuth`, valida author.
+- `toggleReelLike({ reelId })` — `requireSupabaseAuth`, upsert/delete.
+- `listReelComments({ reelId })` / `addReelComment({ reelId, text })` — publishable / auth.
+
+Upload de vídeo direto do cliente autenticado via `supabase.storage.from('reels-media').upload(...)`. Poster gerado no cliente com `<video>` + `canvas.toDataURL('image/jpeg')` no primeiro frame.
+
+---
+
+## 8. Seed / demo
+
+Migração inclui 4–5 reels de demo (vídeos curtos públicos livres de direito) vinculados aos `places` já semeados, para a tela nascer cheia enquanto ninguém publicou.
+
+---
+
+## 9. Arquivos
+
+**Novos**
+- `src/routes/_app.reels.tsx` — feed vertical.
+- `src/components/reels/reel-card.tsx` — item individual com overlays.
+- `src/components/reels/reel-actions.tsx` — coluna direita.
+- `src/components/reels/reel-overlay-chips.tsx` — chips local/evento/pessoas.
+- `src/components/reels/comments-sheet.tsx` — bottom sheet.
+- `src/routes/_authenticated/gerenciar.novo-reel.tsx` — composer.
+- `src/lib/reels.functions.ts` — server fns.
+- Migração SQL: `reels`, `reel_likes`, `reel_comments`, bucket, seeds.
+
+**Editados**
+- `src/components/bottom-nav.tsx` — adiciona item Reels.
+- `src/routes/_app.gerenciar.tsx` — aba "Reels".
+- `src/styles.css` — token `--reel-surface`.
+
+---
+
+## 10. Validação
+
+1. `bun run build` limpo.
+2. Playwright: abrir `/reels` → 3 reels renderizam, autoplay muda ao rolar, double-tap curte, tap no chip de local navega para `/local/$id`.
+3. Criar reel autenticado → aparece no topo do feed.
+4. Curtir/descurtir persiste após reload.
+5. Regra ≤2 km respeitada no chip de local.
+
+---
+
+## Fora do escopo (Fase 2 do Reels, se pedir)
+
+- Aba "Amigos" com feed filtrado.
+- Deep-link `/reel/$id` com OG image para compartilhamento externo.
+- Filtros e trilhas nativas (biblioteca de áudios).
+- Edição client-side (trim, textos, stickers).
+- Reels vinculados a eventos (depende de `events` da Fase 2 geral).
+
+---
+
+## Alternativa de bottom nav
+
+Se preferir manter 5 itens: **substituo "Rota"** por "Reels" (Rota migra para dentro de Home como já está no card de mobilidade). Alinha com o plano geral de "Rota → Lugares" da Fase 2. Prefere substituir ou adicionar? Se não responder, mantenho os 5 atuais + Reels vira o 6º com layout compacto.
