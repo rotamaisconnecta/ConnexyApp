@@ -158,6 +158,132 @@ export type Database = {
         }
         Relationships: []
       }
+      reel_comments: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          reel_id: string
+          text: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          reel_id: string
+          text: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          reel_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_comments_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reel_likes: {
+        Row: {
+          created_at: string
+          reel_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          reel_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          reel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_likes_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reels: {
+        Row: {
+          audio_label: string | null
+          author_id: string
+          caption: string | null
+          created_at: string
+          duration_s: number | null
+          id: string
+          place_id: string | null
+          poster_url: string | null
+          tagged_user_ids: string[]
+          video_url: string
+        }
+        Insert: {
+          audio_label?: string | null
+          author_id: string
+          caption?: string | null
+          created_at?: string
+          duration_s?: number | null
+          id?: string
+          place_id?: string | null
+          poster_url?: string | null
+          tagged_user_ids?: string[]
+          video_url: string
+        }
+        Update: {
+          audio_label?: string | null
+          author_id?: string
+          caption?: string | null
+          created_at?: string
+          duration_s?: number | null
+          id?: string
+          place_id?: string | null
+          poster_url?: string | null
+          tagged_user_ids?: string[]
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reels_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reels_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
