@@ -66,24 +66,21 @@ function NovoReel() {
       const vidPath = `${user.id}/${Date.now()}.${ext}`;
       const { error: vErr } = await supabase.storage.from("reels-media").upload(vidPath, videoFile, { contentType: videoFile.type });
       if (vErr) throw vErr;
-      const { data: vPub } = supabase.storage.from("reels-media").getPublicUrl(vidPath);
 
-      let posterUrl: string | null = null;
+      let posterPath: string | null = null;
       if (posterBlob) {
         const pPath = `${user.id}/${Date.now()}-poster.jpg`;
         const { error: pErr } = await supabase.storage.from("reels-media").upload(pPath, posterBlob, { contentType: "image/jpeg" });
-        if (!pErr) {
-          const { data: pPub } = supabase.storage.from("reels-media").getPublicUrl(pPath);
-          posterUrl = pPub.publicUrl;
-        }
+        if (!pErr) posterPath = pPath;
       }
 
       const taggedIds = tagged.split(",").map((s) => s.trim()).filter(Boolean);
 
+      // Store storage paths (bucket is private → feed resolves signed URLs on read)
       const { error: iErr } = await supabase.from("reels").insert({
         author_id: user.id,
-        video_url: vPub.publicUrl,
-        poster_url: posterUrl,
+        video_url: vidPath,
+        poster_url: posterPath,
         caption: caption.trim() || null,
         audio_label: audioLabel.trim() || null,
         place_id: placeId || null,

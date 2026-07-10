@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
+import { Route as AppReelsRouteImport } from './routes/_app.reels'
 import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
 import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
 import { Route as AppMatchingRouteImport } from './routes/_app.matching'
@@ -30,6 +31,7 @@ import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
 import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
+import { Route as AppGerenciarNovoReelRouteImport } from './routes/_app.gerenciar.novo-reel'
 import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -69,6 +71,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppRotaRoute = AppRotaRouteImport.update({
   id: '/rota',
   path: '/rota',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReelsRoute = AppReelsRouteImport.update({
+  id: '/reels',
+  path: '/reels',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPrivacidadeRoute = AppPrivacidadeRouteImport.update({
@@ -136,6 +143,11 @@ const AppLocalIdRoute = AppLocalIdRouteImport.update({
   path: '/local/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGerenciarNovoReelRoute = AppGerenciarNovoReelRouteImport.update({
+  id: '/novo-reel',
+  path: '/novo-reel',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
 const AppChatIdRoute = AppChatIdRouteImport.update({
   id: '/chat/$id',
   path: '/chat/$id',
@@ -152,14 +164,16 @@ export interface FileRoutesByFullPath {
   '/avaliar': typeof AppAvaliarRoute
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
-  '/gerenciar': typeof AppGerenciarRoute
+  '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/privacidade': typeof AppPrivacidadeRoute
+  '/reels': typeof AppReelsRoute
   '/rota': typeof AppRotaRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
@@ -175,14 +189,16 @@ export interface FileRoutesByTo {
   '/avaliar': typeof AppAvaliarRoute
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
-  '/gerenciar': typeof AppGerenciarRoute
+  '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/privacidade': typeof AppPrivacidadeRoute
+  '/reels': typeof AppReelsRoute
   '/rota': typeof AppRotaRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
@@ -200,14 +216,16 @@ export interface FileRoutesById {
   '/_app/avaliar': typeof AppAvaliarRoute
   '/_app/connecta': typeof AppConnectaRoute
   '/_app/corrida': typeof AppCorridaRoute
-  '/_app/gerenciar': typeof AppGerenciarRoute
+  '/_app/gerenciar': typeof AppGerenciarRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/locais': typeof AppLocaisRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
   '/_app/privacidade': typeof AppPrivacidadeRoute
+  '/_app/reels': typeof AppReelsRoute
   '/_app/rota': typeof AppRotaRoute
   '/_app/chat/$id': typeof AppChatIdRoute
+  '/_app/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
   '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
@@ -231,8 +249,10 @@ export interface FileRouteTypes {
     | '/matching'
     | '/notificacoes'
     | '/privacidade'
+    | '/reels'
     | '/rota'
     | '/chat/$id'
+    | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
     | '/solicitacao/$id'
@@ -254,8 +274,10 @@ export interface FileRouteTypes {
     | '/matching'
     | '/notificacoes'
     | '/privacidade'
+    | '/reels'
     | '/rota'
     | '/chat/$id'
+    | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
     | '/solicitacao/$id'
@@ -278,8 +300,10 @@ export interface FileRouteTypes {
     | '/_app/matching'
     | '/_app/notificacoes'
     | '/_app/privacidade'
+    | '/_app/reels'
     | '/_app/rota'
     | '/_app/chat/$id'
+    | '/_app/gerenciar/novo-reel'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
     | '/_app/solicitacao/$id'
@@ -352,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/rota'
       fullPath: '/rota'
       preLoaderRoute: typeof AppRotaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reels': {
+      id: '/_app/reels'
+      path: '/reels'
+      fullPath: '/reels'
+      preLoaderRoute: typeof AppReelsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/privacidade': {
@@ -445,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLocalIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/gerenciar/novo-reel': {
+      id: '/_app/gerenciar/novo-reel'
+      path: '/novo-reel'
+      fullPath: '/gerenciar/novo-reel'
+      preLoaderRoute: typeof AppGerenciarNovoReelRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
     '/_app/chat/$id': {
       id: '/_app/chat/$id'
       path: '/chat/$id'
@@ -455,16 +493,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppGerenciarRouteChildren {
+  AppGerenciarNovoReelRoute: typeof AppGerenciarNovoReelRoute
+}
+
+const AppGerenciarRouteChildren: AppGerenciarRouteChildren = {
+  AppGerenciarNovoReelRoute: AppGerenciarNovoReelRoute,
+}
+
+const AppGerenciarRouteWithChildren = AppGerenciarRoute._addFileChildren(
+  AppGerenciarRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
   AppConnectaRoute: typeof AppConnectaRoute
   AppCorridaRoute: typeof AppCorridaRoute
-  AppGerenciarRoute: typeof AppGerenciarRoute
+  AppGerenciarRoute: typeof AppGerenciarRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppLocaisRoute: typeof AppLocaisRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
+  AppReelsRoute: typeof AppReelsRoute
   AppRotaRoute: typeof AppRotaRoute
   AppChatIdRoute: typeof AppChatIdRoute
   AppLocalIdRoute: typeof AppLocalIdRoute
@@ -477,12 +528,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppAvaliarRoute: AppAvaliarRoute,
   AppConnectaRoute: AppConnectaRoute,
   AppCorridaRoute: AppCorridaRoute,
-  AppGerenciarRoute: AppGerenciarRoute,
+  AppGerenciarRoute: AppGerenciarRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppLocaisRoute: AppLocaisRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
+  AppReelsRoute: AppReelsRoute,
   AppRotaRoute: AppRotaRoute,
   AppChatIdRoute: AppChatIdRoute,
   AppLocalIdRoute: AppLocalIdRoute,
