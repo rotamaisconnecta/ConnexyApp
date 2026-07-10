@@ -69,6 +69,20 @@ function ReelsPage() {
       comments: commentsMap.get(r.id) ?? 0,
       likedByMe: mineSet.has(r.id),
     }));
+
+    // Resolve signed URLs for paths stored in the private bucket
+    const needsSign = items.filter((it) => it.video_url && !it.video_url.startsWith("http")).map((it) => it.video_url);
+    const posterNeeds = items.filter((it) => it.poster_url && !it.poster_url.startsWith("http")).map((it) => it.poster_url!) ;
+    const allPaths = Array.from(new Set([...needsSign, ...posterNeeds]));
+    if (allPaths.length) {
+      const { data: signed } = await supabase.storage.from("reels-media").createSignedUrls(allPaths, 60 * 60 * 6);
+      const map = new Map<string, string>();
+      (signed ?? []).forEach((s) => { if (s.path && s.signedUrl) map.set(s.path, s.signedUrl); });
+      items.forEach((it) => {
+        if (it.video_url && !it.video_url.startsWith("http")) it.video_url = map.get(it.video_url) ?? it.video_url;
+        if (it.poster_url && !it.poster_url.startsWith("http")) it.poster_url = map.get(it.poster_url) ?? it.poster_url;
+      });
+    }
     setReels(items);
     setLoading(false);
   }, [user]);
