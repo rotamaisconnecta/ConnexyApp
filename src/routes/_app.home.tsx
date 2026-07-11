@@ -287,13 +287,13 @@ const toneMap: Record<string, string> = {
   f: "bg-secondary text-primary",
 };
 
-function QuickAction({ to, label, Icon, tone }: { to: string; label: string; Icon: React.ComponentType<{ className?: string }>; tone: keyof typeof toneMap }) {
+function QuickAction({ label, Icon, tone }: { label: string; Icon: React.ComponentType<{ className?: string }>; tone: keyof typeof toneMap }) {
   return (
-    <Link to={to} className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1.5">
       <span className={`h-12 w-12 grid place-items-center rounded-2xl shadow-soft ${toneMap[tone]}`}>
         <Icon className="h-5 w-5" />
       </span>
       <span className="text-[10px] font-semibold text-center leading-tight">{label}</span>
-    </Link>
+    </div>
   );
 }
