@@ -1,148 +1,67 @@
+# Redesign da Home + novo ícone Connexa
 
-# Reels Connecta — espaço de vídeos verticais contextuais
+## 1. Substituir o ícone/logo do app
 
-Inspirado na referência (movea), mas com a personalidade do Connecta: cada reel é **ancorado a um lugar/evento real** e a pessoas próximas. Não é só vídeo — é um momento geolocalizado que conecta.
+- Registrar o arquivo `Ícone.png` como asset via `lovable-assets` em `src/assets/connexa-logo.png.asset.json`.
+- Reescrever `src/components/logo.tsx` para renderizar o novo logo (pin gradiente roxo→rosa + wordmark "connexa") a partir do asset, mantendo a prop `size` e `variant`. Remover o quadrado "R+".
+- Atualizar usos que ainda mostram "R+" grande:
+  - `src/routes/index.tsx` (splash) — trocar o bloco "R+" pelo logo Connexa.
+  - `src/routes/welcome.tsx` — trocar o quadradinho "R+" pelo logo.
+  - Onde couber, trocar textos "RotaMais Connecta" por "Connexa" nos títulos visíveis da Home (metadados de SEO podem manter marca atual).
 
----
+## 2. Redesenhar `/_app/home` inspirada na referência
 
-## 1. Diferencial Connecta (não é cópia do Instagram)
+Manter o `PhoneFrame`, `StatusBar`, `BottomNav` e tokens/utilitários já existentes (`bg-gradient-brand`, `shadow-elegant`, `text-primary`, `bg-accent`, `bg-surface`, etc.). Nada de cores hardcoded.
 
-Cada reel carrega três camadas exclusivas sobrepostas ao vídeo:
+Nova estrutura vertical (de cima para baixo):
 
-- **Chip de local** (topo-esq): "Vila Madalena, SP · 2,3 km de você" — clicável, leva para `/local/$id`.
-- **Chip de evento/vibe** (abaixo do local, quando existir): "Evento Hoje · Festa Sunset · 18:00 · 1,2 km".
-- **Pill "Com {nomes} +N pessoas"** acima do áudio — mostra outras pessoas do Connecta que estavam no mesmo lugar/evento. Clicar abre mini-lista com atalho "Enviar solicitação de chat".
+1. **Header**
+   - Esquerda: `<Logo />` novo (pin + "connexa").
+   - Direita: sino de notificações (com badge) + ícone de mensagens (link para `/connecta` ou lista de chats), ambos em botões redondos `bg-secondary`.
 
-Isso transforma o reel em **prova social de presença** — o motor do app.
+2. **Saudação + clima**
+   - Linha 1: "Bom dia, {primeiro nome}! 👋" usando `currentUser.name`, com destaque no nome (`text-primary`).
+   - Linha 2: dia da semana + data (pt-BR, via `Intl.DateTimeFormat`).
+   - Card à direita: mini widget de clima mock ("28°C · Ensolarado") + bairro/cidade (`São Paulo, SP`) com `ChevronDown`. Layout em grid `grid-cols-[minmax(0,1fr)_auto]` com `min-w-0`/`shrink-0` (regra responsiva).
 
----
+3. **Busca + atalhos rápidos**
+   - Input pill "Para onde vamos hoje?" (visual apenas, sem lógica nova) com ícone `Search`.
+   - Chips ao lado: "Casa", "Trabalho", "Outros" (`Home`, `Briefcase`, `MoreHorizontal`).
 
-## 2. Navegação
+4. **Grid de ações rápidas (6 ícones circulares)**
+   - Pedir corrida → `/rota`
+   - Pessoas → `/connecta`
+   - Eventos → `/locais` (filtro Eventos, sem alterar rota)
+   - Promoções → `/locais`
+   - Locais → `/locais`
+   - Explorar → `/reels`
+   - Cada item: círculo pastel com ícone colorido + label pequena. Reaproveitar `bg-accent`/`text-primary` e variações via `bg-secondary` para variar tons dentro do design system.
 
-- Novo item no bottom nav: **Reels** (ícone `Clapperboard` ou `Play`), substituindo nada por enquanto — inserido entre Home e Connecta (5 itens viram 5 mantendo os atuais; se preferir 4, ver alternativa no fim).
-- Rota `/_app/reels` (pública, dentro do layout já existente com `PhoneFrame`).
-- Também acessível como aba dentro de `/home` no topo ("Reels" / "Amigos") em versão futura — Fase 1 entrega só a página dedicada.
+5. **Cabeçalho da seção do feed** (⚠️ mudança pedida)
+   - Título: **"Pessoas interessantes"** (era "Seu feed contextual").
+   - Subtítulo: "Conteúdos selecionados para você, aqui e agora."
+   - Link/botão à direita: "Personalizar" com ícone `SlidersHorizontal`.
 
----
+6. **Cards do feed (ordem)**
+   1. **Pessoas interessantes** — card destacando "3 pessoas com interesses em comum perto de você" com 3 avatares de `people` + chips de interesses (Música, Viagens, Cafés) e CTA "Ver pessoas →" para `/connecta`. **Este card vai no topo do feed** conforme pedido.
+   2. **Motorista a X min de você** — card com imagem de carro, motorista, preço mock, CTA "Solicitar corrida" → `/rota`.
+   3. **Promoção perto de você** — reaproveita `places[0]` (Café Central 20% OFF) no estilo do mockup: imagem à direita, badge "Só hoje!".
+   4. **Evento recomendado** — `places[1]` (Festa Sunset), com "amigos vão" (avatares) e CTA "Quero ir".
+   5. **Negócio local** — outro item de `places` com desconto e CTA "Ver cardápio".
+   - Todos os cards usam `rounded-2xl bg-surface border border-border shadow-soft`, imagens `object-cover`, tipografia `font-display` para títulos.
 
-## 3. Layout da tela `/reels`
+7. **Rodapé**: mantém `BottomNav` atual (sem mexer nas rotas de navegação nesta fase).
 
-Snap scroll vertical fullscreen dentro do `PhoneFrame`:
+## 3. Fora de escopo (não fazer agora)
 
-- **Header transparente** sobre o vídeo: logo Connecta centralizada, `Search` e ícone de mensagens (badge) à direita, tabs "Reels" / "Amigos" abaixo.
-- **Vídeo** em `object-cover` ocupando toda a tela, com gradiente inferior para legibilidade.
-- **Coluna de ações à direita** (vertical, como referência):
-  - Avatar do autor com botão `+` roxo para seguir.
-  - `Heart` + contagem (curtir).
-  - `MessageCircle` + contagem (comentários — abre bottom sheet).
-  - `Send` (compartilhar via chat interno — abre `MeetupSheet`-like para escolher conversa).
-  - `Bookmark` (salvar).
-  - `MoreHorizontal` (menu: denunciar, não me interessa).
-  - Miniatura do áudio girando (link para "Ver mais reels com este som").
-- **Bloco inferior esquerdo**:
-  - Linha autor: avatar + nome + `BadgeCheck` + botão outline "Seguir".
-  - Legenda com emojis, truncada em 2 linhas + "mais".
-  - Pill "Com Juliana, Pedro e +12 pessoas" (nova, marca Connecta).
-  - Linha de áudio "♪ The Nights – Avicii" com marquee sutil.
-- **Barra de progresso** segmentada no rodápe (5 segmentos, ativo com `bg-gradient-brand`).
-- **Snap scroll** com `snap-y snap-mandatory` — cada reel é uma section `h-full snap-start`.
+- Não alterar backend, tabelas, `mock-data`, rotas de navegação nem `BottomNav`.
+- Não trocar fontes globais nem tokens em `src/styles.css`.
+- Não substituir marca "RotaMais Connecta" em metadados/SEO globais além do necessário para o header visível.
 
-Cores: **fundo preto** só nesta tela (o app é claro). Adiciono token `--reel-surface: #0a0a0a` no `styles.css` e uso `bg-[hsl(var(--reel-surface))]` apenas neste escopo, sem quebrar o resto.
+## Detalhes técnicos
 
----
-
-## 4. Interações
-
-- **Play/pause** ao tocar no vídeo.
-- **Double-tap** curte (animação coração roxo `framer-motion`).
-- **Mute/unmute** com ícone flutuante que aparece 1.5s.
-- **Autoplay** do reel visível via `IntersectionObserver` (threshold 0.7); pausa quando sai da viewport.
-- **Prefetch** do próximo vídeo (`<video preload="metadata">` no próximo item).
-- **Regra de privacidade ≤2 km**: no chip de local, se distância < 2 km mostra "Próximo de você" em vez do valor exato (mantém padrão do app).
-
----
-
-## 5. Botão "Criar reel"
-
-- Na tela de reels: FAB circular `bg-gradient-brand` com `+` (canto inferior direito, acima da bottom nav).
-- Também em `/gerenciar` → nova aba **Reels** listando os do usuário + botão "Novo reel".
-- **Composer** (`/_authenticated/gerenciar/novo-reel` ou modal): upload de vídeo (mp4/webm, ≤60s, validado client-side), preview, campos: legenda, `place_id` (select de `places`), `event_id` opcional (Fase 2), tags de pessoas presentes (autocomplete de amigos), trilha (texto livre nesta fase).
-
----
-
-## 6. Backend (Lovable Cloud)
-
-Nova tabela `reels` + storage bucket:
-
-- **`reels`**: `id`, `author_id → profiles(id)`, `video_url`, `poster_url`, `caption`, `place_id → places(id) null`, `audio_label`, `tagged_user_ids uuid[]`, `duration_s int`, `created_at`.
-  - RLS: SELECT `TO anon, authenticated USING (true)`; INSERT/UPDATE/DELETE só do autor.
-  - GRANT SELECT em `anon, authenticated`; ALL em `service_role`.
-- **`reel_likes`**: `reel_id`, `user_id`, PK composta. RLS: SELECT público; INSERT/DELETE só do próprio user.
-- **`reel_comments`**: `id`, `reel_id`, `author_id`, `text`, `created_at`. RLS: SELECT público; INSERT do autenticado; DELETE só do autor.
-- **Storage bucket `reels-media`**: público read, upload autenticado (mp4/webm/poster jpg).
-
-Contagens (likes/comments) via **view materializada** ou `count` inline em query (Fase 1 usa `count` inline — simples).
-
----
-
-## 7. Server functions (client-safe `.functions.ts`)
-
-- `listReels({ cursor })` — publishable client, ordena por `created_at desc`, paginado 10 em 10, join com `profiles` e `places`.
-- `getReelDetail({ id })` — publishable client (para deep-link `/reel/$id`, Fase 2).
-- `createReel(input)` — `requireSupabaseAuth`.
-- `deleteReel({ id })` — `requireSupabaseAuth`, valida author.
-- `toggleReelLike({ reelId })` — `requireSupabaseAuth`, upsert/delete.
-- `listReelComments({ reelId })` / `addReelComment({ reelId, text })` — publishable / auth.
-
-Upload de vídeo direto do cliente autenticado via `supabase.storage.from('reels-media').upload(...)`. Poster gerado no cliente com `<video>` + `canvas.toDataURL('image/jpeg')` no primeiro frame.
-
----
-
-## 8. Seed / demo
-
-Migração inclui 4–5 reels de demo (vídeos curtos públicos livres de direito) vinculados aos `places` já semeados, para a tela nascer cheia enquanto ninguém publicou.
-
----
-
-## 9. Arquivos
-
-**Novos**
-- `src/routes/_app.reels.tsx` — feed vertical.
-- `src/components/reels/reel-card.tsx` — item individual com overlays.
-- `src/components/reels/reel-actions.tsx` — coluna direita.
-- `src/components/reels/reel-overlay-chips.tsx` — chips local/evento/pessoas.
-- `src/components/reels/comments-sheet.tsx` — bottom sheet.
-- `src/routes/_authenticated/gerenciar.novo-reel.tsx` — composer.
-- `src/lib/reels.functions.ts` — server fns.
-- Migração SQL: `reels`, `reel_likes`, `reel_comments`, bucket, seeds.
-
-**Editados**
-- `src/components/bottom-nav.tsx` — adiciona item Reels.
-- `src/routes/_app.gerenciar.tsx` — aba "Reels".
-- `src/styles.css` — token `--reel-surface`.
-
----
-
-## 10. Validação
-
-1. `bun run build` limpo.
-2. Playwright: abrir `/reels` → 3 reels renderizam, autoplay muda ao rolar, double-tap curte, tap no chip de local navega para `/local/$id`.
-3. Criar reel autenticado → aparece no topo do feed.
-4. Curtir/descurtir persiste após reload.
-5. Regra ≤2 km respeitada no chip de local.
-
----
-
-## Fora do escopo (Fase 2 do Reels, se pedir)
-
-- Aba "Amigos" com feed filtrado.
-- Deep-link `/reel/$id` com OG image para compartilhamento externo.
-- Filtros e trilhas nativas (biblioteca de áudios).
-- Edição client-side (trim, textos, stickers).
-- Reels vinculados a eventos (depende de `events` da Fase 2 geral).
-
----
-
-## Alternativa de bottom nav
-
-Se preferir manter 5 itens: **substituo "Rota"** por "Reels" (Rota migra para dentro de Home como já está no card de mobilidade). Alinha com o plano geral de "Rota → Lugares" da Fase 2. Prefere substituir ou adicionar? Se não responder, mantenho os 5 atuais + Reels vira o 6º com layout compacto.
+- Novo asset: `src/assets/connexa-logo.png.asset.json` importado como `import connexaLogo from "@/assets/connexa-logo.png.asset.json"` e usado como `<img src={connexaLogo.url} />`.
+- `Logo` aceita `size` (altura do pin) e opcionalmente `showWordmark` (default true).
+- Data formatada com `new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })`.
+- Ícones novos do lucide: `Briefcase`, `MoreHorizontal`, `Ticket`, `Tag`, `Store`, `Compass`, `MessageSquare`, `SlidersHorizontal` (já usados no projeto).
+- Manter regra responsiva: linhas com título + widget usam `grid grid-cols-[minmax(0,1fr)_auto]` com `min-w-0` no texto e `shrink-0` nos ícones.
