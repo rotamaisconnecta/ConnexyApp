@@ -1,17 +1,24 @@
-export function Logo({ size = 40, variant = "dark" }: { size?: number; variant?: "dark" | "light" }) {
-  const fg = variant === "dark" ? "#0f0a1f" : "#ffffff";
+import connexaLogo from "@/assets/connexa-logo.png.asset.json";
+
+export function Logo({ size = 40, showWordmark = true }: { size?: number; variant?: "dark" | "light"; showWordmark?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <div
-        className="grid place-items-center rounded-xl bg-gradient-brand text-white font-black shadow-elegant"
-        style={{ width: size, height: size, fontSize: size * 0.5 }}
-      >
-        R+
-      </div>
-      <div className="leading-tight">
-        <div className="font-display text-lg font-bold" style={{ color: fg }}>RotaMais</div>
-        <div className="text-[11px] font-semibold -mt-0.5" style={{ color: "var(--primary)" }}>Connecta</div>
-      </div>
+      <img
+        src={connexaLogo.url}
+        alt="Connexa"
+        style={{ width: size, height: size }}
+        className="object-contain"
+      />
+      {showWordmark ? (
+        <div className="leading-tight">
+          <div className="font-display text-lg font-bold" style={{ color: "var(--foreground)" }}>
+            connexa
+          </div>
+          <div className="text-[10px] font-semibold -mt-0.5 text-muted-foreground">
+            Mova-se · Conecte-se · Descubra
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
