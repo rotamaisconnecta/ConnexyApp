@@ -98,12 +98,12 @@ function Home() {
       {/* Grid de ações rápidas */}
       <section className="mt-5 px-5">
         <div className="grid grid-cols-6 gap-1">
-          <QuickAction to="/rota" label="Corrida" Icon={Car} tone="a" />
-          <QuickAction to="/connecta" label="Pessoas" Icon={Users} tone="b" />
-          <QuickAction to="/locais" label="Eventos" Icon={Ticket} tone="c" />
-          <QuickAction to="/locais" label="Promoções" Icon={Tag} tone="d" />
-          <QuickAction to="/locais" label="Locais" Icon={Store} tone="e" />
-          <QuickAction to="/reels" label="Explorar" Icon={Compass} tone="f" />
+          <Link to="/rota"><QuickAction label="Corrida" Icon={Car} tone="a" /></Link>
+          <Link to="/connecta"><QuickAction label="Pessoas" Icon={Users} tone="b" /></Link>
+          <Link to="/locais"><QuickAction label="Eventos" Icon={Ticket} tone="c" /></Link>
+          <Link to="/locais"><QuickAction label="Promoções" Icon={Tag} tone="d" /></Link>
+          <Link to="/locais"><QuickAction label="Locais" Icon={Store} tone="e" /></Link>
+          <Link to="/reels"><QuickAction label="Explorar" Icon={Compass} tone="f" /></Link>
         </div>
       </section>
 
