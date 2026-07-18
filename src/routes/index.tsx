@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/components/logo";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   component: Splash,
@@ -11,8 +12,15 @@ export const Route = createFileRoute("/")({
 function Splash() {
   const nav = useNavigate();
   useEffect(() => {
-    const t = setTimeout(() => nav({ to: "/welcome" }), 1800);
-    return () => clearTimeout(t);
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled) nav({ to: data.session ? "/localizacao" : "/welcome" });
+    }, 1800);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [nav]);
 
   return (

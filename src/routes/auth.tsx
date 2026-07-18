@@ -21,7 +21,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ to: "/home" });
+      if (data.session) nav({ to: "/localizacao" });
     });
   }, [nav]);
 
@@ -40,7 +40,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bem-vindo de volta!");
-        nav({ to: "/home" });
+        nav({ to: "/localizacao" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
@@ -61,7 +61,7 @@ function AuthPage() {
     }
     if (result.redirected) return;
     toast.success("Bem-vindo!");
-    nav({ to: "/home" });
+    nav({ to: "/localizacao" });
   }
 
   return (
