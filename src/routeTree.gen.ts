@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as LocalizacaoRouteImport } from './routes/localizacao'
 import { Route as InteressesRouteImport } from './routes/interesses'
+import { Route as FinalizarPerfilRouteImport } from './routes/finalizar-perfil'
+import { Route as CompletarPerfilRouteImport } from './routes/completar-perfil'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
@@ -47,6 +49,16 @@ const LocalizacaoRoute = LocalizacaoRouteImport.update({
 const InteressesRoute = InteressesRouteImport.update({
   id: '/interesses',
   path: '/interesses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinalizarPerfilRoute = FinalizarPerfilRouteImport.update({
+  id: '/finalizar-perfil',
+  path: '/finalizar-perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompletarPerfilRoute = CompletarPerfilRouteImport.update({
+  id: '/completar-perfil',
+  path: '/completar-perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CadastroRoute = CadastroRouteImport.update({
@@ -158,6 +170,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
+  '/completar-perfil': typeof CompletarPerfilRoute
+  '/finalizar-perfil': typeof FinalizarPerfilRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
   '/welcome': typeof WelcomeRoute
@@ -183,6 +197,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
+  '/completar-perfil': typeof CompletarPerfilRoute
+  '/finalizar-perfil': typeof FinalizarPerfilRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
   '/welcome': typeof WelcomeRoute
@@ -210,6 +226,8 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
+  '/completar-perfil': typeof CompletarPerfilRoute
+  '/finalizar-perfil': typeof FinalizarPerfilRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
   '/welcome': typeof WelcomeRoute
@@ -237,6 +255,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cadastro'
+    | '/completar-perfil'
+    | '/finalizar-perfil'
     | '/interesses'
     | '/localizacao'
     | '/welcome'
@@ -262,6 +282,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cadastro'
+    | '/completar-perfil'
+    | '/finalizar-perfil'
     | '/interesses'
     | '/localizacao'
     | '/welcome'
@@ -288,6 +310,8 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/cadastro'
+    | '/completar-perfil'
+    | '/finalizar-perfil'
     | '/interesses'
     | '/localizacao'
     | '/welcome'
@@ -315,6 +339,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   CadastroRoute: typeof CadastroRoute
+  CompletarPerfilRoute: typeof CompletarPerfilRoute
+  FinalizarPerfilRoute: typeof FinalizarPerfilRoute
   InteressesRoute: typeof InteressesRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -341,6 +367,20 @@ declare module '@tanstack/react-router' {
       path: '/interesses'
       fullPath: '/interesses'
       preLoaderRoute: typeof InteressesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finalizar-perfil': {
+      id: '/finalizar-perfil'
+      path: '/finalizar-perfil'
+      fullPath: '/finalizar-perfil'
+      preLoaderRoute: typeof FinalizarPerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/completar-perfil': {
+      id: '/completar-perfil'
+      path: '/completar-perfil'
+      fullPath: '/completar-perfil'
+      preLoaderRoute: typeof CompletarPerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cadastro': {
@@ -550,6 +590,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   CadastroRoute: CadastroRoute,
+  CompletarPerfilRoute: CompletarPerfilRoute,
+  FinalizarPerfilRoute: FinalizarPerfilRoute,
   InteressesRoute: InteressesRoute,
   LocalizacaoRoute: LocalizacaoRoute,
   WelcomeRoute: WelcomeRoute,

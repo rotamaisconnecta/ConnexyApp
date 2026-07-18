@@ -47,7 +47,7 @@ function Signup() {
 
         <div className="mt-auto pt-6 pb-6 space-y-3">
           <button
-            onClick={() => nav({ to: "/interesses" })}
+            onClick={() => nav({ to: "/completar-perfil" })}
             className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant">
             Continuar
           </button>
