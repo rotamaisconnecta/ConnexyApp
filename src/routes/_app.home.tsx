@@ -29,8 +29,9 @@ import {
   type Person,
 } from "@/lib/mock-data";
 import { proximityLabel, homeProximityLabel } from "@/lib/proximity";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, type Variants, type Easing } from "framer-motion";
+import useEmblaCarousel from "embla-carousel-react";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({
@@ -106,22 +107,14 @@ function Home() {
   const firstName = currentUser.name.split(" ")[0];
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [personSheetOpen, setPersonSheetOpen] = useState(false);
+  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
   const nearbyPeople = useMemo(() => people.slice(0, 5), []);
   const onlinePeople = useMemo(() => people.filter((p) => p.online), []);
-  const eventPlaces = useMemo(
-    () => places.filter((p) => p.category === "Eventos").slice(0, 3),
-    [],
-  );
+  const eventPlaces = useMemo(() => places.filter((p) => p.category === "Eventos").slice(0, 3), []);
   const driver = drivers[0];
-  const cafe = useMemo(
-    () => places.find((p) => p.category === "Cafés") ?? places[0],
-    [],
-  );
-  const burger = useMemo(
-    () => places.find((p) => p.category === "Restaurantes") ?? places[2],
-    [],
-  );
+  const cafe = useMemo(() => places.find((p) => p.category === "Cafés") ?? places[0], []);
+  const burger = useMemo(() => places.find((p) => p.category === "Restaurantes") ?? places[2], []);
 
   const openPerson = useCallback((p: Person) => {
     setSelectedPerson(p);
@@ -129,6 +122,28 @@ function Home() {
   }, []);
 
   const closeSheet = useCallback(() => setPersonSheetOpen(false), []);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "center",
+    containScroll: "trimSnaps",
+    dragFree: true,
+  });
+
+  const handleEmblaSelect = useCallback(() => {
+    if (!emblaApi) return;
+    const idx = emblaApi.selectedScrollSnap();
+    setActiveCarouselIndex(idx);
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", handleEmblaSelect);
+    emblaApi.on("reInit", handleEmblaSelect);
+    return () => {
+      emblaApi.off("select", handleEmblaSelect);
+      emblaApi.off("reInit", handleEmblaSelect);
+    };
+  }, [emblaApi, handleEmblaSelect]);
 
   return (
     <div className="flex-1">
@@ -160,29 +175,35 @@ function Home() {
         </div>
       </header>
 
+      {/* Feature 1: User photo + greeting */}
       <section className="px-5">
         <div className="flex items-center gap-3">
-          <img
-            src={currentUser.photo}
-            alt=""
-            className="h-12 w-12 rounded-full object-cover shrink-0"
-          />
+          <Link
+            to="/perfil"
+            aria-label="Abrir meu perfil"
+            className="shrink-0 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            <img
+              src={currentUser.photo}
+              alt={`Foto de ${currentUser.name}`}
+              className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-soft"
+            />
+          </Link>
           <div>
             <h1 className="font-display text-2xl font-bold leading-tight">
               {greeting()}, <span className="text-primary">{firstName}!</span>{" "}
               <span aria-hidden>👋</span>
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {formatToday()}
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">{formatToday()}</p>
           </div>
         </div>
       </section>
 
+      {/* Search bar */}
       <section className="mt-4 px-5">
         <button
           type="button"
-          className="w-full flex items-center gap-3 rounded-2xl bg-accent/40 border border-accent px-4 py-3.5 shadow-soft transition-all duration-200 hover:bg-accent/60 active:scale-[0.98]"
+          className="w-full flex items-center gap-3 rounded-2xl bg-accent/40 border border-accent px-4 py-3 shadow-soft transition-all duration-200 hover:bg-accent/60 active:scale-[0.98]"
         >
           <span className="h-8 w-8 grid place-items-center rounded-full bg-primary/10 shrink-0">
             <Search className="h-4 w-4 text-primary" />
@@ -192,6 +213,7 @@ function Home() {
       </section>
 
       <div className="mt-5 space-y-5 pb-6">
+        {/* Feature 3-5: Snap Carousel with center highlight + Discover card */}
         <motion.section
           custom={0}
           initial="hidden"
@@ -202,34 +224,55 @@ function Home() {
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-3">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm leading-none" aria-hidden>❤️</span>
-                <h2 className="font-display text-lg font-bold truncate">
-                  Pessoas Próximas
-                </h2>
+                <span className="text-sm leading-none" aria-hidden>
+                  ❤️
+                </span>
+                <h2 className="font-display text-lg font-bold truncate">Pessoas Próximas</h2>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Conheça pessoas que compartilham seus interesses.
               </p>
             </div>
             <Link
-              to="/connecta"
-              className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5"
+              to="/pessoas"
+              className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
             >
               Ver todas <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-            {nearbyPeople.map((p) => (
-              <PersonCard key={p.id} person={p} onOpen={openPerson} />
+          <div ref={emblaRef} className="overflow-hidden -mx-5 px-5">
+            <div className="flex">
+              {nearbyPeople.map((p, i) => (
+                <PersonCard
+                  key={p.id}
+                  person={p}
+                  onOpen={openPerson}
+                  isCenter={i === activeCarouselIndex}
+                  index={i}
+                />
+              ))}
+              <DiscoverCard />
+            </div>
+          </div>
+
+          {/* Scroll dots indicator */}
+          <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+            {nearbyPeople.map((_, i) => (
+              <span
+                key={i}
+                className={`rounded-full transition-all duration-300 ${
+                  i === activeCarouselIndex ? "h-1.5 w-4 bg-primary" : "h-1.5 w-1.5 bg-border"
+                }`}
+              />
             ))}
           </div>
 
           {onlinePeople.length > 0 && (
-            <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
-                <EyeOff className="h-3 w-3" /> Existem pessoas próximas, mas algumas
-                escolheram não aparecer.
+                <EyeOff className="h-3 w-3" /> Existem pessoas próximas, mas algumas escolheram não
+                aparecer.
               </span>
             </div>
           )}
@@ -246,9 +289,7 @@ function Home() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-primary" />
-                <h2 className="font-display text-base font-bold truncate">
-                  Mapa ao Vivo
-                </h2>
+                <h2 className="font-display text-base font-bold truncate">Mapa ao Vivo</h2>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 O que está acontecendo perto de você
@@ -286,9 +327,7 @@ function Home() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <Ticket className="h-3.5 w-3.5 text-primary" />
-                <h2 className="font-display text-base font-bold truncate">
-                  Eventos
-                </h2>
+                <h2 className="font-display text-base font-bold truncate">Eventos</h2>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Acontecendo agora na sua região
@@ -296,7 +335,7 @@ function Home() {
             </div>
             <Link
               to="/locais"
-              className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5"
+              className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
             >
               Ver mais <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -320,9 +359,7 @@ function Home() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <Store className="h-3.5 w-3.5 text-primary" />
-                <h2 className="font-display text-base font-bold truncate">
-                  Lugares & Promoções
-                </h2>
+                <h2 className="font-display text-base font-bold truncate">Lugares & Promoções</h2>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Ofertas imperdíveis perto de você
@@ -345,9 +382,7 @@ function Home() {
                   <br />
                   <span className="text-primary text-lg">20% OFF</span>
                 </div>
-                <div className="mt-2 text-xs font-semibold truncate">
-                  {cafe.name}
-                </div>
+                <div className="mt-2 text-xs font-semibold truncate">{cafe.name}</div>
                 <div className="text-[11px] text-muted-foreground">
                   {proximityLabel(cafe.distanceMeters)}
                 </div>
@@ -365,9 +400,7 @@ function Home() {
                 <span className="absolute bottom-2 right-2 rounded-lg bg-surface/95 text-primary text-[10px] font-bold px-2 py-1 leading-tight text-center shadow-soft">
                   Só hoje!
                   <br />
-                  <span className="text-muted-foreground font-medium">
-                    até 23:00
-                  </span>
+                  <span className="text-muted-foreground font-medium">até 23:00</span>
                 </span>
               </div>
             </div>
@@ -387,17 +420,14 @@ function Home() {
                   {burger.name}
                 </div>
                 <div className="text-xs">
-                  Almoço Executivo com{" "}
-                  <span className="text-primary font-bold">15% OFF</span>
+                  Almoço Executivo com <span className="text-primary font-bold">15% OFF</span>
                 </div>
                 <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />{" "}
-                    {proximityLabel(burger.distanceMeters)}
+                    <MapPin className="h-3 w-3" /> {proximityLabel(burger.distanceMeters)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-current text-primary" />{" "}
-                    {burger.rating}
+                    <Star className="h-3 w-3 fill-current text-primary" /> {burger.rating}
                   </span>
                 </div>
               </div>
@@ -427,9 +457,7 @@ function Home() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <Car className="h-3.5 w-3.5 text-primary" />
-                <h2 className="font-display text-base font-bold truncate">
-                  Mobilidade
-                </h2>
+                <h2 className="font-display text-base font-bold truncate">Mobilidade</h2>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Motoristas disponíveis agora
@@ -445,16 +473,11 @@ function Home() {
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Car className="h-3.5 w-3.5 text-primary" />
-                  Motorista a{" "}
-                  <span className="text-primary font-semibold">2 min</span>
+                  Motorista a <span className="text-primary font-semibold">2 min</span>
                 </div>
-                <div className="mt-1 font-display font-bold text-sm">
-                  Av. Paulista, 1000
-                </div>
+                <div className="mt-1 font-display font-bold text-sm">Av. Paulista, 1000</div>
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="font-display font-bold text-lg text-primary">
-                    R$ 18,90
-                  </span>
+                  <span className="font-display font-bold text-lg text-primary">R$ 18,90</span>
                   <span className="rounded-full bg-accent text-primary text-[10px] font-semibold px-2 py-0.5">
                     Promoção aplicada
                   </span>
@@ -474,8 +497,7 @@ function Home() {
                 />
                 <div className="min-w-0">
                   <div className="text-xs font-semibold truncate">
-                    {driver.name}{" "}
-                    <Star className="inline h-3 w-3 fill-current text-primary" />{" "}
+                    {driver.name} <Star className="inline h-3 w-3 fill-current text-primary" />{" "}
                     {driver.rating}
                   </div>
                   <div className="text-[10px] text-muted-foreground truncate">
@@ -488,30 +510,32 @@ function Home() {
         </motion.section>
       </div>
 
-      <PersonDetailSheet
-        person={selectedPerson}
-        open={personSheetOpen}
-        onClose={closeSheet}
-      />
+      <PersonDetailSheet person={selectedPerson} open={personSheetOpen} onClose={closeSheet} />
     </div>
   );
 }
 
+/* ─── Feature 3+4: Person Card with center-highlight ─────────────── */
+
 function PersonCard({
   person,
   onOpen,
+  isCenter,
+  index,
 }: {
   person: Person;
   onOpen: (p: Person) => void;
+  isCenter: boolean;
+  index: number;
 }) {
   const score = useMemo(() => compatibilityScore(person), [person]);
   const tier = useMemo(() => compatibilityInfo(score), [score]);
 
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
-      aria-label={`Ver perfil de ${person.name}, ${person.age} anos`}
+      aria-label={`Ver perfil de ${person.name}, ${person.age} anos. ${tier ? `${score}% de compatibilidade` : ""}`}
       onClick={() => onOpen(person)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -519,53 +543,96 @@ function PersonCard({
           onOpen(person);
         }
       }}
-      className="shrink-0 w-52 rounded-2xl bg-surface border border-border shadow-soft overflow-hidden text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all duration-200 hover:shadow-elegant hover:scale-[1.02] active:scale-[0.98]"
+      animate={{
+        scale: isCenter ? 1.04 : 0.95,
+        opacity: isCenter ? 1 : 0.65,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="shrink-0 w-[208px] pl-4 first:pl-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <div className="relative h-52">
-        <img
-          src={person.photo}
-          alt={person.name}
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
-        {tier && (
-          <span
-            className={`absolute top-2 left-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${tier.className}`}
-          >
-            {score}%
-          </span>
-        )}
-        <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface/90 text-foreground shadow-soft">
-          {homeProximityLabel(person.distanceMeters)}
-        </span>
-      </div>
-      <div className="p-3">
-        <div className="flex items-center gap-1.5">
-          <span className="font-display font-bold text-sm truncate">
-            {person.name}, {person.age}
-          </span>
-          <PresenceDot online={person.online} size={8} />
-        </div>
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {person.interests.slice(0, 3).map((interest) => (
+      <div
+        className={`rounded-2xl bg-surface border overflow-hidden text-left transition-shadow duration-300 ${
+          isCenter ? "border-primary/20 shadow-elegant" : "border-border shadow-soft"
+        }`}
+      >
+        <div className="relative h-52">
+          <img
+            src={person.photo}
+            alt={person.name}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+          {tier && (
             <span
-              key={interest}
-              className="text-[9px] bg-secondary rounded-full px-1.5 py-0.5"
+              className={`absolute top-2 left-2 text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm ${tier.className}`}
             >
-              {interestEmoji[interest] ?? "•"} {interest}
+              {score}%
             </span>
-          ))}
+          )}
+          <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface/90 text-foreground shadow-soft">
+            {homeProximityLabel(person.distanceMeters)}
+          </span>
         </div>
-        <span
-          aria-hidden
-          className="mt-2.5 block w-full h-9 rounded-xl bg-gradient-brand text-white text-xs font-semibold shadow-soft items-center justify-center"
-        >
-          Conhecer
-        </span>
+        <div className="p-3">
+          <div className="flex items-center gap-1.5">
+            <span className="font-display font-bold text-sm truncate">
+              {person.name}, {person.age}
+            </span>
+            <PresenceDot online={person.online} size={8} />
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {person.interests.slice(0, 3).map((interest) => (
+              <span key={interest} className="text-[9px] bg-secondary rounded-full px-1.5 py-0.5">
+                {interestEmoji[interest] ?? "•"} {interest}
+              </span>
+            ))}
+          </div>
+          {/* Feature 2: Conhecer button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(person);
+            }}
+            className="mt-2.5 block w-full h-9 rounded-xl bg-gradient-brand text-white text-xs font-semibold shadow-soft items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
+          >
+            Conhecer
+          </button>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
+
+/* ─── Feature 5: Discover special card ───────────────────────────── */
+
+function DiscoverCard() {
+  return (
+    <Link
+      to="/pessoas"
+      className="shrink-0 w-[208px] pl-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="h-full rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-lilac/10 border border-primary/15 shadow-soft overflow-hidden flex flex-col items-center justify-center text-center p-5 transition-shadow duration-300 hover:shadow-elegant"
+      >
+        <span className="text-2xl mb-2" aria-hidden>
+          ✨
+        </span>
+        <span className="font-display font-bold text-sm text-primary mb-1">Ver todas</span>
+        <span className="text-[11px] text-muted-foreground leading-snug mb-3">
+          Descubra mais pessoas perto de você
+        </span>
+        <span className="h-9 px-5 rounded-xl bg-gradient-brand text-white text-xs font-semibold shadow-soft flex items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-[0.97]">
+          Explorar
+        </span>
+      </motion.div>
+    </Link>
+  );
+}
+
+/* ─── Event Card (unchanged) ────────────────────────────────────── */
 
 function EventCard({ event }: { event: (typeof places)[number] }) {
   const attendees = useMemo(() => people.slice(0, 2), []);
@@ -589,7 +656,7 @@ function EventCard({ event }: { event: (typeof places)[number] }) {
           aria-label="Favoritar"
           onClick={(e) => e.preventDefault()}
           onKeyDown={(e) => e.preventDefault()}
-          className="absolute top-2 right-2 h-7 w-7 grid place-items-center rounded-full bg-surface/90 shadow-soft cursor-pointer"
+          className="absolute top-2 right-2 h-7 w-7 grid place-items-center rounded-full bg-surface/90 shadow-soft cursor-pointer transition-all duration-200 hover:bg-surface active:scale-90"
         >
           <Heart className="h-3.5 w-3.5 text-primary" />
         </span>
@@ -598,14 +665,10 @@ function EventCard({ event }: { event: (typeof places)[number] }) {
         </span>
       </div>
       <div className="p-3">
-        <div className="font-display font-bold text-sm truncate">
-          {event.name}
-        </div>
+        <div className="font-display font-bold text-sm truncate">{event.name}</div>
         <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
           <MapPin className="h-3 w-3 shrink-0" />
-          <span className="truncate">
-            {proximityLabel(event.distanceMeters)}
-          </span>
+          <span className="truncate">{proximityLabel(event.distanceMeters)}</span>
         </div>
         {event.hours && (
           <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">

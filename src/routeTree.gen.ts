@@ -28,6 +28,7 @@ import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppGerenciarRouteImport } from './routes/_app.gerenciar'
 import { Route as AppDestinoRouteImport } from './routes/_app.destino'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
+import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
@@ -131,6 +132,11 @@ const AppCorridaRoute = AppCorridaRouteImport.update({
   path: '/corrida',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPessoasRoute = AppPessoasRouteImport.update({
+  id: '/pessoas',
+  path: '/pessoas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppConnectaRoute = AppConnectaRouteImport.update({
   id: '/connecta',
   path: '/connecta',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
+  '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/reels': typeof AppReelsRoute
   '/rota': typeof AppRotaRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/locais': typeof AppLocaisRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
+  '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/reels': typeof AppReelsRoute
   '/rota': typeof AppRotaRoute
@@ -278,6 +286,7 @@ export interface FileRouteTypes {
     | '/locais'
     | '/matching'
     | '/notificacoes'
+    | '/pessoas'
     | '/privacidade'
     | '/reels'
     | '/rota'
@@ -306,6 +315,7 @@ export interface FileRouteTypes {
     | '/locais'
     | '/matching'
     | '/notificacoes'
+    | '/pessoas'
     | '/privacidade'
     | '/reels'
     | '/rota'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/_app/locais'
     | '/_app/matching'
     | '/_app/notificacoes'
+    | '/_app/pessoas'
     | '/_app/privacidade'
     | '/_app/reels'
     | '/_app/rota'
@@ -500,6 +511,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConnectaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pessoas': {
+      id: '/_app/pessoas'
+      path: '/pessoas'
+      fullPath: '/pessoas'
+      preLoaderRoute: typeof AppPessoasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/avaliar': {
       id: '/_app/avaliar'
       path: '/avaliar'
@@ -574,6 +592,7 @@ interface AppRouteChildren {
   AppLocaisRoute: typeof AppLocaisRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
+  AppPessoasRoute: typeof AppPessoasRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AppReelsRoute: typeof AppReelsRoute
   AppRotaRoute: typeof AppRotaRoute
@@ -594,6 +613,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLocaisRoute: AppLocaisRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
+  AppPessoasRoute: AppPessoasRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AppReelsRoute: AppReelsRoute,
   AppRotaRoute: AppRotaRoute,
