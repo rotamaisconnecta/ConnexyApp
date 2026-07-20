@@ -26,6 +26,7 @@ import { Route as AppMatchingRouteImport } from './routes/_app.matching'
 import { Route as AppLocaisRouteImport } from './routes/_app.locais'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppGerenciarRouteImport } from './routes/_app.gerenciar'
+import { Route as AppDestinoRouteImport } from './routes/_app.destino'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
@@ -120,6 +121,11 @@ const AppGerenciarRoute = AppGerenciarRouteImport.update({
   path: '/gerenciar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDestinoRoute = AppDestinoRouteImport.update({
+  id: '/destino',
+  path: '/destino',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCorridaRoute = AppCorridaRouteImport.update({
   id: '/corrida',
   path: '/corrida',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/avaliar': typeof AppAvaliarRoute
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
+  '/destino': typeof AppDestinoRoute
   '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/avaliar': typeof AppAvaliarRoute
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
+  '/destino': typeof AppDestinoRoute
   '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/_app/avaliar': typeof AppAvaliarRoute
   '/_app/connecta': typeof AppConnectaRoute
   '/_app/corrida': typeof AppCorridaRoute
+  '/_app/destino': typeof AppDestinoRoute
   '/_app/gerenciar': typeof AppGerenciarRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/locais': typeof AppLocaisRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/avaliar'
     | '/connecta'
     | '/corrida'
+    | '/destino'
     | '/gerenciar'
     | '/home'
     | '/locais'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/avaliar'
     | '/connecta'
     | '/corrida'
+    | '/destino'
     | '/gerenciar'
     | '/home'
     | '/locais'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/_app/avaliar'
     | '/_app/connecta'
     | '/_app/corrida'
+    | '/_app/destino'
     | '/_app/gerenciar'
     | '/_app/home'
     | '/_app/locais'
@@ -467,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGerenciarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/destino': {
+      id: '/_app/destino'
+      path: '/destino'
+      fullPath: '/destino'
+      preLoaderRoute: typeof AppDestinoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/corrida': {
       id: '/_app/corrida'
       path: '/corrida'
@@ -549,6 +568,7 @@ interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
   AppConnectaRoute: typeof AppConnectaRoute
   AppCorridaRoute: typeof AppCorridaRoute
+  AppDestinoRoute: typeof AppDestinoRoute
   AppGerenciarRoute: typeof AppGerenciarRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppLocaisRoute: typeof AppLocaisRoute
@@ -568,6 +588,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAvaliarRoute: AppAvaliarRoute,
   AppConnectaRoute: AppConnectaRoute,
   AppCorridaRoute: AppCorridaRoute,
+  AppDestinoRoute: AppDestinoRoute,
   AppGerenciarRoute: AppGerenciarRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppLocaisRoute: AppLocaisRoute,

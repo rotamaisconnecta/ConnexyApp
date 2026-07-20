@@ -1,11 +1,5 @@
 export type ProximityTier =
-  | "here"
-  | "veryClose"
-  | "close"
-  | "around"
-  | "neighborhood"
-  | "far"
-  | "veryFar";
+  "here" | "veryClose" | "close" | "around" | "neighborhood" | "far" | "veryFar";
 
 export function proximityTier(meters: number): ProximityTier {
   if (meters <= 20) return "here";
@@ -74,4 +68,14 @@ export function personProximityLabel(meters: number): string {
 export function personProximityRadius(meters: number): string | null {
   if (meters <= 2000) return null;
   return proximityRadius(meters);
+}
+
+// Home feed proximity: privacy-respecting labels with emojis.
+export function homeProximityLabel(meters: number): string {
+  if (meters <= 100) return "🔥 Muito perto";
+  if (meters <= 300) return "📍 Bem próximo";
+  if (meters <= 800) return "🚶 Perto de você";
+  if (meters <= 2000) return "🌎 Na sua região";
+  const km = (meters / 1000).toFixed(1).replace(".", ",");
+  return `${km} km`;
 }
