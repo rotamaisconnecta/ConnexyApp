@@ -161,11 +161,22 @@ function Home() {
       </header>
 
       <section className="px-5">
-        <h1 className="font-display text-2xl font-bold leading-tight">
-          {greeting()}, <span className="text-primary">{firstName}!</span>{" "}
-          <span aria-hidden>👋</span>
-        </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">{formatToday()}</p>
+        <div className="flex items-center gap-3">
+          <img
+            src={currentUser.photo}
+            alt=""
+            className="h-12 w-12 rounded-full object-cover shrink-0"
+          />
+          <div>
+            <h1 className="font-display text-2xl font-bold leading-tight">
+              {greeting()}, <span className="text-primary">{firstName}!</span>{" "}
+              <span aria-hidden>👋</span>
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {formatToday()}
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="mt-4 px-5">
