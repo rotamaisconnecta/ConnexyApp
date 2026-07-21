@@ -1,7 +1,7 @@
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Music, MapPin, Clock } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { PresenceDot } from "@/components/presence-dot";
 import { cn } from "@/lib/utils";
 import { heroFade } from "@/components/profile/animations";
@@ -9,11 +9,6 @@ import { heroFade } from "@/components/profile/animations";
 /* ─── Types ──────────────────────────────────────────────── */
 
 type PhotoVariant = "pessoa" | "empresa" | "evento" | "motorista";
-
-type HeroBadge = {
-  label: string;
-  variant?: "default" | "secondary" | "destructive" | "outline";
-};
 
 export interface HeroProps {
   photo: string;
@@ -25,28 +20,22 @@ export interface HeroProps {
   lastSeen?: string;
   proximity?: string;
   radius?: string;
-  badge?: HeroBadge;
-  mood?: string;
-  nowPlaying?: string;
+  badge?: ReactNode;
+  mood?: { emoji: string; text: string };
+  nowPlaying?: { kind: string; title: string; subtitle?: string };
   photoVariant?: PhotoVariant;
   gradientBg?: boolean;
 }
 
 /* ─── Photo config per variant ───────────────────────────── */
 
-const photoClasses: Record<PhotoVariant, string> = {
-  pessoa: "h-24 w-24 rounded-3xl",
-  empresa: "h-20 w-20 rounded-2xl",
-  evento: "h-48 w-full rounded-2xl object-cover",
-  motorista: "h-20 w-20 rounded-full",
-};
-
-const fallbackSizes: Record<PhotoVariant, string> = {
-  pessoa: "text-2xl",
-  empresa: "text-xl",
-  evento: "text-2xl",
-  motorista: "text-xl",
-};
+const PHOTO_VARIANTS: Record<PhotoVariant, { avatar: string; fallback: string; dotSize: number }> =
+  {
+    pessoa: { avatar: "h-24 w-24 rounded-3xl", fallback: "text-2xl", dotSize: 14 },
+    empresa: { avatar: "h-20 w-20 rounded-2xl", fallback: "text-xl", dotSize: 12 },
+    evento: { avatar: "h-48 w-full rounded-2xl object-cover", fallback: "text-2xl", dotSize: 10 },
+    motorista: { avatar: "h-20 w-20 rounded-full", fallback: "text-xl", dotSize: 12 },
+  };
 
 /* ─── Component ──────────────────────────────────────────── */
 
@@ -74,6 +63,7 @@ export function Hero({
     .toUpperCase();
 
   const isEvento = photoVariant === "evento";
+  const cfg = PHOTO_VARIANTS[photoVariant];
 
   return (
     <motion.section
@@ -94,46 +84,17 @@ export function Hero({
           <img src={photo} alt={`Banner de ${name}`} className="h-48 w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>
-      ) : photoVariant === "pessoa" ? (
-        <div className="relative inline-block">
-          <Avatar
-            className={cn(
-              "h-24 w-24 rounded-3xl ring-2 ring-border",
-              gradientBg && "ring-white/30",
-            )}
-          >
-            <AvatarImage src={photo} alt={`Foto de ${name}`} />
-            <AvatarFallback
-              className={cn("bg-gradient-brand text-white font-bold", fallbackSizes[photoVariant])}
-            >
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          {online !== undefined && (
-            <span className="absolute -bottom-0.5 -right-0.5">
-              <PresenceDot online={online} size={14} />
-            </span>
-          )}
-        </div>
       ) : (
         <div className="relative inline-block">
-          <Avatar
-            className={cn(
-              photoClasses[photoVariant],
-              "ring-2 ring-border",
-              gradientBg && "ring-white/30",
-            )}
-          >
+          <Avatar className={cn(cfg.avatar, "ring-2 ring-border", gradientBg && "ring-white/30")}>
             <AvatarImage src={photo} alt={`Foto de ${name}`} />
-            <AvatarFallback
-              className={cn("bg-gradient-brand text-white font-bold", fallbackSizes[photoVariant])}
-            >
+            <AvatarFallback className={cn("bg-gradient-brand text-white font-bold", cfg.fallback)}>
               {initials}
             </AvatarFallback>
           </Avatar>
           {online !== undefined && (
             <span className="absolute -bottom-0.5 -right-0.5">
-              <PresenceDot online={online} size={12} />
+              <PresenceDot online={online} size={cfg.dotSize} />
             </span>
           )}
         </div>
@@ -150,7 +111,7 @@ export function Hero({
         {/* Name + Handle */}
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <h2 className="font-display text-xl font-bold leading-tight">{name}</h2>
-          {online !== undefined && isEvento && <PresenceDot online={online} size={10} />}
+          {online !== undefined && isEvento && <PresenceDot online={online} size={cfg.dotSize} />}
         </div>
 
         {subtitle && (
@@ -176,11 +137,7 @@ export function Hero({
         )}
 
         {/* Badge */}
-        {badge && (
-          <div className="mt-1">
-            <Badge variant={badge.variant ?? "secondary"}>{badge.label}</Badge>
-          </div>
-        )}
+        {badge && <div className="mt-1">{badge}</div>}
 
         {/* Headline */}
         {headline && (
@@ -202,7 +159,7 @@ export function Hero({
               gradientBg || isEvento ? "text-white/60" : "text-muted-foreground",
             )}
           >
-            {mood}
+            {mood.emoji} {mood.text}
           </p>
         )}
 
@@ -215,7 +172,19 @@ export function Hero({
             )}
           >
             <Music className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{nowPlaying}</span>
+            <span className="truncate">
+              {nowPlaying.title}
+              {nowPlaying.subtitle && (
+                <span
+                  className={cn(
+                    "ml-1 font-normal",
+                    gradientBg || isEvento ? "text-white/60" : "text-muted-foreground",
+                  )}
+                >
+                  — {nowPlaying.subtitle}
+                </span>
+              )}
+            </span>
           </div>
         )}
 
