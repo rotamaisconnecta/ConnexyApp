@@ -51,18 +51,19 @@ export function PersonDetailSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-foreground/40 z-40"
+            className="fixed inset-0 bg-foreground/40 z-40"
           />
-          <motion.div
-            key="sheet"
-            role="dialog"
-            aria-label={`Perfil de ${person.name}`}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="absolute inset-x-0 bottom-0 z-50 rounded-t-3xl bg-surface border-t border-border shadow-elegant max-h-[85%] flex flex-col"
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              key="sheet"
+              role="dialog"
+              aria-label={`Perfil de ${person.name}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", damping: 28, stiffness: 260 }}
+              className="w-full max-w-md max-h-[85vh] rounded-3xl bg-surface border border-border shadow-elegant flex flex-col pointer-events-auto"
+            >
             <div className="pt-2 pb-1 flex justify-center shrink-0">
               <span className="h-1.5 w-10 rounded-full bg-border" />
             </div>
@@ -206,6 +207,7 @@ export function PersonDetailSheet({
               </button>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
