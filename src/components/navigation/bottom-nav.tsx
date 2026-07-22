@@ -35,7 +35,7 @@ export function BottomNavPremium({ unreadCount = 0, onNavigate }: BottomNavPremi
         animate="visible"
         role="tablist"
         aria-label="Navegação principal"
-        className="sticky bottom-0 left-0 right-0 z-30 h-20 bg-background/95 backdrop-blur-xl border-t shadow-xl rounded-t-3xl px-2 pt-2 pb-4 safe-area-pb"
+        className="sticky bottom-0 left-0 right-0 z-30 h-20 bg-background/95 backdrop-blur-xl border-t border-border/50 shadow-xl rounded-t-3xl px-2 pt-2 pb-4"
       >
         <ul className="flex items-center justify-between h-full">
           {NAVIGATION_ITEMS.map((item) => {

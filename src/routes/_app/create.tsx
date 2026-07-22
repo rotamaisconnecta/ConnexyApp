@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNavPremium } from "@/components/navigation/bottom-nav";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -66,7 +66,7 @@ function CreatePage() {
           </div>
         </div>
 
-        <BottomNav />
+        <BottomNavPremium />
       </div>
     );
   }
@@ -99,7 +99,10 @@ function CreatePage() {
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.03 }}
               onClick={() =>
-                nav({ to: `/_app/create`, search: { category: action.id.toLowerCase() } })
+                nav({
+                  to: "/_app/create",
+                  search: { category: action.id.toLowerCase() },
+                })
               }
               aria-label={`Criar ${action.label}`}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -118,7 +121,7 @@ function CreatePage() {
         </motion.div>
       </div>
 
-      <BottomNav />
+      <BottomNavPremium />
     </div>
   );
 }

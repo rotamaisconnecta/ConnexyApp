@@ -3,7 +3,7 @@
    Pure TypeScript. No React. No side effects.
 ========================================================= */
 
-import type { NavigationTabValue } from "./navigation-types";
+import type { NavigationTabValue, NavigationItem, CreateActionItem } from "./navigation-types";
 import { NavigationTab } from "./navigation-types";
 import { NAVIGATION_ITEMS, CREATE_ACTIONS } from "./navigation-items";
 
@@ -33,7 +33,7 @@ export function getActiveTab(pathname: string): NavigationTabValue | null {
 
 /* ─── getNavigationItem ─────────────────────────────────── */
 
-export function getNavigationItem(id: NavigationTabValue) {
+export function getNavigationItem(id: NavigationTabValue): NavigationItem | null {
   return NAVIGATION_ITEMS.find((item) => item.id === id) ?? null;
 }
 
@@ -46,13 +46,13 @@ export function getNavigationRoute(id: NavigationTabValue): string {
 
 /* ─── getCreateActions ──────────────────────────────────── */
 
-export function getCreateActions() {
+export function getCreateActions(): CreateActionItem[] {
   return CREATE_ACTIONS;
 }
 
 /* ─── getCreateActionByCategory ─────────────────────────── */
 
-export function getCreateActionByCategory(category: string) {
+export function getCreateActionByCategory(category: string): CreateActionItem | null {
   return (
     CREATE_ACTIONS.find((action) => action.id.toLowerCase() === category.toLowerCase()) ?? null
   );

@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { bottomNavItem } from "./navigation-animations";
@@ -26,7 +26,7 @@ export function BottomNavItem({ item, isActive }: BottomNavItemProps) {
   return (
     <motion.li variants={bottomNavItem} className="flex-1 flex justify-center">
       <Link
-        to={item.route}
+        to={item.route as "/feed" | "/chat" | "/profile" | "/"}
         aria-label={item.label}
         tabIndex={0}
         role="tab"

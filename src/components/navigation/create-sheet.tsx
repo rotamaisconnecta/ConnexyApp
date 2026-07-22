@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { sheetOverlay, sheetContainer } from "./navigation-animations";
 import { CreateSheetItem } from "./create-sheet-item";
 import { CREATE_ACTIONS } from "@/lib/navigation/navigation-items";
 
@@ -71,7 +72,7 @@ export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-display font-bold text-lg">Criar publicação</h2>
-                  <p className="text-xs text-muted-foreground">O que deseja compartilhar?</p>
+                  <p className="text-xs text-muted-foreground">O que você deseja compartilhar?</p>
                 </div>
                 <button
                   onClick={onClose}
