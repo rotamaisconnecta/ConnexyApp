@@ -29,19 +29,27 @@ import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppGerenciarRouteImport } from './routes/_app.gerenciar'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppLocaisRouteImport } from './routes/_app.locais'
+import { Route as AppMarketplaceRouteImport } from './routes/_app/marketplace'
 import { Route as AppMatchingRouteImport } from './routes/_app.matching'
 import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
 import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppReelsRouteImport } from './routes/_app.reels'
+import { Route as AppRideRouteImport } from './routes/_app/ride'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
+import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
+import { Route as AppEventEventIdRouteImport } from './routes/_app/event.$eventId'
 import { Route as AppGerenciarNovoReelRouteImport } from './routes/_app.gerenciar.novo-reel'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
+import { Route as AppRideActiveRouteImport } from './routes/_app/ride/active'
+import { Route as AppRideHistoryRouteImport } from './routes/_app/ride/history'
+import { Route as AppRideMatchingRouteImport } from './routes/_app/ride/matching'
+import { Route as AppRideRequestRouteImport } from './routes/_app/ride/request'
 import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -143,6 +151,11 @@ const AppLocaisRoute = AppLocaisRouteImport.update({
   path: '/locais',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMarketplaceRoute = AppMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMatchingRoute = AppMatchingRouteImport.update({
   id: '/matching',
   path: '/matching',
@@ -173,9 +186,19 @@ const AppReelsRoute = AppReelsRouteImport.update({
   path: '/reels',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRideRoute = AppRideRouteImport.update({
+  id: '/ride',
+  path: '/ride',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRotaRoute = AppRotaRouteImport.update({
   id: '/rota',
   path: '/rota',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBusinessBusinessIdRoute = AppBusinessBusinessIdRouteImport.update({
+  id: '/business/$businessId',
+  path: '/business/$businessId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatConversationIdRoute = AppChatConversationIdRouteImport.update({
@@ -187,6 +210,11 @@ const AppChatIdRoute = AppChatIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AppChatRoute,
+} as any)
+const AppEventEventIdRoute = AppEventEventIdRouteImport.update({
+  id: '/event/$eventId',
+  path: '/event/$eventId',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppGerenciarNovoReelRoute = AppGerenciarNovoReelRouteImport.update({
   id: '/novo-reel',
@@ -207,6 +235,26 @@ const AppPerfilIdRoute = AppPerfilIdRouteImport.update({
   id: '/perfil/$id',
   path: '/perfil/$id',
   getParentRoute: () => AppRoute,
+} as any)
+const AppRideActiveRoute = AppRideActiveRouteImport.update({
+  id: '/active',
+  path: '/active',
+  getParentRoute: () => AppRideRoute,
+} as any)
+const AppRideHistoryRoute = AppRideHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppRideRoute,
+} as any)
+const AppRideMatchingRoute = AppRideMatchingRouteImport.update({
+  id: '/matching',
+  path: '/matching',
+  getParentRoute: () => AppRideRoute,
+} as any)
+const AppRideRequestRoute = AppRideRequestRouteImport.update({
+  id: '/request',
+  path: '/request',
+  getParentRoute: () => AppRideRoute,
 } as any)
 const AppSolicitacaoIdRoute = AppSolicitacaoIdRouteImport.update({
   id: '/solicitacao/$id',
@@ -234,18 +282,26 @@ export interface FileRoutesByFullPath {
   '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
+  '/marketplace': typeof AppMarketplaceRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/profile': typeof AppProfileRoute
   '/reels': typeof AppReelsRoute
+  '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
+  '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/event/$eventId': typeof AppEventEventIdRoute
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
+  '/ride/active': typeof AppRideActiveRoute
+  '/ride/history': typeof AppRideHistoryRoute
+  '/ride/matching': typeof AppRideMatchingRoute
+  '/ride/request': typeof AppRideRequestRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
   '/perfil/': typeof AppPerfilIndexRoute
 }
@@ -269,18 +325,26 @@ export interface FileRoutesByTo {
   '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
   '/locais': typeof AppLocaisRoute
+  '/marketplace': typeof AppMarketplaceRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/profile': typeof AppProfileRoute
   '/reels': typeof AppReelsRoute
+  '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
+  '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/event/$eventId': typeof AppEventEventIdRoute
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
+  '/ride/active': typeof AppRideActiveRoute
+  '/ride/history': typeof AppRideHistoryRoute
+  '/ride/matching': typeof AppRideMatchingRoute
+  '/ride/request': typeof AppRideRequestRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
   '/perfil': typeof AppPerfilIndexRoute
 }
@@ -306,18 +370,26 @@ export interface FileRoutesById {
   '/_app/gerenciar': typeof AppGerenciarRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/locais': typeof AppLocaisRoute
+  '/_app/marketplace': typeof AppMarketplaceRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
   '/_app/pessoas': typeof AppPessoasRoute
   '/_app/privacidade': typeof AppPrivacidadeRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/reels': typeof AppReelsRoute
+  '/_app/ride': typeof AppRideRouteWithChildren
   '/_app/rota': typeof AppRotaRoute
+  '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/chat/$id': typeof AppChatIdRoute
+  '/_app/event/$eventId': typeof AppEventEventIdRoute
   '/_app/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
+  '/_app/ride/active': typeof AppRideActiveRoute
+  '/_app/ride/history': typeof AppRideHistoryRoute
+  '/_app/ride/matching': typeof AppRideMatchingRoute
+  '/_app/ride/request': typeof AppRideRequestRoute
   '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
 }
@@ -343,18 +415,26 @@ export interface FileRouteTypes {
     | '/gerenciar'
     | '/home'
     | '/locais'
+    | '/marketplace'
     | '/matching'
     | '/notificacoes'
     | '/pessoas'
     | '/privacidade'
     | '/profile'
     | '/reels'
+    | '/ride'
     | '/rota'
+    | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
+    | '/event/$eventId'
     | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
+    | '/ride/active'
+    | '/ride/history'
+    | '/ride/matching'
+    | '/ride/request'
     | '/solicitacao/$id'
     | '/perfil/'
   fileRoutesByTo: FileRoutesByTo
@@ -378,18 +458,26 @@ export interface FileRouteTypes {
     | '/gerenciar'
     | '/home'
     | '/locais'
+    | '/marketplace'
     | '/matching'
     | '/notificacoes'
     | '/pessoas'
     | '/privacidade'
     | '/profile'
     | '/reels'
+    | '/ride'
     | '/rota'
+    | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
+    | '/event/$eventId'
     | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
+    | '/ride/active'
+    | '/ride/history'
+    | '/ride/matching'
+    | '/ride/request'
     | '/solicitacao/$id'
     | '/perfil'
   id:
@@ -414,18 +502,26 @@ export interface FileRouteTypes {
     | '/_app/gerenciar'
     | '/_app/home'
     | '/_app/locais'
+    | '/_app/marketplace'
     | '/_app/matching'
     | '/_app/notificacoes'
     | '/_app/pessoas'
     | '/_app/privacidade'
     | '/_app/profile'
     | '/_app/reels'
+    | '/_app/ride'
     | '/_app/rota'
+    | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/chat/$id'
+    | '/_app/event/$eventId'
     | '/_app/gerenciar/novo-reel'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
+    | '/_app/ride/active'
+    | '/_app/ride/history'
+    | '/_app/ride/matching'
+    | '/_app/ride/request'
     | '/_app/solicitacao/$id'
     | '/_app/perfil/'
   fileRoutesById: FileRoutesById
@@ -584,6 +680,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLocaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/marketplace': {
+      id: '/_app/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof AppMarketplaceRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/matching': {
       id: '/_app/matching'
       path: '/matching'
@@ -626,11 +729,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReelsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ride': {
+      id: '/_app/ride'
+      path: '/ride'
+      fullPath: '/ride'
+      preLoaderRoute: typeof AppRideRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/rota': {
       id: '/_app/rota'
       path: '/rota'
       fullPath: '/rota'
       preLoaderRoute: typeof AppRotaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/business/$businessId': {
+      id: '/_app/business/$businessId'
+      path: '/business/$businessId'
+      fullPath: '/business/$businessId'
+      preLoaderRoute: typeof AppBusinessBusinessIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/chat/$conversationId': {
@@ -646,6 +763,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/chat/$id'
       preLoaderRoute: typeof AppChatIdRouteImport
       parentRoute: typeof AppChatRoute
+    }
+    '/_app/event/$eventId': {
+      id: '/_app/event/$eventId'
+      path: '/event/$eventId'
+      fullPath: '/event/$eventId'
+      preLoaderRoute: typeof AppEventEventIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/gerenciar/novo-reel': {
       id: '/_app/gerenciar/novo-reel'
@@ -674,6 +798,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/perfil/$id'
       preLoaderRoute: typeof AppPerfilIdRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/ride/active': {
+      id: '/_app/ride/active'
+      path: '/active'
+      fullPath: '/ride/active'
+      preLoaderRoute: typeof AppRideActiveRouteImport
+      parentRoute: typeof AppRideRoute
+    }
+    '/_app/ride/history': {
+      id: '/_app/ride/history'
+      path: '/history'
+      fullPath: '/ride/history'
+      preLoaderRoute: typeof AppRideHistoryRouteImport
+      parentRoute: typeof AppRideRoute
+    }
+    '/_app/ride/matching': {
+      id: '/_app/ride/matching'
+      path: '/matching'
+      fullPath: '/ride/matching'
+      preLoaderRoute: typeof AppRideMatchingRouteImport
+      parentRoute: typeof AppRideRoute
+    }
+    '/_app/ride/request': {
+      id: '/_app/ride/request'
+      path: '/request'
+      fullPath: '/ride/request'
+      preLoaderRoute: typeof AppRideRequestRouteImport
+      parentRoute: typeof AppRideRoute
     }
     '/_app/solicitacao/$id': {
       id: '/_app/solicitacao/$id'
@@ -710,6 +862,23 @@ const AppGerenciarRouteWithChildren = AppGerenciarRoute._addFileChildren(
   AppGerenciarRouteChildren,
 )
 
+interface AppRideRouteChildren {
+  AppRideActiveRoute: typeof AppRideActiveRoute
+  AppRideHistoryRoute: typeof AppRideHistoryRoute
+  AppRideMatchingRoute: typeof AppRideMatchingRoute
+  AppRideRequestRoute: typeof AppRideRequestRoute
+}
+
+const AppRideRouteChildren: AppRideRouteChildren = {
+  AppRideActiveRoute: AppRideActiveRoute,
+  AppRideHistoryRoute: AppRideHistoryRoute,
+  AppRideMatchingRoute: AppRideMatchingRoute,
+  AppRideRequestRoute: AppRideRequestRoute,
+}
+
+const AppRideRouteWithChildren =
+  AppRideRoute._addFileChildren(AppRideRouteChildren)
+
 interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
   AppChatRoute: typeof AppChatRouteWithChildren
@@ -722,13 +891,17 @@ interface AppRouteChildren {
   AppGerenciarRoute: typeof AppGerenciarRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppLocaisRoute: typeof AppLocaisRoute
+  AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
   AppPessoasRoute: typeof AppPessoasRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AppProfileRoute: typeof AppProfileRoute
   AppReelsRoute: typeof AppReelsRoute
+  AppRideRoute: typeof AppRideRouteWithChildren
   AppRotaRoute: typeof AppRotaRoute
+  AppBusinessBusinessIdRoute: typeof AppBusinessBusinessIdRoute
+  AppEventEventIdRoute: typeof AppEventEventIdRoute
   AppLocalIdRoute: typeof AppLocalIdRoute
   AppPerfilIdRoute: typeof AppPerfilIdRoute
   AppSolicitacaoIdRoute: typeof AppSolicitacaoIdRoute
@@ -747,13 +920,17 @@ const AppRouteChildren: AppRouteChildren = {
   AppGerenciarRoute: AppGerenciarRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppLocaisRoute: AppLocaisRoute,
+  AppMarketplaceRoute: AppMarketplaceRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
   AppPessoasRoute: AppPessoasRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AppProfileRoute: AppProfileRoute,
   AppReelsRoute: AppReelsRoute,
+  AppRideRoute: AppRideRouteWithChildren,
   AppRotaRoute: AppRotaRoute,
+  AppBusinessBusinessIdRoute: AppBusinessBusinessIdRoute,
+  AppEventEventIdRoute: AppEventEventIdRoute,
   AppLocalIdRoute: AppLocalIdRoute,
   AppPerfilIdRoute: AppPerfilIdRoute,
   AppSolicitacaoIdRoute: AppSolicitacaoIdRoute,
