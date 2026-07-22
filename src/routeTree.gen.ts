@@ -22,6 +22,7 @@ import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
+import { Route as AppCreateRouteImport } from './routes/_app/create'
 import { Route as AppCreatePostRouteImport } from './routes/_app/create-post'
 import { Route as AppDestinoRouteImport } from './routes/_app.destino'
 import { Route as AppDiscoverRouteImport } from './routes/_app/discover'
@@ -114,6 +115,11 @@ const AppConnectaRoute = AppConnectaRouteImport.update({
 const AppCorridaRoute = AppCorridaRouteImport.update({
   id: '/corrida',
   path: '/corrida',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCreateRoute = AppCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCreatePostRoute = AppCreatePostRouteImport.update({
@@ -275,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
+  '/create': typeof AppCreateRoute
   '/create-post': typeof AppCreatePostRoute
   '/destino': typeof AppDestinoRoute
   '/discover': typeof AppDiscoverRoute
@@ -318,6 +325,7 @@ export interface FileRoutesByTo {
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
+  '/create': typeof AppCreateRoute
   '/create-post': typeof AppCreatePostRoute
   '/destino': typeof AppDestinoRoute
   '/discover': typeof AppDiscoverRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/_app/chat': typeof AppChatRouteWithChildren
   '/_app/connecta': typeof AppConnectaRoute
   '/_app/corrida': typeof AppCorridaRoute
+  '/_app/create': typeof AppCreateRoute
   '/_app/create-post': typeof AppCreatePostRoute
   '/_app/destino': typeof AppDestinoRoute
   '/_app/discover': typeof AppDiscoverRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/connecta'
     | '/corrida'
+    | '/create'
     | '/create-post'
     | '/destino'
     | '/discover'
@@ -451,6 +461,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/connecta'
     | '/corrida'
+    | '/create'
     | '/create-post'
     | '/destino'
     | '/discover'
@@ -495,6 +506,7 @@ export interface FileRouteTypes {
     | '/_app/chat'
     | '/_app/connecta'
     | '/_app/corrida'
+    | '/_app/create'
     | '/_app/create-post'
     | '/_app/destino'
     | '/_app/discover'
@@ -629,6 +641,13 @@ declare module '@tanstack/react-router' {
       path: '/corrida'
       fullPath: '/corrida'
       preLoaderRoute: typeof AppCorridaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/create': {
+      id: '/_app/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof AppCreateRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/create-post': {
@@ -884,6 +903,7 @@ interface AppRouteChildren {
   AppChatRoute: typeof AppChatRouteWithChildren
   AppConnectaRoute: typeof AppConnectaRoute
   AppCorridaRoute: typeof AppCorridaRoute
+  AppCreateRoute: typeof AppCreateRoute
   AppCreatePostRoute: typeof AppCreatePostRoute
   AppDestinoRoute: typeof AppDestinoRoute
   AppDiscoverRoute: typeof AppDiscoverRoute
@@ -913,6 +933,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRouteWithChildren,
   AppConnectaRoute: AppConnectaRoute,
   AppCorridaRoute: AppCorridaRoute,
+  AppCreateRoute: AppCreateRoute,
   AppCreatePostRoute: AppCreatePostRoute,
   AppDestinoRoute: AppDestinoRoute,
   AppDiscoverRoute: AppDiscoverRoute,
