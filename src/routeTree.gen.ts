@@ -24,6 +24,7 @@ import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppCreateRouteImport } from './routes/_app/create'
 import { Route as AppCreatePostRouteImport } from './routes/_app/create-post'
+import { Route as AppDesignSystemRouteImport } from './routes/_app/design-system'
 import { Route as AppDestinoRouteImport } from './routes/_app.destino'
 import { Route as AppDiscoverRouteImport } from './routes/_app/discover'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
@@ -33,6 +34,7 @@ import { Route as AppLocaisRouteImport } from './routes/_app.locais'
 import { Route as AppMarketplaceRouteImport } from './routes/_app/marketplace'
 import { Route as AppMatchingRouteImport } from './routes/_app.matching'
 import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
+import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
@@ -127,6 +129,11 @@ const AppCreatePostRoute = AppCreatePostRouteImport.update({
   path: '/create-post',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDesignSystemRoute = AppDesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDestinoRoute = AppDestinoRouteImport.update({
   id: '/destino',
   path: '/destino',
@@ -170,6 +177,11 @@ const AppMatchingRoute = AppMatchingRouteImport.update({
 const AppNotificacoesRoute = AppNotificacoesRouteImport.update({
   id: '/notificacoes',
   path: '/notificacoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPessoasRoute = AppPessoasRouteImport.update({
@@ -283,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/corrida': typeof AppCorridaRoute
   '/create': typeof AppCreateRoute
   '/create-post': typeof AppCreatePostRoute
+  '/design-system': typeof AppDesignSystemRoute
   '/destino': typeof AppDestinoRoute
   '/discover': typeof AppDiscoverRoute
   '/feed': typeof AppFeedRoute
@@ -292,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof AppMarketplaceRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
+  '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/profile': typeof AppProfileRoute
@@ -327,6 +341,7 @@ export interface FileRoutesByTo {
   '/corrida': typeof AppCorridaRoute
   '/create': typeof AppCreateRoute
   '/create-post': typeof AppCreatePostRoute
+  '/design-system': typeof AppDesignSystemRoute
   '/destino': typeof AppDestinoRoute
   '/discover': typeof AppDiscoverRoute
   '/feed': typeof AppFeedRoute
@@ -336,6 +351,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof AppMarketplaceRoute
   '/matching': typeof AppMatchingRoute
   '/notificacoes': typeof AppNotificacoesRoute
+  '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/profile': typeof AppProfileRoute
@@ -373,6 +389,7 @@ export interface FileRoutesById {
   '/_app/corrida': typeof AppCorridaRoute
   '/_app/create': typeof AppCreateRoute
   '/_app/create-post': typeof AppCreatePostRoute
+  '/_app/design-system': typeof AppDesignSystemRoute
   '/_app/destino': typeof AppDestinoRoute
   '/_app/discover': typeof AppDiscoverRoute
   '/_app/feed': typeof AppFeedRoute
@@ -382,6 +399,7 @@ export interface FileRoutesById {
   '/_app/marketplace': typeof AppMarketplaceRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_app/pessoas': typeof AppPessoasRoute
   '/_app/privacidade': typeof AppPrivacidadeRoute
   '/_app/profile': typeof AppProfileRoute
@@ -419,6 +437,7 @@ export interface FileRouteTypes {
     | '/corrida'
     | '/create'
     | '/create-post'
+    | '/design-system'
     | '/destino'
     | '/discover'
     | '/feed'
@@ -428,6 +447,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/matching'
     | '/notificacoes'
+    | '/notifications'
     | '/pessoas'
     | '/privacidade'
     | '/profile'
@@ -463,6 +483,7 @@ export interface FileRouteTypes {
     | '/corrida'
     | '/create'
     | '/create-post'
+    | '/design-system'
     | '/destino'
     | '/discover'
     | '/feed'
@@ -472,6 +493,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/matching'
     | '/notificacoes'
+    | '/notifications'
     | '/pessoas'
     | '/privacidade'
     | '/profile'
@@ -508,6 +530,7 @@ export interface FileRouteTypes {
     | '/_app/corrida'
     | '/_app/create'
     | '/_app/create-post'
+    | '/_app/design-system'
     | '/_app/destino'
     | '/_app/discover'
     | '/_app/feed'
@@ -517,6 +540,7 @@ export interface FileRouteTypes {
     | '/_app/marketplace'
     | '/_app/matching'
     | '/_app/notificacoes'
+    | '/_app/notifications'
     | '/_app/pessoas'
     | '/_app/privacidade'
     | '/_app/profile'
@@ -657,6 +681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreatePostRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/design-system': {
+      id: '/_app/design-system'
+      path: '/design-system'
+      fullPath: '/design-system'
+      preLoaderRoute: typeof AppDesignSystemRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/destino': {
       id: '/_app/destino'
       path: '/destino'
@@ -718,6 +749,13 @@ declare module '@tanstack/react-router' {
       path: '/notificacoes'
       fullPath: '/notificacoes'
       preLoaderRoute: typeof AppNotificacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/pessoas': {
@@ -905,6 +943,7 @@ interface AppRouteChildren {
   AppCorridaRoute: typeof AppCorridaRoute
   AppCreateRoute: typeof AppCreateRoute
   AppCreatePostRoute: typeof AppCreatePostRoute
+  AppDesignSystemRoute: typeof AppDesignSystemRoute
   AppDestinoRoute: typeof AppDestinoRoute
   AppDiscoverRoute: typeof AppDiscoverRoute
   AppFeedRoute: typeof AppFeedRoute
@@ -914,6 +953,7 @@ interface AppRouteChildren {
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppPessoasRoute: typeof AppPessoasRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AppProfileRoute: typeof AppProfileRoute
@@ -935,6 +975,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCorridaRoute: AppCorridaRoute,
   AppCreateRoute: AppCreateRoute,
   AppCreatePostRoute: AppCreatePostRoute,
+  AppDesignSystemRoute: AppDesignSystemRoute,
   AppDestinoRoute: AppDestinoRoute,
   AppDiscoverRoute: AppDiscoverRoute,
   AppFeedRoute: AppFeedRoute,
@@ -944,6 +985,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppPessoasRoute: AppPessoasRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AppProfileRoute: AppProfileRoute,

@@ -11,10 +11,15 @@ import { NavigationTab } from "@/lib/navigation/navigation-types";
 
 interface BottomNavPremiumProps {
   unreadCount?: number;
+  notificationCount?: number;
   onNavigate?: (route: string) => void;
 }
 
-export function BottomNavPremium({ unreadCount = 0, onNavigate }: BottomNavPremiumProps) {
+export function BottomNavPremium({
+  unreadCount = 0,
+  notificationCount = 0,
+  onNavigate,
+}: BottomNavPremiumProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const activeTab = getActiveTab(pathname);
@@ -43,7 +48,12 @@ export function BottomNavPremium({ unreadCount = 0, onNavigate }: BottomNavPremi
               return <FloatingPlusButton key={item.id} onTap={() => setIsSheetOpen(true)} />;
             }
 
-            const badge = item.id === NavigationTab.CHAT ? unreadCount : undefined;
+            const badge =
+              item.id === NavigationTab.CHAT
+                ? unreadCount
+                : item.id === NavigationTab.HOME
+                  ? notificationCount
+                  : undefined;
 
             return (
               <BottomNavItem

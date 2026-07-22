@@ -19,10 +19,11 @@ const rightItems = [
 
 interface BottomNavProps {
   unreadCount?: number;
+  notificationCount?: number;
   onNavigate?: (route: string) => void;
 }
 
-export function BottomNav({ unreadCount = 0, onNavigate }: BottomNavProps) {
+export function BottomNav({ unreadCount = 0, notificationCount = 0, onNavigate }: BottomNavProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -50,6 +51,7 @@ export function BottomNav({ unreadCount = 0, onNavigate }: BottomNavProps) {
           {leftItems.map(({ to, label, icon: Icon }) => {
             const active =
               to === "/" ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+            const badge = to === "/feed" ? notificationCount : undefined;
             return (
               <li key={to} className="flex-1 flex justify-center">
                 <Link
@@ -58,7 +60,7 @@ export function BottomNav({ unreadCount = 0, onNavigate }: BottomNavProps) {
                   tabIndex={0}
                   role="tab"
                   aria-selected={active}
-                  className="flex flex-col items-center gap-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+                  className="flex flex-col items-center gap-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl relative"
                 >
                   <span
                     className={cn(
@@ -78,6 +80,11 @@ export function BottomNav({ unreadCount = 0, onNavigate }: BottomNavProps) {
                   >
                     {label}
                   </span>
+                  {badge !== undefined && badge > 0 && (
+                    <span className="absolute -mt-7 ml-4 h-4 min-w-[16px] rounded-full bg-error text-white text-[9px] font-bold px-1 grid place-items-center">
+                      {getUnreadBadgeCount(badge)}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
