@@ -14,7 +14,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { Logo } from "@/lib/branding/brand-config";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { PresenceDot } from "@/components/presence-dot";
 import { MapCanvas } from "@/components/map-canvas";
 import { PersonDetailSheet } from "@/components/person-detail-sheet";
@@ -149,9 +149,10 @@ function Home() {
     <div className="flex-1">
       <StatusBar />
 
-      <header className="flex items-center justify-between px-5 pt-1 pb-3">
-        <img src={Logo.default} alt="Connexy" className="h-9 object-contain" />
-        <div className="flex items-center gap-2 shrink-0">
+      <header className="grid grid-cols-[1fr_auto_1fr] items-center px-5 pt-1 pb-3">
+        <div />
+        <BrandLogo variant="full" size="lg" />
+        <div className="flex items-center gap-2 shrink-0 justify-end">
           <Link
             to="/notificacoes"
             className="relative h-10 w-10 grid place-items-center rounded-full bg-secondary"
