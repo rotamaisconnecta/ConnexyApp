@@ -1,0 +1,37 @@
+export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export function isWithinRadius(
+  userLat: number,
+  userLon: number,
+  eventLat: number,
+  eventLon: number,
+  radius: number,
+): boolean {
+  const distance = calculateDistance(userLat, userLon, eventLat, eventLon);
+  return distance <= radius;
+}
+
+export function getDistanceLabel(meters: number): string {
+  if (meters < 50) return "< 50m";
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)}km`;
+}
+
+export function formatProximity(meters: number): string {
+  if (meters < 50) return "muito perto";
+  if (meters < 200) return "perto";
+  if (meters < 1000) return "perto";
+  return "longe";
+}

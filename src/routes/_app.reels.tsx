@@ -1,21 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { Search, Send, Plus, Clapperboard, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
-import { ReelCard, type ReelItem } from "@/components/reels/reel-card";
-import { CommentsSheet } from "@/components/reels/comments-sheet";
 import { motion } from "framer-motion";
+import { ReelsFeed } from "@/components/reels/reels-feed";
+import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
+import { ReelShareSheet } from "@/components/reels/reel-share-sheet";
+import { ReelLoading } from "@/components/reels/reel-loading";
+import { MOCK_REELS } from "@/lib/reels/reel-mocks";
+import type { Reel, ReelComment } from "@/lib/reels/reel-types";
+import { sortSmart } from "@/lib/reels/reel-ranking";
+import { filterReels, type ReelFilterState } from "@/lib/reels/reel-filter";
+import { REEL_CATEGORY_META } from "@/lib/reels/reel-types";
 
 export const Route = createFileRoute("/_app/reels")({
   head: () => ({
     meta: [
-      { title: "Reels — Connecta" },
+      { title: "Reels — Connexy" },
       {
         name: "description",
         content:
-          "Momentos reais de quem está por perto. Reels ancorados em lugares e eventos do Connecta.",
+          "Momentos reais de quem está por perto. Reels ancorados em lugares e eventos do Connexy.",
       },
     ],
   }),
@@ -25,109 +29,65 @@ export const Route = createFileRoute("/_app/reels")({
 type Tab = "reels" | "amigos";
 
 function ReelsPage() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("reels");
-  const [reels, setReels] = useState<ReelItem[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const [muted, setMuted] = useState(true);
   const [commentsFor, setCommentsFor] = useState<string | null>(null);
+  const [shareFor, setShareFor] = useState<string | null>(null);
+  const [filters, setFilters] = useState<ReelFilterState>({
+    category: "ALL",
+    searchQuery: "",
+    sortBy: "smart",
+  });
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("reels")
-      .select(
-        `
-        id, video_url, poster_url, caption, audio_label, created_at, tagged_user_ids,
-        author:profiles!reels_author_id_fkey ( id, name, handle, photo_url ),
-        place:places ( id, name, category )
-      `,
-      )
-      .order("created_at", { ascending: false })
-      .limit(20);
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
-    }
-    const rows = data ?? [];
-    const ids = rows.map((r) => r.id);
-    const [{ data: likeRows }, { data: commentRows }, myLikesRes] = await Promise.all([
-      supabase
-        .from("reel_likes")
-        .select("reel_id")
-        .in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
-      supabase
-        .from("reel_comments")
-        .select("reel_id")
-        .in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
-      user
-        ? supabase
-            .from("reel_likes")
-            .select("reel_id")
-            .eq("user_id", user.id)
-            .in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
-        : Promise.resolve({ data: [] as { reel_id: string }[] }),
-    ]);
-    const likesMap = new Map<string, number>();
-    (likeRows ?? []).forEach((r) => likesMap.set(r.reel_id, (likesMap.get(r.reel_id) ?? 0) + 1));
-    const commentsMap = new Map<string, number>();
-    (commentRows ?? []).forEach((r) =>
-      commentsMap.set(r.reel_id, (commentsMap.get(r.reel_id) ?? 0) + 1),
-    );
-    const mineSet = new Set(
-      ((myLikesRes.data as { reel_id: string }[] | null) ?? []).map((r) => r.reel_id),
-    );
-
-    const items: ReelItem[] = rows.map((r) => ({
-      id: r.id,
-      video_url: r.video_url,
-      poster_url: r.poster_url,
-      caption: r.caption,
-      audio_label: r.audio_label,
-      created_at: r.created_at,
-      tagged_user_ids: r.tagged_user_ids ?? [],
-      author: Array.isArray(r.author) ? r.author[0] : r.author,
-      place: Array.isArray(r.place) ? r.place[0] : r.place,
-      likes: likesMap.get(r.id) ?? 0,
-      comments: commentsMap.get(r.id) ?? 0,
-      likedByMe: mineSet.has(r.id),
-    }));
-
-    // Resolve signed URLs for paths stored in the private bucket
-    const needsSign = items
-      .filter((it) => it.video_url && !it.video_url.startsWith("http"))
-      .map((it) => it.video_url);
-    const posterNeeds = items
-      .filter((it) => it.poster_url && !it.poster_url.startsWith("http"))
-      .map((it) => it.poster_url!);
-    const allPaths = Array.from(new Set([...needsSign, ...posterNeeds]));
-    if (allPaths.length) {
-      const { data: signed } = await supabase.storage
-        .from("reels-media")
-        .createSignedUrls(allPaths, 60 * 60 * 6);
-      const map = new Map<string, string>();
-      (signed ?? []).forEach((s) => {
-        if (s.path && s.signedUrl) map.set(s.path, s.signedUrl);
-      });
-      items.forEach((it) => {
-        if (it.video_url && !it.video_url.startsWith("http"))
-          it.video_url = map.get(it.video_url) ?? it.video_url;
-        if (it.poster_url && !it.poster_url.startsWith("http"))
-          it.poster_url = map.get(it.poster_url) ?? it.poster_url;
-      });
-    }
-    setReels(items);
-    setLoading(false);
-  }, [user]);
+  const [mockComments, setMockComments] = useState<ReelComment[]>([
+    {
+      id: "c1",
+      text: "Que momento incrível! 🔥",
+      authorId: "u1",
+      authorName: "Ana Silva",
+      authorPhoto: "https://i.pravatar.cc/150?img=1",
+      createdAt: "2026-07-21T10:00:00Z",
+      likes: 12,
+      likedByMe: false,
+      replies: [],
+    },
+    {
+      id: "c2",
+      text: "Adorei! Vou lá amanhã",
+      authorId: "u2",
+      authorName: "Carlos Souza",
+      authorPhoto: "https://i.pravatar.cc/150?img=3",
+      createdAt: "2026-07-21T09:30:00Z",
+      likes: 5,
+      likedByMe: true,
+      replies: [],
+    },
+    {
+      id: "c3",
+      text: "Esse lugar é demais 🙌",
+      authorId: "u3",
+      authorName: "Maria Costa",
+      authorPhoto: "https://i.pravatar.cc/150?img=5",
+      createdAt: "2026-07-20T18:00:00Z",
+      likes: 8,
+      likedByMe: false,
+      replies: [],
+    },
+  ]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    const timer = setTimeout(() => {
+      setReels(sortSmart(MOCK_REELS));
+      setLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
 
-  // Track active reel via scroll position
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -139,63 +99,80 @@ function ReelsPage() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [reels.length]);
 
-  async function toggleLike(reelId: string) {
-    if (!user) {
-      toast.error("Entre para curtir");
-      return;
-    }
-    const idx = reels.findIndex((r) => r.id === reelId);
-    if (idx < 0) return;
-    const wasLiked = reels[idx].likedByMe;
+  const filteredReels = filterReels(reels, filters);
+
+  function handleToggleLike(reelId: string) {
     setReels((prev) =>
-      prev.map((r, i) =>
-        i === idx ? { ...r, likedByMe: !wasLiked, likes: r.likes + (wasLiked ? -1 : 1) } : r,
+      prev.map((r) =>
+        r.id === reelId
+          ? {
+              ...r,
+              likedByMe: !r.likedByMe,
+              stats: { ...r.stats, likes: r.stats.likes + (r.likedByMe ? -1 : 1) },
+            }
+          : r,
       ),
     );
-    if (wasLiked) {
-      await supabase.from("reel_likes").delete().eq("reel_id", reelId).eq("user_id", user.id);
-    } else {
-      const { error } = await supabase
-        .from("reel_likes")
-        .insert({ reel_id: reelId, user_id: user.id });
-      if (error && !error.message.includes("duplicate")) toast.error(error.message);
-    }
   }
 
-  const emptyState = useMemo(
-    () => (
-      <div className="absolute inset-0 grid place-items-center px-6 text-center">
-        <div>
-          <div className="mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-brand text-white shadow-elegant">
-            <Clapperboard className="h-8 w-8" />
-          </div>
-          <h2 className="mt-4 font-display text-xl text-white font-bold">
-            Nenhum reel por aqui ainda
-          </h2>
-          <p className="mt-2 text-sm text-white/70">
-            Seja o primeiro a compartilhar um momento real de um lugar do Connecta.
-          </p>
-          <Link
-            to="/gerenciar/novo-reel"
-            className="mt-5 inline-flex items-center gap-2 h-11 rounded-full bg-gradient-brand text-white font-semibold px-5 shadow-elegant"
-          >
-            <Plus className="h-4 w-4" /> Criar meu primeiro reel
-          </Link>
-        </div>
-      </div>
-    ),
-    [],
-  );
+  function handleToggleSave(reelId: string) {
+    setReels((prev) =>
+      prev.map((r) =>
+        r.id === reelId
+          ? {
+              ...r,
+              savedByMe: !r.savedByMe,
+              stats: { ...r.stats, saves: r.stats.saves + (r.savedByMe ? -1 : 1) },
+            }
+          : r,
+      ),
+    );
+  }
+
+  function handleToggleFollow(reelId: string) {
+    setReels((prev) =>
+      prev.map((r) =>
+        r.id === reelId ? { ...r, author: { ...r.author, isFollowing: !r.author.isFollowing } } : r,
+      ),
+    );
+  }
+
+  function handleAddComment(text: string) {
+    if (!commentsFor || !text.trim()) return;
+    const newComment: ReelComment = {
+      id: `c-${Date.now()}`,
+      text: text.trim(),
+      authorId: "current-user",
+      authorName: "Você",
+      authorPhoto: "https://i.pravatar.cc/150?img=12",
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      likedByMe: false,
+      replies: [],
+    };
+    setMockComments((prev) => [...prev, newComment]);
+    setReels((prev) =>
+      prev.map((r) =>
+        r.id === commentsFor ? { ...r, stats: { ...r.stats, comments: r.stats.comments + 1 } } : r,
+      ),
+    );
+  }
+
+  function handleLikeComment(commentId: string) {
+    setMockComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? { ...c, likedByMe: !c.likedByMe, likes: c.likes + (c.likedByMe ? -1 : 1) }
+          : c,
+      ),
+    );
+  }
 
   return (
     <div className="absolute inset-0 bg-[#0a0a0a] flex flex-col overflow-hidden">
-      {/* Header */}
       <div className="absolute inset-x-0 top-0 z-30 pt-4 px-4 pb-2 flex items-center gap-3">
         <div className="flex-1 flex items-center justify-center gap-1.5">
-          <span className="font-display text-lg font-bold text-white">connec</span>
-          <span className="font-display text-lg font-bold bg-gradient-brand bg-clip-text text-transparent">
-            ta
-          </span>
+          <span className="font-display text-lg font-bold text-white">connexy</span>
         </div>
         <button
           className="absolute right-14 top-4 h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15"
@@ -212,7 +189,6 @@ function ReelsPage() {
             3
           </span>
         </Link>
-        {/* Tabs */}
         <div className="absolute left-4 top-14 flex items-center gap-4">
           <TabBtn
             active={tab === "reels"}
@@ -227,34 +203,68 @@ function ReelsPage() {
             icon={<Users className="h-4 w-4" />}
           />
         </div>
+        <div className="absolute left-4 top-24 flex gap-2 overflow-x-auto no-scrollbar max-w-[80%]">
+          <FilterPill
+            active={filters.category === "ALL"}
+            onClick={() => setFilters((f) => ({ ...f, category: "ALL" }))}
+            label="Todos"
+          />
+          {REEL_CATEGORY_META.map((cat) => (
+            <FilterPill
+              key={cat.value}
+              active={filters.category === cat.value}
+              onClick={() => setFilters((f) => ({ ...f, category: cat.value }))}
+              label={`${cat.emoji} ${cat.label}`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Feed */}
-      <div ref={scrollerRef} className="flex-1 overflow-y-auto snap-y snap-mandatory no-scrollbar">
+      <div className="flex-1">
         {loading ? (
-          <div className="h-full grid place-items-center text-white/70 text-sm">Carregando…</div>
-        ) : reels.length === 0 ? (
-          <div className="h-full relative">{emptyState}</div>
+          <ReelLoading />
+        ) : filteredReels.length === 0 ? (
+          <div className="h-full grid place-items-center px-6 text-center">
+            <div>
+              <div className="mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-brand text-white shadow-lg">
+                <Clapperboard className="h-8 w-8" />
+              </div>
+              <h2 className="mt-4 font-display text-xl text-white font-bold">
+                Nenhum reel encontrado
+              </h2>
+              <p className="mt-2 text-sm text-white/70">
+                Seja o primeiro a compartilhar um momento real.
+              </p>
+              <Link
+                to="/create"
+                className="mt-5 inline-flex items-center gap-2 h-11 rounded-full bg-gradient-brand text-white font-semibold px-5 shadow-lg"
+              >
+                <Plus className="h-4 w-4" /> Criar reel
+              </Link>
+            </div>
+          </div>
         ) : (
-          reels.map((reel, i) => (
-            <ReelCard
-              key={reel.id}
-              reel={reel}
-              active={i === activeIdx && tab === "reels"}
-              muted={muted}
-              onToggleMute={() => setMuted((m) => !m)}
-              onToggleLike={() => toggleLike(reel.id)}
-              onOpenComments={() => setCommentsFor(reel.id)}
-              onShare={() => toast.info("Em breve: compartilhar reel no chat")}
-            />
-          ))
+          <ReelsFeed
+            reels={filteredReels}
+            activeIdx={activeIdx}
+            muted={muted}
+            scrollRef={scrollerRef}
+            onScroll={() => {}}
+            onToggleMute={() => setMuted((m) => !m)}
+            onToggleLike={handleToggleLike}
+            onOpenComments={(id) => setCommentsFor(id)}
+            onShare={(id) => setShareFor(id)}
+            onSave={handleToggleSave}
+            onFollow={handleToggleFollow}
+            onConnect={() => {}}
+            onOpenProfile={(id) => navigate({ to: "/perfil/$id", params: { id } })}
+          />
         )}
       </div>
 
-      {/* Progress bar segments */}
-      {reels.length > 1 && (
+      {filteredReels.length > 1 && (
         <div className="absolute left-4 right-4 bottom-3 z-20 flex gap-1 pointer-events-none">
-          {reels.map((_, i) => (
+          {filteredReels.map((_, i) => (
             <div key={i} className="flex-1 h-0.5 rounded-full bg-white/20 overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-brand"
@@ -267,28 +277,46 @@ function ReelsPage() {
         </div>
       )}
 
-      {/* FAB Create */}
       <Link
-        to="/gerenciar/novo-reel"
-        className="absolute right-4 bottom-8 z-30 h-14 w-14 grid place-items-center rounded-full bg-gradient-brand text-white shadow-elegant active:scale-95 transition"
+        to="/create"
+        className="absolute right-4 bottom-8 z-30 h-14 w-14 grid place-items-center rounded-full bg-gradient-brand text-white shadow-lg active:scale-95 transition"
         aria-label="Criar reel"
       >
         <Plus className="h-6 w-6" />
       </Link>
 
-      <CommentsSheet
+      <ReelCommentsSheet
         reelId={commentsFor}
         open={!!commentsFor}
         onClose={() => setCommentsFor(null)}
-        currentUserId={user?.id ?? null}
-        onCountChange={(delta) => {
-          if (!commentsFor) return;
-          setReels((prev) =>
-            prev.map((r) => (r.id === commentsFor ? { ...r, comments: r.comments + delta } : r)),
-          );
-        }}
+        comments={mockComments}
+        onAddComment={handleAddComment}
+        onLikeComment={handleLikeComment}
       />
+
+      <ReelShareSheet reelId={shareFor ?? ""} open={!!shareFor} onClose={() => setShareFor(null)} />
     </div>
+  );
+}
+
+function FilterPill({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 h-8 px-3 rounded-full text-xs font-semibold transition-colors ${
+        active ? "bg-white text-black" : "bg-white/10 text-white/70 hover:bg-white/20"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
