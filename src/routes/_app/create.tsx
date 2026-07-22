@@ -38,9 +38,9 @@ function CreatePage() {
 
   if (activeCategory) {
     return (
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
         <StatusBar />
-        <div className="flex items-center gap-3 px-5 pt-1 pb-3">
+        <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
           <Link to="/feed" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
             <ChevronLeft className="h-4 w-4" />
           </Link>
@@ -72,10 +72,10 @@ function CreatePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
       <StatusBar />
 
-      <div className="flex items-center gap-3 px-5 pt-1 pb-3">
+      <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
         <Link to="/feed" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
           <ChevronLeft className="h-4 w-4" />
         </Link>
@@ -85,12 +85,12 @@ function CreatePage() {
         </div>
       </div>
 
-      <div className="flex-1 px-5 pb-4 overflow-y-auto no-scrollbar">
+      <div className="flex-1 px-5 pb-[140px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <motion.div
           variants={gridContainer}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-3 gap-3"
+          className="grid grid-cols-3 gap-4 justify-items-center"
         >
           {CREATE_ACTIONS.map((action) => (
             <motion.button
