@@ -17,7 +17,11 @@ export function FloatingPlusButton({ onTap }: FloatingPlusButtonProps) {
         aria-label="Criar publicação"
         className="relative h-16 w-16 rounded-full bg-gradient-to-br from-[#6C3BFF] to-[#8B5CFF] shadow-xl ring-4 ring-background flex items-center justify-center z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 overflow-hidden"
       >
-        <img src={Icon} alt="" className="h-[34px] w-[34px] object-contain" />
+        <img
+          src={Icon}
+          alt="Connexy"
+          className="h-[46px] w-[46px] object-contain select-none pointer-events-none drop-shadow-md"
+        />
       </motion.button>
     </motion.li>
   );
