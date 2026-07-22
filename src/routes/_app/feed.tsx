@@ -3,6 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { Feed } from "@/components/feed/feed";
 import { currentUser } from "@/lib/mock-data";
 import { FeedItemType, type FeedItem } from "@/lib/feed/feed-types";
+import { Logo } from "@/lib/branding/brand-config";
 
 const MOCK_FEED_ITEMS: FeedItem[] = [
   {
@@ -226,7 +227,7 @@ function FeedPage() {
       <StatusBar />
 
       <header className="px-5 pt-1 pb-3">
-        <h1 className="font-display font-bold text-lg">Feed</h1>
+        <img src={Logo.default} alt="Connexy" className="h-8" />
       </header>
 
       <div className="px-4">
