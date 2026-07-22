@@ -14,7 +14,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { Logo } from "@/components/logo";
+import { Logo } from "@/lib/branding/brand-config";
 import { PresenceDot } from "@/components/presence-dot";
 import { MapCanvas } from "@/components/map-canvas";
 import { PersonDetailSheet } from "@/components/person-detail-sheet";
@@ -36,7 +36,7 @@ import useEmblaCarousel from "embla-carousel-react";
 export const Route = createFileRoute("/_app/home")({
   head: () => ({
     meta: [
-      { title: "Connexa — Mova-se, conecte-se, descubra" },
+      { title: "Connexy" },
       {
         name: "description",
         content: "Seu feed contextual de pessoas, eventos e lugares perto de você.",
@@ -149,10 +149,8 @@ function Home() {
     <div className="flex-1">
       <StatusBar />
 
-      <header className="px-5 pt-1 pb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-        <div className="min-w-0">
-          <Logo size={36} />
-        </div>
+      <header className="flex items-center justify-between px-5 pt-1 pb-3">
+        <img src={Logo.default} alt="Connexy" className="h-9 object-contain" />
         <div className="flex items-center gap-2 shrink-0">
           <Link
             to="/notificacoes"

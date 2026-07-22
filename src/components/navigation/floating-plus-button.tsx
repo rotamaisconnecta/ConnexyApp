@@ -15,9 +15,9 @@ export function FloatingPlusButton({ onTap }: FloatingPlusButtonProps) {
         whileHover="hover"
         variants={centerButton}
         aria-label="Criar publicação"
-        className="relative h-16 w-16 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary shadow-xl flex items-center justify-center z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 overflow-hidden"
+        className="relative h-16 w-16 rounded-full bg-gradient-to-br from-[#6C3BFF] to-[#8B5CFF] shadow-xl ring-4 ring-background flex items-center justify-center z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 overflow-hidden"
       >
-        <img src={Icon} className="w-12 h-12" />
+        <img src={Icon} alt="" className="h-[34px] w-[34px] object-contain" />
       </motion.button>
     </motion.li>
   );

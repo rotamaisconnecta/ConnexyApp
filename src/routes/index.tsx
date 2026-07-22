@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
-import { Logo } from "@/components/logo";
+import { Logo } from "@/lib/branding/brand-config";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -39,13 +39,7 @@ function Splash() {
           transition={{ type: "spring", stiffness: 200, damping: 18 }}
           className="relative flex flex-col items-center gap-4"
         >
-          <div className="grid h-24 w-24 place-items-center rounded-[2rem] bg-gradient-brand text-white font-black text-4xl shadow-elegant">
-            R+
-          </div>
-          <div className="text-center">
-            <div className="font-display text-3xl font-bold">RotaMais</div>
-            <div className="text-primary-glow text-lg font-semibold -mt-1">Connecta</div>
-          </div>
+          <img src={Logo.default} alt="Connexy" className="h-16 object-contain" />
         </motion.div>
         <motion.div
           initial={{ opacity: 0 }}
@@ -62,7 +56,6 @@ function Splash() {
             />
           ))}
         </motion.div>
-        <Logo size={0} variant="light" />
       </div>
     </PhoneFrame>
   );
