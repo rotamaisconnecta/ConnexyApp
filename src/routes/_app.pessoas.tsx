@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/pessoas")({
-  head: () => ({ meta: [{ title: "Pessoas — Connexa" }] }),
+  head: () => ({ meta: [{ title: "Pessoas — Connexy" }] }),
   component: Pessoas,
 });
 
