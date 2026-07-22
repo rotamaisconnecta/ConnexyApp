@@ -9,7 +9,7 @@ import { getUnreadBadgeCount } from "@/lib/navigation/navigation-utils";
 
 const leftItems = [
   { to: "/feed", label: "Início", icon: Home },
-  { to: "/", label: "Mapa", icon: Map },
+  { to: "/discover", label: "Mapa", icon: Map },
 ];
 
 const rightItems = [

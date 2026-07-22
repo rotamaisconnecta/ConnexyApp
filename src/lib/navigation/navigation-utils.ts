@@ -21,7 +21,7 @@ export function getActiveTab(pathname: string): NavigationTabValue | null {
   for (const item of NAVIGATION_ITEMS) {
     if (item.id === NavigationTab.CREATE) continue;
     if (item.id === NavigationTab.MAP) {
-      if (pathname === "/") return item.id;
+      if (isActiveRoute(pathname, item.route)) return item.id;
       continue;
     }
     if (isActiveRoute(pathname, item.route)) {

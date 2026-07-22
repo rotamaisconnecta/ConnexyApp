@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNav } from "@/components/bottom-nav";
 import { ConversationList } from "@/components/chat/conversation-list";
 import { EmptyChat } from "@/components/chat/empty-chat";
 import { LoadingChat } from "@/components/chat/loading-chat";
@@ -131,8 +130,6 @@ function ChatListPage() {
           <ConversationList conversations={result} onSelect={handleSelect} />
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 }

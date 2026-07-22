@@ -19,7 +19,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     id: NavigationTab.MAP,
     label: "Mapa",
     icon: "Map",
-    route: "/",
+    route: "/discover",
   },
   {
     id: NavigationTab.CREATE,

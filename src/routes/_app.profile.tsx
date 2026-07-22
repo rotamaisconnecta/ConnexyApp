@@ -13,6 +13,7 @@ import {
   Users,
   Handshake,
   CalendarCheck,
+  Car,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
@@ -183,6 +184,33 @@ function ProfilePage() {
           </div>
         </motion.section>
       )}
+
+      {/* ── Mobilidade ────────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(5.5)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
+      >
+        <div className="flex items-center gap-3">
+          <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-primary">
+            <Car className="h-4 w-4" />
+          </span>
+          <div className="flex-1">
+            <div className="text-sm font-semibold">Mobilidade</div>
+            <div className="text-[11px] text-muted-foreground">
+              Cadastre-se para receber solicitações de corrida
+            </div>
+          </div>
+        </div>
+        <Link
+          to="/profile/driver"
+          className="mt-3 block w-full rounded-xl bg-gradient-brand py-2.5 text-center text-xs font-semibold text-white shadow-soft"
+        >
+          Tornar-me motorista
+        </Link>
+      </motion.section>
 
       {/* ── Quick Links ───────────────────────────────────── */}
 

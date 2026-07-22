@@ -49,6 +49,7 @@ import { Route as AppGerenciarNovoReelRouteImport } from './routes/_app.gerencia
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
+import { Route as AppProfileDriverRouteImport } from './routes/_app/profile/driver'
 import { Route as AppRideActiveRouteImport } from './routes/_app/ride/active'
 import { Route as AppRideHistoryRouteImport } from './routes/_app/ride/history'
 import { Route as AppRideMatchingRouteImport } from './routes/_app/ride/matching'
@@ -254,6 +255,11 @@ const AppPerfilIdRoute = AppPerfilIdRouteImport.update({
   path: '/perfil/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProfileDriverRoute = AppProfileDriverRouteImport.update({
+  id: '/driver',
+  path: '/driver',
+  getParentRoute: () => AppProfileRoute,
+} as any)
 const AppRideActiveRoute = AppRideActiveRouteImport.update({
   id: '/active',
   path: '/active',
@@ -308,7 +314,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
-  '/profile': typeof AppProfileRoute
+  '/profile': typeof AppProfileRouteWithChildren
   '/reels': typeof AppReelsRoute
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
@@ -319,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
+  '/profile/driver': typeof AppProfileDriverRoute
   '/ride/active': typeof AppRideActiveRoute
   '/ride/history': typeof AppRideHistoryRoute
   '/ride/matching': typeof AppRideMatchingRoute
@@ -354,7 +361,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
-  '/profile': typeof AppProfileRoute
+  '/profile': typeof AppProfileRouteWithChildren
   '/reels': typeof AppReelsRoute
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
+  '/profile/driver': typeof AppProfileDriverRoute
   '/ride/active': typeof AppRideActiveRoute
   '/ride/history': typeof AppRideHistoryRoute
   '/ride/matching': typeof AppRideMatchingRoute
@@ -402,7 +410,7 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/pessoas': typeof AppPessoasRoute
   '/_app/privacidade': typeof AppPrivacidadeRoute
-  '/_app/profile': typeof AppProfileRoute
+  '/_app/profile': typeof AppProfileRouteWithChildren
   '/_app/reels': typeof AppReelsRoute
   '/_app/ride': typeof AppRideRouteWithChildren
   '/_app/rota': typeof AppRotaRoute
@@ -413,6 +421,7 @@ export interface FileRoutesById {
   '/_app/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
+  '/_app/profile/driver': typeof AppProfileDriverRoute
   '/_app/ride/active': typeof AppRideActiveRoute
   '/_app/ride/history': typeof AppRideHistoryRoute
   '/_app/ride/matching': typeof AppRideMatchingRoute
@@ -461,6 +470,7 @@ export interface FileRouteTypes {
     | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
+    | '/profile/driver'
     | '/ride/active'
     | '/ride/history'
     | '/ride/matching'
@@ -507,6 +517,7 @@ export interface FileRouteTypes {
     | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
+    | '/profile/driver'
     | '/ride/active'
     | '/ride/history'
     | '/ride/matching'
@@ -554,6 +565,7 @@ export interface FileRouteTypes {
     | '/_app/gerenciar/novo-reel'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
+    | '/_app/profile/driver'
     | '/_app/ride/active'
     | '/_app/ride/history'
     | '/_app/ride/matching'
@@ -856,6 +868,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPerfilIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/profile/driver': {
+      id: '/_app/profile/driver'
+      path: '/driver'
+      fullPath: '/profile/driver'
+      preLoaderRoute: typeof AppProfileDriverRouteImport
+      parentRoute: typeof AppProfileRoute
+    }
     '/_app/ride/active': {
       id: '/_app/ride/active'
       path: '/active'
@@ -919,6 +938,18 @@ const AppGerenciarRouteWithChildren = AppGerenciarRoute._addFileChildren(
   AppGerenciarRouteChildren,
 )
 
+interface AppProfileRouteChildren {
+  AppProfileDriverRoute: typeof AppProfileDriverRoute
+}
+
+const AppProfileRouteChildren: AppProfileRouteChildren = {
+  AppProfileDriverRoute: AppProfileDriverRoute,
+}
+
+const AppProfileRouteWithChildren = AppProfileRoute._addFileChildren(
+  AppProfileRouteChildren,
+)
+
 interface AppRideRouteChildren {
   AppRideActiveRoute: typeof AppRideActiveRoute
   AppRideHistoryRoute: typeof AppRideHistoryRoute
@@ -956,7 +987,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPessoasRoute: typeof AppPessoasRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
-  AppProfileRoute: typeof AppProfileRoute
+  AppProfileRoute: typeof AppProfileRouteWithChildren
   AppReelsRoute: typeof AppReelsRoute
   AppRideRoute: typeof AppRideRouteWithChildren
   AppRotaRoute: typeof AppRotaRoute
@@ -988,7 +1019,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppPessoasRoute: AppPessoasRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
-  AppProfileRoute: AppProfileRoute,
+  AppProfileRoute: AppProfileRouteWithChildren,
   AppReelsRoute: AppReelsRoute,
   AppRideRoute: AppRideRouteWithChildren,
   AppRotaRoute: AppRotaRoute,

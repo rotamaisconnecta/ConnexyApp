@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNav } from "@/components/bottom-nav";
 import { PeopleGrid } from "@/components/discovery/people-grid";
 import { PeopleList } from "@/components/discovery/people-list";
 import { DiscoverySearch } from "@/components/discovery/discovery-search";
@@ -181,8 +180,6 @@ function DiscoverPage() {
           />
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 }
