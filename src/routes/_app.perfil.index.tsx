@@ -14,12 +14,18 @@ function Profile() {
       <StatusBar />
       <header className="px-5 pt-1 pb-3 flex items-center justify-between">
         <h1 className="font-display font-bold text-lg">Perfil</h1>
-        <Link to="/privacidade" className="text-xs font-semibold text-primary">Editar</Link>
+        <Link to="/privacidade" className="text-xs font-semibold text-primary">
+          Editar
+        </Link>
       </header>
 
       <div className="mx-5 rounded-3xl bg-gradient-brand p-5 text-white shadow-elegant">
         <div className="flex items-center gap-4">
-          <img src={currentUser.photo} alt="" className="h-16 w-16 rounded-full ring-4 ring-white/30 object-cover" />
+          <img
+            src={currentUser.photo}
+            alt=""
+            className="h-16 w-16 rounded-full ring-4 ring-white/30 object-cover"
+          />
           <div className="flex-1">
             <div className="font-display text-lg font-bold">{currentUser.name}</div>
             <div className="text-xs opacity-90">Ver perfil público</div>
@@ -34,7 +40,13 @@ function Profile() {
       </div>
 
       <div className="mt-5 mx-5 rounded-2xl bg-surface border border-border divide-y divide-border">
-        <Link to="/gerenciar"><Item icon={Settings} label="Gerenciar minha bio" hint="Edite bio, posts, humor e interesses" /></Link>
+        <Link to="/gerenciar">
+          <Item
+            icon={Settings}
+            label="Gerenciar minha bio"
+            hint="Edite bio, posts, humor e interesses"
+          />
+        </Link>
         <Item icon={MapPinned} label="Minhas viagens" hint="Histórico e avaliações" />
         <Item icon={Users} label="Conexões" hint="Pessoas que você conectou" />
         <Item icon={Bookmark} label="Locais favoritos" hint="Seus lugares salvos" />
@@ -50,7 +62,12 @@ function Profile() {
         <div className="text-xs font-semibold text-primary">Interesses</div>
         <div className="mt-2 flex flex-wrap gap-2">
           {currentUser.interests.map((t) => (
-            <span key={t} className="rounded-full bg-surface text-primary text-xs font-semibold px-3 py-1 border border-primary/20">{t}</span>
+            <span
+              key={t}
+              className="rounded-full bg-surface text-primary text-xs font-semibold px-3 py-1 border border-primary/20"
+            >
+              {t}
+            </span>
           ))}
         </div>
       </div>
@@ -69,7 +86,15 @@ function Stat({ n, l, divider }: { n: number | string; l: string; divider?: bool
   );
 }
 
-function Item({ icon: Icon, label, hint }: { icon: React.ComponentType<{ className?: string }>; label: string; hint: string }) {
+function Item({
+  icon: Icon,
+  label,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  hint: string;
+}) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-primary">

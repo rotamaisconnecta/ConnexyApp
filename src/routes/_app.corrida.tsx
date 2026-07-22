@@ -45,7 +45,9 @@ function RideActive() {
           <img src={d.photo} className="h-14 w-14 rounded-full object-cover" alt="" />
           <div className="flex-1">
             <div className="font-semibold">{d.name}</div>
-            <div className="text-[11px] text-muted-foreground">{d.car} · {d.plate}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {d.car} · {d.plate}
+            </div>
           </div>
           <div className="flex gap-2">
             <button className="h-11 w-11 grid place-items-center rounded-full bg-secondary">
@@ -65,27 +67,38 @@ function RideActive() {
             <div className="text-sm font-semibold">Modo Social</div>
             <div className="text-[11px] text-muted-foreground">Ver pessoas indo na mesma rota</div>
           </div>
-          <button onClick={() => setSocial((s) => !s)}
-                  className={`h-6 w-11 rounded-full ${social ? "bg-primary" : "bg-border"} relative transition`}>
-            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${social ? "left-5" : "left-0.5"}`} />
+          <button
+            onClick={() => setSocial((s) => !s)}
+            className={`h-6 w-11 rounded-full ${social ? "bg-primary" : "bg-border"} relative transition`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${social ? "left-5" : "left-0.5"}`}
+            />
           </button>
         </div>
 
         <div className="mt-4">
-          <p className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide mb-2">Sugestão no seu destino</p>
+          <p className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide mb-2">
+            Sugestão no seu destino
+          </p>
           <div className="rounded-2xl border border-border overflow-hidden flex">
             <img src={places[0].cover} className="h-20 w-24 object-cover" alt="" />
             <div className="flex-1 p-2.5">
               <div className="font-semibold text-sm">{places[0].name}</div>
-              <div className="text-[11px] text-muted-foreground">{proximityLabel(places[0].distanceMeters)} · ⭐ {places[0].rating}</div>
-              <div className="text-[11px] text-primary font-semibold mt-0.5">20% OFF · ver no mapa</div>
+              <div className="text-[11px] text-muted-foreground">
+                {proximityLabel(places[0].distanceMeters)} · ⭐ {places[0].rating}
+              </div>
+              <div className="text-[11px] text-primary font-semibold mt-0.5">
+                20% OFF · ver no mapa
+              </div>
             </div>
           </div>
         </div>
 
         <button
           onClick={() => nav({ to: "/avaliar" })}
-          className="mt-4 w-full rounded-full bg-gradient-brand py-3.5 text-white font-semibold shadow-elegant">
+          className="mt-4 w-full rounded-full bg-gradient-brand py-3.5 text-white font-semibold shadow-elegant"
+        >
           Finalizar corrida (demo)
         </button>
       </div>

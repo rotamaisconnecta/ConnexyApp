@@ -14,9 +14,9 @@ export const Route = createFileRoute("/_app/notificacoes")({
 function iconFor(type: (typeof notifications)[number]["type"]) {
   const map: Record<string, { bg: string; e: string }> = {
     social: { bg: "bg-pink/15 text-pink", e: "👥" },
-    event:  { bg: "bg-accent text-primary", e: "★" },
-    promo:  { bg: "bg-primary/15 text-primary", e: "%" },
-    chat:   { bg: "bg-success/15 text-success", e: "💬" },
+    event: { bg: "bg-accent text-primary", e: "★" },
+    promo: { bg: "bg-primary/15 text-primary", e: "%" },
+    chat: { bg: "bg-success/15 text-success", e: "💬" },
   };
   return map[type];
 }
@@ -35,8 +35,11 @@ function Notifs() {
 
       <div className="px-5 flex gap-2 overflow-x-auto no-scrollbar">
         {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold ${tab === t ? "bg-gradient-brand text-white" : "bg-secondary text-muted-foreground"}`}>
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold ${tab === t ? "bg-gradient-brand text-white" : "bg-secondary text-muted-foreground"}`}
+          >
             {t}
           </button>
         ))}
@@ -46,8 +49,15 @@ function Notifs() {
         {notifications.map((n) => {
           const ic = iconFor(n.type);
           return (
-            <li key={n.id} className="rounded-2xl bg-surface border border-border p-3 flex items-start gap-3">
-              <span className={`h-10 w-10 grid place-items-center rounded-full text-sm font-bold ${ic.bg}`}>{ic.e}</span>
+            <li
+              key={n.id}
+              className="rounded-2xl bg-surface border border-border p-3 flex items-start gap-3"
+            >
+              <span
+                className={`h-10 w-10 grid place-items-center rounded-full text-sm font-bold ${ic.bg}`}
+              >
+                {ic.e}
+              </span>
               <div className="flex-1">
                 <div className="text-sm">{n.text}</div>
                 <div className="text-[11px] text-muted-foreground mt-0.5">{n.time}</div>

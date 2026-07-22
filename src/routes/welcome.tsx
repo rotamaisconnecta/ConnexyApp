@@ -18,7 +18,11 @@ function Welcome() {
   return (
     <main className="min-h-screen bg-white">
       <div className="relative mx-auto w-full max-w-[430px]">
-        <img className="block h-auto w-full" src={welcomeReference} alt="Connexy - Tudo acontece ao seu redor" />
+        <img
+          className="block h-auto w-full"
+          src={welcomeReference}
+          alt="Connexy - Tudo acontece ao seu redor"
+        />
         <Link
           to="/cadastro"
           aria-label="Criar minha conta"

@@ -1,6 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { ChevronLeft, Shield, Bell, CreditCard, Globe, HelpCircle, ChevronRight, EyeOff } from "lucide-react";
+import {
+  ChevronLeft,
+  Shield,
+  Bell,
+  CreditCard,
+  Globe,
+  HelpCircle,
+  ChevronRight,
+  EyeOff,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 const KEY = "rmc:invisible";
@@ -45,9 +54,13 @@ function Privacy() {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold">Modo invisível</div>
-              <button onClick={toggle}
-                      className={`h-6 w-11 rounded-full ${invisible ? "bg-primary" : "bg-border"} relative transition`}>
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${invisible ? "left-5" : "left-0.5"}`} />
+              <button
+                onClick={toggle}
+                className={`h-6 w-11 rounded-full ${invisible ? "bg-primary" : "bg-border"} relative transition`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${invisible ? "left-5" : "left-0.5"}`}
+                />
               </button>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -57,7 +70,9 @@ function Privacy() {
         </div>
 
         <div className="mt-4">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Quem pode me ver</div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Quem pode me ver
+          </div>
           <div className="mt-2 space-y-1">
             {[
               { id: "todos", label: "Todos" },
@@ -66,8 +81,13 @@ function Privacy() {
             ].map((o) => (
               <label key={o.id} className="flex items-center justify-between py-2 text-sm">
                 <span>{o.label}</span>
-                <input type="radio" name="vis" checked={visibility === o.id} onChange={() => setVisibility(o.id as typeof visibility)}
-                       className="h-4 w-4 accent-[color:var(--primary)]" />
+                <input
+                  type="radio"
+                  name="vis"
+                  checked={visibility === o.id}
+                  onChange={() => setVisibility(o.id as typeof visibility)}
+                  className="h-4 w-4 accent-[color:var(--primary)]"
+                />
               </label>
             ))}
           </div>
@@ -91,7 +111,9 @@ function Privacy() {
           <Shield className="h-5 w-5 text-primary" />
           <div className="flex-1">
             <div className="text-sm font-semibold">Sua segurança é nossa prioridade</div>
-            <p className="text-[11px] text-muted-foreground">Compartilhe viagens, botão de emergência e central de segurança.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Compartilhe viagens, botão de emergência e central de segurança.
+            </p>
           </div>
         </div>
       </section>
@@ -101,7 +123,15 @@ function Privacy() {
   );
 }
 
-function Item({ icon: Icon, label, hint }: { icon: React.ComponentType<{ className?: string }>; label: string; hint: string }) {
+function Item({
+  icon: Icon,
+  label,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  hint: string;
+}) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-primary">

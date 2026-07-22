@@ -1,6 +1,13 @@
 import connexaLogo from "@/assets/connexa-logo.png.asset.json";
 
-export function Logo({ size = 40, showWordmark = true }: { size?: number; variant?: "dark" | "light"; showWordmark?: boolean }) {
+export function Logo({
+  size = 40,
+  showWordmark = true,
+}: {
+  size?: number;
+  variant?: "dark" | "light";
+  showWordmark?: boolean;
+}) {
   return (
     <div className="flex items-center gap-2">
       <img

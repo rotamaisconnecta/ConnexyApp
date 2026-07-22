@@ -47,7 +47,9 @@ function CompleteProfile() {
 
           <header className="mt-7 text-center">
             <p className="text-lg font-medium text-violet-600">Passo 2 de 3</p>
-            <h1 className="mt-2 font-display text-[34px] font-semibold leading-tight">Complete seu perfil</h1>
+            <h1 className="mt-2 font-display text-[34px] font-semibold leading-tight">
+              Complete seu perfil
+            </h1>
             <p className="mx-auto mt-3 max-w-[320px] text-lg leading-7 text-muted-foreground">
               Conte um pouco mais sobre voce para que possamos te conectar melhor.
             </p>
@@ -61,7 +63,11 @@ function CompleteProfile() {
                 className="grid h-36 w-36 place-items-center overflow-hidden rounded-full border-8 border-white bg-violet-50 text-violet-600 shadow-[0_0_26px_rgba(109,40,217,0.2)]"
               >
                 {photo ? (
-                  <img className="h-full w-full object-cover" src={photo} alt="Foto de perfil selecionada" />
+                  <img
+                    className="h-full w-full object-cover"
+                    src={photo}
+                    alt="Foto de perfil selecionada"
+                  />
                 ) : (
                   <span className="flex flex-col items-center gap-2 text-lg font-medium">
                     <Camera className="h-9 w-9 fill-violet-600" />
@@ -122,10 +128,16 @@ function CompleteProfile() {
                   placeholder="Fale sobre voce, seus interesses, paixoes e o que te move."
                   className="h-28 w-full resize-none bg-transparent text-lg leading-7 outline-none placeholder:text-muted-foreground"
                 />
-                <span className="absolute bottom-3 right-4 text-sm text-muted-foreground">{bio.length}/160</span>
+                <span className="absolute bottom-3 right-4 text-sm text-muted-foreground">
+                  {bio.length}/160
+                </span>
               </span>
             </label>
-            <Field label="Data de nascimento" icon={CalendarDays} trailing={<ChevronDown className="h-5 w-5 text-muted-foreground" />}>
+            <Field
+              label="Data de nascimento"
+              icon={CalendarDays}
+              trailing={<ChevronDown className="h-5 w-5 text-muted-foreground" />}
+            >
               <input
                 required
                 type="date"
@@ -145,7 +157,10 @@ function CompleteProfile() {
             </button>
           </form>
 
-          <Link to="/cadastro" className="mt-6 block text-center text-lg font-medium text-violet-600">
+          <Link
+            to="/cadastro"
+            className="mt-6 block text-center text-lg font-medium text-violet-600"
+          >
             Voltar
           </Link>
         </div>

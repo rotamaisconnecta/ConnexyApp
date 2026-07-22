@@ -48,24 +48,35 @@ function Signup() {
         <div className="mt-auto pt-6 pb-6 space-y-3">
           <button
             onClick={() => nav({ to: "/completar-perfil" })}
-            className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant">
+            className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant"
+          >
             Continuar
           </button>
-          <button className="w-full text-center text-sm text-muted-foreground">
-            Pular
-          </button>
+          <button className="w-full text-center text-sm text-muted-foreground">Pular</button>
         </div>
       </div>
     </PhoneFrame>
   );
 }
 
-function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
   return (
     <label className="block">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <input
-        type={type} value={value} onChange={(e) => onChange(e.target.value)}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
       />
     </label>

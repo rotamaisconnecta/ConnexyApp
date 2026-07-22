@@ -10,10 +10,7 @@ export function PresenceDot({
   size?: number;
 }) {
   return (
-    <span
-      className={cn("relative inline-flex", className)}
-      style={{ height: size, width: size }}
-    >
+    <span className={cn("relative inline-flex", className)} style={{ height: size, width: size }}>
       {online && (
         <span
           className="absolute inset-0 rounded-full bg-success/50 animate-ping"

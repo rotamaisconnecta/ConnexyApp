@@ -12,7 +12,11 @@ export const Route = createFileRoute("/_app/reels")({
   head: () => ({
     meta: [
       { title: "Reels — Connecta" },
-      { name: "description", content: "Momentos reais de quem está por perto. Reels ancorados em lugares e eventos do Connecta." },
+      {
+        name: "description",
+        content:
+          "Momentos reais de quem está por perto. Reels ancorados em lugares e eventos do Connecta.",
+      },
     ],
   }),
   component: ReelsPage,
@@ -34,26 +38,48 @@ function ReelsPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("reels")
-      .select(`
+      .select(
+        `
         id, video_url, poster_url, caption, audio_label, created_at, tagged_user_ids,
         author:profiles!reels_author_id_fkey ( id, name, handle, photo_url ),
         place:places ( id, name, category )
-      `)
+      `,
+      )
       .order("created_at", { ascending: false })
       .limit(20);
-    if (error) { toast.error(error.message); setLoading(false); return; }
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
     const rows = data ?? [];
     const ids = rows.map((r) => r.id);
     const [{ data: likeRows }, { data: commentRows }, myLikesRes] = await Promise.all([
-      supabase.from("reel_likes").select("reel_id").in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
-      supabase.from("reel_comments").select("reel_id").in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
-      user ? supabase.from("reel_likes").select("reel_id").eq("user_id", user.id).in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]) : Promise.resolve({ data: [] as { reel_id: string }[] }),
+      supabase
+        .from("reel_likes")
+        .select("reel_id")
+        .in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
+      supabase
+        .from("reel_comments")
+        .select("reel_id")
+        .in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
+      user
+        ? supabase
+            .from("reel_likes")
+            .select("reel_id")
+            .eq("user_id", user.id)
+            .in("reel_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
+        : Promise.resolve({ data: [] as { reel_id: string }[] }),
     ]);
     const likesMap = new Map<string, number>();
     (likeRows ?? []).forEach((r) => likesMap.set(r.reel_id, (likesMap.get(r.reel_id) ?? 0) + 1));
     const commentsMap = new Map<string, number>();
-    (commentRows ?? []).forEach((r) => commentsMap.set(r.reel_id, (commentsMap.get(r.reel_id) ?? 0) + 1));
-    const mineSet = new Set(((myLikesRes.data as { reel_id: string }[] | null) ?? []).map((r) => r.reel_id));
+    (commentRows ?? []).forEach((r) =>
+      commentsMap.set(r.reel_id, (commentsMap.get(r.reel_id) ?? 0) + 1),
+    );
+    const mineSet = new Set(
+      ((myLikesRes.data as { reel_id: string }[] | null) ?? []).map((r) => r.reel_id),
+    );
 
     const items: ReelItem[] = rows.map((r) => ({
       id: r.id,
@@ -71,23 +97,35 @@ function ReelsPage() {
     }));
 
     // Resolve signed URLs for paths stored in the private bucket
-    const needsSign = items.filter((it) => it.video_url && !it.video_url.startsWith("http")).map((it) => it.video_url);
-    const posterNeeds = items.filter((it) => it.poster_url && !it.poster_url.startsWith("http")).map((it) => it.poster_url!) ;
+    const needsSign = items
+      .filter((it) => it.video_url && !it.video_url.startsWith("http"))
+      .map((it) => it.video_url);
+    const posterNeeds = items
+      .filter((it) => it.poster_url && !it.poster_url.startsWith("http"))
+      .map((it) => it.poster_url!);
     const allPaths = Array.from(new Set([...needsSign, ...posterNeeds]));
     if (allPaths.length) {
-      const { data: signed } = await supabase.storage.from("reels-media").createSignedUrls(allPaths, 60 * 60 * 6);
+      const { data: signed } = await supabase.storage
+        .from("reels-media")
+        .createSignedUrls(allPaths, 60 * 60 * 6);
       const map = new Map<string, string>();
-      (signed ?? []).forEach((s) => { if (s.path && s.signedUrl) map.set(s.path, s.signedUrl); });
+      (signed ?? []).forEach((s) => {
+        if (s.path && s.signedUrl) map.set(s.path, s.signedUrl);
+      });
       items.forEach((it) => {
-        if (it.video_url && !it.video_url.startsWith("http")) it.video_url = map.get(it.video_url) ?? it.video_url;
-        if (it.poster_url && !it.poster_url.startsWith("http")) it.poster_url = map.get(it.poster_url) ?? it.poster_url;
+        if (it.video_url && !it.video_url.startsWith("http"))
+          it.video_url = map.get(it.video_url) ?? it.video_url;
+        if (it.poster_url && !it.poster_url.startsWith("http"))
+          it.poster_url = map.get(it.poster_url) ?? it.poster_url;
       });
     }
     setReels(items);
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Track active reel via scroll position
   useEffect(() => {
@@ -102,36 +140,52 @@ function ReelsPage() {
   }, [reels.length]);
 
   async function toggleLike(reelId: string) {
-    if (!user) { toast.error("Entre para curtir"); return; }
+    if (!user) {
+      toast.error("Entre para curtir");
+      return;
+    }
     const idx = reels.findIndex((r) => r.id === reelId);
     if (idx < 0) return;
     const wasLiked = reels[idx].likedByMe;
-    setReels((prev) => prev.map((r, i) => i === idx ? { ...r, likedByMe: !wasLiked, likes: r.likes + (wasLiked ? -1 : 1) } : r));
+    setReels((prev) =>
+      prev.map((r, i) =>
+        i === idx ? { ...r, likedByMe: !wasLiked, likes: r.likes + (wasLiked ? -1 : 1) } : r,
+      ),
+    );
     if (wasLiked) {
       await supabase.from("reel_likes").delete().eq("reel_id", reelId).eq("user_id", user.id);
     } else {
-      const { error } = await supabase.from("reel_likes").insert({ reel_id: reelId, user_id: user.id });
+      const { error } = await supabase
+        .from("reel_likes")
+        .insert({ reel_id: reelId, user_id: user.id });
       if (error && !error.message.includes("duplicate")) toast.error(error.message);
     }
   }
 
-  const emptyState = useMemo(() => (
-    <div className="absolute inset-0 grid place-items-center px-6 text-center">
-      <div>
-        <div className="mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-brand text-white shadow-elegant">
-          <Clapperboard className="h-8 w-8" />
+  const emptyState = useMemo(
+    () => (
+      <div className="absolute inset-0 grid place-items-center px-6 text-center">
+        <div>
+          <div className="mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-gradient-brand text-white shadow-elegant">
+            <Clapperboard className="h-8 w-8" />
+          </div>
+          <h2 className="mt-4 font-display text-xl text-white font-bold">
+            Nenhum reel por aqui ainda
+          </h2>
+          <p className="mt-2 text-sm text-white/70">
+            Seja o primeiro a compartilhar um momento real de um lugar do Connecta.
+          </p>
+          <Link
+            to="/gerenciar/novo-reel"
+            className="mt-5 inline-flex items-center gap-2 h-11 rounded-full bg-gradient-brand text-white font-semibold px-5 shadow-elegant"
+          >
+            <Plus className="h-4 w-4" /> Criar meu primeiro reel
+          </Link>
         </div>
-        <h2 className="mt-4 font-display text-xl text-white font-bold">Nenhum reel por aqui ainda</h2>
-        <p className="mt-2 text-sm text-white/70">Seja o primeiro a compartilhar um momento real de um lugar do Connecta.</p>
-        <Link
-          to="/gerenciar/novo-reel"
-          className="mt-5 inline-flex items-center gap-2 h-11 rounded-full bg-gradient-brand text-white font-semibold px-5 shadow-elegant"
-        >
-          <Plus className="h-4 w-4" /> Criar meu primeiro reel
-        </Link>
       </div>
-    </div>
-  ), []);
+    ),
+    [],
+  );
 
   return (
     <div className="absolute inset-0 bg-[#0a0a0a] flex flex-col overflow-hidden">
@@ -139,19 +193,39 @@ function ReelsPage() {
       <div className="absolute inset-x-0 top-0 z-30 pt-4 px-4 pb-2 flex items-center gap-3">
         <div className="flex-1 flex items-center justify-center gap-1.5">
           <span className="font-display text-lg font-bold text-white">connec</span>
-          <span className="font-display text-lg font-bold bg-gradient-brand bg-clip-text text-transparent">ta</span>
+          <span className="font-display text-lg font-bold bg-gradient-brand bg-clip-text text-transparent">
+            ta
+          </span>
         </div>
-        <button className="absolute right-14 top-4 h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15" aria-label="Buscar">
+        <button
+          className="absolute right-14 top-4 h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15"
+          aria-label="Buscar"
+        >
           <Search className="h-4 w-4 text-white" />
         </button>
-        <Link to="/connecta" className="absolute right-3 top-4 h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15 relative">
+        <Link
+          to="/connecta"
+          className="absolute right-3 top-4 h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15 relative"
+        >
           <Send className="h-4 w-4 text-white" />
-          <span className="absolute -top-1 -right-1 h-4 w-4 grid place-items-center rounded-full bg-pink-500 text-[10px] font-bold text-white">3</span>
+          <span className="absolute -top-1 -right-1 h-4 w-4 grid place-items-center rounded-full bg-pink-500 text-[10px] font-bold text-white">
+            3
+          </span>
         </Link>
         {/* Tabs */}
         <div className="absolute left-4 top-14 flex items-center gap-4">
-          <TabBtn active={tab === "reels"} onClick={() => setTab("reels")} label="Reels" icon={<Clapperboard className="h-4 w-4" />} />
-          <TabBtn active={tab === "amigos"} onClick={() => setTab("amigos")} label="Amigos" icon={<Users className="h-4 w-4" />} />
+          <TabBtn
+            active={tab === "reels"}
+            onClick={() => setTab("reels")}
+            label="Reels"
+            icon={<Clapperboard className="h-4 w-4" />}
+          />
+          <TabBtn
+            active={tab === "amigos"}
+            onClick={() => setTab("amigos")}
+            label="Amigos"
+            icon={<Users className="h-4 w-4" />}
+          />
         </div>
       </div>
 
@@ -209,18 +283,33 @@ function ReelsPage() {
         currentUserId={user?.id ?? null}
         onCountChange={(delta) => {
           if (!commentsFor) return;
-          setReels((prev) => prev.map((r) => r.id === commentsFor ? { ...r, comments: r.comments + delta } : r));
+          setReels((prev) =>
+            prev.map((r) => (r.id === commentsFor ? { ...r, comments: r.comments + delta } : r)),
+          );
         }}
       />
     </div>
   );
 }
 
-function TabBtn({ active, onClick, label, icon }: { active: boolean; onClick: () => void; label: string; icon: React.ReactNode }) {
+function TabBtn({
+  active,
+  onClick,
+  label,
+  icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1">
-      <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${active ? "text-white" : "text-white/60"}`}>
-        {icon}{label}
+      <span
+        className={`inline-flex items-center gap-1.5 text-sm font-semibold ${active ? "text-white" : "text-white/60"}`}
+      >
+        {icon}
+        {label}
       </span>
       {active && <span className="h-0.5 w-8 rounded-full bg-gradient-brand" />}
     </button>

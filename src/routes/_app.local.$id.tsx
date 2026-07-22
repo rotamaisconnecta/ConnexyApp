@@ -7,8 +7,15 @@ import { ChevronLeft, Star, Phone, Navigation, Bookmark, Share2 } from "lucide-r
 export const Route = createFileRoute("/_app/local/$id")({
   head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.name} — RotaMais Connecta` : "Local — RotaMais Connecta" },
-      ...(loaderData ? [{ property: "og:title", content: loaderData.name }, { property: "og:image", content: loaderData.cover }] : []),
+      {
+        title: loaderData ? `${loaderData.name} — RotaMais Connecta` : "Local — RotaMais Connecta",
+      },
+      ...(loaderData
+        ? [
+            { property: "og:title", content: loaderData.name },
+            { property: "og:image", content: loaderData.cover },
+          ]
+        : []),
     ],
   }),
   loader: ({ params }) => {
@@ -30,12 +37,19 @@ function LocalDetail() {
         <div className="absolute inset-x-0 top-0">
           <StatusBar dark />
         </div>
-        <Link to="/locais" className="absolute top-14 left-4 h-10 w-10 grid place-items-center rounded-full bg-white/90 backdrop-blur">
+        <Link
+          to="/locais"
+          className="absolute top-14 left-4 h-10 w-10 grid place-items-center rounded-full bg-white/90 backdrop-blur"
+        >
           <ChevronLeft className="h-4 w-4" />
         </Link>
         <div className="absolute top-14 right-4 flex gap-2">
-          <button className="h-10 w-10 grid place-items-center rounded-full bg-white/90"><Bookmark className="h-4 w-4" /></button>
-          <button className="h-10 w-10 grid place-items-center rounded-full bg-white/90"><Share2 className="h-4 w-4" /></button>
+          <button className="h-10 w-10 grid place-items-center rounded-full bg-white/90">
+            <Bookmark className="h-4 w-4" />
+          </button>
+          <button className="h-10 w-10 grid place-items-center rounded-full bg-white/90">
+            <Share2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -43,8 +57,14 @@ function LocalDetail() {
         <div className="text-[11px] uppercase text-primary font-semibold">{p.category}</div>
         <h1 className="font-display text-2xl font-bold">{p.name}</h1>
         <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
-          <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.rating} ({p.reviews} avaliações)</span>
-          <span>·</span><span>{proximityLabel(p.distanceMeters)}</span><span>·</span><span>{p.hours}</span>
+          <span className="flex items-center gap-0.5">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.rating} ({p.reviews}{" "}
+            avaliações)
+          </span>
+          <span>·</span>
+          <span>{proximityLabel(p.distanceMeters)}</span>
+          <span>·</span>
+          <span>{p.hours}</span>
         </div>
 
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{p.description}</p>
@@ -66,7 +86,10 @@ function LocalDetail() {
             { Icon: Bookmark, label: "Salvar" },
             { Icon: Share2, label: "Compartilhar" },
           ].map(({ Icon, label }) => (
-            <button key={label} className="flex flex-col items-center gap-1 rounded-2xl bg-secondary py-3 text-[11px] font-semibold">
+            <button
+              key={label}
+              className="flex flex-col items-center gap-1 rounded-2xl bg-secondary py-3 text-[11px] font-semibold"
+            >
               <Icon className="h-4 w-4 text-primary" />
               {label}
             </button>
@@ -81,7 +104,9 @@ function LocalDetail() {
               { n: "Pedro L.", t: "Atendimento rápido e simpático." },
             ].map((r) => (
               <div key={r.n} className="rounded-2xl border border-border p-3">
-                <div className="flex items-center gap-1 text-[11px] font-semibold">{r.n} · <span className="text-amber-500">★★★★★</span></div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold">
+                  {r.n} · <span className="text-amber-500">★★★★★</span>
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">{r.t}</p>
               </div>
             ))}
@@ -90,7 +115,10 @@ function LocalDetail() {
       </div>
 
       <div className="p-5">
-        <Link to="/rota" className="block w-full rounded-full bg-gradient-brand py-4 text-center text-white font-semibold shadow-elegant">
+        <Link
+          to="/rota"
+          className="block w-full rounded-full bg-gradient-brand py-4 text-center text-white font-semibold shadow-elegant"
+        >
           Ir até lá
         </Link>
       </div>

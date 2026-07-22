@@ -11,15 +11,23 @@ export const Route = createFileRoute("/interesses")({
 
 function Interests() {
   const nav = useNavigate();
-  const [selected, setSelected] = useState<string[]>(["Viagens", "Socializar", "Eventos", "Música"]);
+  const [selected, setSelected] = useState<string[]>([
+    "Viagens",
+    "Socializar",
+    "Eventos",
+    "Música",
+  ]);
   const toggle = (t: string) =>
-    setSelected((s) => s.includes(t) ? s.filter(x => x !== t) : [...s, t]);
+    setSelected((s) => (s.includes(t) ? s.filter((x) => x !== t) : [...s, t]));
 
   return (
     <PhoneFrame>
       <StatusBar />
       <div className="flex items-center justify-between px-5 pt-2 pb-4">
-        <Link to="/completar-perfil" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
+        <Link
+          to="/completar-perfil"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        >
           <ChevronLeft className="h-4 w-4" />
         </Link>
         <span className="text-xs text-muted-foreground">Passo 3 de 4</span>
@@ -36,10 +44,15 @@ function Interests() {
           {allInterests.map((t) => {
             const on = selected.includes(t);
             return (
-              <button key={t} onClick={() => toggle(t)}
-                className={`rounded-full px-4 py-2 text-sm font-medium border transition ${on
-                  ? "bg-gradient-brand text-white border-transparent shadow-soft"
-                  : "bg-surface text-foreground border-border"}`}>
+              <button
+                key={t}
+                onClick={() => toggle(t)}
+                className={`rounded-full px-4 py-2 text-sm font-medium border transition ${
+                  on
+                    ? "bg-gradient-brand text-white border-transparent shadow-soft"
+                    : "bg-surface text-foreground border-border"
+                }`}
+              >
                 {t}
               </button>
             );
@@ -53,7 +66,8 @@ function Interests() {
           <button
             onClick={() => nav({ to: "/finalizar-perfil" })}
             disabled={selected.length < 3}
-            className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant disabled:opacity-50">
+            className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant disabled:opacity-50"
+          >
             Finalizar
           </button>
         </div>

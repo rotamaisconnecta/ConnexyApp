@@ -38,13 +38,19 @@ function RotaPage() {
         <div className="rounded-2xl border border-border bg-surface p-3 space-y-3">
           <div className="flex items-center gap-3">
             <span className="h-2.5 w-2.5 rounded-full bg-success ring-4 ring-success/20" />
-            <input defaultValue="Minha localização" className="flex-1 bg-transparent outline-none text-sm" />
+            <input
+              defaultValue="Minha localização"
+              className="flex-1 bg-transparent outline-none text-sm"
+            />
           </div>
           <div className="border-t border-border" />
           <div className="flex items-center gap-3">
             <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
-            <input placeholder="Digite o destino" defaultValue="Shopping Ibirapuera"
-                   className="flex-1 bg-transparent outline-none text-sm" />
+            <input
+              placeholder="Digite o destino"
+              defaultValue="Shopping Ibirapuera"
+              className="flex-1 bg-transparent outline-none text-sm"
+            />
             <Search className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
@@ -55,17 +61,24 @@ function RotaPage() {
             { Icon: Briefcase, label: "Trabalho" },
             { Icon: Star, label: "Favoritos" },
           ].map(({ Icon, label }) => (
-            <button key={label} className="flex items-center gap-2 rounded-full bg-secondary px-3 py-2 text-xs font-medium">
+            <button
+              key={label}
+              className="flex items-center gap-2 rounded-full bg-secondary px-3 py-2 text-xs font-medium"
+            >
               <Icon className="h-3.5 w-3.5" /> {label}
             </button>
           ))}
         </div>
 
-        <p className="mt-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sugestões</p>
+        <p className="mt-5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          Sugestões
+        </p>
         <ul className="mt-2 divide-y divide-border">
           {suggestions.map((s) => (
             <li key={s.label} className="flex items-center gap-3 py-3">
-              <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-lg">{s.icon}</span>
+              <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-lg">
+                {s.icon}
+              </span>
               <div className="flex-1">
                 <div className="text-sm font-medium">{s.label}</div>
                 <div className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -78,7 +91,8 @@ function RotaPage() {
 
         <button
           onClick={() => nav({ to: "/matching" })}
-          className="mt-5 w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant">
+          className="mt-5 w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant"
+        >
           Confirmar destino
         </button>
       </div>
