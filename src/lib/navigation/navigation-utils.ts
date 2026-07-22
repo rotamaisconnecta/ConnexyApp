@@ -20,6 +20,10 @@ export function isActiveRoute(pathname: string, route: string): boolean {
 export function getActiveTab(pathname: string): NavigationTabValue | null {
   for (const item of NAVIGATION_ITEMS) {
     if (item.id === NavigationTab.CREATE) continue;
+    if (item.id === NavigationTab.MAP) {
+      if (pathname === "/") return item.id;
+      continue;
+    }
     if (isActiveRoute(pathname, item.route)) {
       return item.id;
     }
@@ -49,7 +53,9 @@ export function getCreateActions() {
 /* ─── getCreateActionByCategory ─────────────────────────── */
 
 export function getCreateActionByCategory(category: string) {
-  return CREATE_ACTIONS.find((action) => action.id === category) ?? null;
+  return (
+    CREATE_ACTIONS.find((action) => action.id.toLowerCase() === category.toLowerCase()) ?? null
+  );
 }
 
 /* ─── getUnreadBadgeCount ───────────────────────────────── */
