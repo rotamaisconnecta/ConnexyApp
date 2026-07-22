@@ -3,6 +3,7 @@ import {
   type EngineContext,
   type EngineNotification,
   type RecommendationTypeValue,
+  type RecommendationReasonValue,
   RecommendationType,
   RecommendationReason,
   ContextDay,
@@ -15,9 +16,7 @@ export function generateSmartNotifications(
   const now = ctx.timestamp;
   const notifications: EngineNotification[] = [];
 
-  const topRecs = [...recs]
-    .sort((a, b) => b.score.total - a.score.total)
-    .slice(0, 10);
+  const topRecs = [...recs].sort((a, b) => b.score.total - a.score.total).slice(0, 10);
 
   for (const rec of topRecs) {
     if (rec.score.total < 60) continue;
@@ -25,7 +24,7 @@ export function generateSmartNotifications(
     let title = "";
     let body = "";
     let icon = "";
-    let reason = RecommendationReason.INTERESSE;
+    let reason: RecommendationReasonValue = RecommendationReason.INTERESSE;
 
     switch (rec.type) {
       case RecommendationType.PERSON:
@@ -105,9 +104,7 @@ export function generateSmartNotifications(
   return notifications;
 }
 
-export function prioritizeNotifications(
-  notifs: EngineNotification[],
-): EngineNotification[] {
+export function prioritizeNotifications(notifs: EngineNotification[]): EngineNotification[] {
   return [...notifs].sort((a, b) => b.score - a.score);
 }
 

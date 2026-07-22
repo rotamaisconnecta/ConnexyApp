@@ -43,10 +43,7 @@ export function TrendingBanner({
     <motion.div
       animate={isPulsing(activityLevel) ? { scale: [1, 1.01, 1] } : undefined}
       transition={isPulsing(activityLevel) ? { duration: 2, repeat: Infinity } : undefined}
-      className={cn(
-        "flex items-center gap-3 rounded-2xl border p-3",
-        LEVEL_BG[activityLevel],
-      )}
+      className={cn("flex items-center gap-3 rounded-2xl border p-3", LEVEL_BG[activityLevel])}
     >
       <span className="text-2xl">{emoji}</span>
 

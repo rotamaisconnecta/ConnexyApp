@@ -63,17 +63,11 @@ export function getNearbyEvents(
   maxDistance: number = 5000,
 ): Recommendation[] {
   return recs
-    .filter(
-      (r) =>
-        r.type === RecommendationType.EVENT && r.distanceMeters <= maxDistance,
-    )
+    .filter((r) => r.type === RecommendationType.EVENT && r.distanceMeters <= maxDistance)
     .sort((a, b) => a.distanceMeters - b.distanceMeters);
 }
 
-export function shouldPrioritizeEvent(
-  event: Recommendation,
-  ctx: EngineContext,
-): boolean {
+export function shouldPrioritizeEvent(event: Recommendation, ctx: EngineContext): boolean {
   if (event.type !== RecommendationType.EVENT) return false;
 
   const meta = event.metadata.kind === "event" ? event.metadata : null;
@@ -87,18 +81,12 @@ export function shouldPrioritizeEvent(
     if (ctx.day === ContextDay.FIM_DE_SEMANA) {
       return meta.attendingCount > 5;
     }
-    if (
-      ctx.period === ContextPeriod.TARDE ||
-      ctx.period === ContextPeriod.NOITE
-    ) {
+    if (ctx.period === ContextPeriod.TARDE || ctx.period === ContextPeriod.NOITE) {
       return meta.attendingCount > 0;
     }
   }
 
-  if (
-    ctx.day === ContextDay.FIM_DE_SEMANA &&
-    meta.attendingCount > 20
-  ) {
+  if (ctx.day === ContextDay.FIM_DE_SEMANA && meta.attendingCount > 20) {
     return true;
   }
 

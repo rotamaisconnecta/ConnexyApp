@@ -1,9 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type {
-  Recommendation,
-  RecommendationMetadata,
-} from "@/lib/engine/engine-types";
+import type { Recommendation, RecommendationMetadata } from "@/lib/engine/engine-types";
 import { RecommendationType, ActivityLevel } from "@/lib/engine/engine-types";
 import {
   Users,
@@ -55,7 +52,10 @@ function getTypeBadge(metadata: RecommendationMetadata): string | null {
     case "person":
       return `${metadata.compatibilityPercent}% compatível`;
     case "event":
-      return new Date(metadata.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+      return new Date(metadata.date).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+      });
     case "business":
       return `★ ${metadata.rating.toFixed(1)}`;
     case "driver":
@@ -128,7 +128,12 @@ export function RecommendationCard({ recommendation, onSelect }: RecommendationC
             {formatDistance(recommendation.distanceMeters)}
           </span>
 
-          <span className={cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium", activityColor)}>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+              activityColor,
+            )}
+          >
             {recommendation.activityLevel.replace("_", " ")}
           </span>
         </div>

@@ -1,13 +1,6 @@
-import {
-  type Recommendation,
-  type EngineUser,
-  RecommendationType,
-} from "./engine-types";
+import { type Recommendation, type EngineUser, RecommendationType } from "./engine-types";
 
-export function getChatSuggestions(
-  recs: Recommendation[],
-  user: EngineUser,
-): Recommendation[] {
+export function getChatSuggestions(recs: Recommendation[], user: EngineUser): Recommendation[] {
   return recs
     .filter(
       (r) =>
@@ -30,31 +23,21 @@ export function getConversationStarters(person: Recommendation): string[] {
 
   const starters: string[] = [];
 
-  starters.push(
-    `Oi! Vi que você também curte um bom rolê. Topa trocar uma ideia?`,
-  );
+  starters.push(`Oi! Vi que você também curte um bom rolê. Topa trocar uma ideia?`);
 
   if (meta.compatibilityPercent >= 80) {
-    starters.push(
-      `Nossa, temos um baita match! Curte os mesmos rolês, né?`,
-    );
+    starters.push(`Nossa, temos um baita match! Curte os mesmos rolês, né?`);
   }
 
   if (meta.mutualConnections > 0) {
-    starters.push(
-      `Temos ${meta.mutualConnections} conex(ões) em comum! Bora conversar?`,
-    );
+    starters.push(`Temos ${meta.mutualConnections} conex(ões) em comum! Bora conversar?`);
   }
 
   if (meta.profession) {
-    starters.push(
-      `Vi que você é ${meta.profession}. Massa! Me conta mais sobre isso.`,
-    );
+    starters.push(`Vi que você é ${meta.profession}. Massa! Me conta mais sobre isso.`);
   }
 
-  starters.push(
-    `E aí, já foi em algum evento recentemente? Quero novidades!`,
-  );
+  starters.push(`E aí, já foi em algum evento recentemente? Quero novidades!`);
 
   return starters.slice(0, 5);
 }
@@ -71,32 +54,14 @@ export function getSmartReplies(context: string): string[] {
   }
 
   if (context.includes("rolê") || context.includes("sair")) {
-    return [
-      "Topo!",
-      "Bora sim!",
-      "Onde é?",
-      "Horário tá bom pra mim",
-      "Leva mais gente!",
-    ];
+    return ["Topo!", "Bora sim!", "Onde é?", "Horário tá bom pra mim", "Leva mais gente!"];
   }
 
   if (context.includes("oferta") || context.includes("desconto")) {
-    return [
-      "Show de bola!",
-      "Vou aproveitar!",
-      "Tem mais?",
-      "Obrigado pela dica!",
-      "Manda o link",
-    ];
+    return ["Show de bola!", "Vou aproveitar!", "Tem mais?", "Obrigado pela dica!", "Manda o link"];
   }
 
-  return [
-    "Legal!",
-    "Concordo!",
-    "Valeu!",
-    "Show!",
-    "Bora!",
-  ];
+  return ["Legal!", "Concordo!", "Valeu!", "Show!", "Bora!"];
 }
 
 export function shouldSuggestChat(rec: Recommendation): boolean {

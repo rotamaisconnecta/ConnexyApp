@@ -1,7 +1,4 @@
-import {
-  SCORING_WEIGHTS,
-  type RecommendationScore,
-} from "./engine-types";
+import { SCORING_WEIGHTS, type RecommendationScore } from "./engine-types";
 
 export function calculateInterestScore(interests: string[], itemInterests: string[]): number {
   if (interests.length === 0 || itemInterests.length === 0) return 0;
@@ -37,10 +34,30 @@ export function calculateCompatibilityScore(userInterests: string[], itemTags: s
 
 export function calculateTimeScore(hour: number): number {
   const activityPatterns: Record<number, number> = {
-    0: 15, 1: 10, 2: 5, 3: 5, 4: 5, 5: 10,
-    6: 30, 7: 50, 8: 70, 9: 85, 10: 90, 11: 85,
-    12: 80, 13: 75, 14: 80, 15: 85, 16: 80, 17: 75,
-    18: 80, 19: 85, 20: 90, 21: 95, 22: 85, 23: 60,
+    0: 15,
+    1: 10,
+    2: 5,
+    3: 5,
+    4: 5,
+    5: 10,
+    6: 30,
+    7: 50,
+    8: 70,
+    9: 85,
+    10: 90,
+    11: 85,
+    12: 80,
+    13: 75,
+    14: 80,
+    15: 85,
+    16: 80,
+    17: 75,
+    18: 80,
+    19: 85,
+    20: 90,
+    21: 95,
+    22: 85,
+    23: 60,
   };
   return activityPatterns[hour] ?? 50;
 }
@@ -65,11 +82,11 @@ export function calculateFinalScore(scores: {
 }): RecommendationScore {
   const total = Math.round(
     scores.interest * SCORING_WEIGHTS.interest +
-    scores.distance * SCORING_WEIGHTS.distance +
-    scores.popularity * SCORING_WEIGHTS.popularity +
-    scores.compatibility * SCORING_WEIGHTS.compatibility +
-    scores.time * SCORING_WEIGHTS.time +
-    scores.recency * SCORING_WEIGHTS.recency,
+      scores.distance * SCORING_WEIGHTS.distance +
+      scores.popularity * SCORING_WEIGHTS.popularity +
+      scores.compatibility * SCORING_WEIGHTS.compatibility +
+      scores.time * SCORING_WEIGHTS.time +
+      scores.recency * SCORING_WEIGHTS.recency,
   );
   return {
     interest: scores.interest,

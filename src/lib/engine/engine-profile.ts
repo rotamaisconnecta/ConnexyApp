@@ -36,8 +36,7 @@ export function getProfileStats(recs: Recommendation[]): ProfileStats {
   }
 
   const totalRecs = recs.length;
-  const avgScore =
-    recs.reduce((sum, r) => sum + r.score.total, 0) / totalRecs;
+  const avgScore = recs.reduce((sum, r) => sum + r.score.total, 0) / totalRecs;
 
   const typeCounts = {} as Record<RecommendationTypeValue, number>;
   for (const key of Object.values(RecommendationType)) {

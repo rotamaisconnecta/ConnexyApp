@@ -10,7 +10,12 @@ interface RecommendationSectionProps {
   onSelect?: (id: string) => void;
 }
 
-export function RecommendationSection({ title, icon, items, onSelect }: RecommendationSectionProps) {
+export function RecommendationSection({
+  title,
+  icon,
+  items,
+  onSelect,
+}: RecommendationSectionProps) {
   if (items.length === 0) {
     return (
       <div className="space-y-2 px-4">

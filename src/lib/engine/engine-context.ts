@@ -66,7 +66,12 @@ const LOCATION_LABELS: Record<ContextLocationValue, string> = {
 
 export function getContextLabel(ctx: EngineContext): string {
   const period = PERIOD_LABELS[ctx.period];
-  const day = ctx.day === "FIM_DE_SEMANA" ? (ctx.period === "MANHA" ? "de sábado" : "de sábado") : "de segunda a sexta";
+  const day =
+    ctx.day === "FIM_DE_SEMANA"
+      ? ctx.period === "MANHA"
+        ? "de sábado"
+        : "de sábado"
+      : "de segunda a sexta";
   const location = LOCATION_LABELS[ctx.location];
   return `${period.charAt(0).toUpperCase() + period.slice(1)} ${day} ${location}`;
 }

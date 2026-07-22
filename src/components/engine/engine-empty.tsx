@@ -5,7 +5,10 @@ interface EngineEmptyProps {
   icon?: React.ReactNode;
 }
 
-export function EngineEmpty({ message = "Nenhuma recomendação disponível", icon }: EngineEmptyProps) {
+export function EngineEmpty({
+  message = "Nenhuma recomendação disponível",
+  icon,
+}: EngineEmptyProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F4F1FF]">

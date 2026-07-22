@@ -342,9 +342,34 @@ export interface TrendingMeta {
 }
 
 export const ACTIVITY_META: TrendingMeta[] = [
-  { level: ActivityLevel.CALMO, label: "Calmo", emoji: "😴", color: "bg-blue-500/15 text-blue-400" },
-  { level: ActivityLevel.MODERADO, label: "Moderado", emoji: "😌", color: "bg-green-500/15 text-green-400" },
-  { level: ActivityLevel.EM_ALTA, label: "Em alta", emoji: "🔥", color: "bg-amber-500/15 text-amber-400" },
-  { level: ActivityLevel.BOMBANDO, label: "Bombando", emoji: "💥", color: "bg-orange-500/15 text-orange-400" },
-  { level: ActivityLevel.MUITO_CHEIO, label: "Muito cheio", emoji: "拥挤", color: "bg-red-500/15 text-red-400" },
+  {
+    level: ActivityLevel.CALMO,
+    label: "Calmo",
+    emoji: "😴",
+    color: "bg-blue-500/15 text-blue-400",
+  },
+  {
+    level: ActivityLevel.MODERADO,
+    label: "Moderado",
+    emoji: "😌",
+    color: "bg-green-500/15 text-green-400",
+  },
+  {
+    level: ActivityLevel.EM_ALTA,
+    label: "Em alta",
+    emoji: "🔥",
+    color: "bg-amber-500/15 text-amber-400",
+  },
+  {
+    level: ActivityLevel.BOMBANDO,
+    label: "Bombando",
+    emoji: "💥",
+    color: "bg-orange-500/15 text-orange-400",
+  },
+  {
+    level: ActivityLevel.MUITO_CHEIO,
+    label: "Muito cheio",
+    emoji: "拥挤",
+    color: "bg-red-500/15 text-red-400",
+  },
 ];

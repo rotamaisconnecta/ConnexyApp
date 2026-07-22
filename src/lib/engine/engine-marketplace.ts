@@ -1,19 +1,11 @@
-import {
-  type Recommendation,
-  type EngineUser,
-  RecommendationType,
-} from "./engine-types";
+import { type Recommendation, type EngineUser, RecommendationType } from "./engine-types";
 
 export function getMarketplaceRecommendations(
   recs: Recommendation[],
   user: EngineUser,
 ): Recommendation[] {
   return recs
-    .filter(
-      (r) =>
-        r.type === RecommendationType.BUSINESS ||
-        r.type === RecommendationType.OFFER,
-    )
+    .filter((r) => r.type === RecommendationType.BUSINESS || r.type === RecommendationType.OFFER)
     .sort((a, b) => b.score.total - a.score.total);
 }
 

@@ -16,10 +16,7 @@ const ACTIVITY_ORDER: ActivityLevelValue[] = [
   ActivityLevel.MUITO_CHEIO,
 ];
 
-export function calculateActivityLevel(
-  checkIns: number,
-  capacity: number,
-): ActivityLevelValue {
+export function calculateActivityLevel(checkIns: number, capacity: number): ActivityLevelValue {
   if (capacity <= 0) return ActivityLevel.CALMO;
 
   const ratio = checkIns / capacity;
@@ -42,23 +39,15 @@ export function getTrendingPlaces(places: TrendingPlace[]): TrendingPlace[] {
 }
 
 export function getTrendingEvents(events: TrendingEvent[]): TrendingEvent[] {
-  return events
-    .filter((e) => e.trending)
-    .sort((a, b) => b.attendingCount - a.attendingCount);
+  return events.filter((e) => e.trending).sort((a, b) => b.attendingCount - a.attendingCount);
 }
 
-export function getTrendingBusinesses(
-  businesses: TrendingBusiness[],
-): TrendingBusiness[] {
-  return businesses
-    .filter((b) => b.trending)
-    .sort((a, b) => b.rating - a.rating);
+export function getTrendingBusinesses(businesses: TrendingBusiness[]): TrendingBusiness[] {
+  return businesses.filter((b) => b.trending).sort((a, b) => b.rating - a.rating);
 }
 
 export function getTrendingPeople(people: TrendingPerson[]): TrendingPerson[] {
-  return [...people].sort(
-    (a, b) => b.compatibilityPercent - a.compatibilityPercent,
-  );
+  return [...people].sort((a, b) => b.compatibilityPercent - a.compatibilityPercent);
 }
 
 export function getTrendingDrivers(drivers: TrendingDriver[]): TrendingDriver[] {
@@ -71,10 +60,7 @@ export function getTrendingDrivers(drivers: TrendingDriver[]): TrendingDriver[] 
   });
 }
 
-export function isActivityLevel(
-  level: ActivityLevelValue,
-  min: ActivityLevelValue,
-): boolean {
+export function isActivityLevel(level: ActivityLevelValue, min: ActivityLevelValue): boolean {
   const levelIdx = ACTIVITY_ORDER.indexOf(level);
   const minIdx = ACTIVITY_ORDER.indexOf(min);
   return levelIdx >= minIdx;

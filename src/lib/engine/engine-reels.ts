@@ -1,22 +1,12 @@
-import {
-  type Recommendation,
-  type EngineUser,
-  RecommendationType,
-} from "./engine-types";
+import { type Recommendation, type EngineUser, RecommendationType } from "./engine-types";
 
-export function getReelRecommendations(
-  recs: Recommendation[],
-  user: EngineUser,
-): Recommendation[] {
+export function getReelRecommendations(recs: Recommendation[], user: EngineUser): Recommendation[] {
   return recs
     .filter((r) => r.type === RecommendationType.REEL)
     .sort((a, b) => b.score.total - a.score.total);
 }
 
-export function getRelatedReels(
-  reel: Recommendation,
-  allRecs: Recommendation[],
-): Recommendation[] {
+export function getRelatedReels(reel: Recommendation, allRecs: Recommendation[]): Recommendation[] {
   const reelMeta = reel.metadata.kind === "reel" ? reel.metadata : null;
   if (!reelMeta) return [];
 
@@ -55,8 +45,7 @@ export function getTrendingReels(recs: Recommendation[]): Recommendation[] {
       (r) =>
         r.type === RecommendationType.REEL &&
         (r.trending ||
-          (r.metadata.kind === "reel" &&
-            r.metadata.likes + r.metadata.comments > 100)),
+          (r.metadata.kind === "reel" && r.metadata.likes + r.metadata.comments > 100)),
     )
     .sort((a, b) => b.score.popularity - a.score.popularity);
 }

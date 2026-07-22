@@ -1,11 +1,6 @@
-import {
-  type Recommendation,
-  RecommendationType,
-} from "./engine-types";
+import { type Recommendation, RecommendationType } from "./engine-types";
 
-export function getDriverRecommendations(
-  recs: Recommendation[],
-): Recommendation[] {
+export function getDriverRecommendations(recs: Recommendation[]): Recommendation[] {
   return recs
     .filter((r) => r.type === RecommendationType.DRIVER)
     .sort((a, b) => b.score.total - a.score.total);
@@ -39,18 +34,14 @@ export function getAvailableDrivers(recs: Recommendation[]): Recommendation[] {
     .sort((a, b) => a.distanceMeters - b.distanceMeters);
 }
 
-export function getFastestDriver(
-  recs: Recommendation[],
-): Recommendation | null {
+export function getFastestDriver(recs: Recommendation[]): Recommendation | null {
   const available = getAvailableDrivers(recs);
   if (available.length === 0) return null;
 
   return available.reduce<Recommendation>((fastest, current) => {
-    const fastestMeta =
-      fastest.metadata.kind === "driver" ? fastest.metadata : null;
-    const currentMeta =
-      current.metadata.kind === "driver" ? current.metadata : null;
+    const fastestMeta = fastest.metadata.kind === "driver" ? fastest.metadata : null;
+    const currentMeta = current.metadata.kind === "driver" ? current.metadata : null;
     if (!fastestMeta || !currentMeta) return fastest;
     return currentMeta.etaMinutes < fastestMeta.etaMinutes ? current : fastest;
-  });
+  }, available[0]);
 }

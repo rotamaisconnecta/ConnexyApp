@@ -1,15 +1,7 @@
 import { Brain } from "lucide-react";
 import type { Recommendation, EngineNotification } from "@/lib/engine/engine-types";
 import { RecommendationType } from "@/lib/engine/engine-types";
-import {
-  Users,
-  Calendar,
-  Building2,
-  MapPin,
-  Film,
-  Car,
-  Ticket,
-} from "lucide-react";
+import { Users, Calendar, Building2, MapPin, Film, Car, Ticket } from "lucide-react";
 import { RecommendationSection } from "./recommendation-section";
 import { SmartAlert } from "./smart-alert";
 
@@ -29,13 +21,41 @@ interface EngineDashboardProps {
 }
 
 const SECTION_CONFIG = [
-  { key: "topPeople" as const, title: "Pessoas para Conhecer", icon: <Users className="h-4 w-4 text-[#A88DFF]" /> },
-  { key: "topEvents" as const, title: "Eventos em Alta", icon: <Calendar className="h-4 w-4 text-[#A88DFF]" /> },
-  { key: "topBusinesses" as const, title: "Empresas Populares", icon: <Building2 className="h-4 w-4 text-[#A88DFF]" /> },
-  { key: "topPlaces" as const, title: "Lugares Quentes", icon: <MapPin className="h-4 w-4 text-[#A88DFF]" /> },
-  { key: "topReels" as const, title: "Reels em Destaque", icon: <Film className="h-4 w-4 text-[#A88DFF]" /> },
-  { key: "topDrivers" as const, title: "Motoristas Próximos", icon: <Car className="h-4 w-4 text-[#A88DFF]" /> },
-  { key: "topOffers" as const, title: "Melhores Ofertas", icon: <Ticket className="h-4 w-4 text-[#A88DFF]" /> },
+  {
+    key: "topPeople" as const,
+    title: "Pessoas para Conhecer",
+    icon: <Users className="h-4 w-4 text-[#A88DFF]" />,
+  },
+  {
+    key: "topEvents" as const,
+    title: "Eventos em Alta",
+    icon: <Calendar className="h-4 w-4 text-[#A88DFF]" />,
+  },
+  {
+    key: "topBusinesses" as const,
+    title: "Empresas Populares",
+    icon: <Building2 className="h-4 w-4 text-[#A88DFF]" />,
+  },
+  {
+    key: "topPlaces" as const,
+    title: "Lugares Quentes",
+    icon: <MapPin className="h-4 w-4 text-[#A88DFF]" />,
+  },
+  {
+    key: "topReels" as const,
+    title: "Reels em Destaque",
+    icon: <Film className="h-4 w-4 text-[#A88DFF]" />,
+  },
+  {
+    key: "topDrivers" as const,
+    title: "Motoristas Próximos",
+    icon: <Car className="h-4 w-4 text-[#A88DFF]" />,
+  },
+  {
+    key: "topOffers" as const,
+    title: "Melhores Ofertas",
+    icon: <Ticket className="h-4 w-4 text-[#A88DFF]" />,
+  },
 ];
 
 export function EngineDashboard({ data }: EngineDashboardProps) {
@@ -71,12 +91,7 @@ export function EngineDashboard({ data }: EngineDashboardProps) {
 
       <div className="space-y-6 py-4">
         {SECTION_CONFIG.map(({ key, title, icon }) => (
-          <RecommendationSection
-            key={key}
-            title={title}
-            icon={icon}
-            items={data[key]}
-          />
+          <RecommendationSection key={key} title={title} icon={icon} items={data[key]} />
         ))}
 
         {data.notifications.length > 0 && (

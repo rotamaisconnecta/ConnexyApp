@@ -12,15 +12,9 @@ import {
   RecommendationType,
 } from "./engine-types";
 
-import {
-  getReelRecommendations,
-  getTrendingReels,
-} from "./engine-reels";
+import { getReelRecommendations, getTrendingReels } from "./engine-reels";
 
-import {
-  getEventRecommendations,
-  getPopularEvents,
-} from "./engine-events";
+import { getEventRecommendations, getPopularEvents } from "./engine-events";
 
 import {
   getMarketplaceRecommendations,
@@ -29,20 +23,11 @@ import {
   getFollowedBusinesses,
 } from "./engine-marketplace";
 
-import {
-  getDiscoveryRecommendations,
-  getCompatiblePeople,
-} from "./engine-discovery";
+import { getDiscoveryRecommendations, getCompatiblePeople } from "./engine-discovery";
 
-import {
-  getDriverRecommendations,
-  getNearestDrivers,
-} from "./engine-driver";
+import { getDriverRecommendations, getNearestDrivers } from "./engine-driver";
 
-import {
-  generateSmartNotifications,
-  prioritizeNotifications,
-} from "./engine-notifications";
+import { generateSmartNotifications, prioritizeNotifications } from "./engine-notifications";
 
 import {
   getTrendingPlaces as calcTrendingPlaces,
@@ -78,10 +63,7 @@ export interface DashboardData {
   notifications: EngineNotification[];
 }
 
-export function initializeEngine(
-  user: EngineUser,
-  context: EngineContext,
-): EngineState {
+export function initializeEngine(user: EngineUser, context: EngineContext): EngineState {
   return {
     user,
     context,
@@ -101,9 +83,7 @@ export function getRecommendations(
   type?: RecommendationTypeValue,
 ): Recommendation[] {
   if (!type) {
-    return [...state.recommendations].sort(
-      (a, b) => b.score.total - a.score.total,
-    );
+    return [...state.recommendations].sort((a, b) => b.score.total - a.score.total);
   }
 
   return state.recommendations
@@ -157,9 +137,7 @@ export function getDashboardData(state: EngineState): DashboardData {
   const topDrivers = getNearestDrivers(recs).slice(0, 5);
   const topOffers = getBestOffers(recs).slice(0, 5);
 
-  const notifications = prioritizeNotifications(
-    generateSmartNotifications(recs, state.context),
-  );
+  const notifications = prioritizeNotifications(generateSmartNotifications(recs, state.context));
 
   return {
     topPeople,
