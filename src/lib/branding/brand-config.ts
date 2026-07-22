@@ -40,8 +40,8 @@ export const Brand = {
    Logo — import paths (use with <img> or next/image)
 ----------------------------------------------------------- */
 export const Logo = {
-  default: new URL("../../assets/branding/connexy-logo.png", import.meta.url).href,
-  icon: new URL("../../assets/branding/connexy-icon.png", import.meta.url).href,
+  default: new URL("../../assets/connexy-logo.png", import.meta.url).href,
+  icon: new URL("../../assets/connexy-icon.png", import.meta.url).href,
 } as const;
 
 export { Colors, Typography, Radius, Gradients, Shadows, IconConfig as Icons, Spacing, Animations };

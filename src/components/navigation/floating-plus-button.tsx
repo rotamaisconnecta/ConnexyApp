@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { centerButton } from "./navigation-animations";
-import Icon from "@/assets/branding/connexy-icon.png";
+import Icon from "@/assets/connexy-icon.png";
 
 interface FloatingPlusButtonProps {
   onTap?: () => void;
