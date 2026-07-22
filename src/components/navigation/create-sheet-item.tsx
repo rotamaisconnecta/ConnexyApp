@@ -28,7 +28,7 @@ export function CreateSheetItem({
       aria-label={`Criar ${label}`}
       className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >
-      <div className="h-16 w-16 rounded-full bg-white shadow-soft grid place-items-center text-3xl">
+      <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-white shadow-soft grid place-items-center text-2xl sm:text-3xl">
         {emoji}
       </div>
       <div className="text-center">

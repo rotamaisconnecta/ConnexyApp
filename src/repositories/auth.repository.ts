@@ -1,26 +1,39 @@
 import { supabase } from "@/lib/supabase/client";
-import { SupabaseError } from "@/lib/supabase/errors";
+import { parseSupabaseError } from "@/lib/supabase/errors";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export const AuthRepository = {
   async getSession() {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw new SupabaseError(error.message, error.status);
-    return data;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw parseSupabaseError(error);
+      return data;
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   async getUser() {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw new SupabaseError(error.message, error.status);
-    return data;
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw parseSupabaseError(error);
+      return data;
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   async signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw new SupabaseError(error.message, error.status);
-    return data;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw parseSupabaseError(error);
+      return data;
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   async signUp(
@@ -28,37 +41,50 @@ export const AuthRepository = {
     password: string,
     metadata?: Record<string, unknown>
   ) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: metadata },
-    });
-    if (error) throw new SupabaseError(error.message, error.status);
-    return data;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: metadata },
+      });
+      if (error) throw parseSupabaseError(error);
+      return data;
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw new SupabaseError(error.message, error.status);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw parseSupabaseError(error);
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   async resetPassword(email: string) {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) throw new SupabaseError(error.message, error.status);
-    return data;
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw parseSupabaseError(error);
+      return data;
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   async updateProfile(data: Record<string, unknown>) {
-    const { data: updated, error } = await supabase.auth.updateUser({ data });
-    if (error) throw new SupabaseError(error.message, error.status);
-    return updated;
+    try {
+      const { data: updated, error } = await supabase.auth.updateUser({ data });
+      if (error) throw parseSupabaseError(error);
+      return updated;
+    } catch (error) {
+      throw parseSupabaseError(error);
+    }
   },
 
   onAuthStateChange(
-    callback: (
-      event: string,
-      session: { user: { id: string; email: string } } | null
-    ) => void
+    callback: (event: AuthChangeEvent, session: Session | null) => void
   ) {
     return supabase.auth.onAuthStateChange(callback);
   },
