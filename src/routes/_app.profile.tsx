@@ -205,7 +205,7 @@ function ProfilePage() {
           </div>
         </div>
         <Link
-          to="/profile/driver"
+          to="/driver/cadastro"
           className="mt-3 block w-full rounded-xl bg-gradient-brand py-2.5 text-center text-xs font-semibold text-white shadow-soft"
         >
           Tornar-me motorista

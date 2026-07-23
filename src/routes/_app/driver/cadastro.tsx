@@ -5,9 +5,9 @@ import { ChevronLeft, Car, Save } from "lucide-react";
 import { currentUser } from "@/lib/mock-data";
 import { motion } from "framer-motion";
 
-export const Route = createFileRoute("/_app/profile/driver")({
-  head: () => ({ meta: [{ title: "Motorista — Connexy" }] }),
-  component: DriverProfilePage,
+export const Route = createFileRoute("/_app/driver/cadastro")({
+  head: () => ({ meta: [{ title: "Cadastro Motorista — Connexy" }] }),
+  component: DriverCadastroPage,
 });
 
 interface DriverForm {
@@ -52,7 +52,7 @@ const INITIAL_FORM: DriverForm = {
   isOnline: false,
 };
 
-function DriverProfilePage() {
+function DriverCadastroPage() {
   const [form, setForm] = useState<DriverForm>(INITIAL_FORM);
   const [saved, setSaved] = useState(false);
 
@@ -69,21 +69,21 @@ function DriverProfilePage() {
     <div className="flex-1 pb-20">
       <StatusBar />
 
-      <header className="px-5 pt-1 pb-3 flex items-center gap-3">
+      <header className="flex items-center gap-3 px-5 pb-3 pt-1">
         <Link
-          to="/profile"
-          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+          to="/driver"
+          className="grid h-9 w-9 place-items-center rounded-full bg-secondary"
           aria-label="Voltar"
         >
           <ChevronLeft className="h-4 w-4" />
         </Link>
         <div className="flex-1">
-          <h1 className="font-display font-bold text-lg">Perfil Motorista</h1>
+          <h1 className="font-display text-lg font-bold">Cadastro Motorista</h1>
           <p className="text-[11px] text-muted-foreground">Configure seus dados de motorista</p>
         </div>
       </header>
 
-      <div className="px-4 space-y-4">
+      <div className="space-y-4 px-4">
         {/* Status */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -244,7 +244,7 @@ function DriverProfilePage() {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSave}
-          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-brand py-3.5 text-white text-sm font-semibold shadow-soft"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-soft"
         >
           <Save className="h-4 w-4" />
           {saved ? "Salvo!" : "Salvar"}
@@ -261,7 +261,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border bg-surface p-4 shadow-soft space-y-3"
+      className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-soft"
     >
       <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
@@ -290,7 +290,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:outline-none"
       />
     </div>
   );

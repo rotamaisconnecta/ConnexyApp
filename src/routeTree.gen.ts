@@ -50,7 +50,6 @@ import { Route as AppRideMatchingRouteImport } from './routes/_app/ride/matching
 import { Route as AppRideHistoryRouteImport } from './routes/_app/ride/history'
 import { Route as AppRideActiveRouteImport } from './routes/_app/ride/active'
 import { Route as AppReelsReelIdRouteImport } from './routes/_app/reels/$reelId'
-import { Route as AppProfileDriverRouteImport } from './routes/_app/profile/driver'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
 import { Route as AppGerenciarNovoReelRouteImport } from './routes/_app.gerenciar.novo-reel'
@@ -59,6 +58,7 @@ import { Route as AppDriverProfileRouteImport } from './routes/_app/driver/profi
 import { Route as AppDriverPerformanceRouteImport } from './routes/_app/driver/performance'
 import { Route as AppDriverHistoryRouteImport } from './routes/_app/driver/history'
 import { Route as AppDriverFinanceRouteImport } from './routes/_app/driver/finance'
+import { Route as AppDriverCadastroRouteImport } from './routes/_app/driver/cadastro'
 import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
@@ -268,11 +268,6 @@ const AppReelsReelIdRoute = AppReelsReelIdRouteImport.update({
   path: '/$reelId',
   getParentRoute: () => AppReelsRoute,
 } as any)
-const AppProfileDriverRoute = AppProfileDriverRouteImport.update({
-  id: '/driver',
-  path: '/driver',
-  getParentRoute: () => AppProfileRoute,
-} as any)
 const AppPerfilIdRoute = AppPerfilIdRouteImport.update({
   id: '/perfil/$id',
   path: '/perfil/$id',
@@ -311,6 +306,11 @@ const AppDriverHistoryRoute = AppDriverHistoryRouteImport.update({
 const AppDriverFinanceRoute = AppDriverFinanceRouteImport.update({
   id: '/driver/finance',
   path: '/driver/finance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDriverCadastroRoute = AppDriverCadastroRouteImport.update({
+  id: '/driver/cadastro',
+  path: '/driver/cadastro',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatIdRoute = AppChatIdRouteImport.update({
@@ -363,13 +363,14 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
-  '/profile': typeof AppProfileRouteWithChildren
+  '/profile': typeof AppProfileRoute
   '/reels': typeof AppReelsRouteWithChildren
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/driver/cadastro': typeof AppDriverCadastroRoute
   '/driver/finance': typeof AppDriverFinanceRoute
   '/driver/history': typeof AppDriverHistoryRoute
   '/driver/performance': typeof AppDriverPerformanceRoute
@@ -378,7 +379,6 @@ export interface FileRoutesByFullPath {
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
-  '/profile/driver': typeof AppProfileDriverRoute
   '/reels/$reelId': typeof AppReelsReelIdRoute
   '/ride/active': typeof AppRideActiveRoute
   '/ride/history': typeof AppRideHistoryRoute
@@ -418,13 +418,14 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
-  '/profile': typeof AppProfileRouteWithChildren
+  '/profile': typeof AppProfileRoute
   '/reels': typeof AppReelsRouteWithChildren
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/driver/cadastro': typeof AppDriverCadastroRoute
   '/driver/finance': typeof AppDriverFinanceRoute
   '/driver/history': typeof AppDriverHistoryRoute
   '/driver/performance': typeof AppDriverPerformanceRoute
@@ -433,7 +434,6 @@ export interface FileRoutesByTo {
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
-  '/profile/driver': typeof AppProfileDriverRoute
   '/reels/$reelId': typeof AppReelsReelIdRoute
   '/ride/active': typeof AppRideActiveRoute
   '/ride/history': typeof AppRideHistoryRoute
@@ -475,13 +475,14 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/pessoas': typeof AppPessoasRoute
   '/_app/privacidade': typeof AppPrivacidadeRoute
-  '/_app/profile': typeof AppProfileRouteWithChildren
+  '/_app/profile': typeof AppProfileRoute
   '/_app/reels': typeof AppReelsRouteWithChildren
   '/_app/ride': typeof AppRideRouteWithChildren
   '/_app/rota': typeof AppRotaRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/chat/$id': typeof AppChatIdRoute
+  '/_app/driver/cadastro': typeof AppDriverCadastroRoute
   '/_app/driver/finance': typeof AppDriverFinanceRoute
   '/_app/driver/history': typeof AppDriverHistoryRoute
   '/_app/driver/performance': typeof AppDriverPerformanceRoute
@@ -490,7 +491,6 @@ export interface FileRoutesById {
   '/_app/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
-  '/_app/profile/driver': typeof AppProfileDriverRoute
   '/_app/reels/$reelId': typeof AppReelsReelIdRoute
   '/_app/ride/active': typeof AppRideActiveRoute
   '/_app/ride/history': typeof AppRideHistoryRoute
@@ -539,6 +539,7 @@ export interface FileRouteTypes {
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
+    | '/driver/cadastro'
     | '/driver/finance'
     | '/driver/history'
     | '/driver/performance'
@@ -547,7 +548,6 @@ export interface FileRouteTypes {
     | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
-    | '/profile/driver'
     | '/reels/$reelId'
     | '/ride/active'
     | '/ride/history'
@@ -594,6 +594,7 @@ export interface FileRouteTypes {
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
+    | '/driver/cadastro'
     | '/driver/finance'
     | '/driver/history'
     | '/driver/performance'
@@ -602,7 +603,6 @@ export interface FileRouteTypes {
     | '/gerenciar/novo-reel'
     | '/local/$id'
     | '/perfil/$id'
-    | '/profile/driver'
     | '/reels/$reelId'
     | '/ride/active'
     | '/ride/history'
@@ -650,6 +650,7 @@ export interface FileRouteTypes {
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/chat/$id'
+    | '/_app/driver/cadastro'
     | '/_app/driver/finance'
     | '/_app/driver/history'
     | '/_app/driver/performance'
@@ -658,7 +659,6 @@ export interface FileRouteTypes {
     | '/_app/gerenciar/novo-reel'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
-    | '/_app/profile/driver'
     | '/_app/reels/$reelId'
     | '/_app/ride/active'
     | '/_app/ride/history'
@@ -971,13 +971,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReelsReelIdRouteImport
       parentRoute: typeof AppReelsRoute
     }
-    '/_app/profile/driver': {
-      id: '/_app/profile/driver'
-      path: '/driver'
-      fullPath: '/profile/driver'
-      preLoaderRoute: typeof AppProfileDriverRouteImport
-      parentRoute: typeof AppProfileRoute
-    }
     '/_app/perfil/$id': {
       id: '/_app/perfil/$id'
       path: '/perfil/$id'
@@ -1032,6 +1025,13 @@ declare module '@tanstack/react-router' {
       path: '/driver/finance'
       fullPath: '/driver/finance'
       preLoaderRoute: typeof AppDriverFinanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/driver/cadastro': {
+      id: '/_app/driver/cadastro'
+      path: '/driver/cadastro'
+      fullPath: '/driver/cadastro'
+      preLoaderRoute: typeof AppDriverCadastroRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/chat/$id': {
@@ -1090,18 +1090,6 @@ const AppGerenciarRouteWithChildren = AppGerenciarRoute._addFileChildren(
   AppGerenciarRouteChildren,
 )
 
-interface AppProfileRouteChildren {
-  AppProfileDriverRoute: typeof AppProfileDriverRoute
-}
-
-const AppProfileRouteChildren: AppProfileRouteChildren = {
-  AppProfileDriverRoute: AppProfileDriverRoute,
-}
-
-const AppProfileRouteWithChildren = AppProfileRoute._addFileChildren(
-  AppProfileRouteChildren,
-)
-
 interface AppReelsRouteChildren {
   AppReelsReelIdRoute: typeof AppReelsReelIdRoute
 }
@@ -1152,11 +1140,12 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPessoasRoute: typeof AppPessoasRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
-  AppProfileRoute: typeof AppProfileRouteWithChildren
+  AppProfileRoute: typeof AppProfileRoute
   AppReelsRoute: typeof AppReelsRouteWithChildren
   AppRideRoute: typeof AppRideRouteWithChildren
   AppRotaRoute: typeof AppRotaRoute
   AppBusinessBusinessIdRoute: typeof AppBusinessBusinessIdRoute
+  AppDriverCadastroRoute: typeof AppDriverCadastroRoute
   AppDriverFinanceRoute: typeof AppDriverFinanceRoute
   AppDriverHistoryRoute: typeof AppDriverHistoryRoute
   AppDriverPerformanceRoute: typeof AppDriverPerformanceRoute
@@ -1191,11 +1180,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppPessoasRoute: AppPessoasRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
-  AppProfileRoute: AppProfileRouteWithChildren,
+  AppProfileRoute: AppProfileRoute,
   AppReelsRoute: AppReelsRouteWithChildren,
   AppRideRoute: AppRideRouteWithChildren,
   AppRotaRoute: AppRotaRoute,
   AppBusinessBusinessIdRoute: AppBusinessBusinessIdRoute,
+  AppDriverCadastroRoute: AppDriverCadastroRoute,
   AppDriverFinanceRoute: AppDriverFinanceRoute,
   AppDriverHistoryRoute: AppDriverHistoryRoute,
   AppDriverPerformanceRoute: AppDriverPerformanceRoute,
