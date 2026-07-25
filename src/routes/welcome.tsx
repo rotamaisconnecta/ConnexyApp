@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import welcomeReference from "@/assets/welcome-reference.png";
+import welcomeReference from "@/assets/Branding/welcome-reference.png";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({

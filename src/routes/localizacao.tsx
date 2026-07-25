@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import locationPermissionReference from "@/assets/location-permission-reference.png";
+import locationPermissionReference from "@/assets/Branding/location-permission-reference.png";
 
 export const Route = createFileRoute("/localizacao")({
   head: () => ({ meta: [{ title: "Permitir localizacao | Connexy" }] }),
