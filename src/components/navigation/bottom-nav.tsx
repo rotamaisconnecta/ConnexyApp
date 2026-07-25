@@ -26,8 +26,10 @@ export function BottomNavPremium({
 
   const handleCreateSelect = useCallback(
     (category: string) => {
-      const route = `/_app/create?category=${category.toLowerCase()}`;
-      onNavigate?.(route);
+      if (onNavigate) {
+        onNavigate(`/_app/create?category=${category.toLowerCase()}`);
+        return;
+      }
     },
     [onNavigate],
   );

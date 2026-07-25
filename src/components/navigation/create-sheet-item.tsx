@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { sheetItem } from "./navigation-animations";
 
 interface CreateSheetItemProps {
+  categoryId: string;
   emoji: string;
   label: string;
   description: string;
@@ -10,6 +11,7 @@ interface CreateSheetItemProps {
 }
 
 export function CreateSheetItem({
+  categoryId,
   emoji,
   label,
   description,
@@ -24,7 +26,7 @@ export function CreateSheetItem({
       animate="visible"
       whileTap={{ scale: 0.95 }}
       whileHover={{ scale: 1.03 }}
-      onClick={() => onSelect?.(label)}
+      onClick={() => onSelect?.(categoryId)}
       aria-label={`Criar ${label}`}
       className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >

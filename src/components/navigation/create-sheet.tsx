@@ -98,6 +98,7 @@ export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
                   {CREATE_ACTIONS.map((action, i) => (
                     <CreateSheetItem
                       key={action.id}
+                      categoryId={action.id}
                       emoji={action.emoji}
                       label={action.label}
                       description={action.description}

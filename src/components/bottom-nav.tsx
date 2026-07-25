@@ -49,10 +49,11 @@ export function BottomNav({
 
   const handleCreateSelect = useCallback(
     (category: string) => {
-      const route = `/_app/create?category=${category.toLowerCase()}`;
-      onNavigate?.(route);
-      if (onNavigate) return;
-      navigate({ to: route });
+      if (onNavigate) {
+        onNavigate(`/_app/create?category=${category.toLowerCase()}`);
+        return;
+      }
+      navigate({ to: "/create", search: { category: category.toLowerCase() } });
     },
     [onNavigate, navigate],
   );
