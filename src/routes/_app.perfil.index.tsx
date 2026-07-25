@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/mock-data";
 import { ChevronRight, MapPinned, Users, Bookmark, Settings, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/_app/perfil/")({
-  head: () => ({ meta: [{ title: "Perfil — RotaMais Connecta" }] }),
+  head: () => ({ meta: [{ title: "Perfil — Connexy" }] }),
   component: Profile,
 });
 

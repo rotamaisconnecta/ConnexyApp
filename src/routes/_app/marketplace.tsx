@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNav } from "@/components/bottom-nav";
 import { SearchBar } from "@/components/marketplace/search-bar";
 import { CategoryFilter } from "@/components/marketplace/category-filter";
 import { MarketplaceFiltersPanel } from "@/components/marketplace/marketplace-filters";
@@ -400,8 +399,6 @@ function MarketplacePage() {
           </div>
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 }

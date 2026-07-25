@@ -26,7 +26,7 @@ export function BottomNavPremium({
 
   const handleCreateSelect = useCallback(
     (category: string) => {
-      const route = `/create-post?category=${category.toLowerCase()}`;
+      const route = `/_app/create?category=${category.toLowerCase()}`;
       onNavigate?.(route);
     },
     [onNavigate],

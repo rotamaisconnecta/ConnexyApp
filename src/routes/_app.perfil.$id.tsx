@@ -34,7 +34,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_app/perfil/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Perfil de ${params.id} — Connecta` },
+      { title: `Perfil de ${params.id} — Connexy` },
       {
         name: "description",
         content: "Conheça a bio, momentos e locais favoritos antes de iniciar a conversa.",

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 
 export const Route = createFileRoute("/_app/connecta")({
-  head: () => ({ meta: [{ title: "Connecta — Pessoas próximas" }] }),
+  head: () => ({ meta: [{ title: "Connexy — Pessoas próximas" }] }),
   component: Connecta,
 });
 
@@ -17,7 +17,7 @@ function Connecta() {
     <div className="flex-1">
       <StatusBar />
       <header className="px-5 pt-1 pb-3">
-        <h1 className="font-display text-xl font-bold">Connecta</h1>
+        <h1 className="font-display text-xl font-bold">Connexy</h1>
         <p className="text-xs text-muted-foreground">Pessoas próximas a você agora</p>
       </header>
 

@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { allInterests } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/interesses")({
-  head: () => ({ meta: [{ title: "Interesses — RotaMais Connecta" }] }),
+  head: () => ({ meta: [{ title: "Interesses — Connexy" }] }),
   component: Interests,
 });
 

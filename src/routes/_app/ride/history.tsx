@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNav } from "@/components/bottom-nav";
 import { RideHistoryList } from "@/components/mobility/ride-history-list";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -92,8 +91,6 @@ function RideHistoryPage() {
       <div className="flex-1 px-5 pb-4 overflow-y-auto no-scrollbar">
         <RideHistoryList history={MOCK_HISTORY} />
       </div>
-
-      <BottomNav />
     </div>
   );
 }

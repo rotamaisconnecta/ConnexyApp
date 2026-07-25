@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft, Car, Save } from "lucide-react";
 import { currentUser } from "@/lib/mock-data";
@@ -53,12 +53,16 @@ const INITIAL_FORM: DriverForm = {
 };
 
 function DriverCadastroPage() {
+  const nav = useNavigate();
   const [form, setForm] = useState<DriverForm>(INITIAL_FORM);
   const [saved, setSaved] = useState(false);
 
   function handleSave() {
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setTimeout(() => {
+      setSaved(false);
+      nav({ to: "/driver" });
+    }, 800);
   }
 
   function update<K extends keyof DriverForm>(key: K, value: DriverForm[K]) {

@@ -47,26 +47,16 @@ type BioPost = {
 };
 
 export const Route = createFileRoute("/_app/gerenciar")({
-  head: () => ({ meta: [{ title: "Gerenciar sua bio — Connecta" }] }),
+  head: () => ({ meta: [{ title: "Gerenciar sua bio — Connexy" }] }),
   component: Gerenciar,
 });
 
 function Gerenciar() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const nav = useNavigate();
   const [tab, setTab] = useState<"perfil" | "posts">("perfil");
 
-  useEffect(() => {
-    if (!authLoading && !user) nav({ to: "/auth" });
-  }, [authLoading, user, nav]);
-
-  if (authLoading || !user) {
-    return (
-      <div className="flex-1 grid place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <div className="flex-1 flex flex-col pb-24">

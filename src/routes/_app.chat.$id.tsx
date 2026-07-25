@@ -26,7 +26,7 @@ import { MeetupSheet, type MeetupPick } from "@/components/chat/meetup-sheet";
 import { Gradients } from "@/theme";
 
 export const Route = createFileRoute("/_app/chat/$id")({
-  head: () => ({ meta: [{ title: "Chat — Connecta" }] }),
+  head: () => ({ meta: [{ title: "Chat — Connexy" }] }),
   loader: ({ params }) => {
     const person = people.find((p) => p.id === params.id);
     if (!person) throw notFound();

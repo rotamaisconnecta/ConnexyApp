@@ -9,7 +9,7 @@ import { useState } from "react";
 const filters = ["Todos", "Restaurantes", "Cafés", "Eventos", "Lojas"] as const;
 
 export const Route = createFileRoute("/_app/locais")({
-  head: () => ({ meta: [{ title: "Locais próximos — RotaMais Connecta" }] }),
+  head: () => ({ meta: [{ title: "Locais próximos — Connexy" }] }),
   component: Locais,
 });
 

@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { Gradients } from "@/theme";
 
 export const Route = createFileRoute("/_app/solicitacao/$id")({
-  head: () => ({ meta: [{ title: "Solicitação de chat — Connecta" }] }),
+  head: () => ({ meta: [{ title: "Solicitação de chat — Connexy" }] }),
   loader: ({ params }) => {
     const person = people.find((p) => p.id === params.id);
     if (!person) throw notFound();

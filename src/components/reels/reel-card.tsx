@@ -121,7 +121,7 @@ export function ReelCard({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-60 bg-gradient-to-t from-black/80 to-transparent" />
 
-      {/* Connecta chips — top-left overlay */}
+      {/* Connexy chips — top-left overlay */}
       <div className="absolute top-16 left-3 space-y-2 z-10 max-w-[62%]">
         {reel.place && (
           <Link

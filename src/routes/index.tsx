@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
-import { BrandLogo } from "@/components/ui/brand-logo";
+import { AppIcon } from "@/components/ui/app-icon";
 import { supabase } from "@/integrations/supabase/client";
 import { Colors } from "@/theme";
 
@@ -42,7 +42,7 @@ function Splash() {
           transition={{ type: "spring", stiffness: 200, damping: 18 }}
           className="relative flex flex-col items-center gap-4"
         >
-          <BrandLogo size="xl" variant="full" />
+          <AppIcon size="2xl" priority className="drop-shadow-lg" />
         </motion.div>
         <motion.div
           initial={{ opacity: 0 }}

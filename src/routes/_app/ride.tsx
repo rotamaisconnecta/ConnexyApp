@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNav } from "@/components/bottom-nav";
 import { RideRequestForm } from "@/components/mobility/ride-request-form";
 import { StopManager } from "@/components/mobility/stop-manager";
 import { FavoriteDestinationList } from "@/components/mobility/favorite-destination";
@@ -106,8 +105,6 @@ function RideRequestPage() {
           </button>
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 }

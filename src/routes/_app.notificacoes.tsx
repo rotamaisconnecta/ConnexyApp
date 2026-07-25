@@ -7,7 +7,7 @@ import { useState } from "react";
 const tabs = ["Todas", "Social", "Viagens", "Promoções"] as const;
 
 export const Route = createFileRoute("/_app/notificacoes")({
-  head: () => ({ meta: [{ title: "Notificações — RotaMais Connecta" }] }),
+  head: () => ({ meta: [{ title: "Notificações — Connexy" }] }),
   component: Notifs,
 });
 

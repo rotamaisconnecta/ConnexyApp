@@ -9,12 +9,12 @@ import { toast } from "sonner";
 type Place = { id: string; name: string };
 
 export const Route = createFileRoute("/_app/gerenciar/novo-reel")({
-  head: () => ({ meta: [{ title: "Novo reel — Connecta" }] }),
+  head: () => ({ meta: [{ title: "Novo reel — Connexy" }] }),
   component: NovoReel,
 });
 
 function NovoReel() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const nav = useNavigate();
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -27,10 +27,6 @@ function NovoReel() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [posting, setPosting] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) nav({ to: "/auth" });
-  }, [authLoading, user, nav]);
 
   useEffect(() => {
     supabase
@@ -123,13 +119,7 @@ function NovoReel() {
     }
   }
 
-  if (authLoading || !user) {
-    return (
-      <div className="flex-1 grid place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
     <div className="flex-1 flex flex-col pb-8">
@@ -141,7 +131,7 @@ function NovoReel() {
         <div className="flex-1">
           <h1 className="font-display font-bold text-lg">Novo reel</h1>
           <p className="text-[11px] text-muted-foreground">
-            Um momento real de um lugar do Connecta
+            Um momento real de um lugar do Connexy
           </p>
         </div>
       </header>

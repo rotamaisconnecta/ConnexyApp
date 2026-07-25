@@ -4,7 +4,7 @@ import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { Camera, ChevronLeft } from "lucide-react";
 
 export const Route = createFileRoute("/cadastro")({
-  head: () => ({ meta: [{ title: "Criar conta — RotaMais Connecta" }] }),
+  head: () => ({ meta: [{ title: "Criar conta — Connexy" }] }),
   component: Signup,
 });
 

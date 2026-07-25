@@ -20,7 +20,7 @@ export function FloatingConnexyButton({ onTap }: FloatingConnexyButtonProps) {
       >
         <AppIcon
           size="lg"
-          className="h-[46px] w-[46px] object-contain select-none pointer-events-none drop-shadow-md"
+          className="h-[58px] w-[58px] object-contain select-none pointer-events-none drop-shadow-md"
         />
       </motion.button>
     </li>

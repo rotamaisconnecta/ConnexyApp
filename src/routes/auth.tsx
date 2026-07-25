@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Loader2, Mail, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Entrar — Connecta" }] }),
+  head: () => ({ meta: [{ title: "Entrar — Connexy" }] }),
   component: AuthPage,
 });
 
@@ -75,7 +75,7 @@ function AuthPage() {
               C
             </div>
             <h1 className="mt-3 font-display text-2xl font-bold">
-              {mode === "signin" ? "Entrar no Connecta" : "Criar sua conta"}
+              {mode === "signin" ? "Entrar no Connexy" : "Criar sua conta"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {mode === "signin"

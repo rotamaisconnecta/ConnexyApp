@@ -19,7 +19,7 @@ export function FloatingPlusButton({ onTap }: FloatingPlusButtonProps) {
       >
         <AppIcon
           size="lg"
-          className="h-[46px] w-[46px] object-contain select-none pointer-events-none drop-shadow-md"
+          className="h-[54px] w-[54px] object-contain select-none pointer-events-none drop-shadow-md"
         />
       </motion.button>
     </motion.li>

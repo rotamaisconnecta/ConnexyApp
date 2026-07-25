@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_app/local/$id")({
   head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
     meta: [
       {
-        title: loaderData ? `${loaderData.name} — RotaMais Connecta` : "Local — RotaMais Connecta",
+        title: loaderData ? `${loaderData.name} — Connexy` : "Local — Connexy",
       },
       ...(loaderData
         ? [

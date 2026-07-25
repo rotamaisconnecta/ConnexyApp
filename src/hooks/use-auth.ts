@@ -8,14 +8,16 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listener first, then hydrate
+    let hydrated = false;
     const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
       setSession(s);
       setUser(s?.user ?? null);
+      if (!hydrated) setLoading(false);
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      hydrated = true;
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();

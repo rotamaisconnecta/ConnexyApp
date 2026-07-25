@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { BottomNavPremium } from "@/components/navigation/bottom-nav";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -65,8 +64,6 @@ function CreatePage() {
             </button>
           </div>
         </div>
-
-        <BottomNavPremium />
       </div>
     );
   }
@@ -120,8 +117,6 @@ function CreatePage() {
           ))}
         </motion.div>
       </div>
-
-      <BottomNavPremium />
     </div>
   );
 }
