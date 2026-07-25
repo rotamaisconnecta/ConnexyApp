@@ -3,6 +3,26 @@ import { SupabaseError } from "@/lib/supabase/errors";
 import type { ProfileRow } from "@/types/database/tables";
 
 export const UserRepository = {
+  async create(data: {
+    id: string;
+    name: string;
+    created_at: string;
+    updated_at: string;
+  }): Promise<ProfileRow> {
+    const { data: created, error } = await supabase
+      .from("profiles")
+      .insert({
+        id: data.id,
+        name: data.name,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      })
+      .select()
+      .single();
+    if (error) throw new SupabaseError(error.message, error.code);
+    return created;
+  },
+
   async getById(id: string): Promise<ProfileRow> {
     const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single();
     if (error) throw new SupabaseError(error.message, error.code);
@@ -45,8 +65,8 @@ export const UserRepository = {
 
   async getNearby(latitude: number, longitude: number, radiusKm: number): Promise<ProfileRow[]> {
     const { data, error } = await supabase.rpc("get_nearby_profiles", {
-      p_latitude: latitude,
-      p_longitude: longitude,
+      p_lat: latitude,
+      p_lng: longitude,
       p_radius_km: radiusKm,
     });
     if (error) throw new SupabaseError(error.message, error.code);

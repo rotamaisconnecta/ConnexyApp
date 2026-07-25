@@ -28,11 +28,13 @@ export const MarketplaceRepository = {
       query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     }
     if (filters.latitude && filters.longitude && filters.radiusKm) {
-      query = query.rpc("get_nearby_businesses", {
+      const { data: nearby, error: rpcError } = await supabase.rpc("get_nearby_businesses", {
         p_latitude: filters.latitude,
         p_longitude: filters.longitude,
         p_radius_km: filters.radiusKm,
       });
+      if (rpcError) throw new SupabaseError(rpcError.message, rpcError.code);
+      return nearby ?? [];
     }
 
     const { data, error } = await query.order("name");

@@ -150,7 +150,7 @@ export function ReelCard({
           <Link
             to="/perfil/$id"
             params={{ id: reel.author.id }}
-            search={{ from: "reels" }}
+            search={{ from: "reels" as never }}
             className="relative"
           >
             <img
@@ -203,7 +203,7 @@ export function ReelCard({
             <Link
               to="/perfil/$id"
               params={{ id: reel.author.id }}
-              search={{ from: "reels" }}
+              search={{ from: "reels" as never }}
               className="flex items-center gap-2"
             >
               <img

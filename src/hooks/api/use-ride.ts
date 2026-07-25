@@ -6,12 +6,12 @@ export function useRide() {
   const [history, setHistory] = useState<unknown[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
       const [activeResult, historyResult] = await Promise.all([
-        RideService.getActiveRide(),
-        RideService.getRideHistory(),
+        RideService.getActiveRide(userId),
+        RideService.getRideHistory(userId, 0),
       ]);
       setActiveRide(activeResult);
       setHistory(historyResult);
@@ -20,21 +20,28 @@ export function useRide() {
     }
   }, []);
 
-  const requestRide = useCallback(async (data: unknown) => {
-    setIsLoading(true);
-    try {
-      const result = await RideService.requestRide(data);
-      setActiveRide(result);
-      return result;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const requestRide = useCallback(
+    async (
+      userId: string,
+      origin: { lat: number; lng: number; address: string },
+      destination: { lat: number; lng: number; address: string },
+    ) => {
+      setIsLoading(true);
+      try {
+        const result = await RideService.requestRide(userId, origin, destination);
+        setActiveRide(result);
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
   const updateStatus = useCallback(async (rideId: string, status: string) => {
     setIsLoading(true);
     try {
-      const result = await RideService.updateStatus(rideId, status);
+      const result = await RideService.updateRideStatus(rideId, status);
       setActiveRide(result);
       return result;
     } finally {

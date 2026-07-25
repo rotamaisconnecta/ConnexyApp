@@ -23,7 +23,13 @@ export const FeedRepository = {
     return data;
   },
 
-  async create(data: Omit<BioPostRow, "id" | "created_at" | "updated_at">): Promise<BioPostRow> {
+  async create(data: {
+    author_id: string;
+    text: string;
+    media_kind?: string | null;
+    media_url?: string | null;
+    place_id?: string | null;
+  }): Promise<BioPostRow> {
     const { data: created, error } = await supabase
       .from("bio_posts")
       .insert(data)

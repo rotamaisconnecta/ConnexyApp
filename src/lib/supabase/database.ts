@@ -10,6 +10,6 @@ export const DatabaseHelper = {
     fn: F,
     params?: Database["public"]["Functions"][F]["Args"],
   ) {
-    return supabase.rpc(fn, params as Record<string, unknown>);
+    return supabase.rpc(fn, params as Database["public"]["Functions"][F]["Args"]);
   },
 };

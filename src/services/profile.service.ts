@@ -43,10 +43,11 @@ export const ProfileService = {
       throw new Error(`Moment must be ${MAX_MOMENT_LENGTH} characters or less`);
     }
 
-    const moment = await ProfileRepository.createMoment(userId, {
+    const moment = await ProfileRepository.createMoment({
+      user_id: userId,
       text: trimmed,
-      media_url: data.media_url,
-      media_kind: data.media_kind,
+      media_url: data.media_url ?? null,
+      media_kind: data.media_kind ?? null,
       created_at: new Date().toISOString(),
     });
     return moment;

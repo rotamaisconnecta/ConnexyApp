@@ -24,7 +24,11 @@ export const ChatService = {
       throw new Error(`Message must be ${MAX_MESSAGE_LENGTH} characters or less`);
     }
 
-    const message = await ChatRepository.sendMessage(conversationId, senderId, trimmed);
+    const message = await ChatRepository.sendMessage(conversationId, {
+      conversation_id: conversationId,
+      sender_id: senderId,
+      content: trimmed,
+    });
     return message;
   },
 

@@ -5,7 +5,7 @@ const DEFAULT_PAGE_SIZE = 20;
 export const NotificationService = {
   async getNotifications(userId: string, page: number) {
     const offset = page * DEFAULT_PAGE_SIZE;
-    const notifications = await NotificationRepository.getNotifications(
+    const notifications = await NotificationRepository.getByUserId(
       userId,
       offset,
       DEFAULT_PAGE_SIZE,

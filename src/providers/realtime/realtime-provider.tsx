@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 interface RealtimeContextValue {
   subscribe: (channel: string, callback: (payload: unknown) => void) => void;
@@ -11,10 +11,12 @@ const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefine
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
-  const channelsRef = useRef<Map<string, ReturnType<typeof createClient.prototype.channel>>>(
-    new Map(),
-  );
-  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const channelsRef = useRef<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Map<string, ReturnType<SupabaseClient<any, any, any, any, any>["channel"]>>
+  >(new Map());
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseRef = useRef<SupabaseClient<any, any, any, any, any> | null>(null);
 
   useEffect(() => {
     const supabase = createClient(
@@ -42,7 +44,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseRef.current) return;
     const channel = supabaseRef.current
       .channel(channelName)
-      .on("broadcast" as never, { event: "message" } as never, (payload) => {
+      .on("broadcast" as never, { event: "message" } as never, (payload: unknown) => {
         callback(payload);
       })
       .subscribe();

@@ -22,7 +22,6 @@ export const FeedService = {
     const post = await FeedRepository.create({
       author_id: authorId,
       text: trimmed,
-      created_at: new Date().toISOString(),
     });
     return post;
   },

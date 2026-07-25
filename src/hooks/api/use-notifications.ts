@@ -5,10 +5,10 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<unknown[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
-      const result = await NotificationService.getNotifications();
+      const result = await NotificationService.getNotifications(userId, 0);
       setNotifications(result);
     } finally {
       setIsLoading(false);
@@ -36,8 +36,8 @@ export function useNotifications() {
     );
   }, []);
 
-  const markAllAsRead = useCallback(async () => {
-    await NotificationService.markAllAsRead();
+  const markAllAsRead = useCallback(async (userId: string) => {
+    await NotificationService.markAllAsRead(userId);
     setNotifications((prev) =>
       prev.map((n: unknown) => {
         if (typeof n === "object" && n !== null) {

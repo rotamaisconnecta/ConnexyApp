@@ -42,7 +42,15 @@ export const RideService = {
       throw new Error("Destination address is required");
     }
 
-    const ride = await RideRepository.createRequest(userId, origin, destination);
+    const ride = await RideRepository.createRequest({
+      passenger_id: userId,
+      origin_address: origin.address,
+      origin_lat: origin.lat,
+      origin_lng: origin.lng,
+      destination_address: destination.address,
+      destination_lat: destination.lat,
+      destination_lng: destination.lng,
+    });
     return ride;
   },
 

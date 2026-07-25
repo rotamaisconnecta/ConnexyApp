@@ -24,16 +24,23 @@ export function useProfile(userId?: string) {
     fetchProfile();
   }, [fetchProfile]);
 
-  const updateProfile = useCallback(async (data: unknown) => {
-    setIsLoading(true);
-    try {
-      const result = await UserService.updateProfile(data);
-      setProfile(result);
-      return result;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const updateProfile = useCallback(
+    async (data: unknown) => {
+      setIsLoading(true);
+      try {
+        if (!userId) throw new Error("No user ID");
+        const result = await UserService.updateProfile(
+          userId,
+          data as Parameters<typeof UserService.updateProfile>[1],
+        );
+        setProfile(result);
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [userId],
+  );
 
   return {
     profile,

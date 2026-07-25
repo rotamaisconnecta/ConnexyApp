@@ -28,7 +28,10 @@ export const RideRepository = {
   },
 
   async createRequest(
-    data: Omit<RideRow, "id" | "created_at" | "updated_at" | "status">,
+    data: Omit<
+      RideRow,
+      "id" | "created_at" | "updated_at" | "status" | "driver_id" | "rating" | "rating_comment"
+    >,
   ): Promise<RideRow> {
     const { data: created, error } = await supabase
       .from("rides")

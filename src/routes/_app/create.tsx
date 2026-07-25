@@ -9,6 +9,9 @@ import { getCreateActionByCategory } from "@/lib/navigation/navigation-utils";
 export const Route = createFileRoute("/_app/create")({
   head: () => ({ meta: [{ title: "Criar publicação" }] }),
   component: CreatePage,
+  validateSearch: (search: Record<string, unknown>): { category?: string } => ({
+    category: search.category as string | undefined,
+  }),
 });
 
 const gridContainer = {
@@ -97,7 +100,7 @@ function CreatePage() {
               whileHover={{ scale: 1.03 }}
               onClick={() =>
                 nav({
-                  to: "/_app/create",
+                  to: "/create",
                   search: { category: action.id.toLowerCase() },
                 })
               }

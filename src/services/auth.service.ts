@@ -16,7 +16,6 @@ export const AuthService = {
       await UserRepository.create({
         id: authData.user.id,
         name: displayName,
-        email,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });

@@ -19,7 +19,7 @@ export function useMarketplace() {
       const [bizResult, eventsResult, offersResult] = await Promise.all([
         MarketplaceService.getBusinesses(filters),
         MarketplaceService.getEvents(filters),
-        MarketplaceService.getOffers(filters),
+        MarketplaceService.getOffers(),
       ]);
       setBusinesses(bizResult);
       setEvents(eventsResult);

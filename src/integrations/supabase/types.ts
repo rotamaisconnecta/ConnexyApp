@@ -278,12 +278,600 @@ export type Database = {
           },
         ];
       };
+      conversations: {
+        Row: {
+          created_at: string;
+          id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      conversation_participants: {
+        Row: {
+          conversation_id: string;
+          joined_at: string;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          joined_at?: string;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          joined_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      messages: {
+        Row: {
+          content: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          read_at: string | null;
+          sender_id: string;
+        };
+        Insert: {
+          content: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          sender_id: string;
+        };
+        Update: {
+          content?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          sender_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey";
+            columns: ["sender_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          created_at: string;
+          data: Json | null;
+          id: string;
+          read: boolean;
+          type: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          data?: Json | null;
+          id?: string;
+          read?: boolean;
+          type: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          data?: Json | null;
+          id?: string;
+          read?: boolean;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      rides: {
+        Row: {
+          created_at: string;
+          driver_id: string | null;
+          destination_address: string;
+          destination_lat: number;
+          destination_lng: number;
+          id: string;
+          origin_address: string;
+          origin_lat: number;
+          origin_lng: number;
+          passenger_id: string;
+          rating: number | null;
+          rating_comment: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          driver_id?: string | null;
+          destination_address: string;
+          destination_lat: number;
+          destination_lng: number;
+          id?: string;
+          origin_address: string;
+          origin_lat: number;
+          origin_lng: number;
+          passenger_id: string;
+          rating?: number | null;
+          rating_comment?: string | null;
+          status: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          driver_id?: string | null;
+          destination_address?: string;
+          destination_lat?: number;
+          destination_lng?: number;
+          id?: string;
+          origin_address?: string;
+          origin_lat?: number;
+          origin_lng?: number;
+          passenger_id?: string;
+          rating?: number | null;
+          rating_comment?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rides_driver_id_fkey";
+            columns: ["driver_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "rides_passenger_id_fkey";
+            columns: ["passenger_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      likes: {
+        Row: {
+          created_at: string;
+          post_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          post_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          post_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "likes_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "bio_posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "likes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      moments: {
+        Row: {
+          created_at: string;
+          id: string;
+          media_kind: string | null;
+          media_url: string | null;
+          text: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          media_kind?: string | null;
+          media_url?: string | null;
+          text: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          media_kind?: string | null;
+          media_url?: string | null;
+          text?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "moments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      compatibility: {
+        Row: {
+          created_at: string;
+          score: number;
+          user_id_1: string;
+          user_id_2: string;
+        };
+        Insert: {
+          created_at?: string;
+          score: number;
+          user_id_1: string;
+          user_id_2: string;
+        };
+        Update: {
+          created_at?: string;
+          score?: number;
+          user_id_1?: string;
+          user_id_2?: string;
+        };
+        Relationships: [];
+      };
+      connection_requests: {
+        Row: {
+          created_at: string;
+          from_user_id: string;
+          id: string;
+          status: string;
+          to_user_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          from_user_id: string;
+          id?: string;
+          status: string;
+          to_user_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          from_user_id?: string;
+          id?: string;
+          status?: string;
+          to_user_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      businesses: {
+        Row: {
+          category: string | null;
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          latitude: number | null;
+          longitude: number | null;
+          name: string;
+          owner_id: string;
+          phone: string | null;
+          photo_url: string | null;
+        };
+        Insert: {
+          category?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          latitude?: number | null;
+          longitude?: number | null;
+          name: string;
+          owner_id: string;
+          phone?: string | null;
+          photo_url?: string | null;
+        };
+        Update: {
+          category?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          latitude?: number | null;
+          longitude?: number | null;
+          name?: string;
+          owner_id?: string;
+          phone?: string | null;
+          photo_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "businesses_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          category: string | null;
+          created_at: string;
+          description: string | null;
+          id: string;
+          latitude: number | null;
+          longitude: number | null;
+          organizer_id: string;
+          starts_at: string;
+          title: string;
+        };
+        Insert: {
+          category?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          organizer_id: string;
+          starts_at: string;
+          title: string;
+        };
+        Update: {
+          category?: string | null;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          organizer_id?: string;
+          starts_at?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_organizer_id_fkey";
+            columns: ["organizer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_users: {
+        Row: {
+          event_id: string;
+          joined_at: string;
+          user_id: string;
+        };
+        Insert: {
+          event_id: string;
+          joined_at?: string;
+          user_id: string;
+        };
+        Update: {
+          event_id?: string;
+          joined_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_users_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "event_users_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      offers: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          title: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          title: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "offers_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      coupons: {
+        Row: {
+          created_at: string;
+          id: string;
+          offer_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          offer_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          offer_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "coupons_offer_id_fkey";
+            columns: ["offer_id"];
+            isOneToOne: false;
+            referencedRelation: "offers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "coupons_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reviews: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          id: string;
+          rating: number;
+          text: string | null;
+          user_id: string;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          id?: string;
+          rating: number;
+          text?: string | null;
+          user_id: string;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          id?: string;
+          rating?: number;
+          text?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      get_nearby_profiles: {
+        Args: {
+          p_lat: number;
+          p_lng: number;
+          p_radius_km: number;
+        };
+        Returns: {
+          age: number | null;
+          bio: string | null;
+          created_at: string;
+          handle: string | null;
+          headline: string | null;
+          id: string;
+          interests: string[];
+          looks_for: string[];
+          mood_emoji: string | null;
+          mood_text: string | null;
+          name: string | null;
+          now_playing_kind: string | null;
+          now_playing_subtitle: string | null;
+          now_playing_title: string | null;
+          photo_url: string | null;
+          updated_at: string;
+          vibe_tags: string[];
+        }[];
+      };
+      get_nearby_businesses: {
+        Args: {
+          p_latitude: number;
+          p_longitude: number;
+          p_radius_km: number;
+        };
+        Returns: {
+          category: string | null;
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          latitude: number | null;
+          longitude: number | null;
+          name: string;
+          owner_id: string;
+          phone: string | null;
+          photo_url: string | null;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

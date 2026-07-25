@@ -18,10 +18,10 @@ export function useAuth() {
     }
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
     setIsLoading(true);
     try {
-      const result = await AuthService.signUp(email, password);
+      const result = await AuthService.signUp(email, password, displayName ?? "");
       setSession(result.session);
       setUser(result.user);
       return result;

@@ -11,11 +11,18 @@ export const SupabaseErrorCode = {
 
 export type SupabaseErrorCodeValue = (typeof SupabaseErrorCode)[keyof typeof SupabaseErrorCode];
 
-export interface SupabaseError {
-  code: SupabaseErrorCodeValue;
-  message: string;
+export class SupabaseError extends Error {
+  code: string;
   status?: number;
   details?: unknown;
+
+  constructor(message: string, code: string, status?: number, details?: unknown) {
+    super(message);
+    this.name = "SupabaseError";
+    this.code = code;
+    this.status = status;
+    this.details = details;
+  }
 }
 
 export function isSupabaseError(error: unknown): error is SupabaseError {
@@ -31,7 +38,7 @@ export function isSupabaseError(error: unknown): error is SupabaseError {
 
 export function parseSupabaseError(error: unknown): SupabaseError {
   if (isSupabaseError(error)) {
-    return error;
+    return new SupabaseError(error.message, error.code, error.status, error.details);
   }
 
   if (typeof error === "object" && error !== null && "message" in error) {
@@ -39,45 +46,45 @@ export function parseSupabaseError(error: unknown): SupabaseError {
     const message = typeof err.message === "string" ? err.message : "Unknown error";
 
     if (message.includes("Invalid login credentials")) {
-      return { code: SupabaseErrorCode.AUTH_INVALID_CREDENTIALS, message, status: err.status };
+      return new SupabaseError(message, SupabaseErrorCode.AUTH_INVALID_CREDENTIALS, err.status);
     }
 
     if (message.includes("User not found")) {
-      return { code: SupabaseErrorCode.AUTH_USER_NOT_FOUND, message, status: err.status };
+      return new SupabaseError(message, SupabaseErrorCode.AUTH_USER_NOT_FOUND, err.status);
     }
 
     if (message.includes("Email not confirmed")) {
-      return { code: SupabaseErrorCode.AUTH_EMAIL_CONFIRMATION, message, status: err.status };
+      return new SupabaseError(message, SupabaseErrorCode.AUTH_EMAIL_CONFIRMATION, err.status);
     }
 
     if (message.includes("invalid file type")) {
-      return { code: SupabaseErrorCode.STORAGE_INVALID_TYPE, message, status: err.status };
+      return new SupabaseError(message, SupabaseErrorCode.STORAGE_INVALID_TYPE, err.status);
     }
 
     if (err.code === "23505") {
-      return {
-        code: SupabaseErrorCode.DATABASE_UNIQUE_VIOLATION,
+      return new SupabaseError(
         message,
-        status: err.status,
-        details: err.details,
-      };
+        SupabaseErrorCode.DATABASE_UNIQUE_VIOLATION,
+        err.status,
+        err.details,
+      );
     }
 
     if (err.code === "23503") {
-      return {
-        code: SupabaseErrorCode.DATABASE_FOREIGN_KEY_VIOLATION,
+      return new SupabaseError(
         message,
-        status: err.status,
-        details: err.details,
-      };
+        SupabaseErrorCode.DATABASE_FOREIGN_KEY_VIOLATION,
+        err.status,
+        err.details,
+      );
     }
 
     if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
-      return { code: SupabaseErrorCode.NETWORK_ERROR, message, status: err.status };
+      return new SupabaseError(message, SupabaseErrorCode.NETWORK_ERROR, err.status);
     }
 
-    return { code: SupabaseErrorCode.UNKNOWN, message, status: err.status, details: err.details };
+    return new SupabaseError(message, SupabaseErrorCode.UNKNOWN, err.status, err.details);
   }
 
-  return { code: SupabaseErrorCode.UNKNOWN, message: String(error) };
+  return new SupabaseError(String(error), SupabaseErrorCode.UNKNOWN);
 }

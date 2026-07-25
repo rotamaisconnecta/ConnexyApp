@@ -237,6 +237,7 @@ function ReelsPage() {
               </p>
               <Link
                 to="/create"
+                search={{}}
                 className="mt-5 inline-flex items-center gap-2 h-11 rounded-full bg-gradient-brand text-white font-semibold px-5 shadow-lg"
               >
                 <Plus className="h-4 w-4" /> Criar reel
@@ -279,6 +280,7 @@ function ReelsPage() {
 
       <Link
         to="/create"
+        search={{}}
         className="absolute right-4 bottom-8 z-30 h-14 w-14 grid place-items-center rounded-full bg-gradient-brand text-white shadow-lg active:scale-95 transition"
         aria-label="Criar reel"
       >

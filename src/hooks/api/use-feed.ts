@@ -11,8 +11,8 @@ export function useFeed() {
     setIsLoading(true);
     try {
       const result = await FeedService.getFeed(1);
-      setItems(result.items);
-      setHasMore(result.hasMore);
+      setItems(result);
+      setHasMore(result.length > 0);
       setPage(1);
     } finally {
       setIsLoading(false);
@@ -25,8 +25,8 @@ export function useFeed() {
     try {
       const nextPage = page + 1;
       const result = await FeedService.getFeed(nextPage);
-      setItems((prev) => [...prev, ...result.items]);
-      setHasMore(result.hasMore);
+      setItems((prev) => [...prev, ...result]);
+      setHasMore(result.length > 0);
       setPage(nextPage);
     } finally {
       setIsLoading(false);
@@ -34,29 +34,35 @@ export function useFeed() {
   }, [isLoading, hasMore, page]);
 
   const createPost = useCallback(async (data: unknown) => {
-    const result = await FeedService.createPost(data);
+    const { authorId, content } = data as { authorId: string; content: string };
+    const result = await FeedService.createPost(authorId, content);
     setItems((prev) => [result, ...prev]);
     return result;
   }, []);
 
-  const deletePost = useCallback(async (postId: string) => {
-    await FeedService.deletePost(postId);
-    setItems((prev) =>
-      prev.filter((item: unknown) => {
-        if (typeof item === "object" && item !== null && "id" in item) {
-          return (item as { id: string }).id !== postId;
-        }
-        return true;
-      }),
-    );
+  const deletePost = useCallback(
+    async (postId: string) => {
+      const firstItem = items[0] as { author_id?: string } | undefined;
+      const authorId = firstItem?.author_id ?? "";
+      await FeedService.deletePost(postId, authorId);
+      setItems((prev) =>
+        prev.filter((item: unknown) => {
+          if (typeof item === "object" && item !== null && "id" in item) {
+            return (item as { id: string }).id !== postId;
+          }
+          return true;
+        }),
+      );
+    },
+    [items],
+  );
+
+  const likePost = useCallback(async (postId: string, userId: string) => {
+    await FeedService.likePost(postId, userId);
   }, []);
 
-  const likePost = useCallback(async (postId: string) => {
-    await FeedService.likePost(postId);
-  }, []);
-
-  const unlikePost = useCallback(async (postId: string) => {
-    await FeedService.unlikePost(postId);
+  const unlikePost = useCallback(async (postId: string, userId: string) => {
+    await FeedService.unlikePost(postId, userId);
   }, []);
 
   return {

@@ -7,26 +7,32 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
-  const sendMessage = useCallback(async (conversationId: string, content: string) => {
-    setIsLoading(true);
-    try {
-      const result = await ChatService.sendMessage(conversationId, content);
-      setMessages((prev) => [...prev, result]);
-      return result;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const sendMessage = useCallback(
+    async (conversationId: string, senderId: string, content: string) => {
+      setIsLoading(true);
+      try {
+        const result = await ChatService.sendMessage(conversationId, senderId, content);
+        setMessages((prev) => [...prev, result]);
+        return result;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
-  const markAsRead = useCallback(async (conversationId: string) => {
-    await ChatService.markAsRead(conversationId);
+  const markAsRead = useCallback(async (conversationId: string, userId: string) => {
+    await ChatService.markAsRead(conversationId, userId);
   }, []);
 
   const loadMore = useCallback(async () => {
     if (!activeConversation || isLoading) return;
     setIsLoading(true);
     try {
-      const older = await ChatService.getMessages(activeConversation, messages.length);
+      const older = await ChatService.getMessages(
+        activeConversation,
+        Math.floor(messages.length / 50),
+      );
       setMessages((prev) => [...older, ...prev]);
     } finally {
       setIsLoading(false);

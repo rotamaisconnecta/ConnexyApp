@@ -6,12 +6,12 @@ export function useUpload() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<Error | null>(null);
 
-  const uploadImage = useCallback(async (file: File) => {
+  const uploadImage = useCallback(async (bucket: string, path: string, file: File) => {
     setIsUploading(true);
     setProgress(0);
     setError(null);
     try {
-      const result = await UploadService.uploadImage(file, setProgress);
+      const result = await UploadService.uploadImage(bucket, path, file);
       return result;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Upload failed"));
@@ -21,12 +21,12 @@ export function useUpload() {
     }
   }, []);
 
-  const uploadAvatar = useCallback(async (file: File) => {
+  const uploadAvatar = useCallback(async (userId: string, file: File) => {
     setIsUploading(true);
     setProgress(0);
     setError(null);
     try {
-      const result = await UploadService.uploadAvatar(file, setProgress);
+      const result = await UploadService.uploadAvatar(userId, file);
       return result;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Upload failed"));
@@ -36,12 +36,12 @@ export function useUpload() {
     }
   }, []);
 
-  const uploadPostMedia = useCallback(async (file: File) => {
+  const uploadPostMedia = useCallback(async (postId: string, file: File) => {
     setIsUploading(true);
     setProgress(0);
     setError(null);
     try {
-      const result = await UploadService.uploadPostMedia(file, setProgress);
+      const result = await UploadService.uploadPostMedia(postId, file);
       return result;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Upload failed"));

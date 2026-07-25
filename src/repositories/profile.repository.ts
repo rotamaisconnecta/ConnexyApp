@@ -9,10 +9,7 @@ export const ProfileRepository = {
     return data;
   },
 
-  async updateProfile(
-    userId: string,
-    data: Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>,
-  ): Promise<ProfileRow> {
+  async updateProfile(userId: string, data: Partial<Omit<ProfileRow, "id">>): Promise<ProfileRow> {
     const { data: updated, error } = await supabase
       .from("profiles")
       .update({ ...data, updated_at: new Date().toISOString() })
@@ -33,7 +30,7 @@ export const ProfileRepository = {
     return data ?? [];
   },
 
-  async createMoment(data: Omit<MomentRow, "id" | "created_at">): Promise<MomentRow> {
+  async createMoment(data: Omit<MomentRow, "id">): Promise<MomentRow> {
     const { data: created, error } = await supabase.from("moments").insert(data).select().single();
     if (error) throw new SupabaseError(error.message, error.code);
     return created;
