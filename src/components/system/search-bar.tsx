@@ -1,6 +1,7 @@
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Colors, Radius } from "@/theme";
 
 interface SearchBarProps {
   value: string;
@@ -21,13 +22,15 @@ export function SearchBar({
 }: SearchBarProps) {
   return (
     <div
-      className={cn(
-        "relative flex items-center h-12 rounded-[18px] bg-[#F8F8FC] border border-[#E7E7F2] px-4",
-        className,
-      )}
+      className={cn("relative flex items-center h-12 px-4", className)}
+      style={{
+        borderRadius: Radius.md,
+        background: Colors.surface,
+        border: `1px solid ${Colors.border}`,
+      }}
     >
       <span className="flex-shrink-0 mr-3">
-        <Search className="w-5 h-5 text-[#9CA3AF]" />
+        <Search className="w-5 h-5" style={{ color: Colors.text.secondary }} />
       </span>
 
       <input
@@ -35,7 +38,8 @@ export function SearchBar({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 bg-transparent text-sm text-[#18181B] placeholder:text-[#9CA3AF] outline-none"
+        className="flex-1 bg-transparent text-sm outline-none"
+        style={{ color: Colors.text.primary }}
       />
 
       <AnimatePresence>
@@ -46,7 +50,12 @@ export function SearchBar({
             exit={{ opacity: 0, scale: 0.8 }}
             className="flex-shrink-0 ml-2"
           >
-            <svg className="w-5 h-5 animate-spin text-[#6C3BFF]" viewBox="0 0 24 24" fill="none">
+            <svg
+              className="w-5 h-5 animate-spin"
+              style={{ color: Colors.brand.primary }}
+              viewBox="0 0 24 24"
+              fill="none"
+            >
               <circle
                 className="opacity-25"
                 cx="12"
@@ -70,9 +79,10 @@ export function SearchBar({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={onClear}
-            className="flex-shrink-0 ml-2 p-1 rounded-full hover:bg-[#E7E7F2] transition-colors"
+            className="flex-shrink-0 ml-2 p-1 rounded-full transition-colors"
+            style={{ borderRadius: Radius.floating }}
           >
-            <X className="w-4 h-4 text-[#9CA3AF]" />
+            <X className="w-4 h-4" style={{ color: Colors.text.secondary }} />
           </motion.button>
         )}
       </AnimatePresence>

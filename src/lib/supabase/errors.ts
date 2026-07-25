@@ -34,11 +34,7 @@ export function parseSupabaseError(error: unknown): SupabaseError {
     return error;
   }
 
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error
-  ) {
+  if (typeof error === "object" && error !== null && "message" in error) {
     const err = error as { message?: string; status?: number; code?: string; details?: unknown };
     const message = typeof err.message === "string" ? err.message : "Unknown error";
 

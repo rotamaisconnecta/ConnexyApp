@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { FeedService } from '@/services/feed-service';
+import { useState, useCallback } from "react";
+import { FeedService } from "@/services/feed.service";
 
 export function useFeed() {
   const [items, setItems] = useState<unknown[]>([]);
@@ -41,12 +41,14 @@ export function useFeed() {
 
   const deletePost = useCallback(async (postId: string) => {
     await FeedService.deletePost(postId);
-    setItems((prev) => prev.filter((item: unknown) => {
-      if (typeof item === 'object' && item !== null && 'id' in item) {
-        return (item as { id: string }).id !== postId;
-      }
-      return true;
-    }));
+    setItems((prev) =>
+      prev.filter((item: unknown) => {
+        if (typeof item === "object" && item !== null && "id" in item) {
+          return (item as { id: string }).id !== postId;
+        }
+        return true;
+      }),
+    );
   }, []);
 
   const likePost = useCallback(async (postId: string) => {

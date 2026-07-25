@@ -13,17 +13,17 @@ interface PermissionCardProps {
 const STATUS_CONFIG = {
   GRANTED: {
     label: "Granted",
-    bg: "#DCFCE7",
+    bg: "color-mix(in oklab, #22C55E 12%, transparent)",
     color: Colors.success,
   },
   DENIED: {
     label: "Denied",
-    bg: "#FEE2E2",
+    bg: "color-mix(in oklab, #EF4444 12%, transparent)",
     color: Colors.danger,
   },
   PROMPT: {
     label: "Pending",
-    bg: "#FEF3C7",
+    bg: "color-mix(in oklab, #F59E0B 12%, transparent)",
     color: Colors.warning,
   },
   UNAVAILABLE: {

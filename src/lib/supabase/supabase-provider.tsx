@@ -38,8 +38,6 @@ export function SupabaseProvider({ children }: SupabaseProviderProps) {
   }, []);
 
   return (
-    <SupabaseContext.Provider value={{ session, isLoading }}>
-      {children}
-    </SupabaseContext.Provider>
+    <SupabaseContext.Provider value={{ session, isLoading }}>{children}</SupabaseContext.Provider>
   );
 }

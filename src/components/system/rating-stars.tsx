@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Radius } from "@/lib/branding/brand-config";
+import { Colors, Radius } from "@/lib/branding/brand-config";
 import { Star } from "lucide-react";
 import { hapticLight } from "@/lib/system/feedback-utils";
 
@@ -48,13 +48,13 @@ export function RatingStars({
             disabled={!interactive}
             className={cn("transition-colors", sizeClassMap[size], interactive && "cursor-pointer")}
             style={{
-              color: filled ? "#F59E0B" : "#E7E7F2",
+              color: filled ? Colors.warning : Colors.border,
               borderRadius: Radius.floating,
             }}
           >
             <Star
               className={cn(sizeClassMap[size], filled && "fill-current")}
-              style={{ color: filled ? "#F59E0B" : "#E7E7F2" }}
+              style={{ color: filled ? Colors.warning : Colors.border }}
             />
           </motion.button>
         );

@@ -28,14 +28,14 @@ export function RecommendationChip({ recommendation, compact }: RecommendationCh
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       className={cn(
-        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#E7E7F2] bg-white transition-colors hover:bg-[#F4F1FF]",
+        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-white transition-colors hover:bg-brand-muted",
         compact ? "px-2 py-1" : "px-3 py-1.5",
       )}
     >
       <span className="text-sm">{TYPE_ICON[recommendation.type] ?? "✨"}</span>
 
       {!compact && (
-        <span className="max-w-[120px] truncate text-xs font-medium text-[#18181B]">
+        <span className="max-w-[120px] truncate text-xs font-medium text-foreground">
           {recommendation.title}
         </span>
       )}

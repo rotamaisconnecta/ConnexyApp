@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { DiscoveryService } from '@/services/discovery-service';
+import { useState, useCallback } from "react";
+import { DiscoveryService } from "@/services/discovery.service";
 
 export function useDiscovery() {
   const [people, setPeople] = useState<unknown[]>([]);

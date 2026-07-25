@@ -3,17 +3,17 @@ import { CheckCircle, AlertTriangle, Info, AlertCircle, Loader2 } from "lucide-r
 import { cn } from "@/lib/utils";
 import { toastIn } from "@/lib/system/animation-utils";
 import type { ToastData, ToastVariantValue } from "@/lib/system/system-types";
-import { Colors, Radius, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Radius, Shadows } from "@/theme";
 
 const variantConfig: Record<
   ToastVariantValue,
   { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }
 > = {
-  SUCCESS: { icon: CheckCircle, color: Colors.success, bg: "rgba(34,197,94,0.1)" },
-  WARNING: { icon: AlertTriangle, color: Colors.warning, bg: "rgba(245,158,11,0.1)" },
-  INFO: { icon: Info, color: Colors.brand.primary, bg: "rgba(108,59,255,0.1)" },
-  DANGER: { icon: AlertCircle, color: Colors.danger, bg: "rgba(239,68,68,0.1)" },
-  LOADING: { icon: Loader2, color: Colors.brand.primary, bg: "rgba(108,59,255,0.1)" },
+  SUCCESS: { icon: CheckCircle, color: Colors.success, bg: `${Colors.success}1A` },
+  WARNING: { icon: AlertTriangle, color: Colors.warning, bg: `${Colors.warning}1A` },
+  INFO: { icon: Info, color: Colors.brand.primary, bg: `${Colors.brand.primary}1A` },
+  DANGER: { icon: AlertCircle, color: Colors.danger, bg: `${Colors.danger}1A` },
+  LOADING: { icon: Loader2, color: Colors.brand.primary, bg: `${Colors.brand.primary}1A` },
 };
 
 interface ToastContainerProps {
@@ -70,7 +70,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
                     className="text-xs font-semibold px-3 py-1 rounded-full transition-opacity hover:opacity-80"
                     style={{
                       color: Colors.brand.primary,
-                      background: "rgba(108,59,255,0.1)",
+                      background: `${Colors.brand.primary}1A`,
                       borderRadius: Radius.floating,
                     }}
                   >

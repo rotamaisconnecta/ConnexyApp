@@ -47,13 +47,13 @@ export const RideService = {
   },
 
   async updateRideStatus(rideId: string, status: string) {
-    if (!VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {
+    if (!VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
       throw new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}`);
     }
 
     const ride = await RideRepository.updateStatus(
       rideId,
-      status as typeof VALID_STATUSES[number]
+      status as (typeof VALID_STATUSES)[number],
     );
     return ride;
   },

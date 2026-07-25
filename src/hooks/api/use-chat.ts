@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { ChatService } from '@/services/chat-service';
+import { useState, useCallback } from "react";
+import { ChatService } from "@/services/chat.service";
 
 export function useChat() {
   const [conversations, setConversations] = useState<unknown[]>([]);

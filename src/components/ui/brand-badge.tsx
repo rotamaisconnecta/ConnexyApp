@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Colors, Gradients } from "@/theme";
 
 interface BrandBadgeProps {
   variant?: "default" | "success" | "warning" | "danger" | "premium";
@@ -7,22 +8,29 @@ interface BrandBadgeProps {
   className?: string;
 }
 
-const variantClassMap: Record<NonNullable<BrandBadgeProps["variant"]>, string> = {
-  default: "bg-[#F4F1FF] text-[#6C3BFF]",
-  success: "bg-[#22C55E]/10 text-[#22C55E]",
-  warning: "bg-[#F59E0B]/10 text-[#F59E0B]",
-  danger: "bg-[#EF4444]/10 text-[#EF4444]",
-  premium: "bg-gradient-to-r from-[#7C3AED] to-[#A855F7] text-white",
-};
+function getBadgeStyle(variant: NonNullable<BrandBadgeProps["variant"]>): React.CSSProperties {
+  switch (variant) {
+    case "default":
+      return { background: Colors.surface, color: Colors.brand.primary };
+    case "success":
+      return { background: `${Colors.success}1A`, color: Colors.success };
+    case "warning":
+      return { background: `${Colors.warning}1A`, color: Colors.warning };
+    case "danger":
+      return { background: `${Colors.danger}1A`, color: Colors.danger };
+    case "premium":
+      return { background: Gradients.premium, color: Colors.background };
+  }
+}
 
 export function BrandBadge({ variant = "default", children, className }: BrandBadgeProps) {
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
-        variantClassMap[variant],
         className,
       )}
+      style={getBadgeStyle(variant)}
     >
       {children}
     </span>

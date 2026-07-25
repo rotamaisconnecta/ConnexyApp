@@ -1,25 +1,17 @@
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseError } from "@/lib/supabase/errors";
-import type {
-  ProfileRow,
-  MomentRow,
-  CompatibilityRow,
-} from "@/types/database/tables";
+import type { ProfileRow, MomentRow, CompatibilityRow } from "@/types/database/tables";
 
 export const ProfileRepository = {
   async getProfile(userId: string): Promise<ProfileRow> {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
     if (error) throw new SupabaseError(error.message, error.code);
     return data;
   },
 
   async updateProfile(
     userId: string,
-    data: Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>
+    data: Partial<Omit<ProfileRow, "id" | "created_at" | "updated_at">>,
   ): Promise<ProfileRow> {
     const { data: updated, error } = await supabase
       .from("profiles")
@@ -41,14 +33,8 @@ export const ProfileRepository = {
     return data ?? [];
   },
 
-  async createMoment(
-    data: Omit<MomentRow, "id" | "created_at">
-  ): Promise<MomentRow> {
-    const { data: created, error } = await supabase
-      .from("moments")
-      .insert(data)
-      .select()
-      .single();
+  async createMoment(data: Omit<MomentRow, "id" | "created_at">): Promise<MomentRow> {
+    const { data: created, error } = await supabase.from("moments").insert(data).select().single();
     if (error) throw new SupabaseError(error.message, error.code);
     return created;
   },
@@ -58,15 +44,12 @@ export const ProfileRepository = {
     if (error) throw new SupabaseError(error.message, error.code);
   },
 
-  async getCompatibility(
-    userId1: string,
-    userId2: string
-  ): Promise<CompatibilityRow> {
+  async getCompatibility(userId1: string, userId2: string): Promise<CompatibilityRow> {
     const { data, error } = await supabase
       .from("compatibility")
       .select("*")
       .or(
-        `and(user_id_1.eq.${userId1},user_id_2.eq.${userId2}),and(user_id_1.eq.${userId2},user_id_2.eq.${userId1})`
+        `and(user_id_1.eq.${userId1},user_id_2.eq.${userId2}),and(user_id_1.eq.${userId2},user_id_2.eq.${userId1})`,
       )
       .single();
     if (error) throw new SupabaseError(error.message, error.code);

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Colors, Radius } from "@/theme";
 
 interface BrandAvatarProps {
   src?: string;
@@ -27,25 +28,27 @@ export function BrandAvatar({ src, alt = "", size = "md", online, className }: B
     <div className={cn("relative shrink-0", className)}>
       <div
         className={cn(
-          "rounded-full bg-[#F4F1FF] overflow-hidden flex items-center justify-center",
+          "rounded-full overflow-hidden flex items-center justify-center",
           sizeClassMap[size],
         )}
+        style={{ background: Colors.surface, borderRadius: Radius.floating }}
       >
         {src ? (
           <img src={src} alt={alt} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-[#6C3BFF] font-semibold text-sm">
+          <span style={{ color: Colors.brand.primary }} className="font-semibold text-sm">
             {alt.charAt(0).toUpperCase() || "?"}
           </span>
         )}
       </div>
       {online !== undefined && (
         <span
-          className={cn(
-            "absolute bottom-0 right-0 rounded-full border-white",
-            badgeSizeMap[size],
-            online ? "bg-[#22C55E]" : "bg-[#71717A]",
-          )}
+          className={cn("absolute bottom-0 right-0 rounded-full border-white", badgeSizeMap[size])}
+          style={{
+            background: online ? Colors.success : Colors.text.secondary,
+            borderRadius: Radius.floating,
+            borderColor: Colors.card,
+          }}
         />
       )}
     </div>

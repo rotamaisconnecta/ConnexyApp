@@ -100,7 +100,7 @@ const MAP_LEGEND = [
   { color: "oklch(0.72 0.2 355)", label: "Pessoas" },
   { color: "oklch(0.72 0.19 40)", label: "Eventos" },
   { color: "oklch(0.6 0.22 300)", label: "Locais" },
-  { color: "#111", label: "Motoristas" },
+  { color: "var(--foreground)", label: "Motoristas" },
 ];
 
 function Home() {

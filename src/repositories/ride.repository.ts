@@ -16,11 +16,7 @@ export const RideRepository = {
     return data;
   },
 
-  async getHistory(
-    userId: string,
-    limit = 20,
-    offset = 0
-  ): Promise<RideRow[]> {
+  async getHistory(userId: string, limit = 20, offset = 0): Promise<RideRow[]> {
     const { data, error } = await supabase
       .from("rides")
       .select("*, driver:profiles!driver_id(*), passenger:profiles!passenger_id(*)")
@@ -32,7 +28,7 @@ export const RideRepository = {
   },
 
   async createRequest(
-    data: Omit<RideRow, "id" | "created_at" | "updated_at" | "status">
+    data: Omit<RideRow, "id" | "created_at" | "updated_at" | "status">,
   ): Promise<RideRow> {
     const { data: created, error } = await supabase
       .from("rides")
@@ -43,10 +39,7 @@ export const RideRepository = {
     return created;
   },
 
-  async updateStatus(
-    id: string,
-    status: RideRow["status"]
-  ): Promise<RideRow> {
+  async updateStatus(id: string, status: RideRow["status"]): Promise<RideRow> {
     const { data, error } = await supabase
       .from("rides")
       .update({ status, updated_at: new Date().toISOString() })
@@ -57,11 +50,7 @@ export const RideRepository = {
     return data;
   },
 
-  async rateRide(
-    id: string,
-    rating: number,
-    comment?: string
-  ): Promise<RideRow> {
+  async rateRide(id: string, rating: number, comment?: string): Promise<RideRow> {
     const { data, error } = await supabase
       .from("rides")
       .update({ rating, rating_comment: comment ?? null })

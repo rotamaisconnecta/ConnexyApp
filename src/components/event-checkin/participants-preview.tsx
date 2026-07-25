@@ -32,7 +32,7 @@ export function ParticipantsPreview({ users, maxVisible = 4 }: ParticipantsPrevi
       {remaining > 0 && (
         <div
           className={cn(
-            "flex h-8 w-8 items-center justify-center -ml-2 rounded-full bg-[#F4F1FF] text-[10px] font-bold text-primary",
+            "flex h-8 w-8 items-center justify-center -ml-2 rounded-full bg-brand-muted text-[10px] font-bold text-primary",
             "border-2 border-white",
           )}
           style={{ zIndex: 0 }}

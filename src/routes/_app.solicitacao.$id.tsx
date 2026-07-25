@@ -5,6 +5,7 @@ import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
 import { X, Check, ChevronLeft, UserRound, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { Gradients } from "@/theme";
 
 export const Route = createFileRoute("/_app/solicitacao/$id")({
   head: () => ({ meta: [{ title: "Solicitação de chat — Connecta" }] }),
@@ -23,10 +24,7 @@ function Solicitacao() {
   const p = Route.useLoaderData() as Person;
   const cg = commonGround(p);
   return (
-    <div
-      className="flex-1 flex flex-col relative"
-      style={{ background: "linear-gradient(180deg, #efeaff 0%, #fff 60%)" }}
-    >
+    <div className="flex-1 flex flex-col relative" style={{ background: Gradients.soft }}>
       <StatusBar />
       <div className="flex items-center justify-between px-5 pt-1 pb-3">
         <Link

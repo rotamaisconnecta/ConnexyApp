@@ -22,7 +22,7 @@ export function RecommendationSection({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {icon}
-            <h2 className="font-display text-sm font-semibold text-[#18181B]">{title}</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">{title}</h2>
           </div>
         </div>
         <EngineEmpty message={`Nenhum ${title.toLowerCase()} no momento`} />
@@ -35,9 +35,9 @@ export function RecommendationSection({
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           {icon}
-          <h2 className="font-display text-sm font-semibold text-[#18181B]">{title}</h2>
+          <h2 className="font-display text-sm font-semibold text-foreground">{title}</h2>
         </div>
-        <button className="flex items-center gap-0.5 text-xs font-medium text-[#A88DFF]">
+        <button className="flex items-center gap-0.5 text-xs font-medium text-lilac">
           Ver todos
           <ChevronRight className="h-3.5 w-3.5" />
         </button>

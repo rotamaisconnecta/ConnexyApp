@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { UploadService } from '@/services/upload-service';
+import { useState, useCallback } from "react";
+import { UploadService } from "@/services/upload.service";
 
 export function useUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -14,7 +14,7 @@ export function useUpload() {
       const result = await UploadService.uploadImage(file, setProgress);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Upload failed'));
+      setError(err instanceof Error ? err : new Error("Upload failed"));
       throw err;
     } finally {
       setIsUploading(false);
@@ -29,7 +29,7 @@ export function useUpload() {
       const result = await UploadService.uploadAvatar(file, setProgress);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Upload failed'));
+      setError(err instanceof Error ? err : new Error("Upload failed"));
       throw err;
     } finally {
       setIsUploading(false);
@@ -44,7 +44,7 @@ export function useUpload() {
       const result = await UploadService.uploadPostMedia(file, setProgress);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Upload failed'));
+      setError(err instanceof Error ? err : new Error("Upload failed"));
       throw err;
     } finally {
       setIsUploading(false);

@@ -66,18 +66,18 @@ export function SmartAlert({ notification, onRead }: SmartAlertProps) {
       onClick={() => onRead?.(notification.id)}
       className={cn(
         "relative flex gap-3 rounded-2xl p-3 transition-colors",
-        notification.read ? "bg-white" : "bg-[#F4F1FF]/60",
+        notification.read ? "bg-white" : "bg-brand-muted/60",
       )}
     >
       {!notification.read && (
-        <span className="absolute left-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#A88DFF]" />
+        <span className="absolute left-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-lilac" />
       )}
 
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F4F1FF]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-muted">
         {notification.icon ? (
           <span className="text-lg">{notification.icon}</span>
         ) : (
-          <Icon className="h-5 w-5 text-[#A88DFF]" />
+          <Icon className="h-5 w-5 text-lilac" />
         )}
       </div>
 
@@ -86,20 +86,22 @@ export function SmartAlert({ notification, onRead }: SmartAlertProps) {
           <p
             className={cn(
               "text-sm leading-snug",
-              notification.read ? "text-[#71717A] font-normal" : "text-[#18181B] font-semibold",
+              notification.read
+                ? "text-muted-foreground font-normal"
+                : "text-foreground font-semibold",
             )}
           >
             {notification.title}
           </p>
-          <span className="shrink-0 text-[10px] text-[#71717A]">
+          <span className="shrink-0 text-[10px] text-muted-foreground">
             {getRelativeTime(notification.createdAt)}
           </span>
         </div>
 
-        <p className="mt-0.5 text-xs text-[#71717A] line-clamp-2">{notification.body}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notification.body}</p>
 
         <div className="mt-1.5 flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-[#F4F1FF] px-1.5 py-0.5 text-[10px] font-medium text-[#A88DFF]">
+          <span className="inline-flex items-center rounded-full bg-brand-muted px-1.5 py-0.5 text-[10px] font-medium text-lilac">
             {reasonLabel}
           </span>
           <span className="inline-flex items-center rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-bold text-green-600">

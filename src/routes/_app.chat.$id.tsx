@@ -23,6 +23,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MeetupSheet, type MeetupPick } from "@/components/chat/meetup-sheet";
+import { Gradients } from "@/theme";
 
 export const Route = createFileRoute("/_app/chat/$id")({
   head: () => ({ meta: [{ title: "Chat — Connecta" }] }),
@@ -173,7 +174,7 @@ function Chat() {
   const radius = personProximityRadius(p.distanceMeters);
 
   return (
-    <div className="flex-1 flex flex-col relative bg-gradient-to-b from-[#f5f0ff] via-[#faf7ff] to-[#fdfbff]">
+    <div className="flex-1 flex flex-col relative" style={{ background: Gradients.soft }}>
       <StatusBar />
       <ChatHeader person={p} />
 

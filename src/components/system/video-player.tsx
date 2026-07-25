@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Colors, Radius, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Radius, Shadows } from "@/theme";
 
 interface VideoPlayerProps {
   src: string;
@@ -134,7 +134,7 @@ export function VideoPlayer({
                 className="p-1"
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
-                <span style={{ color: "#FFFFFF" }}>
+                <span style={{ color: Colors.background }}>
                   {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                 </span>
               </button>
@@ -152,12 +152,12 @@ export function VideoPlayer({
                 style={{ accentColor: Colors.brand.primary }}
               />
               <button onClick={toggleMute} className="p-1" aria-label={isMuted ? "Unmute" : "Mute"}>
-                <span style={{ color: "#FFFFFF" }}>
+                <span style={{ color: Colors.background }}>
                   {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </span>
               </button>
               <button onClick={toggleFullscreen} className="p-1" aria-label="Fullscreen">
-                <span style={{ color: "#FFFFFF" }}>
+                <span style={{ color: Colors.background }}>
                   <Maximize className="w-5 h-5" />
                 </span>
               </button>

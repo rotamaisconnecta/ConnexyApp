@@ -169,7 +169,7 @@ function ReelsPage() {
   }
 
   return (
-    <div className="absolute inset-0 bg-[#0a0a0a] flex flex-col overflow-hidden">
+    <div className="absolute inset-0 bg-black flex flex-col overflow-hidden">
       <div className="absolute inset-x-0 top-0 z-30 pt-4 px-4 pb-2 flex items-center gap-3">
         <div className="flex-1 flex items-center justify-center gap-1.5">
           <span className="font-display text-lg font-bold text-white">connexy</span>

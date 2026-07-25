@@ -13,7 +13,7 @@ export function BrandSection({ title, action, children, className }: BrandSectio
     <section className={cn("flex flex-col gap-3", className)}>
       {(title || action) && (
         <div className="flex items-center justify-between px-1">
-          {title && <h3 className="text-base font-semibold text-[#18181B]">{title}</h3>}
+          {title && <h3 className="text-base font-semibold text-foreground">{title}</h3>}
           {action}
         </div>
       )}

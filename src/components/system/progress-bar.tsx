@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Colors, Radius } from "@/lib/branding/brand-config";
+import { Colors, Radius } from "@/theme";
 
 interface ProgressBarProps {
   value: number;

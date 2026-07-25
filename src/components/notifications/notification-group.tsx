@@ -19,7 +19,7 @@ interface NotificationGroupProps {
 export function NotificationGroupCard({ group, onRead, onDismiss }: NotificationGroupProps) {
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-[#71717A]">
+      <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {GROUP_LABEL_PT[group.label] ?? group.label}
       </h3>
       <div className="flex flex-col gap-1">

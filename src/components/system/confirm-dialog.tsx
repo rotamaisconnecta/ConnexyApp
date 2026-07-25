@@ -1,4 +1,4 @@
-import { Colors, Gradients, Radius, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Gradients, Radius, Shadows } from "@/theme";
 import { Modal } from "./modal";
 
 interface ConfirmDialogProps {
@@ -51,9 +51,11 @@ export function ConfirmDialog({
             style={{
               borderRadius: Radius.sm,
               background: danger
-                ? `linear-gradient(135deg, ${Colors.danger}, #DC2626)`
+                ? `linear-gradient(135deg, ${Colors.danger}, ${Colors.danger})`
                 : Gradients.primary,
-              boxShadow: danger ? "0 4px 16px rgba(239, 68, 68, 0.35)" : Shadows.floatingButton,
+              boxShadow: danger
+                ? `0 4px 16px color-mix(in oklab, ${Colors.danger} 35%, transparent)`
+                : Shadows.floatingButton,
             }}
           >
             {confirmLabel}

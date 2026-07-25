@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { BadgeCheck, ImagePlus, MapPin, Plus, ShieldCheck, UserRound } from "lucide-react";
+import { ImagePlus, MapPin, Plus, ShieldCheck, UserRound } from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 
 export const Route = createFileRoute("/finalizar-perfil")({
@@ -33,14 +33,14 @@ function FinishProfile() {
 
   return (
     <PhoneFrame>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-white text-[#16172b]">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-white text-foreground">
         <StatusBar />
         <div className="px-6 pb-8 pt-4">
           <div className="flex items-center justify-between">
             <Link
               to="/interesses"
               aria-label="Voltar"
-              className="grid h-11 w-11 place-items-center rounded-2xl border border-violet-100 bg-white text-[#151528] shadow-soft"
+              className="grid h-11 w-11 place-items-center rounded-2xl border border-violet-100 bg-white text-foreground shadow-soft"
             >
               <span className="text-4xl font-light leading-none">&#8249;</span>
             </Link>

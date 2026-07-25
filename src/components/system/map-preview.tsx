@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Colors, Radius, Gradients } from "@/lib/branding/brand-config";
+import { Colors, Radius, Gradients } from "@/theme";
 
 interface MapPreviewProps {
   latitude: number;
@@ -38,7 +38,7 @@ export function MapPreview({
               className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
               style={{
                 backgroundColor: Colors.brand.primary,
-                color: "#FFFFFF",
+                color: Colors.background,
                 borderRadius: Radius.floating,
               }}
             >

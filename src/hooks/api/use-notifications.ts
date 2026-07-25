@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { NotificationService } from '@/services/notification-service';
+import { useState, useCallback } from "react";
+import { NotificationService } from "@/services/notification.service";
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<unknown[]>([]);
@@ -16,7 +16,7 @@ export function useNotifications() {
   }, []);
 
   const unreadCount = notifications.filter((n: unknown) => {
-    if (typeof n === 'object' && n !== null && 'read' in n) {
+    if (typeof n === "object" && n !== null && "read" in n) {
       return !(n as { read: boolean }).read;
     }
     return false;
@@ -26,7 +26,7 @@ export function useNotifications() {
     await NotificationService.markAsRead(notificationId);
     setNotifications((prev) =>
       prev.map((n: unknown) => {
-        if (typeof n === 'object' && n !== null && 'id' in n) {
+        if (typeof n === "object" && n !== null && "id" in n) {
           if ((n as { id: string }).id === notificationId) {
             return { ...n, read: true };
           }
@@ -40,7 +40,7 @@ export function useNotifications() {
     await NotificationService.markAllAsRead();
     setNotifications((prev) =>
       prev.map((n: unknown) => {
-        if (typeof n === 'object' && n !== null) {
+        if (typeof n === "object" && n !== null) {
           return { ...n, read: true };
         }
         return n;

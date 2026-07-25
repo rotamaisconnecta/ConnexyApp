@@ -11,10 +11,8 @@ export const RealtimeHelper = {
   ) {
     return supabase
       .channel(channel)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table, filter },
-        (payload) => callback?.(payload),
+      .on("postgres_changes", { event: "*", schema: "public", table, filter }, (payload) =>
+        callback?.(payload),
       )
       .subscribe();
   },
@@ -24,7 +22,10 @@ export const RealtimeHelper = {
   },
 
   subscribePresence(channel: string) {
-    return supabase.channel(channel).on("presence", { event: "sync" }, () => {}).subscribe();
+    return supabase
+      .channel(channel)
+      .on("presence", { event: "sync" }, () => {})
+      .subscribe();
   },
 
   trackPresence(channel: Channel, key: string, state: Record<string, unknown>) {

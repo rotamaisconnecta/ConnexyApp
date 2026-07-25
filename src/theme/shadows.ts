@@ -9,6 +9,7 @@ export const Shadows = {
   large: "0 8px 32px rgba(0, 0, 0, 0.12)",
   floatingButton: "0 8px 24px rgba(108, 59, 255, 0.35)",
   premiumCard: "0 8px 32px rgba(108, 59, 255, 0.15)",
+  glow: "0 0 26px rgba(108, 59, 255, 0.2)",
 } as const;
 
 export type ShadowToken = (typeof Shadows)[keyof typeof Shadows];

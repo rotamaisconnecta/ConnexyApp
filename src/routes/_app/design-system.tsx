@@ -112,7 +112,7 @@ function DesignSystemPage() {
         <section className="px-5 space-y-4">
           <SectionHeader title="Branding" />
           <BrandCard>
-            <p className="text-sm text-[#71717A]">
+            <p className="text-sm text-muted-foreground">
               BrandButton, BrandCard, BrandInput, BrandBadge...
             </p>
           </BrandCard>
@@ -165,7 +165,7 @@ function DesignSystemPage() {
             onChange={setSegment}
           />
           <SearchBar value={search} onChange={setSearch} placeholder="Buscar..." />
-          <FilterBar filters={DEMO_FILTERS} onToggle={(id) => console.log("filter", id)} />
+          <FilterBar filters={DEMO_FILTERS} onToggle={(id) => {}} />
         </section>
 
         <SectionDivider className="my-4" />
@@ -249,12 +249,12 @@ function DesignSystemPage() {
         <section className="px-5 space-y-4">
           <SectionHeader title="Cards Premium" />
           <PremiumCard>
-            <p className="text-sm font-medium text-[#18181B]">PremiumCard</p>
-            <p className="text-xs text-[#71717A]">Gradiente e glow automático</p>
+            <p className="text-sm font-medium text-foreground">PremiumCard</p>
+            <p className="text-xs text-muted-foreground">Gradiente e glow automático</p>
           </PremiumCard>
           <GlassCard>
-            <p className="text-sm font-medium text-[#18181B]">GlassCard</p>
-            <p className="text-xs text-[#71717A]">Glassmorphism com blur</p>
+            <p className="text-sm font-medium text-foreground">GlassCard</p>
+            <p className="text-xs text-muted-foreground">Glassmorphism com blur</p>
           </GlassCard>
         </section>
 
@@ -301,7 +301,9 @@ function DesignSystemPage() {
       </div>
 
       <Modal isOpen={modal.isOpen} onClose={modal.close} title="Exemplo Modal">
-        <p className="text-sm text-[#71717A] mb-4">Este é um modal de exemplo do Design System.</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Este é um modal de exemplo do Design System.
+        </p>
         <BrandButton onClick={modal.close} className="w-full">
           Fechar
         </BrandButton>
@@ -312,7 +314,7 @@ function DesignSystemPage() {
         onClose={bottomSheet.close}
         title="Exemplo Bottom Sheet"
       >
-        <p className="text-sm text-[#71717A] mb-4">Bottom sheet com arrasto e snap.</p>
+        <p className="text-sm text-muted-foreground mb-4">Bottom sheet com arrasto e snap.</p>
         <BrandButton onClick={bottomSheet.close} className="w-full">
           Fechar
         </BrandButton>

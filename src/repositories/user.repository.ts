@@ -4,11 +4,7 @@ import type { ProfileRow } from "@/types/database/tables";
 
 export const UserRepository = {
   async getById(id: string): Promise<ProfileRow> {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", id).single();
     if (error) throw new SupabaseError(error.message, error.code);
     return data;
   },
@@ -25,7 +21,7 @@ export const UserRepository = {
 
   async update(
     id: string,
-    data: Partial<Omit<ProfileRow, "id" | "created_at">>
+    data: Partial<Omit<ProfileRow, "id" | "created_at">>,
   ): Promise<ProfileRow> {
     const { data: updated, error } = await supabase
       .from("profiles")
@@ -41,19 +37,13 @@ export const UserRepository = {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .or(
-        `full_name.ilike.%${query}%,handle.ilike.%${query}%,bio.ilike.%${query}%`
-      )
+      .or(`full_name.ilike.%${query}%,handle.ilike.%${query}%,bio.ilike.%${query}%`)
       .limit(20);
     if (error) throw new SupabaseError(error.message, error.code);
     return data ?? [];
   },
 
-  async getNearby(
-    latitude: number,
-    longitude: number,
-    radiusKm: number
-  ): Promise<ProfileRow[]> {
+  async getNearby(latitude: number, longitude: number, radiusKm: number): Promise<ProfileRow[]> {
     const { data, error } = await supabase.rpc("get_nearby_profiles", {
       p_latitude: latitude,
       p_longitude: longitude,

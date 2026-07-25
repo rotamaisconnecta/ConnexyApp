@@ -5,5 +5,5 @@ interface BrandDividerProps {
 }
 
 export function BrandDivider({ className }: BrandDividerProps) {
-  return <hr className={cn("border-t border-[#E7E7F2]", className)} />;
+  return <hr className={cn("border-t border-border", className)} />;
 }

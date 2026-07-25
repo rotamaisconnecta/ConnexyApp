@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Colors } from "@/theme";
 
 interface BrandScreenProps {
   padded?: boolean;
@@ -19,12 +20,13 @@ export function BrandScreen({
   return (
     <div
       className={cn(
-        "min-h-screen bg-white text-[#18181B]",
+        "min-h-screen",
         safeArea && "pt-safe",
         padded && "px-5",
         scroll && "overflow-y-auto",
         className,
       )}
+      style={{ background: Colors.background, color: Colors.text.primary }}
     >
       {children}
     </div>

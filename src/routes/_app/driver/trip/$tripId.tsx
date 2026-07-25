@@ -32,7 +32,7 @@ function DriverTripPage() {
   return (
     <div className="flex-1 pb-20">
       <StatusBar />
-      <DriverTrip ride={MOCK_RIDE} onAction={(action) => console.log(action)} />
+      <DriverTrip ride={MOCK_RIDE} onAction={(action) => {}} />
     </div>
   );
 }

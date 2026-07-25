@@ -12,7 +12,6 @@ import { ChevronLeft } from "lucide-react";
 import { useState, useMemo } from "react";
 import type {
   Business,
-  BusinessCategoryValue,
   BusinessPhoto,
   BusinessRating,
   BusinessHoursSlot,

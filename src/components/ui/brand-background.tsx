@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Colors } from "@/lib/branding/brand-config";
+import { Colors, Gradients } from "@/theme";
 
 interface BrandBackgroundProps {
   variant?: "default" | "surface" | "gradient";
@@ -16,17 +16,17 @@ export function BrandBackground({
   children,
   className,
 }: BrandBackgroundProps) {
-  const bgClass =
+  const bgStyle: React.CSSProperties =
     variant === "gradient"
-      ? "bg-gradient-to-b from-[#F4F1FF] to-white"
+      ? { background: Gradients.soft }
       : variant === "surface"
-        ? "bg-[#F8F8FC]"
-        : "bg-white";
+        ? { background: Colors.surface }
+        : { background: Colors.background };
 
   return (
     <div
-      className={`min-h-screen ${bgClass} ${safeArea ? "pt-safe" : ""} ${blur ? "backdrop-blur-sm" : ""} ${className ?? ""}`}
-      style={{ color: Colors.text.primary }}
+      className={`min-h-screen ${safeArea ? "pt-safe" : ""} ${blur ? "backdrop-blur-sm" : ""} ${className ?? ""}`}
+      style={{ ...bgStyle, color: Colors.text.primary }}
     >
       {children}
     </div>

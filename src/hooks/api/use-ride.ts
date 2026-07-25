@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { RideService } from '@/services/ride-service';
+import { useState, useCallback } from "react";
+import { RideService } from "@/services/ride.service";
 
 export function useRide() {
   const [activeRide, setActiveRide] = useState<unknown>(null);

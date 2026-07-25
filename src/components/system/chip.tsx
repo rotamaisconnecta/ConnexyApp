@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Colors, Radius } from "@/lib/branding/brand-config";
+import { Colors, Radius } from "@/theme";
 
 interface ChipProps {
   label: string;
@@ -41,7 +41,7 @@ export function Chip({
       )}
       style={{
         background: selected ? Colors.brand.primary : Colors.surface,
-        color: selected ? "#FFFFFF" : Colors.brand.primary,
+        color: selected ? Colors.background : Colors.brand.primary,
         borderRadius: Radius.floating,
       }}
     >
@@ -59,7 +59,7 @@ export function Chip({
             onRemove?.();
           }}
           className="ml-0.5 rounded-full p-0.5 transition-colors"
-          style={{ color: selected ? "#FFFFFFCC" : Colors.brand.primary }}
+          style={{ color: selected ? `${Colors.background}CC` : Colors.brand.primary }}
         >
           <span className="flex items-center">
             <svg

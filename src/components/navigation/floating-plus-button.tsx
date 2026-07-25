@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { centerButton } from "./navigation-animations";
-import Icon from "@/assets/connexy-icon.png";
+import { AppIcon } from "@/components/ui/app-icon";
 
 interface FloatingPlusButtonProps {
   onTap?: () => void;
@@ -17,9 +17,8 @@ export function FloatingPlusButton({ onTap }: FloatingPlusButtonProps) {
         aria-label="Criar publicação"
         className="relative h-16 w-16 rounded-full shadow-xl ring-4 ring-background flex items-center justify-center z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       >
-        <img
-          src={Icon}
-          alt="Connexy"
+        <AppIcon
+          size="lg"
           className="h-[46px] w-[46px] object-contain select-none pointer-events-none drop-shadow-md"
         />
       </motion.button>

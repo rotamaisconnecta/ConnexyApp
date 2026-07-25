@@ -8,6 +8,7 @@ import type {
 import { getCategoryLabel } from "@/lib/notifications/notification-utils";
 import { toggleCategory } from "@/lib/notifications/notification-filter";
 import { Search, X } from "lucide-react";
+import { Colors } from "@/theme";
 
 const QUICK_FILTERS: NotificationCategoryValue[] = [
   NotificationCategory.MESSAGE,
@@ -30,20 +31,24 @@ export function NotificationFilters({ filter, onChange }: NotificationFiltersPro
     <div className="flex flex-col gap-3 px-4">
       {showSearch && (
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#71717A]" />
+          <Search
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+            style={{ color: Colors.text.secondary }}
+          />
           <input
             autoFocus
             value={filter.search}
             onChange={(e) => onChange({ ...filter, search: e.target.value })}
             placeholder="Buscar notificações..."
-            className="h-10 w-full rounded-xl bg-[#F8F8FC] pl-9 pr-8 text-sm text-[#18181B] placeholder:text-[#71717A] outline-none"
+            className="h-10 w-full rounded-xl bg-surface pl-9 pr-8 text-sm text-foreground outline-none"
           />
           <button
             onClick={() => {
               onChange({ ...filter, search: "" });
               setShowSearch(false);
             }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[#71717A]"
+            className="absolute right-2 top-1/2 -translate-y-1/2"
+            style={{ color: Colors.text.secondary }}
           >
             <X className="h-4 w-4" />
           </button>
@@ -54,7 +59,8 @@ export function NotificationFilters({ filter, onChange }: NotificationFiltersPro
         {!showSearch && (
           <button
             onClick={() => setShowSearch(true)}
-            className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-[#F8F8FC] px-3 text-xs font-medium text-[#71717A] transition-colors hover:bg-[#F4F1FF]"
+            className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-surface px-3 text-xs font-medium transition-colors"
+            style={{ color: Colors.text.secondary }}
           >
             <Search className="h-3.5 w-3.5" />
           </button>
@@ -65,8 +71,8 @@ export function NotificationFilters({ filter, onChange }: NotificationFiltersPro
           className={cn(
             "h-8 shrink-0 rounded-full px-3 text-xs font-medium transition-colors",
             filter.unreadOnly
-              ? "bg-[#6C3BFF] text-white"
-              : "bg-[#F8F8FC] text-[#71717A] hover:bg-[#F4F1FF]",
+              ? "bg-primary text-white"
+              : "bg-surface text-muted-foreground hover:bg-accent",
           )}
         >
           Não lidas
@@ -81,8 +87,8 @@ export function NotificationFilters({ filter, onChange }: NotificationFiltersPro
             className={cn(
               "h-8 shrink-0 rounded-full px-3 text-xs font-medium transition-colors whitespace-nowrap",
               filter.categories.includes(cat)
-                ? "bg-[#6C3BFF] text-white"
-                : "bg-[#F8F8FC] text-[#71717A] hover:bg-[#F4F1FF]",
+                ? "bg-primary text-white"
+                : "bg-surface text-muted-foreground hover:bg-accent",
             )}
           >
             {getCategoryLabel(cat)}

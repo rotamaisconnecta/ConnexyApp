@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { usePullToRefresh } from "@/hooks/system/use-pull-to-refresh";
+import { Colors } from "@/theme";
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void> | void;
@@ -29,7 +30,12 @@ export function PullToRefresh({ onRefresh, children, className }: PullToRefreshP
               isRefreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }
             }
           >
-            <svg className="w-6 h-6 text-[#6C3BFF]" viewBox="0 0 24 24" fill="none">
+            <svg
+              className="w-6 h-6"
+              style={{ color: Colors.brand.primary }}
+              viewBox="0 0 24 24"
+              fill="none"
+            >
               <circle
                 className="opacity-25"
                 cx="12"

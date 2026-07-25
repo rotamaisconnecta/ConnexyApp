@@ -3,6 +3,7 @@
    for notifications. No React. No side effects.
 ========================================================= */
 
+import { Colors } from "@/theme";
 import { NotificationCategory, NotificationPriority } from "./notification-types";
 import type {
   Notification,
@@ -16,66 +17,82 @@ const CATEGORY_META: Record<
   NotificationCategoryValue,
   { icon: string; color: string; label: string }
 > = {
-  [NotificationCategory.MESSAGE]: { icon: "MessageCircle", color: "#6C3BFF", label: "Mensagem" },
+  [NotificationCategory.MESSAGE]: {
+    icon: "MessageCircle",
+    color: Colors.brand.primary,
+    label: "Mensagem",
+  },
   [NotificationCategory.CONNECTION_REQUEST]: {
     icon: "UserPlus",
-    color: "#8B5CFF",
+    color: Colors.brand.secondary,
     label: "Pedido de conexão",
   },
   [NotificationCategory.CONNECTION_ACCEPTED]: {
     icon: "CheckCircle",
-    color: "#22C55E",
+    color: Colors.success,
     label: "Conexão aceita",
   },
   [NotificationCategory.NEARBY_PERSON]: {
     icon: "MapPin",
-    color: "#A88DFF",
+    color: Colors.brand.light,
     label: "Pessoa próxima",
   },
   [NotificationCategory.NEARBY_MOMENT]: {
     icon: "Camera",
-    color: "#EC4899",
+    color: Colors.brand.light,
     label: "Momento próximo",
   },
   [NotificationCategory.NEARBY_OFFER]: {
     icon: "Tag",
-    color: "#F59E0B",
+    color: Colors.warning,
     label: "Oferta perto de você",
   },
   [NotificationCategory.NEARBY_EVENT]: {
     icon: "Calendar",
-    color: "#3B82F6",
+    color: Colors.brand.primary,
     label: "Evento próximo",
   },
   [NotificationCategory.DRIVER_FOUND]: {
     icon: "Car",
-    color: "#22C55E",
+    color: Colors.success,
     label: "Motorista encontrado",
   },
   [NotificationCategory.RIDE_STARTED]: {
     icon: "Navigation",
-    color: "#6C3BFF",
+    color: Colors.brand.primary,
     label: "Corrida iniciada",
   },
   [NotificationCategory.RIDE_FINISHED]: {
     icon: "Flag",
-    color: "#71717A",
+    color: Colors.text.secondary,
     label: "Corrida finalizada",
   },
   [NotificationCategory.BUSINESS_FOLLOW]: {
     icon: "Building2",
-    color: "#3B82F6",
+    color: Colors.brand.primary,
     label: "Empresa começou a seguir",
   },
   [NotificationCategory.COUPON_AVAILABLE]: {
     icon: "Ticket",
-    color: "#F59E0B",
+    color: Colors.warning,
     label: "Cupom disponível",
   },
-  [NotificationCategory.LIKE]: { icon: "Heart", color: "#EF4444", label: "Curtida" },
-  [NotificationCategory.COMMENT]: { icon: "MessageSquare", color: "#6C3BFF", label: "Comentário" },
-  [NotificationCategory.MENTION]: { icon: "AtSign", color: "#A855F7", label: "Menção" },
-  [NotificationCategory.SHARE]: { icon: "Share2", color: "#3B82F6", label: "Compartilhamento" },
+  [NotificationCategory.LIKE]: { icon: "Heart", color: Colors.danger, label: "Curtida" },
+  [NotificationCategory.COMMENT]: {
+    icon: "MessageSquare",
+    color: Colors.brand.primary,
+    label: "Comentário",
+  },
+  [NotificationCategory.MENTION]: {
+    icon: "AtSign",
+    color: Colors.brand.secondary,
+    label: "Menção",
+  },
+  [NotificationCategory.SHARE]: {
+    icon: "Share2",
+    color: Colors.brand.primary,
+    label: "Compartilhamento",
+  },
 };
 
 export function getCategoryIcon(category: NotificationCategoryValue): string {

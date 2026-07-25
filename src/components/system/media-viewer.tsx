@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Colors, Animations } from "@/lib/branding/brand-config";
+import { Colors, Animations } from "@/theme";
 
 interface MediaViewerProps {
   isOpen: boolean;
@@ -28,15 +28,15 @@ export function MediaViewer({ isOpen, onClose, src, type = "image", alt = "" }: 
           exit={Animations.fade.exit}
           transition={Animations.fade.transition}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: "rgba(0,0,0,0.95)" }}
+          style={{ backgroundColor: "color-mix(in oklab, black 95%, transparent)" }}
         >
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-50 p-2 rounded-full"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+            style={{ backgroundColor: "color-mix(in oklab, var(--background) 15%, transparent)" }}
             aria-label="Close"
           >
-            <span style={{ color: "#FFFFFF" }}>
+            <span style={{ color: Colors.background }}>
               <X className="w-6 h-6" />
             </span>
           </button>

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { AuthService } from '@/services/auth-service';
+import { useState, useCallback } from "react";
+import { AuthService } from "@/services/auth.service";
 
 export function useAuth() {
   const [session, setSession] = useState<unknown>(null);

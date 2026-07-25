@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Colors, Gradients } from "@/theme";
 
 interface LiveEventBannerProps {
   eventName: string;
@@ -13,8 +14,9 @@ export function LiveEventBanner({ eventName, checkinCount, isActive }: LiveEvent
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl px-4 py-3",
-        isActive ? "bg-gradient-to-r from-[#6C3BFF] to-[#8B5CFF]" : "bg-surface shadow-soft",
+        isActive ? "text-white" : "bg-surface shadow-soft",
       )}
+      style={isActive ? { background: Gradients.primary } : undefined}
     >
       {isActive && (
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PC9zdmc+')] opacity-40" />
@@ -53,7 +55,7 @@ export function LiveEventBanner({ eventName, checkinCount, isActive }: LiveEvent
         <span
           className={cn(
             "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold",
-            isActive ? "bg-white/20 text-white" : "bg-[#F4F1FF] text-primary",
+            isActive ? "bg-white/20 text-white" : "text-primary",
           )}
         >
           {checkinCount} {checkinCount === 1 ? "check-in" : "check-ins"}

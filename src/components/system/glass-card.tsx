@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Shadows } from "@/theme";
 
 interface GlassCardProps {
   children: ReactNode;
@@ -11,11 +12,11 @@ export function GlassCard({ children, blur = true, className }: GlassCardProps) 
   return (
     <div
       className={cn(
-        "bg-white/70 border border-white/20 rounded-[24px] p-4",
-        "shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
+        "bg-white/70 border border-white/20 p-4",
         blur && "backdrop-blur-xl",
         className,
       )}
+      style={{ borderRadius: 24, boxShadow: Shadows.medium }}
     >
       {children}
     </div>

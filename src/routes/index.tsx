@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { supabase } from "@/integrations/supabase/client";
+import { Colors } from "@/theme";
 
 export const Route = createFileRoute("/")({
   component: Splash,
@@ -25,12 +26,14 @@ function Splash() {
 
   return (
     <PhoneFrame>
-      <div className="flex-1 grid place-items-center bg-[#0f0a1f] text-white relative overflow-hidden">
+      <div
+        className="flex-1 grid place-items-center text-white relative overflow-hidden"
+        style={{ backgroundColor: Colors.brand.dark }}
+      >
         <div
           className="absolute inset-0 opacity-40"
           style={{
-            background:
-              "radial-gradient(600px 400px at 50% 30%, rgba(108,59,255,0.6), transparent)",
+            background: `radial-gradient(600px 400px at 50% 30%, ${Colors.brand.primary}99, transparent)`,
           }}
         />
         <motion.div

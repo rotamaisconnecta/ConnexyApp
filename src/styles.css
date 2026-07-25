@@ -42,6 +42,7 @@
   --color-ring-offset-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
+  --color-brand-muted: var(--brand-muted);
 }
 
 :root {
@@ -71,6 +72,7 @@
   --muted-foreground: oklch(0.52 0.03 285);
   --accent: oklch(0.94 0.03 305);
   --accent-foreground: oklch(0.3 0.1 295);
+  --brand-muted: oklch(0.965 0.015 285);
 
   --destructive: oklch(0.62 0.24 25);
   --destructive-foreground: oklch(0.99 0 0);
@@ -86,6 +88,8 @@
   --gradient-surface: linear-gradient(180deg, oklch(0.99 0.005 300), oklch(0.95 0.02 300));
   --shadow-elegant: 0 20px 50px -20px color-mix(in oklab, oklch(0.55 0.24 295) 45%, transparent);
   --shadow-soft: 0 8px 24px -12px color-mix(in oklab, oklch(0.4 0.15 290) 25%, transparent);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.12);
   --shadow-phone: 0 40px 80px -30px rgba(30, 15, 60, 0.35), 0 8px 20px -8px rgba(30, 15, 60, 0.2);
 }
 
@@ -104,6 +108,7 @@
   --muted-foreground: oklch(0.72 0.02 290);
   --accent: oklch(0.3 0.08 295);
   --accent-foreground: oklch(0.98 0.005 300);
+  --brand-muted: oklch(0.25 0.04 290);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.72 0.19 300);
@@ -140,6 +145,12 @@
 }
 @utility shadow-soft {
   box-shadow: var(--shadow-soft);
+}
+@utility shadow-medium {
+  box-shadow: var(--shadow-medium);
+}
+@utility shadow-large {
+  box-shadow: var(--shadow-large);
 }
 @utility shadow-phone {
   box-shadow: var(--shadow-phone);

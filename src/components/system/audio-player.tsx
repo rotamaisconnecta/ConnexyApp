@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Colors, Radius, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Radius, Shadows } from "@/theme";
 
 interface AudioPlayerProps {
   src: string;
@@ -89,7 +89,7 @@ export function AudioPlayer({ src, title, artist, className }: AudioPlayerProps)
         style={{ backgroundColor: Colors.brand.primary }}
         aria-label={isPlaying ? "Pause" : "Play"}
       >
-        <span style={{ color: "#FFFFFF" }}>
+        <span style={{ color: Colors.background }}>
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </span>
       </motion.button>

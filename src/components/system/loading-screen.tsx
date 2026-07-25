@@ -18,7 +18,7 @@ export function LoadingScreen({ message, fullScreen = true }: LoadingScreenProps
       <div
         className="h-10 w-10 animate-spin rounded-full border-4"
         style={{
-          borderColor: "#E7E7F2",
+          borderColor: Colors.border,
           borderTopColor: Colors.brand.primary,
         }}
       />

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Colors, Gradients } from "@/theme";
 
 type Pin = {
   x: number;
@@ -40,7 +41,7 @@ export function MapCanvas({
   return (
     <div
       className={`relative overflow-hidden rounded-2xl ${className}`}
-      style={{ height, background: "linear-gradient(180deg, #efeaff 0%, #f7f3ff 100%)" }}
+      style={{ height, background: Gradients.soft }}
     >
       <svg viewBox="0 0 400 300" className="absolute inset-0 h-full w-full">
         {/* Blocks */}
@@ -67,11 +68,11 @@ export function MapCanvas({
           />
         ))}
         {/* Streets */}
-        <line x1="0" y1="120" x2="400" y2="120" stroke="#fff" strokeWidth="10" />
-        <line x1="0" y1="220" x2="400" y2="220" stroke="#fff" strokeWidth="8" />
-        <line x1="200" y1="0" x2="200" y2="300" stroke="#fff" strokeWidth="10" />
-        <line x1="80" y1="0" x2="80" y2="300" stroke="#fff" strokeWidth="6" />
-        <line x1="320" y1="0" x2="320" y2="300" stroke="#fff" strokeWidth="6" />
+        <line x1="0" y1="120" x2="400" y2="120" stroke={Colors.background} strokeWidth="10" />
+        <line x1="0" y1="220" x2="400" y2="220" stroke={Colors.background} strokeWidth="8" />
+        <line x1="200" y1="0" x2="200" y2="300" stroke={Colors.background} strokeWidth="10" />
+        <line x1="80" y1="0" x2="80" y2="300" stroke={Colors.background} strokeWidth="6" />
+        <line x1="320" y1="0" x2="320" y2="300" stroke={Colors.background} strokeWidth="6" />
         {/* Park */}
         <circle cx="320" cy="80" r="34" fill="#c7f1d9" />
         <circle cx="60" cy="240" r="26" fill="#c7f1d9" />

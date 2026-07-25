@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Colors } from "@/theme";
 import { Radius } from "@/lib/branding/brand-config";
 
 interface BadgeCounterProps {
@@ -17,8 +18,8 @@ export function BadgeCounter({ count, max = 99, className }: BadgeCounterProps) 
         className,
       )}
       style={{
-        backgroundColor: "#EF4444",
-        color: "#FFFFFF",
+        backgroundColor: Colors.danger,
+        color: Colors.background,
         borderRadius: Radius.floating,
         minWidth: 16,
         height: 16,

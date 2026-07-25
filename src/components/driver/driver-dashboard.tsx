@@ -34,7 +34,7 @@ function StatCard({ icon, label, value, accent }: StatCardProps) {
     >
       <div
         className="h-9 w-9 rounded-xl grid place-items-center mb-3"
-        style={{ backgroundColor: accent ?? "var(--color-primary-light, #F4F1FF)" }}
+        style={{ backgroundColor: accent ?? "var(--color-brand-muted)" }}
       >
         {icon}
       </div>
@@ -54,25 +54,25 @@ export function DriverDashboard({ earnings, isOnline, onToggleOnline }: DriverDa
       icon: <DollarSign className="h-4 w-4 text-emerald-600" />,
       label: "Ganhos Hoje",
       value: formatCurrency(earnings.today),
-      accent: "rgba(16,185,129,0.1)",
+      accent: "color-mix(in oklab, #10B981 10%, transparent)",
     },
     {
       icon: <Route className="h-4 w-4 text-blue-600" />,
       label: "Corridas",
       value: String(earnings.totalTrips),
-      accent: "rgba(59,130,246,0.1)",
+      accent: "color-mix(in oklab, #3B82F6 10%, transparent)",
     },
     {
       icon: <Star className="h-4 w-4 text-amber-500" />,
       label: "Avaliação",
       value: earnings.averagePerTrip.toFixed(1),
-      accent: "rgba(245,158,11,0.1)",
+      accent: "color-mix(in oklab, #F59E0B 10%, transparent)",
     },
     {
       icon: <Clock className="h-4 w-4 text-violet-600" />,
       label: "Horas Online",
       value: `${earnings.commission.toFixed(0)}h`,
-      accent: "rgba(139,92,246,0.1)",
+      accent: "color-mix(in oklab, #8B5CFF 10%, transparent)",
     },
   ];
 

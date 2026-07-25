@@ -82,9 +82,9 @@ export function RecommendationCard({ recommendation, onSelect }: RecommendationC
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       onClick={() => onSelect?.(recommendation.id)}
-      className="flex w-36 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-[#E7E7F2] bg-white transition-shadow hover:shadow-md"
+      className="flex w-36 shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-md"
     >
-      <div className="relative h-24 w-full overflow-hidden bg-[#F4F1FF]">
+      <div className="relative h-24 w-full overflow-hidden bg-brand-muted">
         <img
           src={recommendation.imageUrl}
           alt={recommendation.title}
@@ -110,20 +110,20 @@ export function RecommendationCard({ recommendation, onSelect }: RecommendationC
 
       <div className="flex flex-1 flex-col gap-1 p-2.5">
         <div className="flex items-center gap-1.5">
-          <Icon className="h-3.5 w-3.5 shrink-0 text-[#A88DFF]" />
-          <p className="truncate text-xs font-semibold text-[#18181B]">{recommendation.title}</p>
+          <Icon className="h-3.5 w-3.5 shrink-0 text-lilac" />
+          <p className="truncate text-xs font-semibold text-foreground">{recommendation.title}</p>
         </div>
 
-        <p className="truncate text-[11px] text-[#71717A]">{recommendation.subtitle}</p>
+        <p className="truncate text-[11px] text-muted-foreground">{recommendation.subtitle}</p>
 
         <div className="mt-auto flex flex-wrap items-center gap-1 pt-1">
           {typeBadge && (
-            <span className="inline-flex items-center rounded-full bg-[#F4F1FF] px-1.5 py-0.5 text-[10px] font-medium text-[#A88DFF]">
+            <span className="inline-flex items-center rounded-full bg-brand-muted px-1.5 py-0.5 text-[10px] font-medium text-lilac">
               {typeBadge}
             </span>
           )}
 
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-[#71717A]">
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
             <Navigation className="h-2.5 w-2.5" />
             {formatDistance(recommendation.distanceMeters)}
           </span>

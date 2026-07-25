@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { AuthService } from '@/services/auth-service';
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { AuthService } from "@/services/auth.service";
 
 interface SessionContextValue {
   session: unknown;
@@ -26,7 +26,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAndRefresh = async () => {
-      if (typeof session === 'object' && session !== null && 'expires_at' in session) {
+      if (typeof session === "object" && session !== null && "expires_at" in session) {
         const expiresAt = (session as { expires_at: number }).expires_at;
         const now = Math.floor(Date.now() / 1000);
         const bufferSeconds = 60;
@@ -53,7 +53,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 export function useSessionContext() {
   const context = useContext(SessionContext);
   if (context === undefined) {
-    throw new Error('useSessionContext must be used within a SessionProvider');
+    throw new Error("useSessionContext must be used within a SessionProvider");
   }
   return context;
 }

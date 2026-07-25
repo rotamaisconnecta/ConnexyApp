@@ -3,6 +3,7 @@
    Pure TypeScript. No React. No side effects.
 ========================================================= */
 
+import { Colors } from "@/theme";
 import { ToastVariant } from "./system-types";
 import type { ToastVariantValue } from "./system-types";
 
@@ -23,11 +24,11 @@ export function getDefaultDuration(variant: ToastVariantValue): number {
 /* ─── Background classes ─────────────────────────────────── */
 
 const TOAST_BG: Record<ToastVariantValue, string> = {
-  [ToastVariant.SUCCESS]: "bg-[#22C55E]",
-  [ToastVariant.WARNING]: "bg-[#F59E0B]",
-  [ToastVariant.INFO]: "bg-[#6C3BFF]",
-  [ToastVariant.DANGER]: "bg-[#EF4444]",
-  [ToastVariant.LOADING]: "bg-[#18181B]",
+  [ToastVariant.SUCCESS]: `bg-[${Colors.success}]`,
+  [ToastVariant.WARNING]: `bg-[${Colors.warning}]`,
+  [ToastVariant.INFO]: `bg-[${Colors.brand.primary}]`,
+  [ToastVariant.DANGER]: `bg-[${Colors.danger}]`,
+  [ToastVariant.LOADING]: `bg-[${Colors.text.primary}]`,
 };
 
 export function getToastBgClass(variant: ToastVariantValue): string {

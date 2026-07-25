@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { MarketplaceService } from '@/services/marketplace-service';
+import { useState, useCallback } from "react";
+import { MarketplaceService } from "@/services/marketplace.service";
 
 interface MarketplaceFilters {
   category?: string;

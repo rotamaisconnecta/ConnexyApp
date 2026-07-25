@@ -14,7 +14,7 @@ export function BrandHeader({ showLogo = false, title, rightAction, className }:
     <header className={cn("flex h-14 items-center justify-between px-5", className)}>
       <div className="flex items-center gap-3">
         {showLogo && <BrandLogo size="sm" variant="icon" />}
-        {title && <h2 className="text-lg font-semibold text-[#18181B]">{title}</h2>}
+        {title && <h2 className="text-lg font-semibold text-foreground">{title}</h2>}
       </div>
       {rightAction && <div>{rightAction}</div>}
     </header>

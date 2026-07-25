@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { snackbarIn } from "@/lib/system/animation-utils";
 import type { SnackbarData, SnackbarVariantValue } from "@/lib/system/system-types";
-import { Colors, Radius, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Radius, Shadows } from "@/theme";
 
 const variantStyles: Record<SnackbarVariantValue, { bg: string; border: string; text: string }> = {
   DEFAULT: {
@@ -58,9 +58,8 @@ export function SnackbarContainer({ snackbars, onDismiss }: SnackbarContainerPro
               {snackbar.action && (
                 <button
                   onClick={snackbar.action.onClick}
-                  className="text-xs font-bold px-3 py-1 rounded-full transition-opacity hover:opacity-80 flex-shrink-0"
+                  className="text-xs font-bold px-3 py-1 rounded-full bg-white/20 transition-opacity hover:opacity-80 flex-shrink-0"
                   style={{
-                    background: "rgba(255,255,255,0.2)",
                     borderRadius: Radius.floating,
                   }}
                 >

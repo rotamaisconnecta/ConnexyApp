@@ -1,4 +1,5 @@
 import { ArrowLeft, CheckCheck, Settings } from "lucide-react";
+import { Colors, Radius } from "@/theme";
 
 interface NotificationHeaderProps {
   unreadCount: number;
@@ -19,15 +20,18 @@ export function NotificationHeader({
         {onBack && (
           <button
             onClick={onBack}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#18181B]"
+            className="flex h-8 w-8 items-center justify-center rounded-full"
+            style={{ color: Colors.text.primary, borderRadius: Radius.floating }}
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
         <div>
-          <h1 className="text-lg font-bold text-[#18181B]">Notificações</h1>
+          <h1 className="text-lg font-bold" style={{ color: Colors.text.primary }}>
+            Notificações
+          </h1>
           {unreadCount > 0 && (
-            <p className="text-[10px] text-[#71717A]">
+            <p className="text-[10px]" style={{ color: Colors.text.secondary }}>
               {unreadCount} não lida{unreadCount > 1 ? "s" : ""}
             </p>
           )}
@@ -38,7 +42,12 @@ export function NotificationHeader({
         {unreadCount > 0 && onMarkAllRead && (
           <button
             onClick={onMarkAllRead}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#6C3BFF] transition-colors hover:bg-[#F4F1FF]"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+            style={{
+              color: Colors.brand.primary,
+              borderRadius: Radius.floating,
+              backgroundColor: Colors.surface,
+            }}
             title="Marcar todas como lidas"
           >
             <CheckCheck className="h-5 w-5" />
@@ -47,7 +56,8 @@ export function NotificationHeader({
         {onSettings && (
           <button
             onClick={onSettings}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#71717A] transition-colors hover:bg-[#F8F8FC]"
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+            style={{ color: Colors.text.secondary, borderRadius: Radius.floating }}
           >
             <Settings className="h-5 w-5" />
           </button>

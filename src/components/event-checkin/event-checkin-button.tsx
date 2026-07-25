@@ -3,6 +3,7 @@ import { MapPin, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CheckinStatus } from "@/lib/event-checkin/checkin-types";
 import { CheckinStatus as Status } from "@/lib/event-checkin/checkin-types";
+import { Gradients, Shadows } from "@/theme";
 
 interface EventCheckinButtonProps {
   status: CheckinStatus;
@@ -58,9 +59,9 @@ export function EventCheckinButton({
       disabled={loading}
       className={cn(
         "relative flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-semibold text-white transition-colors",
-        "bg-gradient-to-r from-[#6C3BFF] to-[#8B5CFF] shadow-[0_4px_16px_rgba(108,59,255,0.35)]",
         loading && "pointer-events-none opacity-70",
       )}
+      style={{ background: Gradients.primary, boxShadow: Shadows.floatingButton }}
     >
       <motion.div
         className="absolute inset-0 rounded-2xl bg-white/20"

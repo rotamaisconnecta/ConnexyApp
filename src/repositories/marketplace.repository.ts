@@ -1,11 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseError } from "@/lib/supabase/errors";
-import type {
-  BusinessRow,
-  EventRow,
-  OfferRow,
-  CouponRow,
-} from "@/types/database/tables";
+import type { BusinessRow, EventRow, OfferRow, CouponRow } from "@/types/database/tables";
 
 interface BusinessFilters {
   category?: string;
@@ -30,9 +25,7 @@ export const MarketplaceRepository = {
       query = query.eq("category", filters.category);
     }
     if (filters.search) {
-      query = query.or(
-        `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
-      );
+      query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     }
     if (filters.latitude && filters.longitude && filters.radiusKm) {
       query = query.rpc("get_nearby_businesses", {
@@ -64,9 +57,7 @@ export const MarketplaceRepository = {
       query = query.eq("category", filters.category);
     }
     if (filters.search) {
-      query = query.or(
-        `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
-      );
+      query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     }
     if (filters.startDate) {
       query = query.gte("starts_at", filters.startDate);

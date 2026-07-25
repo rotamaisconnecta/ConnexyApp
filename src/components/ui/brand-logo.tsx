@@ -6,6 +6,7 @@ interface BrandLogoProps {
   variant?: "full" | "icon";
   className?: string;
   animated?: boolean;
+  priority?: boolean;
 }
 
 const sizeMap: Record<NonNullable<BrandLogoProps["size"]>, string> = {
@@ -15,7 +16,13 @@ const sizeMap: Record<NonNullable<BrandLogoProps["size"]>, string> = {
   xl: "w-48 h-14",
 };
 
-export function BrandLogo({ size = "md", variant = "full", className, animated }: BrandLogoProps) {
+export function BrandLogo({
+  size = "md",
+  variant = "full",
+  className,
+  animated,
+  priority,
+}: BrandLogoProps) {
   const src = variant === "icon" ? Logo.icon : Logo.default;
 
   return (
@@ -24,6 +31,7 @@ export function BrandLogo({ size = "md", variant = "full", className, animated }
       alt="Connexy"
       className={cn(sizeMap[size], animated && "animate-pulse", className)}
       style={{ height: "auto" }}
+      loading={priority ? "eager" : "lazy"}
     />
   );
 }

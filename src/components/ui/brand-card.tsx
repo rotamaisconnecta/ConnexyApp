@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Radius, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Radius, Shadows } from "@/theme";
 
 interface BrandCardProps {
   children: ReactNode;
@@ -28,16 +28,18 @@ export function BrandCard({
     <div
       onClick={onClick}
       className={cn(
-        "rounded-[18px] border border-[#E7E7F2] bg-white",
+        "bg-white",
         padding && "p-4",
         onClick && "cursor-pointer active:scale-[0.98] transition-transform",
         className,
       )}
-      style={{ boxShadow: shadowMap[shadow] }}
+      style={{
+        borderRadius: Radius.md,
+        border: `1px solid ${Colors.border}`,
+        boxShadow: shadowMap[shadow],
+      }}
     >
       {children}
     </div>
   );
 }
-
-export { Radius, Shadows };

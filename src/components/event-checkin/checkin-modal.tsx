@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Colors, Gradients, Radius, Shadows } from "@/theme";
 
 interface CheckinModalProps {
   isOpen: boolean;
@@ -30,12 +31,16 @@ export function CheckinModal({ isOpen, eventName, onConfirm, onClose }: CheckinM
             className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-soft"
           >
             <div className="mb-4 flex items-center justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F4F1FF]">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full"
+                style={{ background: Colors.surface }}
+              >
                 <MapPin className="h-5 w-5 text-primary" />
               </div>
               <button
                 onClick={onClose}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
+                style={{ borderRadius: Radius.floating }}
               >
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -62,9 +67,9 @@ export function CheckinModal({ isOpen, eventName, onConfirm, onClose }: CheckinM
                 onClick={onConfirm}
                 className={cn(
                   "flex-1 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition-colors",
-                  "bg-gradient-to-r from-[#6C3BFF] to-[#8B5CFF] shadow-[0_4px_16px_rgba(108,59,255,0.35)]",
-                  "hover:shadow-[0_6px_20px_rgba(108,59,255,0.45)]",
+                  "hover:opacity-90",
                 )}
+                style={{ background: Gradients.primary, boxShadow: Shadows.floatingButton }}
               >
                 Confirmar
               </button>

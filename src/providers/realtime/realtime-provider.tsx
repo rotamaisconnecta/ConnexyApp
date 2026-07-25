@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 interface RealtimeContextValue {
   subscribe: (channel: string, callback: (payload: unknown) => void) => void;
@@ -23,10 +23,10 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     );
     supabaseRef.current = supabase;
 
-    const channel = supabase.channel('realtime-connection');
+    const channel = supabase.channel("realtime-connection");
     channel
-      .on('system' as never, { event: 'connected' } as never, () => setIsConnected(true))
-      .on('system' as never, { event: 'disconnected' } as never, () => setIsConnected(false))
+      .on("system" as never, { event: "connected" } as never, () => setIsConnected(true))
+      .on("system" as never, { event: "disconnected" } as never, () => setIsConnected(false))
       .subscribe();
 
     return () => {
@@ -38,19 +38,16 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const subscribe = useCallback(
-    (channelName: string, callback: (payload: unknown) => void) => {
-      if (!supabaseRef.current) return;
-      const channel = supabaseRef.current
-        .channel(channelName)
-        .on('broadcast' as never, { event: 'message' } as never, (payload) => {
-          callback(payload);
-        })
-        .subscribe();
-      channelsRef.current.set(channelName, channel);
-    },
-    [],
-  );
+  const subscribe = useCallback((channelName: string, callback: (payload: unknown) => void) => {
+    if (!supabaseRef.current) return;
+    const channel = supabaseRef.current
+      .channel(channelName)
+      .on("broadcast" as never, { event: "message" } as never, (payload) => {
+        callback(payload);
+      })
+      .subscribe();
+    channelsRef.current.set(channelName, channel);
+  }, []);
 
   const unsubscribe = useCallback((channelName: string) => {
     const channel = channelsRef.current.get(channelName);
@@ -72,7 +69,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 export function useRealtimeContext() {
   const context = useContext(RealtimeContext);
   if (context === undefined) {
-    throw new Error('useRealtimeContext must be used within a RealtimeProvider');
+    throw new Error("useRealtimeContext must be used within a RealtimeProvider");
   }
   return context;
 }

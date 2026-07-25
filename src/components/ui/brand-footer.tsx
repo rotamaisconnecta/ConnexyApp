@@ -10,7 +10,7 @@ export function BrandFooter({ children, className }: BrandFooterProps) {
   return (
     <footer
       className={cn(
-        "flex items-center justify-center border-t border-[#E7E7F2] bg-white px-5 py-4",
+        "flex items-center justify-center border-t border-border bg-white px-5 py-4",
         className,
       )}
     >

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useInfiniteScroll } from "@/hooks/system/use-infinite-scroll";
+import { Colors } from "@/theme";
 
 interface InfiniteScrollProps {
   children: ReactNode;
@@ -29,7 +30,12 @@ export function InfiniteScroll({
 
       {isLoading && (
         <div className="flex items-center justify-center py-4">
-          <svg className="w-6 h-6 animate-spin text-[#6C3BFF]" viewBox="0 0 24 24" fill="none">
+          <svg
+            className="w-6 h-6 animate-spin"
+            style={{ color: Colors.brand.primary }}
+            viewBox="0 0 24 24"
+            fill="none"
+          >
             <circle
               className="opacity-25"
               cx="12"

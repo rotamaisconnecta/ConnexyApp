@@ -29,5 +29,5 @@ export function getBackdropClass(): string {
 
 export function getDialogContentClass(size: ModalSizeValue): string {
   const sizeClass = getModalSizeClass(size);
-  return `relative mx-auto ${sizeClass} rounded-[24px] bg-white p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)]`;
+  return `relative mx-auto ${sizeClass} rounded-[24px] bg-white p-6 shadow-medium`;
 }

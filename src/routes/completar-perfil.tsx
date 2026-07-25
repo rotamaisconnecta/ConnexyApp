@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { AtSign, CalendarDays, Camera, ChevronDown, Pencil, UserRound } from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
+import { Shadows } from "@/theme";
 
 export const Route = createFileRoute("/completar-perfil")({
   head: () => ({ meta: [{ title: "Complete seu perfil | Connexy" }] }),
@@ -26,14 +27,14 @@ function CompleteProfile() {
 
   return (
     <PhoneFrame>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-white text-[#16172b]">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-white text-foreground">
         <StatusBar />
         <div className="px-6 pb-8 pt-4">
           <div className="flex items-center justify-between">
             <Link
               to="/cadastro"
               aria-label="Voltar"
-              className="grid h-11 w-11 place-items-center rounded-2xl border border-violet-100 bg-white text-[#151528] shadow-soft"
+              className="grid h-11 w-11 place-items-center rounded-2xl border border-violet-100 bg-white text-foreground shadow-soft"
             >
               <span className="text-4xl font-light leading-none">&#8249;</span>
             </Link>
@@ -60,7 +61,8 @@ function CompleteProfile() {
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
-                className="grid h-36 w-36 place-items-center overflow-hidden rounded-full border-8 border-white bg-violet-50 text-violet-600 shadow-[0_0_26px_rgba(109,40,217,0.2)]"
+                className="grid h-36 w-36 place-items-center overflow-hidden rounded-full border-8 border-white bg-violet-50 text-violet-600"
+                style={{ boxShadow: Shadows.glow }}
               >
                 {photo ? (
                   <img

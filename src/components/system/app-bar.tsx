@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Colors, Shadows } from "@/lib/branding/brand-config";
+import { Colors, Shadows } from "@/theme";
 
 interface AppBarProps {
   title?: string;
@@ -26,7 +26,9 @@ export function AppBar({
       )}
       style={{
         height: 56,
-        background: transparent ? "transparent" : "rgba(255,255,255,0.8)",
+        background: transparent
+          ? "transparent"
+          : "color-mix(in oklab, var(--background) 80%, transparent)",
         borderBottom: transparent ? "none" : `1px solid ${Colors.border}`,
         boxShadow: transparent ? "none" : Shadows.soft,
       }}

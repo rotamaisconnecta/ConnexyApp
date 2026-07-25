@@ -14,7 +14,7 @@ export function NotificationBadge({ count, className }: NotificationBadgeProps) 
   return (
     <span
       className={cn(
-        "absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#EF4444] px-1 text-[9px] font-bold text-white",
+        "absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-white",
         className,
       )}
     >

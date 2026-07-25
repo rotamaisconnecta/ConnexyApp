@@ -24,37 +24,37 @@ const SECTION_CONFIG = [
   {
     key: "topPeople" as const,
     title: "Pessoas para Conhecer",
-    icon: <Users className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <Users className="h-4 w-4 text-lilac" />,
   },
   {
     key: "topEvents" as const,
     title: "Eventos em Alta",
-    icon: <Calendar className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <Calendar className="h-4 w-4 text-lilac" />,
   },
   {
     key: "topBusinesses" as const,
     title: "Empresas Populares",
-    icon: <Building2 className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <Building2 className="h-4 w-4 text-lilac" />,
   },
   {
     key: "topPlaces" as const,
     title: "Lugares Quentes",
-    icon: <MapPin className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <MapPin className="h-4 w-4 text-lilac" />,
   },
   {
     key: "topReels" as const,
     title: "Reels em Destaque",
-    icon: <Film className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <Film className="h-4 w-4 text-lilac" />,
   },
   {
     key: "topDrivers" as const,
     title: "Motoristas Próximos",
-    icon: <Car className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <Car className="h-4 w-4 text-lilac" />,
   },
   {
     key: "topOffers" as const,
     title: "Melhores Ofertas",
-    icon: <Ticket className="h-4 w-4 text-[#A88DFF]" />,
+    icon: <Ticket className="h-4 w-4 text-lilac" />,
   },
 ];
 
@@ -77,14 +77,14 @@ export function EngineDashboard({ data }: EngineDashboardProps) {
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
-      <div className="sticky top-0 z-10 border-b border-[#E7E7F2] bg-white/80 backdrop-blur-md">
+      <div className="sticky top-0 z-10 border-b border-border bg-white/80 backdrop-blur-md">
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F4F1FF]">
-            <Brain className="h-5 w-5 text-[#A88DFF]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-muted">
+            <Brain className="h-5 w-5 text-lilac" />
           </div>
           <div>
-            <h1 className="font-display text-base font-bold text-[#18181B]">Connexy Engine</h1>
-            <p className="text-xs text-[#71717A]">Score médio: {avgScore}%</p>
+            <h1 className="font-display text-base font-bold text-foreground">Connexy Engine</h1>
+            <p className="text-xs text-muted-foreground">Score médio: {avgScore}%</p>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ export function EngineDashboard({ data }: EngineDashboardProps) {
 
         {data.notifications.length > 0 && (
           <div className="space-y-2 px-4">
-            <h2 className="font-display text-sm font-semibold text-[#18181B]">
+            <h2 className="font-display text-sm font-semibold text-foreground">
               Alertas Inteligentes
             </h2>
             <div className="space-y-2">

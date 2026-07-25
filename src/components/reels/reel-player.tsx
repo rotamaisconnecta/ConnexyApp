@@ -82,7 +82,7 @@ export function ReelPlayer({
   }
 
   return (
-    <section className="relative h-full w-full snap-start shrink-0 bg-[#0a0a0a] overflow-hidden">
+    <section className="relative h-full w-full snap-start shrink-0 bg-black overflow-hidden">
       <video
         ref={videoRef}
         src={reel.videoUrl}

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Radius } from "@/lib/branding/brand-config";
+import { Colors, Radius } from "@/theme";
 
 interface NotificationBadgeProps {
   count: number;
@@ -14,8 +14,8 @@ export function NotificationBadge({ count, className }: NotificationBadgeProps) 
         className,
       )}
       style={{
-        backgroundColor: "#EF4444",
-        color: "#FFFFFF",
+        backgroundColor: Colors.danger,
+        color: Colors.background,
         borderRadius: Radius.floating,
         minWidth: 16,
         height: 16,

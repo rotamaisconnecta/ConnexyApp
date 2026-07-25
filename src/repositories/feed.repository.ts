@@ -23,9 +23,7 @@ export const FeedRepository = {
     return data;
   },
 
-  async create(
-    data: Omit<BioPostRow, "id" | "created_at" | "updated_at">
-  ): Promise<BioPostRow> {
+  async create(data: Omit<BioPostRow, "id" | "created_at" | "updated_at">): Promise<BioPostRow> {
     const { data: created, error } = await supabase
       .from("bio_posts")
       .insert(data)
@@ -41,9 +39,7 @@ export const FeedRepository = {
   },
 
   async like(postId: string, userId: string): Promise<void> {
-    const { error } = await supabase
-      .from("likes")
-      .insert({ post_id: postId, user_id: userId });
+    const { error } = await supabase.from("likes").insert({ post_id: postId, user_id: userId });
     if (error) throw new SupabaseError(error.message, error.code);
   },
 

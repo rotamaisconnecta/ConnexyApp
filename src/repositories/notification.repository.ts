@@ -3,11 +3,7 @@ import { SupabaseError } from "@/lib/supabase/errors";
 import type { NotificationRow } from "@/types/database/tables";
 
 export const NotificationRepository = {
-  async getByUserId(
-    userId: string,
-    limit = 20,
-    offset = 0
-  ): Promise<NotificationRow[]> {
+  async getByUserId(userId: string, limit = 20, offset = 0): Promise<NotificationRow[]> {
     const { data, error } = await supabase
       .from("notifications")
       .select("*")
@@ -39,10 +35,7 @@ export const NotificationRepository = {
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("notifications")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("notifications").delete().eq("id", id);
     if (error) throw new SupabaseError(error.message, error.code);
   },
 

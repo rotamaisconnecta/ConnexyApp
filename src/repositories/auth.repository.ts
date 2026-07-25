@@ -36,11 +36,7 @@ export const AuthRepository = {
     }
   },
 
-  async signUp(
-    email: string,
-    password: string,
-    metadata?: Record<string, unknown>
-  ) {
+  async signUp(email: string, password: string, metadata?: Record<string, unknown>) {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -83,9 +79,7 @@ export const AuthRepository = {
     }
   },
 
-  onAuthStateChange(
-    callback: (event: AuthChangeEvent, session: Session | null) => void
-  ) {
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
     return supabase.auth.onAuthStateChange(callback);
   },
 };

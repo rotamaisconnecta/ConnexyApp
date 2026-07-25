@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { AuthService } from '@/services/auth-service';
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { AuthService } from "@/services/auth.service";
 
 interface AuthContextValue {
   user: unknown;
@@ -19,13 +19,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = AuthService.onAuthStateChange((newSession, newUser) => {
+    const result = AuthService.onAuthStateChange((newSession, newUser) => {
       setSession(newSession);
       setUser(newUser);
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      result?.data?.subscription?.unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -36,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string) => {
-    const result = await AuthService.signUp(email, password);
+    const result = await AuthService.signUp(email, password, email.split("@")[0]);
     setSession(result.session);
     setUser(result.user);
     return result;
@@ -64,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuthContext() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
+    throw new Error("useAuthContext must be used within an AuthProvider");
   }
   return context;
 }

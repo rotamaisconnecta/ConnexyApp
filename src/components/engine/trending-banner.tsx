@@ -49,7 +49,7 @@ export function TrendingBanner({
 
       <div className="flex-1 min-w-0">
         <p className={cn("text-sm font-semibold", LEVEL_TEXT[activityLevel])}>{title}</p>
-        <p className="truncate text-xs text-[#71717A]">{subtitle}</p>
+        <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
       </div>
 
       {actionLabel && onAction && (

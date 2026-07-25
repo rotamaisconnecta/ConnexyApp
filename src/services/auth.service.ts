@@ -48,4 +48,13 @@ export const AuthService = {
     const session = await AuthRepository.getSession();
     return session.session !== null;
   },
+
+  onAuthStateChange(callback: (session: unknown, user: unknown) => void) {
+    return AuthRepository.onAuthStateChange(callback);
+  },
+
+  async refreshSession() {
+    const session = await AuthRepository.getSession();
+    return session;
+  },
 };

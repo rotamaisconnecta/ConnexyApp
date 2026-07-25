@@ -3,6 +3,8 @@
    No React. No hooks. No side effects.
 ========================================================= */
 
+import { Colors } from "@/theme";
+
 /* ─── Input contracts ────────────────────────────────────── */
 
 export interface CompatibilityViewer {
@@ -63,7 +65,7 @@ const TIER_LABELS: Record<string, string> = {
 const TIER_STYLES: Record<string, { className: string; color: string }> = {
   excelente: {
     className: "bg-gradient-brand text-white",
-    color: "#6C3BFF",
+    color: Colors.brand.primary,
   },
   alta: {
     className: "bg-primary/15 text-primary",

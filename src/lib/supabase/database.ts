@@ -6,7 +6,10 @@ export const DatabaseHelper = {
     return supabase.from(table);
   },
 
-  rpc<F extends keyof Database["public"]["Functions"]>(fn: F, params?: Database["public"]["Functions"][F]["Args"]) {
+  rpc<F extends keyof Database["public"]["Functions"]>(
+    fn: F,
+    params?: Database["public"]["Functions"][F]["Args"],
+  ) {
     return supabase.rpc(fn, params as Record<string, unknown>);
   },
 };

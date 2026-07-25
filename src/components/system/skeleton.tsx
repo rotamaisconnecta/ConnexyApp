@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Colors, Radius } from "@/lib/branding/brand-config";
+import { Colors, Radius } from "@/theme";
 
 type SkeletonVariant =
   "TEXT" | "CARD" | "AVATAR" | "IMAGE" | "LIST" | "FEED" | "CHAT" | "MARKETPLACE";
@@ -10,8 +10,7 @@ interface SkeletonProps {
   count?: number;
 }
 
-const shimmerClass =
-  "bg-gradient-to-r from-[#F4F1FF] via-[#E7E7F2] to-[#F4F1FF] bg-[length:200%_100%] animate-[shimmer_1.5s_infinite]";
+const shimmerClass = "bg-gradient-to-r animate-[shimmer_1.5s_infinite]";
 
 function SkeletonBlock({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return <div className={cn(shimmerClass, "rounded", className)} style={style} />;

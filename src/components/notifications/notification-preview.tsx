@@ -14,10 +14,7 @@ export function NotificationPreview({ notification, className }: NotificationPre
 
   return (
     <div
-      className={cn(
-        "flex items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
-        className,
-      )}
+      className={cn("flex items-center gap-3 rounded-2xl bg-white p-3 shadow-medium", className)}
     >
       <div
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -26,10 +23,10 @@ export function NotificationPreview({ notification, className }: NotificationPre
         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="truncate text-xs font-semibold text-[#18181B]">{title}</p>
-        <p className="truncate text-[10px] text-[#71717A]">{notification.body}</p>
+        <p className="truncate text-xs font-semibold text-foreground">{title}</p>
+        <p className="truncate text-[10px] text-muted-foreground">{notification.body}</p>
       </div>
-      <span className="shrink-0 text-[9px] text-[#71717A]">
+      <span className="shrink-0 text-[9px] text-muted-foreground">
         {getRelativeTimeLabel(notification.createdAt)}
       </span>
     </div>

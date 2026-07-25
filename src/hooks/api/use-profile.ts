@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { UserService } from '@/services/user-service';
+import { useState, useCallback, useEffect } from "react";
+import { UserService } from "@/services/user.service";
 
 export function useProfile(userId?: string) {
   const [profile, setProfile] = useState<unknown>(null);
@@ -14,7 +14,7 @@ export function useProfile(userId?: string) {
       const result = await UserService.getProfile(userId);
       setProfile(result);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch profile'));
+      setError(err instanceof Error ? err : new Error("Failed to fetch profile"));
     } finally {
       setIsLoading(false);
     }

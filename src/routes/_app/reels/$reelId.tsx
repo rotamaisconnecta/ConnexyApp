@@ -102,14 +102,14 @@ function ReelDetailPage() {
 
   if (!reel) {
     return (
-      <div className="absolute inset-0 bg-[#0a0a0a] grid place-items-center text-white">
+      <div className="absolute inset-0 bg-black grid place-items-center text-white">
         Reel não encontrado
       </div>
     );
   }
 
   return (
-    <div className="absolute inset-0 bg-[#0a0a0a] overflow-hidden">
+    <div className="absolute inset-0 bg-black overflow-hidden">
       <video
         ref={videoRef}
         src={reel.videoUrl}

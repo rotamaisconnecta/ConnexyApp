@@ -13,11 +13,7 @@ export const ChatRepository = {
     return data ?? [];
   },
 
-  async getMessages(
-    conversationId: string,
-    limit = 50,
-    offset = 0
-  ): Promise<MessageRow[]> {
+  async getMessages(conversationId: string, limit = 50, offset = 0): Promise<MessageRow[]> {
     const { data, error } = await supabase
       .from("messages")
       .select("*, sender:profiles(*)")
@@ -30,7 +26,7 @@ export const ChatRepository = {
 
   async sendMessage(
     conversationId: string,
-    data: Omit<MessageRow, "id" | "created_at" | "read_at">
+    data: Omit<MessageRow, "id" | "created_at" | "read_at">,
   ): Promise<MessageRow> {
     const { data: created, error } = await supabase
       .from("messages")

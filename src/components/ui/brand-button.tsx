@@ -1,5 +1,6 @@
 import type { ReactNode, ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { Colors, Gradients, Radius, Shadows } from "@/theme";
 
 interface BrandButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "outline" | "danger" | "premium";
@@ -7,22 +8,40 @@ interface BrandButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
-const variantClassMap: Record<NonNullable<BrandButtonProps["variant"]>, string> = {
-  primary:
-    "bg-gradient-to-r from-[#6C3BFF] to-[#8B5CFF] text-white shadow-[0_4px_16px_rgba(108,59,255,0.35)]",
-  secondary: "bg-[#F4F1FF] text-[#6C3BFF]",
-  ghost: "bg-transparent text-[#18181B]",
-  outline: "border border-[#E7E7F2] bg-white text-[#18181B]",
-  danger: "bg-[#EF4444] text-white",
-  premium:
-    "bg-gradient-to-r from-[#7C3AED] to-[#A855F7] text-white shadow-[0_4px_16px_rgba(124,58,237,0.35)]",
-};
-
 const sizeClassMap: Record<NonNullable<BrandButtonProps["size"]>, string> = {
   sm: "h-10 px-4 text-sm",
   md: "h-12 px-6 text-base",
   lg: "h-14 px-8 text-lg",
 };
+
+function getVariantStyle(variant: NonNullable<BrandButtonProps["variant"]>): React.CSSProperties {
+  switch (variant) {
+    case "primary":
+      return {
+        background: Gradients.primary,
+        color: Colors.background,
+        boxShadow: Shadows.floatingButton,
+      };
+    case "secondary":
+      return { background: Colors.surface, color: Colors.brand.primary };
+    case "ghost":
+      return { background: "transparent", color: Colors.text.primary };
+    case "outline":
+      return {
+        border: `1px solid ${Colors.border}`,
+        background: Colors.card,
+        color: Colors.text.primary,
+      };
+    case "danger":
+      return { background: Colors.danger, color: Colors.background };
+    case "premium":
+      return {
+        background: Gradients.premium,
+        color: Colors.background,
+        boxShadow: Shadows.premiumCard,
+      };
+  }
+}
 
 export function BrandButton({
   variant = "primary",
@@ -35,12 +54,12 @@ export function BrandButton({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-[18px] font-semibold transition-all active:scale-[0.97]",
-        variantClassMap[variant],
+        "inline-flex items-center justify-center gap-2 font-semibold transition-all active:scale-[0.97]",
         sizeClassMap[size],
         disabled && "opacity-50 pointer-events-none",
         className,
       )}
+      style={{ borderRadius: Radius.md, ...getVariantStyle(variant) }}
       disabled={disabled}
       {...rest}
     >

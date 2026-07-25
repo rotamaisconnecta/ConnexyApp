@@ -2,12 +2,13 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { DriverHeader } from "@/components/driver/driver-header";
-import { DriverDashboard } from "@/components/driver/driver-dashboard";
-import { DriverMap } from "@/components/driver/driver-map";
-import { DriverEventsPanel } from "@/components/driver/driver-events-panel";
-import { RideRequestCard } from "@/components/driver/ride-request-card";
+import { DriverPremiumDashboard } from "@/components/driver/driver-premium-dashboard";
+import { DriverSmartMap } from "@/components/driver/driver-smart-map";
+import { DriverEventMarker } from "@/components/driver/driver-event-marker";
+import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
 import { DriverEmpty } from "@/components/driver/driver-empty";
 import { CityHotspots } from "@/components/driver/city-hotspots";
+import { DriverNotifications } from "@/components/driver/driver-notifications";
 import { currentUser } from "@/lib/mock-data";
 import type {
   DriverEarnings,
@@ -118,9 +119,43 @@ const MOCK_RIDE_REQUEST: RideRequest = {
   createdAt: new Date(),
 };
 
+const MOCK_NOTIFICATIONS = [
+  {
+    id: "n1",
+    type: "hotspot" as const,
+    title: "Av. Paulista está bombando",
+    body: "3 eventos acontecendo agora na região",
+    icon: "📍",
+    priority: "HIGH" as const,
+    read: false,
+    createdAt: "2 min",
+  },
+  {
+    id: "n2",
+    type: "event_nearby" as const,
+    title: "Festival Gastronômico",
+    body: "Evento a 1.2 km — alta demanda de corridas",
+    icon: "📅",
+    priority: "MEDIUM" as const,
+    read: false,
+    createdAt: "5 min",
+  },
+  {
+    id: "n3",
+    type: "earnings" as const,
+    title: "Ganhos de hoje",
+    body: "Você já ganhou R$ 156,80 hoje!",
+    icon: "💰",
+    priority: "LOW" as const,
+    read: true,
+    createdAt: "1h",
+  },
+];
+
 function DriverPage() {
   const [isOnline, setIsOnline] = useState(false);
   const [showRideRequest, setShowRideRequest] = useState(false);
+  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
 
   return (
     <div className="flex-1 pb-20">
@@ -137,29 +172,46 @@ function DriverPage() {
       />
 
       <div className="px-4 space-y-4">
-        <DriverDashboard
+        <DriverPremiumDashboard
           earnings={MOCK_EARNINGS}
           isOnline={isOnline}
-          onToggleOnline={() => setIsOnline(!isOnline)}
+          onToggleOnline={() => {
+            setIsOnline(!isOnline);
+            if (!isOnline) setShowRideRequest(true);
+          }}
+          acceptanceRate={92}
+          onlineMinutes={isOnline ? 45 : 0}
+          cancelledTrips={3}
         />
 
-        <DriverMap hotspots={MOCK_HOTSPOTS} driverLat={-23.5613} driverLng={-46.656} />
-
-        {showRideRequest && (
-          <RideRequestCard
-            request={MOCK_RIDE_REQUEST}
-            onAccept={() => setShowRideRequest(false)}
-            onDecline={() => setShowRideRequest(false)}
-          />
-        )}
+        <DriverSmartMap hotspots={MOCK_HOTSPOTS} driverLat={-23.5613} driverLng={-46.656} />
 
         {!showRideRequest && isOnline && (
           <DriverEmpty message="Aguardando solicitações..." icon="🚖" />
         )}
 
-        <DriverEventsPanel events={MOCK_EVENTS} onNavigate={() => {}} />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Eventos Próximos
+            </h3>
+            <span className="text-[10px] text-muted-foreground">{MOCK_EVENTS.length} eventos</span>
+          </div>
+          {MOCK_EVENTS.map((event, i) => (
+            <DriverEventMarker key={event.id} event={event} index={i} />
+          ))}
+        </div>
 
         <CityHotspots hotspots={MOCK_HOTSPOTS} />
+
+        <DriverNotifications
+          notifications={notifications}
+          onMarkAsRead={(id) =>
+            setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+          }
+          onMarkAllRead={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
+          onDismiss={(id) => setNotifications((prev) => prev.filter((n) => n.id !== id))}
+        />
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <Link
@@ -170,6 +222,14 @@ function DriverPage() {
           </Link>
         </motion.div>
       </div>
+
+      <DriverRideBottomSheet
+        isOpen={showRideRequest}
+        onClose={() => setShowRideRequest(false)}
+        request={showRideRequest ? MOCK_RIDE_REQUEST : null}
+        onAccept={() => setShowRideRequest(false)}
+        onDecline={() => setShowRideRequest(false)}
+      />
     </div>
   );
 }

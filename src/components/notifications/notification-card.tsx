@@ -72,7 +72,7 @@ export function NotificationCard({
       onDoubleClick={() => onDismiss?.(notification.id)}
       className={cn(
         "relative flex gap-3 rounded-2xl p-3 transition-colors",
-        notification.isRead ? "bg-white" : "bg-[#F4F1FF]/60",
+        notification.isRead ? "bg-white" : "bg-brand-muted/60",
       )}
     >
       {!notification.isRead && (
@@ -98,17 +98,19 @@ export function NotificationCard({
           <p
             className={cn(
               "text-sm leading-snug",
-              notification.isRead ? "text-[#71717A] font-normal" : "text-[#18181B] font-semibold",
+              notification.isRead
+                ? "text-muted-foreground font-normal"
+                : "text-foreground font-semibold",
             )}
           >
             {title}
           </p>
-          <span className="shrink-0 text-[10px] text-[#71717A]">
+          <span className="shrink-0 text-[10px] text-muted-foreground">
             {getRelativeTimeLabel(notification.createdAt)}
           </span>
         </div>
         {notification.body && (
-          <p className="mt-0.5 text-xs text-[#71717A] line-clamp-2">{notification.body}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notification.body}</p>
         )}
       </div>
     </motion.div>

@@ -12,8 +12,8 @@ export function EngineLoading() {
         transition={{ duration: 1.5, repeat: Infinity }}
         className="space-y-3"
       >
-        <div className="h-8 w-48 rounded-full bg-[#E7E7F2]" />
-        <div className="h-4 w-32 rounded-full bg-[#E7E7F2]" />
+        <div className="h-8 w-48 rounded-full bg-border" />
+        <div className="h-4 w-32 rounded-full bg-border" />
       </motion.div>
 
       {sections.map((_, s) => (
@@ -24,8 +24,8 @@ export function EngineLoading() {
             transition={{ duration: 1.5, repeat: Infinity, delay: s * 0.15 }}
             className="flex items-center gap-2 px-1"
           >
-            <div className="h-5 w-5 rounded bg-[#E7E7F2]" />
-            <div className="h-4 w-40 rounded-full bg-[#E7E7F2]" />
+            <div className="h-5 w-5 rounded bg-border" />
+            <div className="h-4 w-40 rounded-full bg-border" />
           </motion.div>
 
           <div className="flex gap-3 overflow-hidden">
@@ -35,7 +35,7 @@ export function EngineLoading() {
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: (s * 4 + c) * 0.08 }}
-                className="h-44 w-36 shrink-0 rounded-2xl bg-[#E7E7F2]"
+                className="h-44 w-36 shrink-0 rounded-2xl bg-border"
               />
             ))}
           </div>

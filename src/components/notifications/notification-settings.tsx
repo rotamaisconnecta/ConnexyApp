@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import type { NotificationSettingsState } from "@/lib/notifications/notification-types";
 import { toggleSetting } from "@/lib/notifications/notification-settings";
 import { ArrowLeft } from "lucide-react";
+import { Colors } from "@/theme";
 
 const SETTINGS_LABELS: { key: keyof NotificationSettingsState; label: string }[] = [
   { key: "message", label: "Mensagens" },
@@ -36,12 +37,15 @@ export function NotificationSettings({ settings, onChange, onBack }: Notificatio
         {onBack && (
           <button
             onClick={onBack}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#18181B]"
+            className="flex h-8 w-8 items-center justify-center rounded-full"
+            style={{ color: Colors.text.primary }}
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        <h1 className="text-lg font-bold text-[#18181B]">Configurações</h1>
+        <h1 className="text-lg font-bold" style={{ color: Colors.text.primary }}>
+          Configurações
+        </h1>
       </header>
 
       <div className="flex flex-col gap-1 px-4">
@@ -50,13 +54,14 @@ export function NotificationSettings({ settings, onChange, onBack }: Notificatio
             key={key}
             whileTap={{ scale: 0.98 }}
             onClick={() => onChange(toggleSetting(settings, key))}
-            className="flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-[#F8F8FC]"
+            className="flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 transition-colors"
           >
-            <span className="text-sm text-[#18181B]">{label}</span>
+            <span className="text-sm" style={{ color: Colors.text.primary }}>
+              {label}
+            </span>
             <div
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                settings[key] ? "bg-[#6C3BFF]" : "bg-[#E7E7F2]"
-              }`}
+              className="relative h-6 w-11 rounded-full transition-colors"
+              style={{ background: settings[key] ? Colors.brand.primary : Colors.border }}
             >
               <div
                 className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${

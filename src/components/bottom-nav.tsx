@@ -1,30 +1,50 @@
-import { useState, useCallback } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useState, useCallback, useMemo } from "react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Home, Map, MessageCircle, User } from "lucide-react";
+import { Home, Map, MessageCircle, User, LayoutDashboard, Wallet, Car } from "lucide-react";
 import { FloatingConnexyButton } from "./navigation/floating-connexy-button";
 import { CreateSheet } from "./navigation/create-sheet";
 import { cn } from "@/lib/utils";
 import { getUnreadBadgeCount } from "@/lib/navigation/navigation-utils";
 
-const leftItems = [
+const passengerLeftItems = [
   { to: "/feed", label: "Início", icon: Home },
   { to: "/discover", label: "Mapa", icon: Map },
 ];
 
-const rightItems = [
+const passengerRightItems = [
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/profile", label: "Perfil", icon: User },
 ];
 
+const driverLeftItems = [
+  { to: "/driver", label: "Painel", icon: LayoutDashboard },
+  { to: "/discover", label: "Mapa", icon: Map },
+];
+
+const driverRightItems = [
+  { to: "/driver/finance", label: "Financeiro", icon: Wallet },
+  { to: "/profile", label: "Perfil", icon: User },
+];
+
 interface BottomNavProps {
+  mode?: "user" | "driver";
   unreadCount?: number;
   notificationCount?: number;
   onNavigate?: (route: string) => void;
 }
 
-export function BottomNav({ unreadCount = 0, notificationCount = 0, onNavigate }: BottomNavProps) {
+export function BottomNav({
+  mode = "user",
+  unreadCount = 0,
+  notificationCount = 0,
+  onNavigate,
+}: BottomNavProps) {
+  const isDriver = mode === "driver";
+  const leftItems = isDriver ? driverLeftItems : passengerLeftItems;
+  const rightItems = isDriver ? driverRightItems : passengerRightItems;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleCreateSelect = useCallback(
@@ -32,9 +52,9 @@ export function BottomNav({ unreadCount = 0, notificationCount = 0, onNavigate }
       const route = `/_app/create?category=${category.toLowerCase()}`;
       onNavigate?.(route);
       if (onNavigate) return;
-      window.location.href = route;
+      navigate({ to: route });
     },
-    [onNavigate],
+    [onNavigate, navigate],
   );
 
   return (

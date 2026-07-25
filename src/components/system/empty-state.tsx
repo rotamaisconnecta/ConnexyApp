@@ -29,10 +29,7 @@ export function EmptyState({
       className={cn("flex flex-col items-center justify-center px-6 py-16 text-center", className)}
     >
       {Icon && (
-        <div
-          className="flex items-center justify-center w-16 h-16 rounded-full mb-6"
-          style={{ backgroundColor: "#F4F1FF" }}
-        >
+        <div className="flex items-center justify-center w-16 h-16 rounded-full mb-6 bg-brand-muted">
           <span style={{ color: Colors.brand.primary }}>
             <Icon className="w-8 h-8" />
           </span>
