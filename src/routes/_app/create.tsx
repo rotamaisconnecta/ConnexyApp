@@ -4,14 +4,10 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CREATE_ACTIONS } from "@/lib/navigation/navigation-items";
-import { getCreateActionByCategory } from "@/lib/navigation/navigation-utils";
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({ meta: [{ title: "Criar publicação" }] }),
   component: CreatePage,
-  validateSearch: (search: Record<string, unknown>): { category?: string } => ({
-    category: search.category as string | undefined,
-  }),
 });
 
 const gridContainer = {
@@ -34,42 +30,6 @@ const gridItem = {
 
 function CreatePage() {
   const nav = useNavigate();
-  const { category } = Route.useSearch();
-
-  const activeCategory = category ? getCreateActionByCategory(category) : null;
-
-  if (activeCategory) {
-    return (
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
-        <StatusBar />
-        <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
-          <Link to="/feed" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-          <div>
-            <h1 className="font-display font-bold text-base">Criar {activeCategory.label}</h1>
-            <p className="text-[11px] text-muted-foreground">{activeCategory.description}</p>
-          </div>
-        </div>
-
-        <div className="flex-1 px-5 pb-4 flex items-center justify-center">
-          <div className="text-center space-y-3">
-            <span className="text-6xl">{activeCategory.emoji}</span>
-            <h2 className="font-display font-bold text-xl">Criar {activeCategory.label}</h2>
-            <p className="text-sm text-muted-foreground max-w-[240px]">
-              {activeCategory.description}. Em breve disponível!
-            </p>
-            <button
-              onClick={() => nav({ to: "/feed" })}
-              className="mt-4 rounded-full bg-gradient-brand px-6 py-3 text-white text-sm font-semibold"
-            >
-              Voltar ao feed
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
@@ -98,12 +58,7 @@ function CreatePage() {
               variants={gridItem}
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.03 }}
-              onClick={() =>
-                nav({
-                  to: "/create",
-                  search: { category: action.id.toLowerCase() },
-                })
-              }
+              onClick={() => nav({ to: `/create/${action.id.toLowerCase()}` })}
               aria-label={`Criar ${action.label}`}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >

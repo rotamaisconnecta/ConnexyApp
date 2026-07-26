@@ -59,6 +59,15 @@ import { Route as AppDriverPerformanceRouteImport } from './routes/_app/driver/p
 import { Route as AppDriverHistoryRouteImport } from './routes/_app/driver/history'
 import { Route as AppDriverFinanceRouteImport } from './routes/_app/driver/finance'
 import { Route as AppDriverCadastroRouteImport } from './routes/_app/driver/cadastro'
+import { Route as AppCreateVideoRouteImport } from './routes/_app/create/video'
+import { Route as AppCreateTextRouteImport } from './routes/_app/create/text'
+import { Route as AppCreateRideRouteImport } from './routes/_app/create/ride'
+import { Route as AppCreateReelRouteImport } from './routes/_app/create/reel'
+import { Route as AppCreatePlaceRouteImport } from './routes/_app/create/place'
+import { Route as AppCreatePhotoRouteImport } from './routes/_app/create/photo'
+import { Route as AppCreateOfferRouteImport } from './routes/_app/create/offer'
+import { Route as AppCreateMomentRouteImport } from './routes/_app/create/moment'
+import { Route as AppCreateEventRouteImport } from './routes/_app/create/event'
 import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
@@ -313,6 +322,51 @@ const AppDriverCadastroRoute = AppDriverCadastroRouteImport.update({
   path: '/driver/cadastro',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCreateVideoRoute = AppCreateVideoRouteImport.update({
+  id: '/video',
+  path: '/video',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreateTextRoute = AppCreateTextRouteImport.update({
+  id: '/text',
+  path: '/text',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreateRideRoute = AppCreateRideRouteImport.update({
+  id: '/ride',
+  path: '/ride',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreateReelRoute = AppCreateReelRouteImport.update({
+  id: '/reel',
+  path: '/reel',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreatePlaceRoute = AppCreatePlaceRouteImport.update({
+  id: '/place',
+  path: '/place',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreatePhotoRoute = AppCreatePhotoRouteImport.update({
+  id: '/photo',
+  path: '/photo',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreateOfferRoute = AppCreateOfferRouteImport.update({
+  id: '/offer',
+  path: '/offer',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreateMomentRoute = AppCreateMomentRouteImport.update({
+  id: '/moment',
+  path: '/moment',
+  getParentRoute: () => AppCreateRoute,
+} as any)
+const AppCreateEventRoute = AppCreateEventRouteImport.update({
+  id: '/event',
+  path: '/event',
+  getParentRoute: () => AppCreateRoute,
+} as any)
 const AppChatIdRoute = AppChatIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -347,7 +401,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
-  '/create': typeof AppCreateRoute
+  '/create': typeof AppCreateRouteWithChildren
   '/create-post': typeof AppCreatePostRoute
   '/design-system': typeof AppDesignSystemRoute
   '/destino': typeof AppDestinoRoute
@@ -370,6 +424,15 @@ export interface FileRoutesByFullPath {
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/create/event': typeof AppCreateEventRoute
+  '/create/moment': typeof AppCreateMomentRoute
+  '/create/offer': typeof AppCreateOfferRoute
+  '/create/photo': typeof AppCreatePhotoRoute
+  '/create/place': typeof AppCreatePlaceRoute
+  '/create/reel': typeof AppCreateReelRoute
+  '/create/ride': typeof AppCreateRideRoute
+  '/create/text': typeof AppCreateTextRoute
+  '/create/video': typeof AppCreateVideoRoute
   '/driver/cadastro': typeof AppDriverCadastroRoute
   '/driver/finance': typeof AppDriverFinanceRoute
   '/driver/history': typeof AppDriverHistoryRoute
@@ -402,7 +465,7 @@ export interface FileRoutesByTo {
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
-  '/create': typeof AppCreateRoute
+  '/create': typeof AppCreateRouteWithChildren
   '/create-post': typeof AppCreatePostRoute
   '/design-system': typeof AppDesignSystemRoute
   '/destino': typeof AppDestinoRoute
@@ -425,6 +488,15 @@ export interface FileRoutesByTo {
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
+  '/create/event': typeof AppCreateEventRoute
+  '/create/moment': typeof AppCreateMomentRoute
+  '/create/offer': typeof AppCreateOfferRoute
+  '/create/photo': typeof AppCreatePhotoRoute
+  '/create/place': typeof AppCreatePlaceRoute
+  '/create/reel': typeof AppCreateReelRoute
+  '/create/ride': typeof AppCreateRideRoute
+  '/create/text': typeof AppCreateTextRoute
+  '/create/video': typeof AppCreateVideoRoute
   '/driver/cadastro': typeof AppDriverCadastroRoute
   '/driver/finance': typeof AppDriverFinanceRoute
   '/driver/history': typeof AppDriverHistoryRoute
@@ -459,7 +531,7 @@ export interface FileRoutesById {
   '/_app/chat': typeof AppChatRouteWithChildren
   '/_app/connecta': typeof AppConnectaRoute
   '/_app/corrida': typeof AppCorridaRoute
-  '/_app/create': typeof AppCreateRoute
+  '/_app/create': typeof AppCreateRouteWithChildren
   '/_app/create-post': typeof AppCreatePostRoute
   '/_app/design-system': typeof AppDesignSystemRoute
   '/_app/destino': typeof AppDestinoRoute
@@ -482,6 +554,15 @@ export interface FileRoutesById {
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/chat/$id': typeof AppChatIdRoute
+  '/_app/create/event': typeof AppCreateEventRoute
+  '/_app/create/moment': typeof AppCreateMomentRoute
+  '/_app/create/offer': typeof AppCreateOfferRoute
+  '/_app/create/photo': typeof AppCreatePhotoRoute
+  '/_app/create/place': typeof AppCreatePlaceRoute
+  '/_app/create/reel': typeof AppCreateReelRoute
+  '/_app/create/ride': typeof AppCreateRideRoute
+  '/_app/create/text': typeof AppCreateTextRoute
+  '/_app/create/video': typeof AppCreateVideoRoute
   '/_app/driver/cadastro': typeof AppDriverCadastroRoute
   '/_app/driver/finance': typeof AppDriverFinanceRoute
   '/_app/driver/history': typeof AppDriverHistoryRoute
@@ -539,6 +620,15 @@ export interface FileRouteTypes {
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
+    | '/create/event'
+    | '/create/moment'
+    | '/create/offer'
+    | '/create/photo'
+    | '/create/place'
+    | '/create/reel'
+    | '/create/ride'
+    | '/create/text'
+    | '/create/video'
     | '/driver/cadastro'
     | '/driver/finance'
     | '/driver/history'
@@ -594,6 +684,15 @@ export interface FileRouteTypes {
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
+    | '/create/event'
+    | '/create/moment'
+    | '/create/offer'
+    | '/create/photo'
+    | '/create/place'
+    | '/create/reel'
+    | '/create/ride'
+    | '/create/text'
+    | '/create/video'
     | '/driver/cadastro'
     | '/driver/finance'
     | '/driver/history'
@@ -650,6 +749,15 @@ export interface FileRouteTypes {
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/chat/$id'
+    | '/_app/create/event'
+    | '/_app/create/moment'
+    | '/_app/create/offer'
+    | '/_app/create/photo'
+    | '/_app/create/place'
+    | '/_app/create/reel'
+    | '/_app/create/ride'
+    | '/_app/create/text'
+    | '/_app/create/video'
     | '/_app/driver/cadastro'
     | '/_app/driver/finance'
     | '/_app/driver/history'
@@ -1034,6 +1142,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDriverCadastroRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/create/video': {
+      id: '/_app/create/video'
+      path: '/video'
+      fullPath: '/create/video'
+      preLoaderRoute: typeof AppCreateVideoRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/text': {
+      id: '/_app/create/text'
+      path: '/text'
+      fullPath: '/create/text'
+      preLoaderRoute: typeof AppCreateTextRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/ride': {
+      id: '/_app/create/ride'
+      path: '/ride'
+      fullPath: '/create/ride'
+      preLoaderRoute: typeof AppCreateRideRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/reel': {
+      id: '/_app/create/reel'
+      path: '/reel'
+      fullPath: '/create/reel'
+      preLoaderRoute: typeof AppCreateReelRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/place': {
+      id: '/_app/create/place'
+      path: '/place'
+      fullPath: '/create/place'
+      preLoaderRoute: typeof AppCreatePlaceRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/photo': {
+      id: '/_app/create/photo'
+      path: '/photo'
+      fullPath: '/create/photo'
+      preLoaderRoute: typeof AppCreatePhotoRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/offer': {
+      id: '/_app/create/offer'
+      path: '/offer'
+      fullPath: '/create/offer'
+      preLoaderRoute: typeof AppCreateOfferRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/moment': {
+      id: '/_app/create/moment'
+      path: '/moment'
+      fullPath: '/create/moment'
+      preLoaderRoute: typeof AppCreateMomentRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
+    '/_app/create/event': {
+      id: '/_app/create/event'
+      path: '/event'
+      fullPath: '/create/event'
+      preLoaderRoute: typeof AppCreateEventRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
     '/_app/chat/$id': {
       id: '/_app/chat/$id'
       path: '/$id'
@@ -1077,6 +1248,34 @@ const AppChatRouteChildren: AppChatRouteChildren = {
 
 const AppChatRouteWithChildren =
   AppChatRoute._addFileChildren(AppChatRouteChildren)
+
+interface AppCreateRouteChildren {
+  AppCreateEventRoute: typeof AppCreateEventRoute
+  AppCreateMomentRoute: typeof AppCreateMomentRoute
+  AppCreateOfferRoute: typeof AppCreateOfferRoute
+  AppCreatePhotoRoute: typeof AppCreatePhotoRoute
+  AppCreatePlaceRoute: typeof AppCreatePlaceRoute
+  AppCreateReelRoute: typeof AppCreateReelRoute
+  AppCreateRideRoute: typeof AppCreateRideRoute
+  AppCreateTextRoute: typeof AppCreateTextRoute
+  AppCreateVideoRoute: typeof AppCreateVideoRoute
+}
+
+const AppCreateRouteChildren: AppCreateRouteChildren = {
+  AppCreateEventRoute: AppCreateEventRoute,
+  AppCreateMomentRoute: AppCreateMomentRoute,
+  AppCreateOfferRoute: AppCreateOfferRoute,
+  AppCreatePhotoRoute: AppCreatePhotoRoute,
+  AppCreatePlaceRoute: AppCreatePlaceRoute,
+  AppCreateReelRoute: AppCreateReelRoute,
+  AppCreateRideRoute: AppCreateRideRoute,
+  AppCreateTextRoute: AppCreateTextRoute,
+  AppCreateVideoRoute: AppCreateVideoRoute,
+}
+
+const AppCreateRouteWithChildren = AppCreateRoute._addFileChildren(
+  AppCreateRouteChildren,
+)
 
 interface AppGerenciarRouteChildren {
   AppGerenciarNovoReelRoute: typeof AppGerenciarNovoReelRoute
@@ -1124,7 +1323,7 @@ interface AppRouteChildren {
   AppChatRoute: typeof AppChatRouteWithChildren
   AppConnectaRoute: typeof AppConnectaRoute
   AppCorridaRoute: typeof AppCorridaRoute
-  AppCreateRoute: typeof AppCreateRoute
+  AppCreateRoute: typeof AppCreateRouteWithChildren
   AppCreatePostRoute: typeof AppCreatePostRoute
   AppDesignSystemRoute: typeof AppDesignSystemRoute
   AppDestinoRoute: typeof AppDestinoRoute
@@ -1164,7 +1363,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRouteWithChildren,
   AppConnectaRoute: AppConnectaRoute,
   AppCorridaRoute: AppCorridaRoute,
-  AppCreateRoute: AppCreateRoute,
+  AppCreateRoute: AppCreateRouteWithChildren,
   AppCreatePostRoute: AppCreatePostRoute,
   AppDesignSystemRoute: AppDesignSystemRoute,
   AppDestinoRoute: AppDestinoRoute,
