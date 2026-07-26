@@ -1,9 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useCallback } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CREATE_ACTIONS } from "@/lib/navigation/navigation-items";
+import { RoleActivationModal } from "@/components/roles/RoleActivationModal";
+import { getStoredRoles } from "@/lib/roles/roles-storage";
+import {
+  canUserCreateCategory,
+  getBlockedCategoryMessage,
+  type PermissionsMap,
+} from "@/lib/roles/roles-utils";
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({ meta: [{ title: "Criar publicação" }] }),
@@ -30,6 +38,41 @@ const gridItem = {
 
 function CreatePage() {
   const nav = useNavigate();
+  const [blockedModal, setBlockedModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    ctaLabel: string;
+    ctaRoute: string;
+  }>({ open: false, title: "", description: "", ctaLabel: "", ctaRoute: "" });
+
+  const handleAction = useCallback(
+    (category: string) => {
+      const { roles } = getStoredRoles();
+      const has = (r: string) => roles.includes(r as never);
+      const permissions: PermissionsMap = {
+        canDrive: has("DRIVER"),
+        canPublishRide: has("DRIVER"),
+        canCreateBusiness: has("BUSINESS"),
+        canCreateOffer: has("BUSINESS"),
+        canCreateEvent: has("EVENT_CREATOR"),
+        canCreatePlace: has("PLACE_OWNER"),
+        canCreateReel: true,
+        canPublishMoment: true,
+        canPublishPhoto: true,
+        canPublishVideo: true,
+        canPublishText: true,
+      };
+
+      if (canUserCreateCategory(category, permissions)) {
+        nav({ to: `/create/${category.toLowerCase()}` });
+      } else {
+        const msg = getBlockedCategoryMessage(category);
+        setBlockedModal({ open: true, ...msg });
+      }
+    },
+    [nav],
+  );
 
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
@@ -58,7 +101,7 @@ function CreatePage() {
               variants={gridItem}
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.03 }}
-              onClick={() => nav({ to: `/create/${action.id.toLowerCase()}` })}
+              onClick={() => handleAction(action.id.toLowerCase())}
               aria-label={`Criar ${action.label}`}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
@@ -75,6 +118,15 @@ function CreatePage() {
           ))}
         </motion.div>
       </div>
+
+      <RoleActivationModal
+        open={blockedModal.open}
+        onClose={() => setBlockedModal((p) => ({ ...p, open: false }))}
+        title={blockedModal.title}
+        description={blockedModal.description}
+        ctaLabel={blockedModal.ctaLabel}
+        ctaRoute={blockedModal.ctaRoute}
+      />
     </div>
   );
 }

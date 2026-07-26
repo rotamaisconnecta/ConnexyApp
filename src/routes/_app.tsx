@@ -1,10 +1,11 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PhoneFrame } from "@/components/phone-frame";
 import { BottomNav } from "@/components/bottom-nav";
 import { PromoPopup } from "@/components/promo-popup";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { getStoredRoles } from "@/lib/roles/roles-storage";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -13,10 +14,19 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
+  const [activeMode, setActiveMode] = useState(() => getStoredRoles().activeMode);
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
+
+  useEffect(() => {
+    function handleStorage() {
+      setActiveMode(getStoredRoles().activeMode);
+    }
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   if (loading || !user) {
     return (
@@ -35,7 +45,7 @@ function AppLayout() {
           <Outlet />
         </div>
         <PromoPopup />
-        <BottomNav />
+        <BottomNav mode={activeMode} />
       </div>
     </PhoneFrame>
   );

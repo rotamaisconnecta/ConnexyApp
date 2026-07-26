@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
 import { Moment } from "@/components/profile/atoms/moment";
 import { Badge } from "@/components/ui/badge";
 import { DriverProfileCard } from "@/components/driver/driver-profile-card";
+import { RoleSwitcher } from "@/components/roles/RoleSwitcher";
+import { RoleSelector } from "@/components/roles/RoleSelector";
+import { RoleHeader } from "@/components/roles/RoleHeader";
 import { currentUser, findPlace, places } from "@/lib/mock-data";
 import { type MomentData } from "@/lib/profile/moment-expiry";
 import {
@@ -15,9 +18,12 @@ import {
   Users,
   Handshake,
   CalendarCheck,
+  Shield,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
+import { UserRole, type RoleMode, type RolesStorage } from "@/lib/roles/roles-types";
+import { getStoredRoles, setStoredRoles } from "@/lib/roles/roles-storage";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
@@ -37,9 +43,31 @@ const MOCK_MOMENT: MomentData = {
 function ProfilePage() {
   const navigate = useNavigate();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
-  const [mode, setMode] = useState<"user" | "driver">("user");
+  const [rolesState, setRolesState] = useState<RolesStorage>(getStoredRoles);
   const [isOnline] = useState(false);
   const [hasRegistration] = useState(false);
+
+  const handleModeChange = useCallback((mode: RoleMode) => {
+    setRolesState((prev) => {
+      const next: RolesStorage = { ...prev, activeMode: mode };
+      setStoredRoles(next);
+      window.dispatchEvent(new Event("storage"));
+      return next;
+    });
+  }, []);
+
+  const handleToggleRole = useCallback((role: UserRole) => {
+    setRolesState((prev) => {
+      const hasRole = prev.roles.includes(role);
+      const newRoles = hasRole ? prev.roles.filter((r) => r !== role) : [...prev.roles, role];
+      if (newRoles.length === 0) newRoles.push(UserRole.USER);
+      const newMode = hasRole && prev.activeMode === role ? UserRole.USER : prev.activeMode;
+      const next: RolesStorage = { roles: newRoles, activeMode: newMode };
+      setStoredRoles(next);
+      window.dispatchEvent(new Event("storage"));
+      return next;
+    });
+  }, []);
 
   return (
     <div className="flex-1 pb-20">
@@ -51,6 +79,16 @@ function ProfilePage() {
           Editar
         </Link>
       </header>
+
+      {/* ── Role Switcher ───────────────────────────────────── */}
+
+      <div className="px-4 mb-3">
+        <RoleSwitcher
+          activeMode={rolesState.activeMode}
+          availableRoles={rolesState.roles}
+          onModeChange={handleModeChange}
+        />
+      </div>
 
       {/* ── Hero ──────────────────────────────────────────── */}
 
@@ -199,12 +237,37 @@ function ProfilePage() {
         className="mx-4 mt-3"
       >
         <DriverProfileCard
-          hasRegistration={hasRegistration}
+          hasRegistration={rolesState.roles.includes(UserRole.DRIVER)}
           isOnline={isOnline}
-          mode={mode}
-          onModeChange={setMode}
+          mode={rolesState.activeMode === UserRole.DRIVER ? "driver" : "user"}
+          onModeChange={(m) => handleModeChange(m === "driver" ? UserRole.DRIVER : UserRole.USER)}
         />
       </motion.div>
+
+      {/* ── Ativar Funcionalidades ────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(5.7)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-4"
+      >
+        <Link
+          to="/profile/roles"
+          className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-shadow"
+        >
+          <span className="h-11 w-11 grid place-items-center rounded-xl bg-primary/10 text-primary">
+            <Shield className="h-5 w-5" />
+          </span>
+          <div className="flex-1">
+            <div className="text-sm font-bold">Ativar Funcionalidades</div>
+            <div className="text-[11px] text-muted-foreground">
+              Motorista, Empresa, Organizador e mais
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      </motion.section>
 
       {/* ── Quick Links ───────────────────────────────────── */}
 

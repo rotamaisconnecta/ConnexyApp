@@ -1,11 +1,19 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Home, Map, MessageCircle, User, LayoutDashboard, Wallet, Car } from "lucide-react";
+import { Home, Map, MessageCircle, User, LayoutDashboard, Car, Store } from "lucide-react";
 import { FloatingConnexyButton } from "./navigation/floating-connexy-button";
 import { CreateSheet } from "./navigation/create-sheet";
 import { cn } from "@/lib/utils";
 import { getUnreadBadgeCount } from "@/lib/navigation/navigation-utils";
+import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
+import { getStoredRoles } from "@/lib/roles/roles-storage";
+import {
+  canUserCreateCategory,
+  getBlockedCategoryMessage,
+  type PermissionsMap,
+} from "@/lib/roles/roles-utils";
+import { RoleActivationModal } from "@/components/roles/RoleActivationModal";
 
 const passengerLeftItems = [
   { to: "/feed", label: "Início", icon: Home },
@@ -23,39 +31,81 @@ const driverLeftItems = [
 ];
 
 const driverRightItems = [
-  { to: "/driver/finance", label: "Financeiro", icon: Wallet },
+  { to: "/driver", label: "Corridas", icon: Car },
+  { to: "/profile", label: "Perfil", icon: User },
+];
+
+const businessLeftItems = [
+  { to: "/feed", label: "Início", icon: Home },
+  { to: "/marketplace", label: "Market", icon: Store },
+];
+
+const businessRightItems = [
+  { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/profile", label: "Perfil", icon: User },
 ];
 
 interface BottomNavProps {
-  mode?: "user" | "driver";
+  mode?: RoleMode;
   unreadCount?: number;
   notificationCount?: number;
-  onNavigate?: (route: string) => void;
 }
 
 export function BottomNav({
-  mode = "user",
+  mode = UserRole.USER,
   unreadCount = 0,
   notificationCount = 0,
-  onNavigate,
 }: BottomNavProps) {
-  const isDriver = mode === "driver";
-  const leftItems = isDriver ? driverLeftItems : passengerLeftItems;
-  const rightItems = isDriver ? driverRightItems : passengerRightItems;
+  const isDriver = mode === UserRole.DRIVER;
+  const isBusiness = mode === UserRole.BUSINESS;
+  const leftItems = isDriver
+    ? driverLeftItems
+    : isBusiness
+      ? businessLeftItems
+      : passengerLeftItems;
+  const rightItems = isDriver
+    ? driverRightItems
+    : isBusiness
+      ? businessRightItems
+      : passengerRightItems;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [blockedModal, setBlockedModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    ctaLabel: string;
+    ctaRoute: string;
+  }>({ open: false, title: "", description: "", ctaLabel: "", ctaRoute: "" });
 
   const handleCreateSelect = useCallback(
     (category: string) => {
-      if (onNavigate) {
-        onNavigate(`/_app/create?category=${category.toLowerCase()}`);
-        return;
+      const { roles } = getStoredRoles();
+      const has = (r: string) => roles.includes(r as never);
+      const permissions: PermissionsMap = {
+        canDrive: has("DRIVER"),
+        canPublishRide: has("DRIVER"),
+        canCreateBusiness: has("BUSINESS"),
+        canCreateOffer: has("BUSINESS"),
+        canCreateEvent: has("EVENT_CREATOR"),
+        canCreatePlace: has("PLACE_OWNER"),
+        canCreateReel: true,
+        canPublishMoment: true,
+        canPublishPhoto: true,
+        canPublishVideo: true,
+        canPublishText: true,
+      };
+
+      if (canUserCreateCategory(category, permissions)) {
+        navigate({ to: `/create/${category.toLowerCase()}` });
+      } else {
+        const msg = getBlockedCategoryMessage(category);
+        setBlockedModal({ open: true, ...msg });
       }
-      navigate({ to: "/create", search: { category: category.toLowerCase() } });
+      setIsSheetOpen(false);
     },
-    [onNavigate, navigate],
+    [navigate],
   );
 
   return (
@@ -160,6 +210,15 @@ export function BottomNav({
         isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
         onSelect={handleCreateSelect}
+      />
+
+      <RoleActivationModal
+        open={blockedModal.open}
+        onClose={() => setBlockedModal((p) => ({ ...p, open: false }))}
+        title={blockedModal.title}
+        description={blockedModal.description}
+        ctaLabel={blockedModal.ctaLabel}
+        ctaRoute={blockedModal.ctaRoute}
       />
     </>
   );
