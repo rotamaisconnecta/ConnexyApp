@@ -1,126 +1,144 @@
-/* =========================================================
-   roles-engine.ts — Maps roles to UI configurations
-   Pure TypeScript. No React. No side effects.
-========================================================= */
+/* ============================================================
+   CONNEXY
+   Phase 8.1
+   Roles Engine
+============================================================ */
 
-import { UserRole, type RoleMode } from "./roles-types";
-import { getStoredRoles } from "./roles-storage";
+import { UserRole } from "./roles-types";
 import { getPermissionsForRoles } from "./roles-utils";
 
-/* ─── BottomNav Item Config ─────────────────────────────── */
-
-export interface NavItem {
-  to: string;
+export interface BottomNavItem {
+  id: string;
   label: string;
-  icon: string; // Lucide icon name
+  icon: string;
+  route: string;
 }
-
-export interface BottomNavConfig {
-  leftItems: NavItem[];
-  rightItems: NavItem[];
-}
-
-const PASSENGER_NAV: BottomNavConfig = {
-  leftItems: [
-    { to: "/feed", label: "Início", icon: "House" },
-    { to: "/discover", label: "Mapa", icon: "Map" },
-  ],
-  rightItems: [
-    { to: "/chat", label: "Chat", icon: "MessageCircle" },
-    { to: "/profile", label: "Perfil", icon: "User" },
-  ],
-};
-
-const DRIVER_NAV: BottomNavConfig = {
-  leftItems: [
-    { to: "/driver", label: "Painel", icon: "LayoutDashboard" },
-    { to: "/discover", label: "Mapa", icon: "Map" },
-  ],
-  rightItems: [
-    { to: "/driver", label: "Corridas", icon: "Car" },
-    { to: "/profile", label: "Perfil", icon: "User" },
-  ],
-};
-
-const BUSINESS_NAV: BottomNavConfig = {
-  leftItems: [
-    { to: "/feed", label: "Início", icon: "House" },
-    { to: "/marketplace", label: "Market", icon: "Store" },
-  ],
-  rightItems: [
-    { to: "/chat", label: "Chat", icon: "MessageCircle" },
-    { to: "/profile", label: "Perfil", icon: "User" },
-  ],
-};
-
-/* ─── getBottomNavConfig ────────────────────────────────── */
-
-export function getBottomNavConfig(mode: RoleMode): BottomNavConfig {
-  switch (mode) {
-    case UserRole.DRIVER:
-      return DRIVER_NAV;
-    case UserRole.BUSINESS:
-      return BUSINESS_NAV;
-    default:
-      return PASSENGER_NAV;
-  }
-}
-
-/* ─── getCreateActionsForRoles ──────────────────────────── */
-// Returns which create categories the user can access
-
-export function getCreateActionsForRoles(
-  roles: UserRole[],
-): { category: string; blocked: boolean }[] {
-  const perms = getPermissionsForRoles(roles);
-  const allCategories = [
-    { category: "photo", blocked: !perms.canPublishPhoto },
-    { category: "video", blocked: !perms.canPublishVideo },
-    { category: "reel", blocked: !perms.canCreateReel },
-    { category: "text", blocked: !perms.canPublishText },
-    { category: "moment", blocked: !perms.canPublishMoment },
-    { category: "offer", blocked: !perms.canCreateOffer },
-    { category: "event", blocked: !perms.canCreateEvent },
-    { category: "place", blocked: !perms.canCreatePlace },
-    { category: "route", blocked: !perms.canPublishRide },
-  ];
-  return allCategories;
-}
-
-/* ─── getMapFilterForRole ───────────────────────────────── */
 
 export interface MapFilter {
-  label: string;
-  value: string;
-  emoji: string;
+  id: string;
+  enabled: boolean;
 }
 
-export function getMapFiltersForRole(mode: RoleMode): MapFilter[] {
-  const base: MapFilter[] = [
-    { label: "Pessoas", value: "people", emoji: "👥" },
-    { label: "Locais", value: "places", emoji: "📍" },
-  ];
+export interface HomeShortcut {
+  id: string;
+  title: string;
+  route: string;
+}
 
-  switch (mode) {
+export interface EngineConfiguration {
+  bottomLeft: BottomNavItem[];
+  bottomRight: BottomNavItem[];
+  mapFilters: MapFilter[];
+  shortcuts: HomeShortcut[];
+  priorityModules: string[];
+  createActions: string[];
+}
+
+export function getEngineConfiguration(activeRole: UserRole): EngineConfiguration {
+  switch (activeRole) {
     case UserRole.DRIVER:
-      return [
-        ...base,
-        { label: "Demanda", value: "demand", emoji: "🔥" },
-        { label: "Hotspots", value: "hotspots", emoji: "🌡️" },
-      ];
+      return {
+        bottomLeft: [
+          { id: "dashboard", label: "Painel", icon: "Car", route: "/driver" },
+          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
+        ],
+        bottomRight: [
+          { id: "rides", label: "Corridas", icon: "Navigation", route: "/driver/rides" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+        mapFilters: [
+          { id: "drivers", enabled: true },
+          { id: "rides", enabled: true },
+          { id: "events", enabled: true },
+          { id: "people", enabled: true },
+          { id: "offers", enabled: false },
+        ],
+        shortcuts: [
+          { id: "online", title: "Ficar Online", route: "/driver" },
+          { id: "earnings", title: "Ganhos", route: "/driver/finance" },
+        ],
+        priorityModules: ["rides", "hotspots", "events", "notifications"],
+        createActions: ["ride", "moment", "photo", "video", "text", "reel"],
+      };
+
     case UserRole.BUSINESS:
-      return [
-        ...base,
-        { label: "Clientes", value: "customers", emoji: "🧑‍💼" },
-        { label: "Promoções", value: "promotions", emoji: "🏷️" },
-      ];
+      return {
+        bottomLeft: [
+          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "marketplace", label: "Marketplace", icon: "Store", route: "/marketplace" },
+        ],
+        bottomRight: [
+          { id: "chat", label: "Chat", icon: "MessageCircle", route: "/chat" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+        mapFilters: [
+          { id: "offers", enabled: true },
+          { id: "businesses", enabled: true },
+          { id: "events", enabled: true },
+          { id: "drivers", enabled: false },
+          { id: "rides", enabled: false },
+        ],
+        shortcuts: [
+          { id: "offers", title: "Minhas Ofertas", route: "/marketplace/manage" },
+          { id: "analytics", title: "Relatórios", route: "/business/analytics" },
+        ],
+        priorityModules: ["marketplace", "offers", "events", "analytics"],
+        createActions: ["offer", "place", "event", "photo", "video", "text", "moment", "reel"],
+      };
+
     default:
-      return base;
+      return {
+        bottomLeft: [
+          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "discover", label: "Mapa", icon: "Map", route: "/discover" },
+        ],
+        bottomRight: [
+          { id: "chat", label: "Chat", icon: "MessageCircle", route: "/chat" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+        mapFilters: [
+          { id: "people", enabled: true },
+          { id: "events", enabled: true },
+          { id: "businesses", enabled: true },
+          { id: "drivers", enabled: true },
+        ],
+        shortcuts: [
+          { id: "people", title: "Pessoas Próximas", route: "/people" },
+          { id: "events", title: "Eventos", route: "/events" },
+        ],
+        priorityModules: ["feed", "people", "events", "reels"],
+        createActions: ["photo", "video", "text", "moment", "reel"],
+      };
   }
 }
 
-/* ─── getCurrentRolesAndMode ────────────────────────────── */
+export function getCreateActionsForRoles(roles: UserRole[]): string[] {
+  const permissions = getPermissionsForRoles(roles);
+  const actions: string[] = ["photo", "video", "text", "moment", "reel"];
 
-export function getCurrentRolesAndMode() {
-  return getStoredRoles();
+  if (permissions.canPublishRide) actions.push("ride");
+  if (permissions.canCreateOffer) actions.push("offer");
+  if (permissions.canCreatePlace) actions.push("place");
+  if (permissions.canCreateEvent) actions.push("event");
+
+  return actions;
+}
+
+export function getPriorityModules(activeRole: UserRole): string[] {
+  return getEngineConfiguration(activeRole).priorityModules;
+}
+
+export function getBottomNavigation(activeRole: UserRole) {
+  return {
+    left: getEngineConfiguration(activeRole).bottomLeft,
+    right: getEngineConfiguration(activeRole).bottomRight,
+  };
+}
+
+export function getMapFilters(activeRole: UserRole) {
+  return getEngineConfiguration(activeRole).mapFilters;
+}
+
+export function getShortcuts(activeRole: UserRole) {
+  return getEngineConfiguration(activeRole).shortcuts;
 }

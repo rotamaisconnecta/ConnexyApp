@@ -1,113 +1,143 @@
-/* =========================================================
-   roles-utils.ts — Permission computation & role helpers
-   Pure TypeScript. No React. No side effects.
-========================================================= */
+/* ============================================================
+   CONNEXY
+   Phase 8.1
+   Multi Role System
+============================================================ */
 
-import { UserRole, type UserPermissions, type RoleDefinition } from "./roles-types";
+import { UserRole, UserPermissions, RoleDefinition } from "./roles-types";
 
-export type PermissionsMap = Record<keyof UserPermissions, boolean>;
-
-/* ─── Role Definitions ──────────────────────────────────── */
-
-const ROLE_DEFINITIONS: RoleDefinition[] = [
+export const ROLE_DEFINITIONS: RoleDefinition[] = [
   {
-    role: UserRole.USER,
-    title: "Usuário",
-    description: "Explore, conecte-se e compartilhe",
+    id: UserRole.USER,
+    label: "Usuário",
     emoji: "👤",
-    color: "#6366f1",
+    color: "#6C3BFF",
+    description: "Modo padrão do Connexy",
   },
   {
-    role: UserRole.DRIVER,
-    title: "Motorista",
-    description: "Ganhe dinheiro fazendo viagens",
+    id: UserRole.DRIVER,
+    label: "Motorista",
     emoji: "🚗",
-    color: "#22c55e",
+    color: "#22C55E",
+    description: "Receba solicitações de corrida",
   },
   {
-    role: UserRole.BUSINESS,
-    title: "Empresa",
-    description: "Divulgue seu negócio e ofertas",
-    emoji: "🏪",
-    color: "#f59e0b",
+    id: UserRole.BUSINESS,
+    label: "Empresa",
+    emoji: "🏢",
+    color: "#F59E0B",
+    description: "Publique ofertas e gerencie seu negócio",
   },
   {
-    role: UserRole.EVENT_CREATOR,
-    title: "Organizador de Eventos",
-    description: "Crie e promova eventos",
+    id: UserRole.EVENT_CREATOR,
+    label: "Organizador",
     emoji: "🎉",
-    color: "#ec4899",
+    color: "#EC4899",
+    description: "Crie e administre eventos",
   },
   {
-    role: UserRole.PLACE_OWNER,
-    title: "Proprietário de Local",
-    description: "Cadastre e gerencie locais",
+    id: UserRole.PLACE_OWNER,
+    label: "Local",
     emoji: "📍",
-    color: "#ef4444",
+    color: "#3B82F6",
+    description: "Cadastre e administre locais",
   },
   {
-    role: UserRole.REELS_CREATOR,
-    title: "Criador de Conteúdo",
-    description: "Crie reels e conteúdo viral",
-    emoji: "🎥",
-    color: "#8b5cf6",
+    id: UserRole.REELS_CREATOR,
+    label: "Criador",
+    emoji: "🎬",
+    color: "#8B5CF6",
+    description: "Produza conteúdo em vídeo",
   },
 ];
 
-/* ─── getRoleDefinition ─────────────────────────────────── */
-
-export function getRoleDefinition(role: UserRole): RoleDefinition {
-  return ROLE_DEFINITIONS.find((r) => r.role === role) ?? ROLE_DEFINITIONS[0];
+export function getRoleDefinition(role: UserRole) {
+  return ROLE_DEFINITIONS.find((r) => r.id === role);
 }
 
-/* ─── getAllRoleDefinitions ──────────────────────────────── */
-
-export function getAllRoleDefinitions(): RoleDefinition[] {
-  return [...ROLE_DEFINITIONS];
+export function getAllRoleDefinitions() {
+  return ROLE_DEFINITIONS;
 }
-
-/* ─── getActivatableRoles ───────────────────────────────── */
-// Roles the user can activate (excludes USER which is always active)
-
-export function getActivatableRoles(): RoleDefinition[] {
-  return ROLE_DEFINITIONS.filter((r) => r.role !== UserRole.USER);
-}
-
-/* ─── getRoleLabel ──────────────────────────────────────── */
 
 export function getRoleLabel(role: UserRole): string {
-  return getRoleDefinition(role).title;
+  return getRoleDefinition(role)?.label ?? "";
 }
-
-/* ─── getRoleEmoji ──────────────────────────────────────── */
 
 export function getRoleEmoji(role: UserRole): string {
-  return getRoleDefinition(role).emoji;
+  return getRoleDefinition(role)?.emoji ?? "";
 }
 
-/* ─── getPermissionsForRoles ────────────────────────────── */
-
 export function getPermissionsForRoles(roles: UserRole[]): UserPermissions {
-  const has = (role: UserRole) => roles.includes(role);
+  const isDriver = roles.includes(UserRole.DRIVER);
+  const isBusiness = roles.includes(UserRole.BUSINESS);
+  const isEventCreator = roles.includes(UserRole.EVENT_CREATOR);
+  const isPlaceOwner = roles.includes(UserRole.PLACE_OWNER);
 
   return {
-    canDrive: has(UserRole.DRIVER),
-    canPublishRide: has(UserRole.DRIVER),
-    canCreateBusiness: has(UserRole.BUSINESS),
-    canCreateOffer: has(UserRole.BUSINESS),
-    canCreateEvent: has(UserRole.EVENT_CREATOR),
-    canCreatePlace: has(UserRole.PLACE_OWNER),
+    canDrive: isDriver,
+    canPublishRide: isDriver,
+    canReceiveRide: isDriver,
+    canCreateBusiness: isBusiness,
+    canCreateOffer: isBusiness,
+    canManageCoupons: isBusiness,
+    canManageEmployees: isBusiness,
+    canCreateCampaigns: isBusiness,
+    canReceivePayments: isBusiness,
+    canAccessBusinessDashboard: isBusiness,
+    canSeeAnalytics: isBusiness,
+    canCreateEvent: isEventCreator,
+    canManageEvents: isEventCreator,
+    canCreatePlace: isPlaceOwner,
     canCreateReel: true,
     canPublishMoment: true,
     canPublishPhoto: true,
     canPublishVideo: true,
     canPublishText: true,
+    canAccessDriverDashboard: isDriver,
+    canModerateCommunity: false,
   };
 }
 
-/* ─── canUserCreateCategory ─────────────────────────────── */
+export function hasRole(roles: UserRole[], role: UserRole): boolean {
+  return roles.includes(role);
+}
 
-export function canUserCreateCategory(category: string, permissions: UserPermissions): boolean {
+export function hasAnyRole(roles: UserRole[], list: UserRole[]): boolean {
+  return list.some((r) => roles.includes(r));
+}
+
+export function hasAllRoles(roles: UserRole[], list: UserRole[]): boolean {
+  return list.every((r) => roles.includes(r));
+}
+
+export function getPrimaryRole(roles: UserRole[]): UserRole {
+  if (roles.includes(UserRole.DRIVER)) return UserRole.DRIVER;
+  if (roles.includes(UserRole.BUSINESS)) return UserRole.BUSINESS;
+  return UserRole.USER;
+}
+
+export function canActivateRole(roles: UserRole[], role: UserRole): boolean {
+  return !roles.includes(role);
+}
+
+export function activateRole(roles: UserRole[], role: UserRole): UserRole[] {
+  if (roles.includes(role)) return roles;
+  return [...roles, role];
+}
+
+export function deactivateRole(roles: UserRole[], role: UserRole): UserRole[] {
+  if (role === UserRole.USER) return roles;
+  return roles.filter((r) => r !== role);
+}
+
+export function getActivatableRoles(): RoleDefinition[] {
+  return ROLE_DEFINITIONS.filter((r) => r.id !== UserRole.USER);
+}
+
+export function canUserCreateCategory(
+  category: string,
+  permissions: UserPermissions,
+): boolean {
   switch (category.toLowerCase()) {
     case "photo":
       return permissions.canPublishPhoto;
@@ -131,8 +161,6 @@ export function canUserCreateCategory(category: string, permissions: UserPermiss
       return false;
   }
 }
-
-/* ─── getBlockedCategoryMessage ─────────────────────────── */
 
 export function getBlockedCategoryMessage(category: string): {
   title: string;

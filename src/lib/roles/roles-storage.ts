@@ -1,102 +1,113 @@
-/* =========================================================
-   roles-storage.ts — localStorage persistence for roles
-   Pure TypeScript. No React. No side effects.
-========================================================= */
+/* ============================================================
+   CONNEXY
+   Phase 8.1
+   Multi Role System
+============================================================ */
 
-import { UserRole, type RoleMode, type RolesStorage } from "./roles-types";
+import { UserRole, RoleMode, UserRolesState } from "./roles-types";
 
 const STORAGE_KEY = "connexy_roles";
 
-const DEFAULT_STATE: RolesStorage = {
+const DEFAULT_STATE: UserRolesState = {
   roles: [UserRole.USER],
   activeMode: UserRole.USER,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-/* ─── getStoredRoles ────────────────────────────────────── */
-
-export function getStoredRoles(): RolesStorage {
+export function getStoredRoles(): UserRolesState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_STATE };
-    const parsed = JSON.parse(raw) as Partial<RolesStorage>;
-
-    const roles = Array.isArray(parsed.roles) ? parsed.roles : [UserRole.USER];
-    const validRoles = roles.filter((r) => Object.values(UserRole).includes(r as UserRole));
-    if (validRoles.length === 0) validRoles.push(UserRole.USER);
-
-    const activeMode =
-      parsed.activeMode && Object.values(UserRole).includes(parsed.activeMode as UserRole)
-        ? (parsed.activeMode as RoleMode)
-        : UserRole.USER;
-
-    return { roles: validRoles as UserRole[], activeMode: activeMode as RoleMode };
+    if (!raw) {
+      saveRoles(DEFAULT_STATE);
+      return DEFAULT_STATE;
+    }
+    return JSON.parse(raw);
   } catch {
-    return { ...DEFAULT_STATE };
+    saveRoles(DEFAULT_STATE);
+    return DEFAULT_STATE;
   }
 }
 
-/* ─── setStoredRoles ────────────────────────────────────── */
-
-export function setStoredRoles(data: RolesStorage): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch {
-    // localStorage full or unavailable — silent fail
-  }
+export function saveRoles(state: UserRolesState): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-/* ─── addRole ───────────────────────────────────────────── */
-
-export function addRole(role: UserRole): RolesStorage {
-  const current = getStoredRoles();
-  if (current.roles.includes(role)) return current;
-  const updated: RolesStorage = {
-    roles: [...current.roles, role],
-    activeMode: current.activeMode,
-  };
-  setStoredRoles(updated);
-  return updated;
+export function getRoles(): UserRole[] {
+  return getStoredRoles().roles;
 }
-
-/* ─── removeRole ────────────────────────────────────────── */
-
-export function removeRole(role: UserRole): RolesStorage {
-  if (role === UserRole.USER) return getStoredRoles(); // Cannot remove USER
-  const current = getStoredRoles();
-  const updatedRoles = current.roles.filter((r) => r !== role);
-  if (updatedRoles.length === 0) updatedRoles.push(UserRole.USER); // Always keep USER
-  const updated: RolesStorage = {
-    roles: updatedRoles,
-    activeMode: current.activeMode === role ? UserRole.USER : current.activeMode,
-  };
-  setStoredRoles(updated);
-  return updated;
-}
-
-/* ─── setActiveMode ─────────────────────────────────────── */
-
-export function setActiveMode(mode: RoleMode): RolesStorage {
-  const current = getStoredRoles();
-  if (!current.roles.includes(mode)) return current;
-  const updated: RolesStorage = { ...current, activeMode: mode };
-  setStoredRoles(updated);
-  return updated;
-}
-
-/* ─── getActiveMode ─────────────────────────────────────── */
 
 export function getActiveMode(): RoleMode {
   return getStoredRoles().activeMode;
 }
 
-/* ─── hasRole ───────────────────────────────────────────── */
+export function getLastMode(): RoleMode {
+  return getStoredRoles().lastMode;
+}
+
+export function setActiveMode(mode: RoleMode): void {
+  const state = getStoredRoles();
+  state.lastMode = state.activeMode;
+  state.activeMode = mode;
+  saveRoles(state);
+}
+
+export function addRole(role: UserRole) {
+  const state = getStoredRoles();
+  if (!state.roles.includes(role)) {
+    state.roles.push(role);
+    saveRoles(state);
+  }
+}
+
+export function removeRole(role: UserRole): void {
+  if (role === UserRole.USER) return;
+  const state = getStoredRoles();
+  state.roles = state.roles.filter((r) => r !== role);
+  if (!state.roles.includes(state.activeMode)) {
+    state.activeMode = UserRole.USER;
+  }
+  saveRoles(state);
+}
 
 export function hasRole(role: UserRole): boolean {
   return getStoredRoles().roles.includes(role);
 }
 
-/* ─── resetRoles ────────────────────────────────────────── */
+export function clearRoles() {
+  localStorage.removeItem(STORAGE_KEY);
+}
 
-export function resetRoles(): void {
-  setStoredRoles({ ...DEFAULT_STATE });
+export function toggleRole(role: UserRole) {
+  if (hasRole(role)) {
+    removeRole(role);
+  } else {
+    addRole(role);
+  }
+}
+
+export function updatePreferences(
+  rememberLastMode: boolean,
+  showRoleSuggestions: boolean,
+) {
+  const state = getStoredRoles();
+  state.preferences.rememberLastMode = rememberLastMode;
+  state.preferences.showRoleSuggestions = showRoleSuggestions;
+  saveRoles(state);
+}
+
+export function restoreLastMode() {
+  const state = getStoredRoles();
+  if (state.preferences.rememberLastMode && state.roles.includes(state.lastMode)) {
+    state.activeMode = state.lastMode;
+    saveRoles(state);
+  }
+}
+
+export function resetRoles() {
+  saveRoles(DEFAULT_STATE);
 }

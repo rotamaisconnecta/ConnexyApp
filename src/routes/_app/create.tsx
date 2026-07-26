@@ -10,7 +10,7 @@ import { getStoredRoles } from "@/lib/roles/roles-storage";
 import {
   canUserCreateCategory,
   getBlockedCategoryMessage,
-  type PermissionsMap,
+  getPermissionsForRoles,
 } from "@/lib/roles/roles-utils";
 
 export const Route = createFileRoute("/_app/create")({
@@ -49,20 +49,7 @@ function CreatePage() {
   const handleAction = useCallback(
     (category: string) => {
       const { roles } = getStoredRoles();
-      const has = (r: string) => roles.includes(r as never);
-      const permissions: PermissionsMap = {
-        canDrive: has("DRIVER"),
-        canPublishRide: has("DRIVER"),
-        canCreateBusiness: has("BUSINESS"),
-        canCreateOffer: has("BUSINESS"),
-        canCreateEvent: has("EVENT_CREATOR"),
-        canCreatePlace: has("PLACE_OWNER"),
-        canCreateReel: true,
-        canPublishMoment: true,
-        canPublishPhoto: true,
-        canPublishVideo: true,
-        canPublishText: true,
-      };
+      const permissions = getPermissionsForRoles(roles);
 
       if (canUserCreateCategory(category, permissions)) {
         nav({ to: `/create/${category.toLowerCase()}` });

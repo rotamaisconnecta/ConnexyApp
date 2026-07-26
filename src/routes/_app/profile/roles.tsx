@@ -6,8 +6,8 @@ import { RoleSelector } from "@/components/roles/RoleSelector";
 import { RoleHeader } from "@/components/roles/RoleHeader";
 import { RoleEmpty } from "@/components/roles/RoleEmpty";
 import { RoleBadge } from "@/components/roles/RoleBadge";
-import { UserRole, type RolesStorage } from "@/lib/roles/roles-types";
-import { getStoredRoles, setStoredRoles } from "@/lib/roles/roles-storage";
+import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
+import { getStoredRoles, saveRoles } from "@/lib/roles/roles-storage";
 import { getActivatableRoles } from "@/lib/roles/roles-utils";
 import { motion } from "framer-motion";
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/profile/roles")({
 });
 
 function RolesPage() {
-  const [rolesState, setRolesState] = useState<RolesStorage>(getStoredRoles);
+  const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
   const activatable = getActivatableRoles();
   const activeCount = rolesState.roles.filter((r) => r !== UserRole.USER).length;
 
@@ -30,8 +30,13 @@ function RolesPage() {
 
       const newMode = hasRole && prev.activeMode === role ? UserRole.USER : prev.activeMode;
 
-      const next: RolesStorage = { roles: newRoles, activeMode: newMode };
-      setStoredRoles(next);
+      const next: UserRolesState = {
+        ...prev,
+        roles: newRoles,
+        activeMode: newMode,
+        lastMode: newMode,
+      };
+      saveRoles(next);
       return next;
     });
   }, []);

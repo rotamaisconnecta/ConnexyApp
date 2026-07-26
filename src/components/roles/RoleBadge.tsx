@@ -10,6 +10,7 @@ interface RoleBadgeProps {
 
 export function RoleBadge({ role, size = "sm", className }: RoleBadgeProps) {
   const def = getRoleDefinition(role);
+  if (!def) return null;
 
   return (
     <span
@@ -25,7 +26,7 @@ export function RoleBadge({ role, size = "sm", className }: RoleBadgeProps) {
       }}
     >
       <span>{def.emoji}</span>
-      <span>{def.title}</span>
+      <span>{def.label}</span>
     </span>
   );
 }

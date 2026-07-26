@@ -30,6 +30,7 @@ export function RoleSwitcher({
     >
       {modesToShow.map((role) => {
         const def = getRoleDefinition(role);
+        if (!def) return null;
         const isActive = activeMode === role;
         return (
           <button
@@ -44,7 +45,7 @@ export function RoleSwitcher({
             )}
           >
             <span>{def.emoji}</span>
-            <span>{def.title}</span>
+            <span>{def.label}</span>
           </button>
         );
       })}

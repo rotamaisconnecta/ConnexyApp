@@ -1,43 +1,78 @@
-/* =========================================================
-   roles-mocks.ts — Mock role states for testing
-   Pure TypeScript. No React. No side effects.
-========================================================= */
+/* ============================================================
+   CONNEXY
+   Phase 8.1
+   Mock States
+============================================================ */
 
-import { UserRole, type RolesStorage } from "./roles-types";
+import { UserRole, UserRolesState } from "./roles-types";
 
-/* ─── Mock States ───────────────────────────────────────── */
-
-export const mockCommonUser: RolesStorage = {
+export const mockCommonUser: UserRolesState = {
   roles: [UserRole.USER],
   activeMode: UserRole.USER,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-export const mockDriver: RolesStorage = {
+export const mockDriver: UserRolesState = {
   roles: [UserRole.USER, UserRole.DRIVER],
   activeMode: UserRole.DRIVER,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-export const mockBusiness: RolesStorage = {
+export const mockBusiness: UserRolesState = {
   roles: [UserRole.USER, UserRole.BUSINESS],
   activeMode: UserRole.BUSINESS,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-export const mockDriverBusiness: RolesStorage = {
+export const mockDriverBusiness: UserRolesState = {
   roles: [UserRole.USER, UserRole.DRIVER, UserRole.BUSINESS],
   activeMode: UserRole.DRIVER,
+  lastMode: UserRole.BUSINESS,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-export const mockBusinessEvents: RolesStorage = {
+export const mockBusinessEvents: UserRolesState = {
   roles: [UserRole.USER, UserRole.BUSINESS, UserRole.EVENT_CREATOR],
   activeMode: UserRole.BUSINESS,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-export const mockContentCreator: RolesStorage = {
+export const mockCreator: UserRolesState = {
   roles: [UserRole.USER, UserRole.REELS_CREATOR],
   activeMode: UserRole.USER,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
 
-export const mockAllRoles: RolesStorage = {
+export const mockAllRoles: UserRolesState = {
   roles: [
     UserRole.USER,
     UserRole.DRIVER,
@@ -47,16 +82,10 @@ export const mockAllRoles: RolesStorage = {
     UserRole.REELS_CREATOR,
   ],
   activeMode: UserRole.USER,
+  lastMode: UserRole.USER,
+  activatedAt: new Date().toISOString(),
+  preferences: {
+    rememberLastMode: true,
+    showRoleSuggestions: true,
+  },
 };
-
-/* ─── All mocks map ─────────────────────────────────────── */
-
-export const ALL_MOCK_STATES = {
-  commonUser: mockCommonUser,
-  driver: mockDriver,
-  business: mockBusiness,
-  driverBusiness: mockDriverBusiness,
-  businessEvents: mockBusinessEvents,
-  contentCreator: mockContentCreator,
-  allRoles: mockAllRoles,
-} as const;

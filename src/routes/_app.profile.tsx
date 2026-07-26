@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
-import { UserRole, type RoleMode, type RolesStorage } from "@/lib/roles/roles-types";
-import { getStoredRoles, setStoredRoles } from "@/lib/roles/roles-storage";
+import { UserRole, type RoleMode, type UserRolesState } from "@/lib/roles/roles-types";
+import { getStoredRoles, saveRoles } from "@/lib/roles/roles-storage";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
@@ -43,14 +43,18 @@ const MOCK_MOMENT: MomentData = {
 function ProfilePage() {
   const navigate = useNavigate();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
-  const [rolesState, setRolesState] = useState<RolesStorage>(getStoredRoles);
+  const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
   const [isOnline] = useState(false);
   const [hasRegistration] = useState(false);
 
   const handleModeChange = useCallback((mode: RoleMode) => {
     setRolesState((prev) => {
-      const next: RolesStorage = { ...prev, activeMode: mode };
-      setStoredRoles(next);
+      const next: UserRolesState = {
+        ...prev,
+        activeMode: mode,
+        lastMode: mode,
+      };
+      saveRoles(next);
       window.dispatchEvent(new Event("storage"));
       return next;
     });
@@ -62,8 +66,13 @@ function ProfilePage() {
       const newRoles = hasRole ? prev.roles.filter((r) => r !== role) : [...prev.roles, role];
       if (newRoles.length === 0) newRoles.push(UserRole.USER);
       const newMode = hasRole && prev.activeMode === role ? UserRole.USER : prev.activeMode;
-      const next: RolesStorage = { roles: newRoles, activeMode: newMode };
-      setStoredRoles(next);
+      const next: UserRolesState = {
+        ...prev,
+        roles: newRoles,
+        activeMode: newMode,
+        lastMode: newMode,
+      };
+      saveRoles(next);
       window.dispatchEvent(new Event("storage"));
       return next;
     });

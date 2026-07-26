@@ -28,7 +28,7 @@ export function RoleCard({ definition, active, onToggle }: RoleCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold truncate">{definition.title}</h3>
+            <h3 className="text-sm font-bold truncate">{definition.label}</h3>
             {active && <span className="shrink-0 h-2 w-2 rounded-full bg-green-500" />}
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
