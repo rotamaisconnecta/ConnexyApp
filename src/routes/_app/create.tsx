@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -9,9 +9,11 @@ import RoleActivationModal from "@/components/roles/RoleActivationModal";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
 import { UserRole } from "@/lib/roles/roles-types";
 import {
-  canUserCreateCategory,
-  getPermissionsForRoles,
-} from "@/lib/roles/roles-utils";
+  canCreateOffer,
+  canCreateEvent,
+  canCreatePlace,
+  canPublishRide,
+} from "@/lib/roles/roles-guards";
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({ meta: [{ title: "Criar publicação" }] }),
@@ -38,35 +40,47 @@ const gridItem = {
 
 function CreatePage() {
   const nav = useNavigate();
-  const [blockedModal, setBlockedModal] = useState<{
-    open: boolean;
-    role: UserRole | null;
-  }>({ open: false, role: null });
+  const { roles } = getStoredRoles();
+  const [requiredRole, setRequiredRole] = useState<UserRole | null>(null);
 
-  function categoryToRole(category: string): UserRole | null {
-    switch (category.toLowerCase()) {
-      case "ride": return UserRole.DRIVER;
-      case "offer": return UserRole.BUSINESS;
-      case "event": return UserRole.EVENT_CREATOR;
-      case "place": return UserRole.PLACE_OWNER;
-      default: return null;
+  function open(category: string) {
+    switch (category) {
+      case "photo":
+        return nav({ to: "/create/photo" });
+      case "video":
+        return nav({ to: "/create/video" });
+      case "text":
+        return nav({ to: "/create/text" });
+      case "moment":
+        return nav({ to: "/create/moment" });
+      case "reel":
+        return nav({ to: "/create/reel" });
+      case "ride":
+        if (!canPublishRide(roles)) {
+          setRequiredRole(UserRole.DRIVER);
+          return;
+        }
+        return nav({ to: "/create/ride" });
+      case "offer":
+        if (!canCreateOffer(roles)) {
+          setRequiredRole(UserRole.BUSINESS);
+          return;
+        }
+        return nav({ to: "/create/offer" });
+      case "event":
+        if (!canCreateEvent(roles)) {
+          setRequiredRole(UserRole.EVENT_CREATOR);
+          return;
+        }
+        return nav({ to: "/create/event" });
+      case "place":
+        if (!canCreatePlace(roles)) {
+          setRequiredRole(UserRole.PLACE_OWNER);
+          return;
+        }
+        return nav({ to: "/create/place" });
     }
   }
-
-  const handleAction = useCallback(
-    (category: string) => {
-      const { roles } = getStoredRoles();
-      const permissions = getPermissionsForRoles(roles);
-
-      if (canUserCreateCategory(category, permissions)) {
-        nav({ to: `/create/${category.toLowerCase()}` });
-      } else {
-        const role = categoryToRole(category);
-        if (role) setBlockedModal({ open: true, role });
-      }
-    },
-    [nav],
-  );
 
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
@@ -95,7 +109,7 @@ function CreatePage() {
               variants={gridItem}
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.03 }}
-              onClick={() => handleAction(action.id.toLowerCase())}
+              onClick={() => open(action.id.toLowerCase())}
               aria-label={`Criar ${action.label}`}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
@@ -113,11 +127,13 @@ function CreatePage() {
         </motion.div>
       </div>
 
-      <RoleActivationModal
-        open={blockedModal.open}
-        role={blockedModal.role!}
-        onClose={() => setBlockedModal({ open: false, role: null })}
-      />
+      {requiredRole && (
+        <RoleActivationModal
+          open
+          role={requiredRole}
+          onClose={() => setRequiredRole(null)}
+        />
+      )}
     </div>
   );
 }
