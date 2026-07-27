@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { RoleSelector } from "@/components/roles/RoleSelector";
+import RoleSelector from "@/components/roles/RoleSelector";
 import RoleHeader from "@/components/roles/RoleHeader";
 import { RoleEmpty } from "@/components/roles/RoleEmpty";
 import RoleBadge from "@/components/roles/RoleBadge";
@@ -72,7 +72,7 @@ function RolesPage() {
 
         {/* Role selector */}
         <RoleHeader />
-        <RoleSelector rolesState={rolesState} onToggleRole={handleToggleRole} />
+        <RoleSelector />
 
         {activeCount === 0 && (
           <div className="mt-4">

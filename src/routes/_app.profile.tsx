@@ -6,7 +6,7 @@ import { Moment } from "@/components/profile/atoms/moment";
 import { Badge } from "@/components/ui/badge";
 import { DriverProfileCard } from "@/components/driver/driver-profile-card";
 import RoleSwitcher from "@/components/roles/RoleSwitcher";
-import { RoleSelector } from "@/components/roles/RoleSelector";
+import RoleSelector from "@/components/roles/RoleSelector";
 
 import { currentUser, findPlace, places } from "@/lib/mock-data";
 import { type MomentData } from "@/lib/profile/moment-expiry";

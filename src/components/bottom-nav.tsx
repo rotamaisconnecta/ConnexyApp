@@ -10,10 +10,9 @@ import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
 import {
   canUserCreateCategory,
-  getBlockedCategoryMessage,
   getPermissionsForRoles,
 } from "@/lib/roles/roles-utils";
-import { RoleActivationModal } from "@/components/roles/RoleActivationModal";
+import RoleActivationModal from "@/components/roles/RoleActivationModal";
 
 const passengerLeftItems = [
   { to: "/feed", label: "Início", icon: Home },
@@ -73,11 +72,18 @@ export function BottomNav({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [blockedModal, setBlockedModal] = useState<{
     open: boolean;
-    title: string;
-    description: string;
-    ctaLabel: string;
-    ctaRoute: string;
-  }>({ open: false, title: "", description: "", ctaLabel: "", ctaRoute: "" });
+    role: UserRole | null;
+  }>({ open: false, role: null });
+
+  function categoryToRole(category: string): UserRole | null {
+    switch (category.toLowerCase()) {
+      case "ride": return UserRole.DRIVER;
+      case "offer": return UserRole.BUSINESS;
+      case "event": return UserRole.EVENT_CREATOR;
+      case "place": return UserRole.PLACE_OWNER;
+      default: return null;
+    }
+  }
 
   const handleCreateSelect = useCallback(
     (category: string) => {
@@ -87,8 +93,8 @@ export function BottomNav({
       if (canUserCreateCategory(category, permissions)) {
         navigate({ to: `/create/${category.toLowerCase()}` });
       } else {
-        const msg = getBlockedCategoryMessage(category);
-        setBlockedModal({ open: true, ...msg });
+        const role = categoryToRole(category);
+        if (role) setBlockedModal({ open: true, role });
       }
       setIsSheetOpen(false);
     },
@@ -201,11 +207,8 @@ export function BottomNav({
 
       <RoleActivationModal
         open={blockedModal.open}
-        onClose={() => setBlockedModal((p) => ({ ...p, open: false }))}
-        title={blockedModal.title}
-        description={blockedModal.description}
-        ctaLabel={blockedModal.ctaLabel}
-        ctaRoute={blockedModal.ctaRoute}
+        role={blockedModal.role!}
+        onClose={() => setBlockedModal({ open: false, role: null })}
       />
     </>
   );

@@ -1,78 +1,111 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
+import { X, ArrowRight, Sparkles, Car, Store, CalendarDays, MapPin } from "lucide-react";
 
-interface RoleActivationModalProps {
+import { useNavigate } from "@tanstack/react-router";
+
+import { UserRole } from "@/lib/roles/roles-types";
+
+interface Props {
   open: boolean;
+  role: UserRole;
   onClose: () => void;
-  title: string;
-  description: string;
-  ctaLabel: string;
-  ctaRoute: string;
 }
 
-export function RoleActivationModal({
-  open,
-  onClose,
-  title,
-  description,
-  ctaLabel,
-  ctaRoute,
-}: RoleActivationModalProps) {
-  const nav = useNavigate();
+const roleData = {
+  DRIVER: {
+    icon: Car,
+    title: "Quero ser Motorista",
+    description:
+      "Cadastre-se como motorista para começar a receber solicitações de corridas e aumentar sua renda.",
+    route: "/driver/cadastro",
+    color: "from-violet-600 to-fuchsia-500",
+  },
+  BUSINESS: {
+    icon: Store,
+    title: "Cadastrar Empresa",
+    description:
+      "Cadastre sua empresa para publicar ofertas, promoções e divulgar seus serviços.",
+    route: "/business/cadastro",
+    color: "from-emerald-500 to-green-600",
+  },
+  EVENT_CREATOR: {
+    icon: CalendarDays,
+    title: "Criar Eventos",
+    description:
+      "Ative esta função para organizar eventos, vender ingressos e receber check-ins.",
+    route: "/events/cadastro",
+    color: "from-orange-500 to-red-500",
+  },
+  PLACE_OWNER: {
+    icon: MapPin,
+    title: "Cadastrar Local",
+    description:
+      "Adicione seu estabelecimento ao mapa inteligente do Connexy.",
+    route: "/places/cadastro",
+    color: "from-sky-500 to-blue-600",
+  },
+};
+
+export default function RoleActivationModal({ open, role, onClose }: Props) {
+  const navigate = useNavigate();
+  const data = roleData[role as keyof typeof roleData];
+
+  if (!data) return null;
+
+  const Icon = data.icon;
+
+  function activate() {
+    onClose();
+    navigate({ to: data.route as never });
+  }
 
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-5"
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-[320px]"
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-background rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
           >
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-border/50">
-              <div className="flex items-center justify-between mb-4">
-                <div />
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="h-8 w-8 grid place-items-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+            <div className={`bg-gradient-to-r ${data.color} p-8 text-white relative`}>
+              <button onClick={onClose} className="absolute top-4 right-4">
+                <X />
+              </button>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <Icon size={32} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">{data.title}</h2>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Sparkles size={16} />
+                    <span className="text-sm">Nova funcionalidade</span>
+                  </div>
+                </div>
               </div>
-
-              <div className="text-center mb-6">
-                <h2 className="font-display font-bold text-lg">{title}</h2>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{description}</p>
-              </div>
-
+            </div>
+            <div className="p-6">
+              <p className="leading-7 text-muted-foreground">{data.description}</p>
               <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  nav({ to: ctaRoute });
-                }}
-                className={cn(
-                  "w-full py-3 rounded-2xl text-sm font-semibold text-white",
-                  "bg-gradient-brand shadow-soft active:scale-[0.98] transition-transform",
-                )}
+                onClick={activate}
+                className="mt-8 w-full rounded-2xl bg-violet-600 py-4 text-white font-semibold flex justify-center items-center gap-2 hover:bg-violet-700 transition"
               >
-                {ctaLabel}
+                Ativar agora
+                <ArrowRight size={18} />
+              </button>
+              <button onClick={onClose} className="mt-3 w-full rounded-2xl border py-4">
+                Agora não
               </button>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

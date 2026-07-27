@@ -5,11 +5,11 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CREATE_ACTIONS } from "@/lib/navigation/navigation-items";
-import { RoleActivationModal } from "@/components/roles/RoleActivationModal";
+import RoleActivationModal from "@/components/roles/RoleActivationModal";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
+import { UserRole } from "@/lib/roles/roles-types";
 import {
   canUserCreateCategory,
-  getBlockedCategoryMessage,
   getPermissionsForRoles,
 } from "@/lib/roles/roles-utils";
 
@@ -40,11 +40,18 @@ function CreatePage() {
   const nav = useNavigate();
   const [blockedModal, setBlockedModal] = useState<{
     open: boolean;
-    title: string;
-    description: string;
-    ctaLabel: string;
-    ctaRoute: string;
-  }>({ open: false, title: "", description: "", ctaLabel: "", ctaRoute: "" });
+    role: UserRole | null;
+  }>({ open: false, role: null });
+
+  function categoryToRole(category: string): UserRole | null {
+    switch (category.toLowerCase()) {
+      case "ride": return UserRole.DRIVER;
+      case "offer": return UserRole.BUSINESS;
+      case "event": return UserRole.EVENT_CREATOR;
+      case "place": return UserRole.PLACE_OWNER;
+      default: return null;
+    }
+  }
 
   const handleAction = useCallback(
     (category: string) => {
@@ -54,8 +61,8 @@ function CreatePage() {
       if (canUserCreateCategory(category, permissions)) {
         nav({ to: `/create/${category.toLowerCase()}` });
       } else {
-        const msg = getBlockedCategoryMessage(category);
-        setBlockedModal({ open: true, ...msg });
+        const role = categoryToRole(category);
+        if (role) setBlockedModal({ open: true, role });
       }
     },
     [nav],
@@ -108,11 +115,8 @@ function CreatePage() {
 
       <RoleActivationModal
         open={blockedModal.open}
-        onClose={() => setBlockedModal((p) => ({ ...p, open: false }))}
-        title={blockedModal.title}
-        description={blockedModal.description}
-        ctaLabel={blockedModal.ctaLabel}
-        ctaRoute={blockedModal.ctaRoute}
+        role={blockedModal.role!}
+        onClose={() => setBlockedModal({ open: false, role: null })}
       />
     </div>
   );
