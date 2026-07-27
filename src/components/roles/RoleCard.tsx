@@ -1,54 +1,70 @@
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import type { RoleDefinition } from "@/lib/roles/roles-types";
+import { CheckCircle2, ArrowRight } from "lucide-react";
+
+import RoleBadge from "./RoleBadge";
+
+import { UserRole } from "@/lib/roles/roles-types";
 
 interface RoleCardProps {
-  definition: RoleDefinition;
-  active: boolean;
-  onToggle: () => void;
+  role: UserRole;
+  title: string;
+  description: string;
+  active?: boolean;
+  onClick?: () => void;
 }
 
-export function RoleCard({ definition, active, onToggle }: RoleCardProps) {
+export default function RoleCard({
+  role,
+  title,
+  description,
+  active = false,
+  onClick,
+}: RoleCardProps) {
   return (
-    <motion.div
-      whileTap={{ scale: 0.97 }}
-      className={cn(
-        "relative overflow-hidden rounded-2xl border p-4 transition-all duration-200",
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.18 }}
+      onClick={onClick}
+      className={[
+        "w-full",
+        "rounded-3xl",
+        "border",
+        "p-5",
+        "text-left",
+        "transition-all",
         active
-          ? "border-primary/30 bg-primary/5 shadow-soft"
-          : "border-border bg-surface shadow-soft hover:shadow-elevated",
-      )}
+          ? "border-violet-500 bg-violet-50 shadow-lg"
+          : "border-border bg-card hover:border-violet-300 hover:shadow-md",
+      ].join(" ")}
     >
-      <div className="flex items-start gap-3">
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
-          style={{ backgroundColor: `${definition.color}15` }}
-        >
-          {definition.emoji}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold truncate">{definition.label}</h3>
-            {active && <span className="shrink-0 h-2 w-2 rounded-full bg-green-500" />}
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-            {definition.description}
-          </p>
-        </div>
+      <div className="flex items-start justify-between">
+        <RoleBadge role={role} size="md" />
+        {active ? (
+          <CheckCircle2 size={24} className="text-violet-600" />
+        ) : (
+          <ArrowRight size={20} className="text-muted-foreground" />
+        )}
       </div>
 
-      <button
-        type="button"
-        onClick={onToggle}
-        className={cn(
-          "mt-3 w-full py-2 rounded-xl text-xs font-semibold transition-colors",
-          active
-            ? "bg-secondary text-muted-foreground hover:bg-secondary/80"
-            : "bg-gradient-brand text-white shadow-soft",
+      <div className="mt-5">
+        <h3 className="text-lg font-bold">{title}</h3>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          {description}
+        </p>
+      </div>
+
+      <div className="mt-6">
+        {active ? (
+          <div className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            Ativado
+          </div>
+        ) : (
+          <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            Disponível
+          </div>
         )}
-      >
-        {active ? "Desativar" : "Ativar"}
-      </button>
-    </motion.div>
+      </div>
+    </motion.button>
   );
 }

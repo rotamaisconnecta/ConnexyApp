@@ -1,16 +1,31 @@
+import { motion } from "framer-motion";
+import { ShieldCheck } from "lucide-react";
+
 interface RoleHeaderProps {
   title?: string;
-  description?: string;
+  subtitle?: string;
 }
 
-export function RoleHeader({
-  title = "Ativar Funcionalidades",
-  description = "Ative papéis adicionais para desbloquear recursos do Connexy.",
+export default function RoleHeader({
+  title = "ATIVAR FUNCIONALIDADES",
+  subtitle = "Escolha quais recursos deseja utilizar no Connexy.",
 }: RoleHeaderProps) {
   return (
-    <div className="mb-3">
-      <h2 className="font-display font-bold text-sm">{title}</h2>
-      {description && <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>}
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="mb-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-lg">
+          <ShieldCheck size={24} className="text-white" />
+        </div>
+        <div className="flex flex-col">
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+    </motion.div>
   );
 }

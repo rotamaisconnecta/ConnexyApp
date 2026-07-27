@@ -1,54 +1,68 @@
-import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
-import { getRoleDefinition, getActivatableRoles } from "@/lib/roles/roles-utils";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { User, Car, Store } from "lucide-react";
+import { useMemo } from "react";
 
-interface RoleSwitcherProps {
-  activeMode: RoleMode;
-  availableRoles: UserRole[];
-  onModeChange: (mode: RoleMode) => void;
-  className?: string;
+import { UserRole, RoleMode } from "@/lib/roles/roles-types";
+
+import { getStoredRoles, getActiveMode, setActiveMode } from "@/lib/roles/roles-storage";
+
+interface Props {
+  onChange?: (role: UserRole) => void;
 }
 
-export function RoleSwitcher({
-  activeMode,
-  availableRoles,
-  onModeChange,
-  className,
-}: RoleSwitcherProps) {
-  const modesToShow = availableRoles.filter(
-    (r) => r === UserRole.USER || r === UserRole.DRIVER || r === UserRole.BUSINESS,
-  );
+export default function RoleSwitcher({ onChange }: Props) {
+  const roles = getStoredRoles();
+  const activeRole = getActiveMode();
 
-  if (modesToShow.length <= 1) return null;
+  const availableRoles = useMemo(() => {
+    return roles.roles.map((role) => {
+      switch (role) {
+        case UserRole.DRIVER:
+          return { role, label: "Motorista", icon: Car };
+        case UserRole.BUSINESS:
+          return { role, label: "Empresa", icon: Store };
+        default:
+          return { role: UserRole.USER, label: "Usuário", icon: User };
+      }
+    });
+  }, [roles.roles]);
+
+  function handleSwitch(role: UserRole) {
+    setActiveMode(role as RoleMode);
+    onChange?.(role);
+    window.dispatchEvent(new Event("roleChanged"));
+  }
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1 p-1 rounded-2xl bg-secondary/50 border border-border/50",
-        className,
-      )}
-    >
-      {modesToShow.map((role) => {
-        const def = getRoleDefinition(role);
-        if (!def) return null;
-        const isActive = activeMode === role;
-        return (
-          <button
-            key={role}
-            type="button"
-            onClick={() => onModeChange(role as RoleMode)}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200",
-              isActive
-                ? "bg-white text-foreground shadow-soft"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <span>{def.emoji}</span>
-            <span>{def.label}</span>
-          </button>
-        );
-      })}
+    <div className="w-full rounded-full bg-muted p-1">
+      <div className="flex">
+        {availableRoles.map((item) => {
+          const Icon = item.icon;
+          const selected =
+            item.role === (activeRole as UserRole);
+          return (
+            <motion.button
+              key={item.role}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => handleSwitch(item.role)}
+              className={[
+                "flex-1",
+                "rounded-full",
+                "px-4",
+                "py-2",
+                "transition-all",
+                "duration-200",
+                selected ? "bg-white shadow text-violet-700" : "text-muted-foreground",
+              ].join(" ")}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Icon size={16} />
+                <span className="font-medium">{item.label}</span>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
     </div>
   );
 }

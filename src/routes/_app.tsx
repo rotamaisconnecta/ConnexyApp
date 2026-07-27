@@ -21,11 +21,11 @@ function AppLayout() {
   }, [loading, user, nav]);
 
   useEffect(() => {
-    function handleStorage() {
+    function handleRoleChanged() {
       setActiveMode(getStoredRoles().activeMode);
     }
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("roleChanged", handleRoleChanged);
+    return () => window.removeEventListener("roleChanged", handleRoleChanged);
   }, []);
 
   if (loading || !user) {

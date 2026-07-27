@@ -1,6 +1,6 @@
 import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
 import { getActivatableRoles } from "@/lib/roles/roles-utils";
-import { RoleCard } from "./RoleCard";
+import RoleCard from "./RoleCard";
 
 interface RoleSelectorProps {
   rolesState: UserRolesState;
@@ -15,9 +15,11 @@ export function RoleSelector({ rolesState, onToggleRole }: RoleSelectorProps) {
       {activatable.map((def) => (
         <RoleCard
           key={def.id}
-          definition={def}
+          role={def.id}
+          title={def.label}
+          description={def.description}
           active={rolesState.roles.includes(def.id)}
-          onToggle={() => onToggleRole(def.id)}
+          onClick={() => onToggleRole(def.id)}
         />
       ))}
     </div>

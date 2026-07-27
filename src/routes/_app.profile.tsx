@@ -5,9 +5,9 @@ import { Hero } from "@/components/profile/atoms/hero";
 import { Moment } from "@/components/profile/atoms/moment";
 import { Badge } from "@/components/ui/badge";
 import { DriverProfileCard } from "@/components/driver/driver-profile-card";
-import { RoleSwitcher } from "@/components/roles/RoleSwitcher";
+import RoleSwitcher from "@/components/roles/RoleSwitcher";
 import { RoleSelector } from "@/components/roles/RoleSelector";
-import { RoleHeader } from "@/components/roles/RoleHeader";
+
 import { currentUser, findPlace, places } from "@/lib/mock-data";
 import { type MomentData } from "@/lib/profile/moment-expiry";
 import {
@@ -47,15 +47,15 @@ function ProfilePage() {
   const [isOnline] = useState(false);
   const [hasRegistration] = useState(false);
 
-  const handleModeChange = useCallback((mode: RoleMode) => {
+  const handleModeChange = useCallback((mode: UserRole) => {
     setRolesState((prev) => {
       const next: UserRolesState = {
         ...prev,
-        activeMode: mode,
-        lastMode: mode,
+        activeMode: mode as RoleMode,
+        lastMode: mode as RoleMode,
       };
       saveRoles(next);
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("roleChanged"));
       return next;
     });
   }, []);
@@ -73,7 +73,7 @@ function ProfilePage() {
         lastMode: newMode,
       };
       saveRoles(next);
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("roleChanged"));
       return next;
     });
   }, []);
@@ -93,9 +93,7 @@ function ProfilePage() {
 
       <div className="px-4 mb-3">
         <RoleSwitcher
-          activeMode={rolesState.activeMode}
-          availableRoles={rolesState.roles}
-          onModeChange={handleModeChange}
+          onChange={handleModeChange}
         />
       </div>
 
