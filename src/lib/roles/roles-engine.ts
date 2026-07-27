@@ -112,16 +112,134 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
   }
 }
 
-export function getCreateActionsForRoles(roles: UserRole[]): string[] {
+/* ─── Create Actions for Roles ───────────────────────────── */
+
+export interface CreateAction {
+  id: string;
+  title: string;
+  emoji: string;
+  icon: string;
+  route: string;
+  enabled: boolean;
+  requiredRole: UserRole | null;
+  lockedReason: string | null;
+}
+
+const ALL_CREATE_ACTIONS: Omit<CreateAction, "enabled">[] = [
+  {
+    id: "photo",
+    title: "Foto",
+    emoji: "📷",
+    icon: "Camera",
+    route: "/create/photo",
+    requiredRole: null,
+    lockedReason: null,
+  },
+  {
+    id: "video",
+    title: "Vídeo",
+    emoji: "🎥",
+    icon: "Video",
+    route: "/create/video",
+    requiredRole: null,
+    lockedReason: null,
+  },
+  {
+    id: "text",
+    title: "Texto",
+    emoji: "✍",
+    icon: "Type",
+    route: "/create/text",
+    requiredRole: null,
+    lockedReason: null,
+  },
+  {
+    id: "moment",
+    title: "Momento",
+    emoji: "⚡",
+    icon: "Zap",
+    route: "/create/moment",
+    requiredRole: null,
+    lockedReason: null,
+  },
+  {
+    id: "reel",
+    title: "Reel",
+    emoji: "▶",
+    icon: "Film",
+    route: "/create/reel",
+    requiredRole: null,
+    lockedReason: null,
+  },
+  {
+    id: "offer",
+    title: "Oferta",
+    emoji: "🏷",
+    icon: "Tag",
+    route: "/create/offer",
+    requiredRole: UserRole.BUSINESS,
+    lockedReason: "Cadastre sua empresa para publicar ofertas.",
+  },
+  {
+    id: "event",
+    title: "Evento",
+    emoji: "🎉",
+    icon: "CalendarDays",
+    route: "/create/event",
+    requiredRole: UserRole.EVENT_CREATOR,
+    lockedReason: "Ative a função Organizador para criar eventos.",
+  },
+  {
+    id: "ride",
+    title: "Carona",
+    emoji: "🚗",
+    icon: "Car",
+    route: "/create/ride",
+    requiredRole: UserRole.DRIVER,
+    lockedReason: "Cadastre-se como motorista para oferecer caronas.",
+  },
+  {
+    id: "place",
+    title: "Local",
+    emoji: "📍",
+    icon: "MapPin",
+    route: "/create/place",
+    requiredRole: UserRole.PLACE_OWNER,
+    lockedReason: "Ative a função Proprietário para cadastrar locais.",
+  },
+];
+
+function isActionEnabled(id: string, roles: UserRole[]): boolean {
   const permissions = getPermissionsForRoles(roles);
-  const actions: string[] = ["photo", "video", "text", "moment", "reel"];
+  switch (id) {
+    case "photo":
+      return permissions.canPublishPhoto;
+    case "video":
+      return permissions.canPublishVideo;
+    case "text":
+      return permissions.canPublishText;
+    case "moment":
+      return permissions.canPublishMoment;
+    case "reel":
+      return permissions.canCreateReel;
+    case "ride":
+      return permissions.canPublishRide;
+    case "offer":
+      return permissions.canCreateOffer;
+    case "event":
+      return permissions.canCreateEvent;
+    case "place":
+      return permissions.canCreatePlace;
+    default:
+      return false;
+  }
+}
 
-  if (permissions.canPublishRide) actions.push("ride");
-  if (permissions.canCreateOffer) actions.push("offer");
-  if (permissions.canCreatePlace) actions.push("place");
-  if (permissions.canCreateEvent) actions.push("event");
-
-  return actions;
+export function getCreateActionsForRoles(roles: UserRole[]): CreateAction[] {
+  return ALL_CREATE_ACTIONS.map((action) => ({
+    ...action,
+    enabled: isActionEnabled(action.id, roles),
+  }));
 }
 
 export function getPriorityModules(activeRole: UserRole): string[] {

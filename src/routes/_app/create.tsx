@@ -1,19 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { CREATE_ACTIONS } from "@/lib/navigation/navigation-items";
-import RoleActivationModal from "@/components/roles/RoleActivationModal";
+import { Lock } from "lucide-react";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
-import { UserRole } from "@/lib/roles/roles-types";
-import {
-  canCreateOffer,
-  canCreateEvent,
-  canCreatePlace,
-  canPublishRide,
-} from "@/lib/roles/roles-guards";
+import { getCreateActionsForRoles } from "@/lib/roles/roles-engine";
+import type { CreateAction } from "@/lib/roles/roles-engine";
+import type { UserRole } from "@/lib/roles/roles-types";
+import RoleActivationModal from "@/components/roles/RoleActivationModal";
+import { Colors, Radius, Shadows } from "@/theme";
 
 export const Route = createFileRoute("/_app/create")({
   head: () => ({ meta: [{ title: "Criar publicação" }] }),
@@ -40,46 +37,32 @@ const gridItem = {
 
 function CreatePage() {
   const nav = useNavigate();
-  const { roles } = getStoredRoles();
+  const [roles, setRoles] = useState(() => getStoredRoles().roles);
   const [requiredRole, setRequiredRole] = useState<UserRole | null>(null);
+  const actions = getCreateActionsForRoles(roles);
 
-  function open(category: string) {
-    switch (category) {
-      case "photo":
-        return nav({ to: "/create/photo" });
-      case "video":
-        return nav({ to: "/create/video" });
-      case "text":
-        return nav({ to: "/create/text" });
-      case "moment":
-        return nav({ to: "/create/moment" });
-      case "reel":
-        return nav({ to: "/create/reel" });
-      case "ride":
-        if (!canPublishRide(roles)) {
-          setRequiredRole(UserRole.DRIVER);
-          return;
-        }
-        return nav({ to: "/create/ride" });
-      case "offer":
-        if (!canCreateOffer(roles)) {
-          setRequiredRole(UserRole.BUSINESS);
-          return;
-        }
-        return nav({ to: "/create/offer" });
-      case "event":
-        if (!canCreateEvent(roles)) {
-          setRequiredRole(UserRole.EVENT_CREATOR);
-          return;
-        }
-        return nav({ to: "/create/event" });
-      case "place":
-        if (!canCreatePlace(roles)) {
-          setRequiredRole(UserRole.PLACE_OWNER);
-          return;
-        }
-        return nav({ to: "/create/place" });
+  const handleRoleChanged = useCallback(() => {
+    setRoles(getStoredRoles().roles);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("roleChanged", handleRoleChanged);
+    return () => window.removeEventListener("roleChanged", handleRoleChanged);
+  }, [handleRoleChanged]);
+
+  function open(action: CreateAction) {
+    if (!action.enabled) {
+      if (action.requiredRole) {
+        setRequiredRole(action.requiredRole);
+      }
+      return;
     }
+    nav({ to: action.route as never });
+  }
+
+  function handleActivated() {
+    setRoles(getStoredRoles().roles);
+    setRequiredRole(null);
   }
 
   return (
@@ -103,37 +86,106 @@ function CreatePage() {
           animate="visible"
           className="grid grid-cols-3 gap-4 justify-items-center"
         >
-          {CREATE_ACTIONS.map((action) => (
-            <motion.button
-              key={action.id}
-              variants={gridItem}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.03 }}
-              onClick={() => open(action.id.toLowerCase())}
-              aria-label={`Criar ${action.label}`}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface shadow-soft hover:shadow-elevated transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            >
-              <div className="h-16 w-16 rounded-full bg-white shadow-soft grid place-items-center text-3xl">
-                {action.emoji}
-              </div>
-              <div className="text-center">
-                <div className="text-xs font-semibold leading-tight">{action.label}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
-                  {action.description}
+          {actions.map((action) => {
+            const isLocked = !action.enabled;
+            return (
+              <motion.button
+                key={action.id}
+                variants={gridItem}
+                whileTap={{ scale: isLocked ? 0.97 : 0.95 }}
+                whileHover={{ scale: isLocked ? 1.0 : 1.03 }}
+                onClick={() => open(action)}
+                aria-label={`Criar ${action.title}`}
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                style={{
+                  background: Colors.surface,
+                  boxShadow: Shadows.soft,
+                  opacity: isLocked ? 0.55 : 1,
+                }}
+              >
+                <div
+                  className="h-16 w-16 rounded-full grid place-items-center text-3xl relative"
+                  style={{ background: Colors.card, boxShadow: Shadows.soft }}
+                >
+                  {action.emoji}
+                  {isLocked && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full grid place-items-center"
+                      style={{ background: Colors.brand.primary }}
+                    >
+                      <Lock size={10} className="text-white" />
+                    </motion.div>
+                  )}
                 </div>
-              </div>
-            </motion.button>
-          ))}
+                <div className="text-center">
+                  <div
+                    className="text-xs font-semibold leading-tight"
+                    style={{ color: Colors.text.primary }}
+                  >
+                    {action.title}
+                  </div>
+                  {isLocked ? (
+                    <div
+                      className="text-[10px] mt-0.5 leading-tight line-clamp-2"
+                      style={{ color: Colors.text.secondary }}
+                    >
+                      {action.lockedReason}
+                    </div>
+                  ) : (
+                    <div
+                      className="text-[10px] mt-0.5 leading-tight"
+                      style={{ color: Colors.text.secondary }}
+                    >
+                      {getActionDescription(action.id)}
+                    </div>
+                  )}
+                </div>
+                {isLocked && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white"
+                    style={{ background: Colors.brand.primary }}
+                  >
+                    <Lock size={8} />
+                    Ativar
+                  </motion.div>
+                )}
+              </motion.button>
+            );
+          })}
         </motion.div>
       </div>
 
-      {requiredRole && (
-        <RoleActivationModal
-          open
-          role={requiredRole}
-          onClose={() => setRequiredRole(null)}
-        />
-      )}
+      {requiredRole && <RoleActivationModal open role={requiredRole} onClose={handleActivated} />}
     </div>
   );
+}
+
+function getActionDescription(id: string): string {
+  switch (id) {
+    case "photo":
+      return "Compartilhe uma foto";
+    case "video":
+      return "Grave ou envie um vídeo";
+    case "reel":
+      return "Vídeos curtos";
+    case "text":
+      return "Compartilhe uma ideia";
+    case "moment":
+      return "O que está acontecendo agora";
+    case "offer":
+      return "Criar oferta";
+    case "event":
+      return "Criar evento";
+    case "ride":
+      return "Oferecer ou pedir carona";
+    case "place":
+      return "Cadastrar um lugar";
+    default:
+      return "";
+  }
 }

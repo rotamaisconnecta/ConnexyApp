@@ -1,8 +1,14 @@
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { sheetOverlay, sheetContainer } from "./navigation-animations";
 import { CreateSheetItem } from "./create-sheet-item";
-import { CREATE_ACTIONS } from "@/lib/navigation/navigation-items";
+import { getStoredRoles } from "@/lib/roles/roles-storage";
+import { getCreateActionsForRoles } from "@/lib/roles/roles-engine";
+import type { CreateAction } from "@/lib/roles/roles-engine";
+import type { UserRole } from "@/lib/roles/roles-types";
+import RoleActivationModal from "@/components/roles/RoleActivationModal";
+import { Colors } from "@/theme";
 
 const overlayVariants = {
   hidden: { opacity: 0 },
@@ -37,9 +43,34 @@ interface CreateSheetProps {
 }
 
 export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
+  const [roles, setRoles] = useState(() => getStoredRoles().roles);
+  const [requiredRole, setRequiredRole] = useState<UserRole | null>(null);
+  const actions = getCreateActionsForRoles(roles);
+
+  const handleRoleChanged = useCallback(() => {
+    setRoles(getStoredRoles().roles);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("roleChanged", handleRoleChanged);
+    return () => window.removeEventListener("roleChanged", handleRoleChanged);
+  }, [handleRoleChanged]);
+
   function handleSelect(category: string) {
     onSelect?.(category);
     onClose();
+  }
+
+  function handleLocked(categoryId: string) {
+    const action = actions.find((a) => a.id === categoryId);
+    if (action?.requiredRole) {
+      setRequiredRole(action.requiredRole);
+    }
+  }
+
+  function handleActivated() {
+    setRoles(getStoredRoles().roles);
+    setRequiredRole(null);
   }
 
   return (
@@ -62,8 +93,10 @@ export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
             exit="exit"
             role="dialog"
             aria-label="Criar publicação"
-            className="fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-[36px] max-h-[90vh] overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 z-50 max-h-[90vh] overflow-hidden"
             style={{
+              background: Colors.surface,
+              borderRadius: "36px 36px 0 0",
               paddingBottom: "env(safe-area-inset-bottom)",
               paddingTop: "env(safe-area-inset-top)",
             }}
@@ -93,25 +126,61 @@ export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
                   variants={gridContainer}
                   initial="hidden"
                   animate="visible"
-                  className="grid grid-cols-2 gap-5 sm:grid-cols-3"
+                  className="grid grid-cols-3 gap-4"
                 >
-                  {CREATE_ACTIONS.map((action, i) => (
+                  {actions.map((action, i) => (
                     <CreateSheetItem
                       key={action.id}
                       categoryId={action.id}
                       emoji={action.emoji}
-                      label={action.label}
-                      description={action.description}
+                      label={action.title}
+                      description={
+                        action.enabled
+                          ? getActionDescription(action.id)
+                          : (action.lockedReason ?? "")
+                      }
                       index={i}
+                      enabled={action.enabled}
+                      lockedReason={action.lockedReason}
                       onSelect={handleSelect}
+                      onLocked={handleLocked}
                     />
                   ))}
                 </motion.div>
               </div>
             </div>
           </motion.div>
+
+          {requiredRole && (
+            <RoleActivationModal open role={requiredRole} onClose={handleActivated} />
+          )}
         </>
       )}
     </AnimatePresence>
   );
+}
+
+function getActionDescription(id: string): string {
+  switch (id) {
+    case "photo":
+      return "Compartilhe uma foto";
+    case "video":
+      return "Grave ou envie um vídeo";
+    case "reel":
+      return "Vídeos curtos";
+    case "text":
+      return "Compartilhe uma ideia";
+    case "moment":
+      return "O que está acontecendo agora";
+    case "offer":
+      return "Criar oferta";
+    case "event":
+      return "Criar evento";
+    case "ride":
+      return "Oferecer ou pedir carona";
+    case "place":
+      return "Cadastrar um lugar";
+    default:
+      return "";
+  }
 }
