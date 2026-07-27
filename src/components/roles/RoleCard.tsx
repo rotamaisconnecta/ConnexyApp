@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowRight } from "lucide-react";
-
-import RoleBadge from "./RoleBadge";
+import { CheckCircle2, ArrowRight, Lock } from "lucide-react";
 
 import { UserRole } from "@/lib/roles/roles-types";
+import { getRoleDefinition } from "@/lib/roles/roles-utils";
+import { BrandCard } from "@/components/ui/brand-card";
+import { BrandBadge } from "@/components/ui/brand-badge";
+import { BrandButton } from "@/components/ui/brand-button";
 
 interface RoleCardProps {
   role: UserRole;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   active?: boolean;
   onClick?: () => void;
 }
@@ -20,51 +22,64 @@ export default function RoleCard({
   active = false,
   onClick,
 }: RoleCardProps) {
+  const def = getRoleDefinition(role);
+  if (!def) return null;
+
+  const isUser = role === UserRole.USER;
+  const displayTitle = title ?? def.label;
+  const displayDescription = description ?? def.description;
+
   return (
-    <motion.button
+    <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.18 }}
-      onClick={onClick}
-      className={[
-        "w-full",
-        "rounded-3xl",
-        "border",
-        "p-5",
-        "text-left",
-        "transition-all",
-        active
-          ? "border-violet-500 bg-violet-50 shadow-lg"
-          : "border-border bg-card hover:border-violet-300 hover:shadow-md",
-      ].join(" ")}
     >
-      <div className="flex items-start justify-between">
-        <RoleBadge role={role} size="md" />
-        {active ? (
-          <CheckCircle2 size={24} className="text-violet-600" />
-        ) : (
-          <ArrowRight size={20} className="text-muted-foreground" />
+      <BrandCard
+        shadow={active ? "medium" : "soft"}
+        className={[
+          "relative overflow-hidden transition-all duration-200",
+          active ? "ring-2 ring-primary/20" : "hover:shadow-medium",
+        ].join(" ")}
+        onClick={isUser ? undefined : onClick}
+      >
+        {active && (
+          <div className="absolute top-0 left-0 h-1 w-full" style={{ background: def.color }} />
         )}
-      </div>
 
-      <div className="mt-5">
-        <h3 className="text-lg font-bold">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-      </div>
+        <div className="flex items-start justify-between">
+          <BrandBadge variant={active ? "success" : "default"}>
+            <span className="leading-none">{def.emoji}</span>
+            <span>{displayTitle}</span>
+          </BrandBadge>
 
-      <div className="mt-6">
-        {active ? (
-          <div className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-            Ativado
-          </div>
-        ) : (
-          <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            Disponível
-          </div>
-        )}
-      </div>
-    </motion.button>
+          {isUser ? (
+            <Lock size={16} className="text-muted-foreground shrink-0 mt-0.5" />
+          ) : active ? (
+            <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
+          ) : (
+            <ArrowRight size={18} className="text-muted-foreground shrink-0 mt-0.5" />
+          )}
+        </div>
+
+        <p className="mt-3 text-sm leading-5 text-muted-foreground">{displayDescription}</p>
+
+        <div className="mt-4">
+          {isUser ? (
+            <BrandBadge variant="default" className="text-[10px]">
+              Sempre ativo
+            </BrandBadge>
+          ) : active ? (
+            <BrandButton variant="outline" size="sm" className="w-full">
+              Desativar
+            </BrandButton>
+          ) : (
+            <BrandButton variant="primary" size="sm" className="w-full">
+              Ativar
+            </BrandButton>
+          )}
+        </div>
+      </BrandCard>
+    </motion.div>
   );
 }

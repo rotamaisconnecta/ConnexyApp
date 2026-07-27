@@ -1,45 +1,80 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
-import { ChevronLeft } from "lucide-react";
-import { StatusBar } from "@/components/phone-frame";
-import RoleSelector from "@/components/roles/RoleSelector";
-import RoleHeader from "@/components/roles/RoleHeader";
-import { RoleEmpty } from "@/components/roles/RoleEmpty";
-import RoleBadge from "@/components/roles/RoleBadge";
-import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
-import { getStoredRoles, saveRoles } from "@/lib/roles/roles-storage";
-import { getActivatableRoles } from "@/lib/roles/roles-utils";
 import { motion } from "framer-motion";
+import { ChevronLeft, Check } from "lucide-react";
+
+import { StatusBar } from "@/components/phone-frame";
+import RoleHeader from "@/components/roles/RoleHeader";
+import RoleSwitcher from "@/components/roles/RoleSwitcher";
+import RoleSelector from "@/components/roles/RoleSelector";
+import RoleBadge from "@/components/roles/RoleBadge";
+import { BrandCard } from "@/components/ui/brand-card";
+import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
+import { getStoredRoles } from "@/lib/roles/roles-storage";
+import { getPermissionsForRoles } from "@/lib/roles/roles-utils";
+import { Colors } from "@/theme";
 
 export const Route = createFileRoute("/_app/profile/roles")({
   head: () => ({ meta: [{ title: "Funcionalidades — Connexy" }] }),
   component: RolesPage,
 });
 
+const PERMISSION_LABELS: Record<keyof import("@/lib/roles/roles-types").UserPermissions, string> = {
+  canDrive: "Dirigir",
+  canPublishRide: "Publicar caronas",
+  canReceiveRide: "Receber caronas",
+  canCreateBusiness: "Criar empresa",
+  canCreateOffer: "Criar ofertas",
+  canManageCoupons: "Gerenciar cupons",
+  canManageEmployees: "Gerenciar funcionários",
+  canCreateCampaigns: "Criar campanhas",
+  canCreateEvent: "Criar eventos",
+  canManageEvents: "Gerenciar eventos",
+  canCreatePlace: "Criar places",
+  canCreateReel: "Criar reels",
+  canPublishMoment: "Publicar moments",
+  canPublishPhoto: "Publicar fotos",
+  canPublishVideo: "Publicar vídeos",
+  canPublishText: "Publicar textos",
+  canAccessDriverDashboard: "Dashboard motorista",
+  canAccessBusinessDashboard: "Dashboard empresa",
+  canSeeAnalytics: "Ver analytics",
+  canModerateCommunity: "Moderar comunidade",
+  canReceivePayments: "Receber pagamentos",
+};
+
+const PERMISSION_ICONS: Record<keyof import("@/lib/roles/roles-types").UserPermissions, string> = {
+  canDrive: "🚗",
+  canPublishRide: "📢",
+  canReceiveRide: "🎯",
+  canCreateBusiness: "🏢",
+  canCreateOffer: "💰",
+  canManageCoupons: "🎟",
+  canManageEmployees: "👥",
+  canCreateCampaigns: "📣",
+  canCreateEvent: "📅",
+  canManageEvents: "⚙",
+  canCreatePlace: "📍",
+  canCreateReel: "🎬",
+  canPublishMoment: "✨",
+  canPublishPhoto: "📸",
+  canPublishVideo: "🎥",
+  canPublishText: "📝",
+  canAccessDriverDashboard: "📊",
+  canAccessBusinessDashboard: "📊",
+  canSeeAnalytics: "📈",
+  canModerateCommunity: "🛡",
+  canReceivePayments: "💳",
+};
+
 function RolesPage() {
   const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
-  const activatable = getActivatableRoles();
   const activeCount = rolesState.roles.filter((r) => r !== UserRole.USER).length;
+  const permissions = getPermissionsForRoles(rolesState.roles);
 
-  const handleToggleRole = useCallback((role: UserRole) => {
-    setRolesState((prev) => {
-      const hasRole = prev.roles.includes(role);
-      const newRoles = hasRole ? prev.roles.filter((r) => r !== role) : [...prev.roles, role];
-
-      if (newRoles.length === 0) newRoles.push(UserRole.USER);
-
-      const newMode = hasRole && prev.activeMode === role ? UserRole.USER : prev.activeMode;
-
-      const next: UserRolesState = {
-        ...prev,
-        roles: newRoles,
-        activeMode: newMode,
-        lastMode: newMode,
-      };
-      saveRoles(next);
-      return next;
-    });
-  }, []);
+  function handleRoleChanged() {
+    setRolesState(getStoredRoles());
+  }
 
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
@@ -70,14 +105,49 @@ function RolesPage() {
           ))}
         </motion.div>
 
+        {/* Mode switcher */}
+        <div className="mb-5">
+          <p className="text-xs font-medium mb-2" style={{ color: Colors.text.secondary }}>
+            Modo ativo
+          </p>
+          <RoleSwitcher onChange={handleRoleChanged} />
+        </div>
+
         {/* Role selector */}
         <RoleHeader />
         <RoleSelector />
 
-        {activeCount === 0 && (
-          <div className="mt-4">
-            <RoleEmpty />
-          </div>
+        {/* Permissions summary */}
+        {activeCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-6"
+          >
+            <h3 className="text-sm font-bold mb-3" style={{ color: Colors.text.primary }}>
+              Permissões ativas
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(PERMISSION_LABELS) as (keyof typeof PERMISSION_LABELS)[]).map((key) => {
+                const allowed = permissions[key];
+                return (
+                  <BrandCard key={key} padding shadow="soft" className="flex items-center gap-2">
+                    <span className="text-sm leading-none">{PERMISSION_ICONS[key]}</span>
+                    <span
+                      className="text-xs flex-1 min-w-0 truncate"
+                      style={{ color: Colors.text.primary }}
+                    >
+                      {PERMISSION_LABELS[key]}
+                    </span>
+                    {allowed && (
+                      <Check size={14} style={{ color: Colors.success }} className="shrink-0" />
+                    )}
+                  </BrandCard>
+                );
+              })}
+            </div>
+          </motion.div>
         )}
 
         {/* Info */}

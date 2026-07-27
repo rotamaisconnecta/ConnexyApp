@@ -1,17 +1,28 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface RoleGridProps {
   children: ReactNode;
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
+    },
+  },
+};
+
 export default function RoleGrid({ children }: RoleGridProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 w-full"
+      variants={container}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full"
     >
       {children}
     </motion.div>

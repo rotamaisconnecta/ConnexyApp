@@ -4,75 +4,52 @@
    Mock States
 ============================================================ */
 
-import { UserRole, UserRolesState } from "./roles-types";
+import { UserRole, UserPermissions, RoleMode } from "./roles-types";
+import { getPermissionsForRoles } from "./roles-utils";
 
-export const mockCommonUser: UserRolesState = {
+export interface RoleMockState {
+  roles: UserRole[];
+  activeMode: RoleMode;
+  permissions: UserPermissions;
+}
+
+export const mockCommonUser: RoleMockState = {
   roles: [UserRole.USER],
   activeMode: UserRole.USER,
-  lastMode: UserRole.USER,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([UserRole.USER]),
 };
 
-export const mockDriver: UserRolesState = {
+export const mockDriver: RoleMockState = {
   roles: [UserRole.USER, UserRole.DRIVER],
   activeMode: UserRole.DRIVER,
-  lastMode: UserRole.USER,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([UserRole.USER, UserRole.DRIVER]),
 };
 
-export const mockBusiness: UserRolesState = {
+export const mockBusiness: RoleMockState = {
   roles: [UserRole.USER, UserRole.BUSINESS],
   activeMode: UserRole.BUSINESS,
-  lastMode: UserRole.USER,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([UserRole.USER, UserRole.BUSINESS]),
 };
 
-export const mockDriverBusiness: UserRolesState = {
+export const mockDriverBusiness: RoleMockState = {
   roles: [UserRole.USER, UserRole.DRIVER, UserRole.BUSINESS],
   activeMode: UserRole.DRIVER,
-  lastMode: UserRole.BUSINESS,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([UserRole.USER, UserRole.DRIVER, UserRole.BUSINESS]),
 };
 
-export const mockBusinessEvents: UserRolesState = {
+export const mockBusinessEvents: RoleMockState = {
   roles: [UserRole.USER, UserRole.BUSINESS, UserRole.EVENT_CREATOR],
   activeMode: UserRole.BUSINESS,
-  lastMode: UserRole.USER,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([UserRole.USER, UserRole.BUSINESS, UserRole.EVENT_CREATOR]),
 };
 
-export const mockCreator: UserRolesState = {
+export const mockContentCreator: RoleMockState = {
   roles: [UserRole.USER, UserRole.REELS_CREATOR],
   activeMode: UserRole.USER,
-  lastMode: UserRole.USER,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([UserRole.USER, UserRole.REELS_CREATOR]),
 };
 
-export const mockAllRoles: UserRolesState = {
+export const mockAllRoles: RoleMockState = {
   roles: [
     UserRole.USER,
     UserRole.DRIVER,
@@ -82,10 +59,12 @@ export const mockAllRoles: UserRolesState = {
     UserRole.REELS_CREATOR,
   ],
   activeMode: UserRole.USER,
-  lastMode: UserRole.USER,
-  activatedAt: new Date().toISOString(),
-  preferences: {
-    rememberLastMode: true,
-    showRoleSuggestions: true,
-  },
+  permissions: getPermissionsForRoles([
+    UserRole.USER,
+    UserRole.DRIVER,
+    UserRole.BUSINESS,
+    UserRole.EVENT_CREATOR,
+    UserRole.PLACE_OWNER,
+    UserRole.REELS_CREATOR,
+  ]),
 };

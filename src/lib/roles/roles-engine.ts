@@ -142,3 +142,151 @@ export function getMapFilters(activeRole: UserRole) {
 export function getShortcuts(activeRole: UserRole) {
   return getEngineConfiguration(activeRole).shortcuts;
 }
+
+/* ─── Bottom Nav Config ──────────────────────────────────── */
+
+export interface BottomNavConfig {
+  leftItems: BottomNavItem[];
+  centerItem: BottomNavItem;
+  rightItems: BottomNavItem[];
+}
+
+const CENTER_ITEM: BottomNavItem = {
+  id: "create",
+  label: "Criar",
+  icon: "Plus",
+  route: "/create",
+};
+
+export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
+  switch (activeRole) {
+    case UserRole.DRIVER:
+      return {
+        leftItems: [
+          { id: "dashboard", label: "Painel", icon: "Car", route: "/driver" },
+          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
+        ],
+        centerItem: CENTER_ITEM,
+        rightItems: [
+          { id: "rides", label: "Corridas", icon: "Navigation", route: "/driver" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+      };
+
+    case UserRole.BUSINESS:
+      return {
+        leftItems: [
+          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "marketplace", label: "Marketplace", icon: "Store", route: "/marketplace" },
+        ],
+        centerItem: CENTER_ITEM,
+        rightItems: [
+          { id: "chat", label: "Chat", icon: "MessageCircle", route: "/chat" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+      };
+
+    case UserRole.EVENT_CREATOR:
+      return {
+        leftItems: [
+          { id: "events", label: "Eventos", icon: "Calendar", route: "/events" },
+          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
+        ],
+        centerItem: CENTER_ITEM,
+        rightItems: [
+          { id: "publications", label: "Publicações", icon: "FileText", route: "/feed" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+      };
+
+    case UserRole.PLACE_OWNER:
+      return {
+        leftItems: [
+          { id: "my-place", label: "Meu Local", icon: "MapPin", route: "/local" },
+          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
+        ],
+        centerItem: CENTER_ITEM,
+        rightItems: [
+          { id: "marketplace", label: "Marketplace", icon: "Store", route: "/marketplace" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+      };
+
+    case UserRole.REELS_CREATOR:
+      return {
+        leftItems: [
+          { id: "feed", label: "Feed", icon: "Home", route: "/feed" },
+          { id: "reels", label: "Reels", icon: "Film", route: "/reels" },
+        ],
+        centerItem: CENTER_ITEM,
+        rightItems: [
+          { id: "messages", label: "Mensagens", icon: "MessageCircle", route: "/chat" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+      };
+
+    default:
+      return {
+        leftItems: [
+          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
+        ],
+        centerItem: CENTER_ITEM,
+        rightItems: [
+          { id: "chat", label: "Chat", icon: "MessageCircle", route: "/chat" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+      };
+  }
+}
+
+/* ─── Map Filters per Role ───────────────────────────────── */
+
+export function getMapFiltersForRole(activeRole: UserRole): MapFilter[] {
+  switch (activeRole) {
+    case UserRole.DRIVER:
+      return [
+        { id: "passengers", enabled: true },
+        { id: "demand", enabled: true },
+        { id: "hotspots", enabled: true },
+        { id: "events", enabled: true },
+      ];
+
+    case UserRole.BUSINESS:
+      return [
+        { id: "customers", enabled: true },
+        { id: "offers", enabled: true },
+        { id: "businesses", enabled: true },
+        { id: "traffic", enabled: true },
+      ];
+
+    case UserRole.EVENT_CREATOR:
+      return [
+        { id: "attendees", enabled: true },
+        { id: "checkins", enabled: true },
+        { id: "events", enabled: true },
+      ];
+
+    case UserRole.PLACE_OWNER:
+      return [
+        { id: "visitors", enabled: true },
+        { id: "places", enabled: true },
+        { id: "traffic", enabled: true },
+      ];
+
+    case UserRole.REELS_CREATOR:
+      return [
+        { id: "people", enabled: true },
+        { id: "trending", enabled: true },
+        { id: "reels", enabled: true },
+      ];
+
+    default:
+      return [
+        { id: "people", enabled: true },
+        { id: "events", enabled: true },
+        { id: "businesses", enabled: true },
+        { id: "offers", enabled: true },
+      ];
+  }
+}
