@@ -1,6 +1,6 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useContext } from "react";
 import { motion, LayoutGroup, AnimatePresence } from "framer-motion";
-import { useContextEngine } from "@/lib/context/use-context";
+import { ContextEngineContext } from "@/lib/context/context-provider";
 import { buildFeed } from "@/lib/feed/feed-builder";
 import { useLiveUpdates } from "@/lib/live/live-hooks";
 import { LIVE_EVENT_META } from "@/lib/live/live-events";
@@ -25,20 +25,65 @@ import type {
   FooterSectionData,
 } from "@/lib/feed/feed-types";
 
-export function SmartFeed() {
-  const { state } = useContextEngine();
-  const [feedKey, setFeedKey] = useState(0);
+function useContextEngineSafe() {
+  const ctx = useContext(ContextEngineContext);
+  if (!ctx) return null;
+  return ctx.state;
+}
 
+export function SmartFeed() {
+  const [feedError, setFeedError] = useState(false);
+  const [feedKey, setFeedKey] = useState(0);
   const { lastEvent } = useLiveUpdates(20);
 
   const rebuildFeed = useCallback(() => {
     setFeedKey((k) => k + 1);
   }, []);
 
+  const state = useContextEngineSafe();
+
   const sections = useMemo(() => {
-    void feedKey;
-    return buildFeed(state);
+    if (!state) return [];
+    try {
+      void feedKey;
+      return buildFeed(state);
+    } catch {
+      return [];
+    }
   }, [state, feedKey]);
+
+  if (!state || feedError) {
+    return (
+      <div className="mx-4 p-6 rounded-3xl bg-surface border border-border shadow-soft text-center">
+        <p className="text-sm text-muted-foreground">Feed temporariamente indisponível.</p>
+        <button
+          type="button"
+          onClick={() => {
+            setFeedError(false);
+            setFeedKey((k) => k + 1);
+          }}
+          className="mt-3 rounded-full bg-gradient-brand px-5 py-2 text-xs font-semibold text-white"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
+
+  if (sections.length === 0) {
+    return (
+      <div className="mx-4 p-6 rounded-3xl bg-surface border border-border shadow-soft text-center">
+        <p className="text-sm text-muted-foreground">Erro ao montar feed.</p>
+        <button
+          type="button"
+          onClick={() => setFeedKey((k) => k + 1)}
+          className="mt-3 rounded-full bg-gradient-brand px-5 py-2 text-xs font-semibold text-white"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   const livePulse = lastEvent ? (LIVE_EVENT_META[lastEvent.type] ?? null) : null;
 

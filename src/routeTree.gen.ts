@@ -53,7 +53,13 @@ import { Route as AppReelsReelIdRouteImport } from './routes/_app/reels/$reelId'
 import { Route as AppProfileRolesRouteImport } from './routes/_app/profile/roles'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
+import { Route as AppGerenciarNovoVideoRouteImport } from './routes/_app.gerenciar.novo-video'
+import { Route as AppGerenciarNovoTextoRouteImport } from './routes/_app.gerenciar.novo-texto'
 import { Route as AppGerenciarNovoReelRouteImport } from './routes/_app.gerenciar.novo-reel'
+import { Route as AppGerenciarNovoLocalRouteImport } from './routes/_app.gerenciar.novo-local'
+import { Route as AppGerenciarNovoEventoRouteImport } from './routes/_app.gerenciar.novo-evento'
+import { Route as AppGerenciarNovaOfertaRouteImport } from './routes/_app.gerenciar.nova-oferta'
+import { Route as AppGerenciarNovaFotoRouteImport } from './routes/_app.gerenciar.nova-foto'
 import { Route as AppEventEventIdRouteImport } from './routes/_app/event.$eventId'
 import { Route as AppDriverProfileRouteImport } from './routes/_app/driver/profile'
 import { Route as AppDriverPerformanceRouteImport } from './routes/_app/driver/performance'
@@ -293,9 +299,39 @@ const AppLocalIdRoute = AppLocalIdRouteImport.update({
   path: '/local/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGerenciarNovoVideoRoute = AppGerenciarNovoVideoRouteImport.update({
+  id: '/novo-video',
+  path: '/novo-video',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
+const AppGerenciarNovoTextoRoute = AppGerenciarNovoTextoRouteImport.update({
+  id: '/novo-texto',
+  path: '/novo-texto',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
 const AppGerenciarNovoReelRoute = AppGerenciarNovoReelRouteImport.update({
   id: '/novo-reel',
   path: '/novo-reel',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
+const AppGerenciarNovoLocalRoute = AppGerenciarNovoLocalRouteImport.update({
+  id: '/novo-local',
+  path: '/novo-local',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
+const AppGerenciarNovoEventoRoute = AppGerenciarNovoEventoRouteImport.update({
+  id: '/novo-evento',
+  path: '/novo-evento',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
+const AppGerenciarNovaOfertaRoute = AppGerenciarNovaOfertaRouteImport.update({
+  id: '/nova-oferta',
+  path: '/nova-oferta',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
+const AppGerenciarNovaFotoRoute = AppGerenciarNovaFotoRouteImport.update({
+  id: '/nova-foto',
+  path: '/nova-foto',
   getParentRoute: () => AppGerenciarRoute,
 } as any)
 const AppEventEventIdRoute = AppEventEventIdRouteImport.update({
@@ -445,7 +481,13 @@ export interface FileRoutesByFullPath {
   '/driver/performance': typeof AppDriverPerformanceRoute
   '/driver/profile': typeof AppDriverProfileRoute
   '/event/$eventId': typeof AppEventEventIdRoute
+  '/gerenciar/nova-foto': typeof AppGerenciarNovaFotoRoute
+  '/gerenciar/nova-oferta': typeof AppGerenciarNovaOfertaRoute
+  '/gerenciar/novo-evento': typeof AppGerenciarNovoEventoRoute
+  '/gerenciar/novo-local': typeof AppGerenciarNovoLocalRoute
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
+  '/gerenciar/novo-texto': typeof AppGerenciarNovoTextoRoute
+  '/gerenciar/novo-video': typeof AppGerenciarNovoVideoRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/profile/roles': typeof AppProfileRolesRoute
@@ -510,7 +552,13 @@ export interface FileRoutesByTo {
   '/driver/performance': typeof AppDriverPerformanceRoute
   '/driver/profile': typeof AppDriverProfileRoute
   '/event/$eventId': typeof AppEventEventIdRoute
+  '/gerenciar/nova-foto': typeof AppGerenciarNovaFotoRoute
+  '/gerenciar/nova-oferta': typeof AppGerenciarNovaOfertaRoute
+  '/gerenciar/novo-evento': typeof AppGerenciarNovoEventoRoute
+  '/gerenciar/novo-local': typeof AppGerenciarNovoLocalRoute
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
+  '/gerenciar/novo-texto': typeof AppGerenciarNovoTextoRoute
+  '/gerenciar/novo-video': typeof AppGerenciarNovoVideoRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/profile/roles': typeof AppProfileRolesRoute
@@ -577,7 +625,13 @@ export interface FileRoutesById {
   '/_app/driver/performance': typeof AppDriverPerformanceRoute
   '/_app/driver/profile': typeof AppDriverProfileRoute
   '/_app/event/$eventId': typeof AppEventEventIdRoute
+  '/_app/gerenciar/nova-foto': typeof AppGerenciarNovaFotoRoute
+  '/_app/gerenciar/nova-oferta': typeof AppGerenciarNovaOfertaRoute
+  '/_app/gerenciar/novo-evento': typeof AppGerenciarNovoEventoRoute
+  '/_app/gerenciar/novo-local': typeof AppGerenciarNovoLocalRoute
   '/_app/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
+  '/_app/gerenciar/novo-texto': typeof AppGerenciarNovoTextoRoute
+  '/_app/gerenciar/novo-video': typeof AppGerenciarNovoVideoRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
   '/_app/profile/roles': typeof AppProfileRolesRoute
@@ -644,7 +698,13 @@ export interface FileRouteTypes {
     | '/driver/performance'
     | '/driver/profile'
     | '/event/$eventId'
+    | '/gerenciar/nova-foto'
+    | '/gerenciar/nova-oferta'
+    | '/gerenciar/novo-evento'
+    | '/gerenciar/novo-local'
     | '/gerenciar/novo-reel'
+    | '/gerenciar/novo-texto'
+    | '/gerenciar/novo-video'
     | '/local/$id'
     | '/perfil/$id'
     | '/profile/roles'
@@ -709,7 +769,13 @@ export interface FileRouteTypes {
     | '/driver/performance'
     | '/driver/profile'
     | '/event/$eventId'
+    | '/gerenciar/nova-foto'
+    | '/gerenciar/nova-oferta'
+    | '/gerenciar/novo-evento'
+    | '/gerenciar/novo-local'
     | '/gerenciar/novo-reel'
+    | '/gerenciar/novo-texto'
+    | '/gerenciar/novo-video'
     | '/local/$id'
     | '/perfil/$id'
     | '/profile/roles'
@@ -775,7 +841,13 @@ export interface FileRouteTypes {
     | '/_app/driver/performance'
     | '/_app/driver/profile'
     | '/_app/event/$eventId'
+    | '/_app/gerenciar/nova-foto'
+    | '/_app/gerenciar/nova-oferta'
+    | '/_app/gerenciar/novo-evento'
+    | '/_app/gerenciar/novo-local'
     | '/_app/gerenciar/novo-reel'
+    | '/_app/gerenciar/novo-texto'
+    | '/_app/gerenciar/novo-video'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
     | '/_app/profile/roles'
@@ -1112,11 +1184,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLocalIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/gerenciar/novo-video': {
+      id: '/_app/gerenciar/novo-video'
+      path: '/novo-video'
+      fullPath: '/gerenciar/novo-video'
+      preLoaderRoute: typeof AppGerenciarNovoVideoRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
+    '/_app/gerenciar/novo-texto': {
+      id: '/_app/gerenciar/novo-texto'
+      path: '/novo-texto'
+      fullPath: '/gerenciar/novo-texto'
+      preLoaderRoute: typeof AppGerenciarNovoTextoRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
     '/_app/gerenciar/novo-reel': {
       id: '/_app/gerenciar/novo-reel'
       path: '/novo-reel'
       fullPath: '/gerenciar/novo-reel'
       preLoaderRoute: typeof AppGerenciarNovoReelRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
+    '/_app/gerenciar/novo-local': {
+      id: '/_app/gerenciar/novo-local'
+      path: '/novo-local'
+      fullPath: '/gerenciar/novo-local'
+      preLoaderRoute: typeof AppGerenciarNovoLocalRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
+    '/_app/gerenciar/novo-evento': {
+      id: '/_app/gerenciar/novo-evento'
+      path: '/novo-evento'
+      fullPath: '/gerenciar/novo-evento'
+      preLoaderRoute: typeof AppGerenciarNovoEventoRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
+    '/_app/gerenciar/nova-oferta': {
+      id: '/_app/gerenciar/nova-oferta'
+      path: '/nova-oferta'
+      fullPath: '/gerenciar/nova-oferta'
+      preLoaderRoute: typeof AppGerenciarNovaOfertaRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
+    '/_app/gerenciar/nova-foto': {
+      id: '/_app/gerenciar/nova-foto'
+      path: '/nova-foto'
+      fullPath: '/gerenciar/nova-foto'
+      preLoaderRoute: typeof AppGerenciarNovaFotoRouteImport
       parentRoute: typeof AppGerenciarRoute
     }
     '/_app/event/$eventId': {
@@ -1297,11 +1411,23 @@ const AppCreateRouteWithChildren = AppCreateRoute._addFileChildren(
 )
 
 interface AppGerenciarRouteChildren {
+  AppGerenciarNovaFotoRoute: typeof AppGerenciarNovaFotoRoute
+  AppGerenciarNovaOfertaRoute: typeof AppGerenciarNovaOfertaRoute
+  AppGerenciarNovoEventoRoute: typeof AppGerenciarNovoEventoRoute
+  AppGerenciarNovoLocalRoute: typeof AppGerenciarNovoLocalRoute
   AppGerenciarNovoReelRoute: typeof AppGerenciarNovoReelRoute
+  AppGerenciarNovoTextoRoute: typeof AppGerenciarNovoTextoRoute
+  AppGerenciarNovoVideoRoute: typeof AppGerenciarNovoVideoRoute
 }
 
 const AppGerenciarRouteChildren: AppGerenciarRouteChildren = {
+  AppGerenciarNovaFotoRoute: AppGerenciarNovaFotoRoute,
+  AppGerenciarNovaOfertaRoute: AppGerenciarNovaOfertaRoute,
+  AppGerenciarNovoEventoRoute: AppGerenciarNovoEventoRoute,
+  AppGerenciarNovoLocalRoute: AppGerenciarNovoLocalRoute,
   AppGerenciarNovoReelRoute: AppGerenciarNovoReelRoute,
+  AppGerenciarNovoTextoRoute: AppGerenciarNovoTextoRoute,
+  AppGerenciarNovoVideoRoute: AppGerenciarNovoVideoRoute,
 }
 
 const AppGerenciarRouteWithChildren = AppGerenciarRoute._addFileChildren(

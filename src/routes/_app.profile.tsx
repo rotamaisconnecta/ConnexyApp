@@ -92,9 +92,7 @@ function ProfilePage() {
       {/* ── Role Switcher ───────────────────────────────────── */}
 
       <div className="px-4 mb-3">
-        <RoleSwitcher
-          onChange={handleModeChange}
-        />
+        <RoleSwitcher onChange={handleModeChange} />
       </div>
 
       {/* ── Hero ──────────────────────────────────────────── */}

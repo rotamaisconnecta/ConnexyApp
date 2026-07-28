@@ -90,10 +90,7 @@ export function toggleRole(role: UserRole) {
   }
 }
 
-export function updatePreferences(
-  rememberLastMode: boolean,
-  showRoleSuggestions: boolean,
-) {
+export function updatePreferences(rememberLastMode: boolean, showRoleSuggestions: boolean) {
   const state = getStoredRoles();
   state.preferences.rememberLastMode = rememberLastMode;
   state.preferences.showRoleSuggestions = showRoleSuggestions;

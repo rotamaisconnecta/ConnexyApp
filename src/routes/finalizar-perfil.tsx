@@ -1,7 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import { ImagePlus, MapPin, Plus, ShieldCheck, UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ImagePlus,
+  MapPin,
+  Plus,
+  ShieldCheck,
+  UserRound,
+  CheckCircle2,
+  Loader2,
+  Camera,
+  Smartphone,
+  Mail,
+  FileText,
+} from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const Route = createFileRoute("/finalizar-perfil")({
   head: () => ({ meta: [{ title: "Finalize seu perfil | Connexy" }] }),
@@ -15,12 +28,52 @@ const statuses = [
   { label: "Nao perturbe", color: "bg-rose-500" },
 ];
 
+const verificationMethods = [
+  { id: "documento", label: "Documento", icon: FileText, desc: "Envie foto do seu documento" },
+  { id: "selfie", label: "Selfie", icon: Camera, desc: "Tire uma selfie para confirmacao" },
+  { id: "telefone", label: "Telefone", icon: Smartphone, desc: "Receba um codigo por SMS" },
+  { id: "email", label: "Email", icon: Mail, desc: "Receba um codigo por email" },
+];
+
+type VerificationStep = "choose" | "progress" | "done";
+
 function FinishProfile() {
   const nav = useNavigate();
   const inputs = useRef<Array<HTMLInputElement | null>>([]);
   const [photos, setPhotos] = useState<Array<string | null>>([null, null, null, null, null]);
   const [gender, setGender] = useState("Masculino");
   const [status, setStatus] = useState("Disponivel");
+  const [location, setLocation] = useState("Carregando localizacao...");
+  const [locationLoading, setLocationLoading] = useState(true);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [showManualLocation, setShowManualLocation] = useState(false);
+  const [manualLocation, setManualLocation] = useState("");
+  const [verifStep, setVerifStep] = useState<VerificationStep>("choose");
+  const [verifProgress, setVerifProgress] = useState(0);
+  const [verifMethod, setVerifMethod] = useState("");
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocation("Localizacao indisponivel");
+      setLocationLoading(false);
+      setLocationDenied(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        setLocationLoading(false);
+      },
+      () => {
+        setLocation("Localizacao nao concedida");
+        setLocationLoading(false);
+        setLocationDenied(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
+  }, []);
 
   function addPhoto(index: number, file?: File) {
     if (!file) return;
@@ -29,6 +82,22 @@ function FinishProfile() {
         photoIndex === index ? URL.createObjectURL(file) : photo,
       ),
     );
+  }
+
+  function startVerification(methodId: string) {
+    setVerifMethod(methodId);
+    setVerifStep("progress");
+    setVerifProgress(0);
+    const interval = setInterval(() => {
+      setVerifProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => setVerifStep("done"), 300);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 300);
   }
 
   return (
@@ -128,13 +197,44 @@ function FinishProfile() {
 
           <section className="mt-8">
             <h2 className="text-xl font-semibold">Localizacao aproximada</h2>
-            <div className="mt-3 flex h-14 items-center gap-3 rounded-2xl border border-violet-100 px-4 shadow-sm">
-              <MapPin className="h-5 w-5 text-violet-600" />
-              <span className="min-w-0 flex-1 truncate text-lg">Sao Paulo, SP - Brasil</span>
-              <button type="button" className="font-medium text-violet-600">
-                Alterar
-              </button>
-            </div>
+            {showManualLocation || locationDenied ? (
+              <div className="mt-3 space-y-2">
+                <div className="flex h-14 items-center gap-3 rounded-2xl border border-violet-100 px-4 shadow-sm">
+                  <MapPin className="h-5 w-5 shrink-0 text-violet-600" />
+                  <input
+                    type="text"
+                    value={manualLocation}
+                    onChange={(e) => setManualLocation(e.target.value)}
+                    placeholder="Digite sua cidade ou endereco"
+                    className="min-w-0 flex-1 bg-transparent text-lg outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowManualLocation(false)}
+                  className="text-sm font-medium text-violet-600"
+                >
+                  Usar localizacao automatica
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 flex h-14 items-center gap-3 rounded-2xl border border-violet-100 px-4 shadow-sm">
+                <MapPin className="h-5 w-5 shrink-0 text-violet-600" />
+                {locationLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : null}
+                <span className="min-w-0 flex-1 truncate text-lg">
+                  {locationLoading ? "Obtendo localizacao..." : location}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowManualLocation(true)}
+                  className="shrink-0 font-medium text-violet-600"
+                >
+                  Alterar localizacao
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="mt-8">
@@ -162,18 +262,90 @@ function FinishProfile() {
               Verificacao de perfil{" "}
               <span className="font-normal text-muted-foreground">(opcional)</span>
             </h2>
-            <div className="mt-3 flex items-center gap-3 rounded-2xl border border-violet-100 p-3 shadow-sm">
-              <ShieldCheck className="h-8 w-8 shrink-0 text-violet-600" />
-              <p className="min-w-0 flex-1 text-sm leading-5 text-muted-foreground">
-                Verifique seu perfil e ganhe mais confianca da comunidade.
-              </p>
-              <button
-                type="button"
-                className="shrink-0 rounded-xl border border-violet-500 px-3 py-2 text-sm font-medium text-violet-600"
-              >
-                Verificar agora
-              </button>
-            </div>
+
+            <AnimatePresence mode="wait">
+              {verifStep === "choose" && (
+                <motion.div
+                  key="choose"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="mt-3 space-y-2"
+                >
+                  <div className="flex items-center gap-3 rounded-2xl border border-violet-100 p-3 shadow-sm">
+                    <ShieldCheck className="h-8 w-8 shrink-0 text-violet-600" />
+                    <p className="min-w-0 flex-1 text-sm leading-5 text-muted-foreground">
+                      Verifique seu perfil e ganhe mais confianca da comunidade.
+                    </p>
+                  </div>
+                  <p className="text-sm font-medium text-foreground">Escolha um metodo:</p>
+                  {verificationMethods.map((method) => (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => startVerification(method.id)}
+                      className="flex w-full items-center gap-3 rounded-2xl border border-violet-100 p-3 shadow-sm hover:bg-violet-50 transition-colors"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                        <method.icon className="h-5 w-5" />
+                      </span>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-semibold">{method.label}</div>
+                        <div className="text-xs text-muted-foreground">{method.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+
+              {verifStep === "progress" && (
+                <motion.div
+                  key="progress"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="mt-3 space-y-3 rounded-2xl border border-violet-100 p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
+                    <div>
+                      <p className="text-sm font-semibold">Verificando...</p>
+                      <p className="text-xs text-muted-foreground">
+                        Metodo: {verificationMethods.find((m) => m.id === verifMethod)?.label}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-violet-100">
+                    <motion.div
+                      className="h-2 rounded-full bg-gradient-brand"
+                      initial={{ width: "0%" }}
+                      animate={{ width: `${verifProgress}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">{verifProgress}%</p>
+                </motion.div>
+              )}
+
+              {verifStep === "done" && (
+                <motion.div
+                  key="done"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="mt-3 space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-8 w-8 shrink-0 text-emerald-500" />
+                    <div>
+                      <p className="text-sm font-bold text-emerald-700">Perfil verificado!</p>
+                      <p className="text-xs text-emerald-600">
+                        Sua conta agora possui o selo de verificacao.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           <button

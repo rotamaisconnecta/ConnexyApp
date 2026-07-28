@@ -134,10 +134,7 @@ export function getActivatableRoles(): RoleDefinition[] {
   return ROLE_DEFINITIONS.filter((r) => r.id !== UserRole.USER);
 }
 
-export function canUserCreateCategory(
-  category: string,
-  permissions: UserPermissions,
-): boolean {
+export function canUserCreateCategory(category: string, permissions: UserPermissions): boolean {
   switch (category.toLowerCase()) {
     case "photo":
       return permissions.canPublishPhoto;

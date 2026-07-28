@@ -4,6 +4,7 @@ import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
 import { PromoPopup } from "@/components/promo-popup";
 import { useAuth } from "@/hooks/use-auth";
+import { ContextEngineProvider } from "@/lib/context/context-provider";
 import { Loader2 } from "lucide-react";
 import { getActiveMode } from "@/lib/roles/roles-storage";
 import type { RoleMode } from "@/lib/roles/roles-types";
@@ -42,13 +43,15 @@ function AppLayout() {
 
   return (
     <PhoneFrame>
-      <div className="flex-1 flex flex-col relative overflow-hidden">
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-2">
-          <Outlet />
+      <ContextEngineProvider>
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          <div className="flex-1 overflow-y-auto no-scrollbar pb-2">
+            <Outlet />
+          </div>
+          <PromoPopup />
+          <BottomNav activeRole={activeMode} />
         </div>
-        <PromoPopup />
-        <BottomNav activeRole={activeMode} />
-      </div>
+      </ContextEngineProvider>
     </PhoneFrame>
   );
 }
