@@ -103,8 +103,8 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
           { id: "drivers", enabled: true },
         ],
         shortcuts: [
-          { id: "people", title: "Pessoas Próximas", route: "/people" },
-          { id: "events", title: "Eventos", route: "/events" },
+          { id: "people", title: "Pessoas Próximas", route: "/pessoas" },
+          { id: "events", title: "Eventos", route: "/feed" },
         ],
         priorityModules: ["feed", "people", "events", "reels"],
         createActions: ["photo", "video", "text", "moment", "reel"],
@@ -286,7 +286,7 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
         ],
         centerItem: CENTER_ITEM,
         rightItems: [
-          { id: "rides", label: "Corridas", icon: "Navigation", route: "/driver" },
+          { id: "rides", label: "Corridas", icon: "Navigation", route: "/driver/history" },
           { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
         ],
       };
@@ -307,7 +307,7 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
     case UserRole.EVENT_CREATOR:
       return {
         leftItems: [
-          { id: "events", label: "Eventos", icon: "Calendar", route: "/events" },
+          { id: "events", label: "Eventos", icon: "Calendar", route: "/feed" },
           { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
         ],
         centerItem: CENTER_ITEM,
@@ -320,7 +320,7 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
     case UserRole.PLACE_OWNER:
       return {
         leftItems: [
-          { id: "my-place", label: "Meu Local", icon: "MapPin", route: "/local" },
+          { id: "my-place", label: "Meu Local", icon: "MapPin", route: "/marketplace" },
           { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
         ],
         centerItem: CENTER_ITEM,

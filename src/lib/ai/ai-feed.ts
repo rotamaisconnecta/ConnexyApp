@@ -17,8 +17,11 @@ export function feedItemToEntity(item: FeedItem): AIEntity {
   const kind = item.type as AIEntityTypeValue;
   return {
     id: item.id,
-    type:
-      kind in ["POST", "MOMENT", "PLACE", "EVENT", "OFFER", "ROUTE", "NETWORKING"] ? kind : "FEED",
+    type: (
+      ["POST", "MOMENT", "PLACE", "EVENT", "OFFER", "ROUTE", "NETWORKING"] as string[]
+    ).includes(kind)
+      ? kind
+      : "FEED",
     distance: item.distance ?? 0,
     rating: 0,
     activity: 0,

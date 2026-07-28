@@ -57,7 +57,7 @@ export const UserRepository = {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .or(`full_name.ilike.%${query}%,handle.ilike.%${query}%,bio.ilike.%${query}%`)
+      .or(`name.ilike.%${query}%,handle.ilike.%${query}%,bio.ilike.%${query}%`)
       .limit(20);
     if (error) throw new SupabaseError(error.message, error.code);
     return data ?? [];

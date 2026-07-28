@@ -367,7 +367,7 @@ function createRecommendationsSection(context: ContextState): SmartSection {
       title: "Ver eventos do dia",
       description: "O que acontece na cidade",
       icon: "📅",
-      route: "/events",
+      route: "/feed",
     },
     {
       id: "rec-3",

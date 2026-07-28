@@ -6,7 +6,7 @@ const DEFAULT_PAGE_SIZE = 20;
 export const FeedService = {
   async getFeed(page: number, pageSize: number = DEFAULT_PAGE_SIZE) {
     const offset = page * pageSize;
-    const posts = await FeedRepository.getFeed(offset, pageSize);
+    const posts = await FeedRepository.getFeed(pageSize, offset);
     return posts;
   },
 

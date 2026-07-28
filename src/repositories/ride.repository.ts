@@ -8,7 +8,7 @@ export const RideRepository = {
       .from("rides")
       .select("*, driver:profiles!driver_id(*), passenger:profiles!passenger_id(*)")
       .or(`driver_id.eq.${userId},passenger_id.eq.${userId}`)
-      .in("status", ["requested", "accepted", "in_progress"])
+      .in("status", ["pending", "accepted", "in_progress"])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

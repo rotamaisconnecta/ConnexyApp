@@ -42,8 +42,13 @@ export function useFeed() {
 
   const deletePost = useCallback(
     async (postId: string) => {
-      const firstItem = items[0] as { author_id?: string } | undefined;
-      const authorId = firstItem?.author_id ?? "";
+      const targetItem = items.find((item: unknown) => {
+        if (typeof item === "object" && item !== null && "id" in item) {
+          return (item as { id: string }).id === postId;
+        }
+        return false;
+      }) as { author_id?: string } | undefined;
+      const authorId = targetItem?.author_id ?? "";
       await FeedService.deletePost(postId, authorId);
       setItems((prev) =>
         prev.filter((item: unknown) => {
