@@ -43,7 +43,7 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
           { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
         ],
         bottomRight: [
-          { id: "rides", label: "Corridas", icon: "Navigation", route: "/driver/rides" },
+          { id: "rides", label: "Corridas", icon: "Navigation", route: "/driver/history" },
           { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
         ],
         mapFilters: [
@@ -79,8 +79,8 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
           { id: "rides", enabled: false },
         ],
         shortcuts: [
-          { id: "offers", title: "Minhas Ofertas", route: "/marketplace/manage" },
-          { id: "analytics", title: "Relatórios", route: "/business/analytics" },
+          { id: "offers", title: "Minhas Ofertas", route: "/marketplace" },
+          { id: "analytics", title: "Relatórios", route: "/gerenciar" },
         ],
         priorityModules: ["marketplace", "offers", "events", "analytics"],
         createActions: ["offer", "place", "event", "photo", "video", "text", "moment", "reel"],
