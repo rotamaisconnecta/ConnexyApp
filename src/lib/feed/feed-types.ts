@@ -143,3 +143,143 @@ export const FEED_SORT_OPTIONS: { value: FeedSortMode; label: string }[] = [
   { value: "distance", label: "Perto" },
   { value: "popular", label: "Popular" },
 ];
+
+/* ===========================================================
+   Smart Feed — Section Types
+   Phase 8.4
+=========================================================== */
+
+export const SmartSectionType = {
+  HERO: "HERO",
+  HOT_AREA: "HOT_AREA",
+  RECOMMENDATIONS: "RECOMMENDATIONS",
+  NEARBY_PEOPLE: "NEARBY_PEOPLE",
+  NEARBY_EVENTS: "NEARBY_EVENTS",
+  NEARBY_BUSINESSES: "NEARBY_BUSINESSES",
+  NEARBY_DRIVERS: "NEARBY_DRIVERS",
+  TRENDING: "TRENDING",
+  FOOTER: "FOOTER",
+} as const;
+
+export type SmartSectionTypeValue = (typeof SmartSectionType)[keyof typeof SmartSectionType];
+
+/* ─── Smart Section ──────────────────────────────────────── */
+
+export interface SmartSection {
+  id: string;
+  type: SmartSectionTypeValue;
+  title: string;
+  subtitle: string;
+  emoji: string;
+  priority: number;
+  data: SmartSectionData;
+}
+
+/* ─── Section Data Union ─────────────────────────────────── */
+
+export type SmartSectionData =
+  | HeroSectionData
+  | HotAreaSectionData
+  | RecommendationsSectionData
+  | NearbyPeopleSectionData
+  | NearbyEventsSectionData
+  | NearbyBusinessesSectionData
+  | NearbyDriversSectionData
+  | TrendingSectionData
+  | FooterSectionData;
+
+export interface HeroSectionData {
+  kind: "HERO";
+  message: string;
+  emoji: string;
+  subtitle: string;
+}
+
+export interface HotAreaSectionData {
+  kind: "HOT_AREA";
+  level: "CALMO" | "NORMAL" | "MOVIMENTADO" | "BOMBANDO";
+  label: string;
+  emoji: string;
+  description: string;
+}
+
+export interface RecommendationsSectionData {
+  kind: "RECOMMENDATIONS";
+  items: Array<{
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    route: string;
+  }>;
+}
+
+export interface NearbyPeopleSectionData {
+  kind: "NEARBY_PEOPLE";
+  count: number;
+  people: Array<{
+    id: string;
+    name: string;
+    photo: string;
+    distance: string;
+    interests: string[];
+    online: boolean;
+  }>;
+}
+
+export interface NearbyEventsSectionData {
+  kind: "NEARBY_EVENTS";
+  count: number;
+  events: Array<{
+    id: string;
+    name: string;
+    banner: string;
+    date: string;
+    time: string;
+    participants: number;
+    distance: string;
+  }>;
+}
+
+export interface NearbyBusinessesSectionData {
+  kind: "NEARBY_BUSINESSES";
+  count: number;
+  businesses: Array<{
+    id: string;
+    name: string;
+    cover: string;
+    category: string;
+    rating: number;
+    distance: string;
+  }>;
+}
+
+export interface NearbyDriversSectionData {
+  kind: "NEARBY_DRIVERS";
+  count: number;
+  drivers: Array<{
+    id: string;
+    name: string;
+    photo: string;
+    car: string;
+    rating: number;
+    distance: string;
+    available: boolean;
+  }>;
+}
+
+export interface TrendingSectionData {
+  kind: "TRENDING";
+  items: Array<{
+    id: string;
+    title: string;
+    emoji: string;
+    count: number;
+    trend: "up" | "stable" | "new";
+  }>;
+}
+
+export interface FooterSectionData {
+  kind: "FOOTER";
+  message: string;
+}
