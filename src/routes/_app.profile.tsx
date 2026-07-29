@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
+import ModeSwitcher from "@/components/roles/ModeSwitcher";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
@@ -51,6 +52,8 @@ function ProfilePage() {
           gradientBg
         />
       </div>
+
+      <ModeSwitcher />
 
       {/* ── Bio ──────────────────────────────────────────── */}
 

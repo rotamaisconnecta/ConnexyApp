@@ -4,6 +4,8 @@ import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft, Car, Save } from "lucide-react";
 import { currentUser } from "@/lib/mock-data";
 import { motion } from "framer-motion";
+import { addRole, setActiveMode } from "@/lib/roles/roles-storage";
+import { UserRole } from "@/lib/roles/roles-types";
 
 export const Route = createFileRoute("/_app/driver/cadastro")({
   head: () => ({ meta: [{ title: "Cadastro Motorista — Connexy" }] }),
@@ -58,6 +60,9 @@ function DriverCadastroPage() {
   const [saved, setSaved] = useState(false);
 
   function handleSave() {
+    addRole(UserRole.DRIVER);
+    setActiveMode(UserRole.DRIVER);
+    window.dispatchEvent(new Event("roleChanged"));
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
