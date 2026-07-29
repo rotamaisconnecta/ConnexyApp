@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { Car, User, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 import { Colors, Shadows } from "@/theme";
 import { getStoredRoles, setActiveMode } from "@/lib/roles/roles-storage";
@@ -30,6 +31,23 @@ export default function ModeSwitcher() {
 
     setActiveMode(mode);
     window.dispatchEvent(new Event("roleChanged"));
+
+    const isDriverMode = mode === UserRole.DRIVER;
+    const title = isDriverMode ? "🚗 Modo Motorista ativado" : "🚶 Modo Passageiro ativado";
+    const description = isDriverMode
+      ? "Agora você está utilizando o painel do motorista."
+      : "Agora você voltou ao modo passageiro.";
+
+    toast.success(title, {
+      description,
+      duration: 2000,
+      className:
+        "border border-border bg-background/95 text-foreground shadow-2xl backdrop-blur-xl",
+    });
+
+    window.setTimeout(() => {
+      navigate({ to: "/home" });
+    }, 300);
   }
 
   if (!hasDriverRole) {
@@ -60,7 +78,13 @@ export default function ModeSwitcher() {
   }
 
   return (
-    <div className="mx-4 mt-3 rounded-[24px] border border-border bg-surface p-2 shadow-soft">
+    <motion.div
+      key={activeMode}
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="mx-4 mt-3 rounded-[24px] border border-border bg-surface p-2 shadow-soft"
+    >
       <div
         className="relative flex items-center rounded-full p-1"
         style={{ background: Colors.surface, boxShadow: Shadows.soft }}
@@ -118,6 +142,6 @@ export default function ModeSwitcher() {
           </span>
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
