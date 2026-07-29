@@ -155,6 +155,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 92,
     photo: "https://i.pravatar.cc/80?img=1",
     distance: "150m",
+    distanceMeters: 150,
     interests: ["Musica", "Cafe"],
     online: true,
   },
@@ -165,6 +166,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 85,
     photo: "https://i.pravatar.cc/80?img=12",
     distance: "80m",
+    distanceMeters: 80,
     interests: ["Tecnologia"],
     online: true,
   },
@@ -175,6 +177,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 78,
     photo: "https://i.pravatar.cc/80?img=23",
     distance: "200m",
+    distanceMeters: 200,
     interests: ["Arte", "Networking"],
     online: false,
   },
@@ -185,6 +188,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 74,
     photo: "https://i.pravatar.cc/80?img=15",
     distance: "350m",
+    distanceMeters: 350,
     interests: ["Esportes"],
     online: true,
   },
@@ -195,6 +199,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 88,
     photo: "https://i.pravatar.cc/80?img=47",
     distance: "120m",
+    distanceMeters: 120,
     interests: ["Cafe", "Leitura"],
     online: true,
   },
@@ -205,6 +210,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 69,
     photo: "https://i.pravatar.cc/80?img=53",
     distance: "500m",
+    distanceMeters: 500,
     interests: ["Viagens", "Fotografia"],
     online: true,
   },
@@ -215,6 +221,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
     compatibility: 81,
     photo: "https://i.pravatar.cc/80?img=44",
     distance: "280m",
+    distanceMeters: 280,
     interests: ["Cinema", "Musica"],
     online: false,
   },
@@ -332,6 +339,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "17:00",
     participants: 128,
     distance: "450m",
+    location: "Parque Central",
   },
   {
     id: "ev2",
@@ -341,6 +349,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "11:00",
     participants: 85,
     distance: "1.2km",
+    location: "Praca da Matriz",
   },
   {
     id: "ev3",
@@ -350,6 +359,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "20:00",
     participants: 200,
     distance: "2.1km",
+    location: "Teatro Municipal",
   },
   {
     id: "ev4",
@@ -359,6 +369,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "14:00",
     participants: 45,
     distance: "800m",
+    location: "Espaco Cultural",
   },
   {
     id: "ev5",
@@ -368,6 +379,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "07:00",
     participants: 32,
     distance: "1.5km",
+    location: "Orla da Praia",
   },
   {
     id: "ev6",
@@ -377,6 +389,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "21:00",
     participants: 67,
     distance: "1.8km",
+    location: "Blue Note Club",
   },
   {
     id: "ev7",
@@ -386,6 +399,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "09:00",
     participants: 110,
     distance: "3.2km",
+    location: "Praca Central",
   },
   {
     id: "ev8",
@@ -395,6 +409,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "19:00",
     participants: 78,
     distance: "2.5km",
+    location: "Auditorio do Sebrae",
   },
   {
     id: "ev9",
@@ -404,6 +419,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "06:00",
     participants: 250,
     distance: "900m",
+    location: "Avenida Beira-Mar",
   },
   {
     id: "ev10",
@@ -413,6 +429,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "18:30",
     participants: 25,
     distance: "1.1km",
+    location: "Biblioteca Municipal",
   },
 ];
 
@@ -424,6 +441,7 @@ const MOCK_BUSINESSES: NearbyBusinessesSectionData["businesses"] = [
     category: "Cafes",
     rating: 4.6,
     distance: "200m",
+    offer: "20% OFF",
   },
   {
     id: "b2",
@@ -432,6 +450,7 @@ const MOCK_BUSINESSES: NearbyBusinessesSectionData["businesses"] = [
     category: "Restaurantes",
     rating: 4.4,
     distance: "350m",
+    offer: "Frete gratis",
   },
   {
     id: "b3",
@@ -440,6 +459,7 @@ const MOCK_BUSINESSES: NearbyBusinessesSectionData["businesses"] = [
     category: "Lojas",
     rating: 4.8,
     distance: "500m",
+    offer: "Promocao hoje",
   },
 ];
 

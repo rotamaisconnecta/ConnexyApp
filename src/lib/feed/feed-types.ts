@@ -228,6 +228,7 @@ export interface NearbyPeopleSectionData {
     age?: number;
     compatibility?: number;
     distance: string;
+    distanceMeters: number;
     interests: string[];
     online: boolean;
   }>;
@@ -259,6 +260,7 @@ export interface NearbyEventsSectionData {
     time: string;
     participants: number;
     distance: string;
+    location: string;
   }>;
 }
 
@@ -272,6 +274,7 @@ export interface NearbyBusinessesSectionData {
     category: string;
     rating: number;
     distance: string;
+    offer?: string;
   }>;
 }
 

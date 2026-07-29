@@ -1,33 +1,12 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Eye, MapPin, Heart } from "lucide-react";
+import { ArrowRight, Eye, Heart } from "lucide-react";
 import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
+import { formatPersonDistance } from "@/lib/proximity";
 import type { NearbyPeopleSectionData } from "@/lib/feed/feed-types";
 
 interface FeedNearbyPeopleProps {
   data: NearbyPeopleSectionData;
-}
-
-function distanceColor(distance: string): string {
-  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
-  const unit = distance.includes("km") ? "km" : "m";
-  if (unit === "m") {
-    if (num <= 100) return "text-green-600";
-    if (num <= 500) return "text-yellow-600";
-    return "text-orange-500";
-  }
-  return "text-red-500";
-}
-
-function distanceLabel(distance: string): string {
-  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
-  const unit = distance.includes("km") ? "km" : "m";
-  if (unit === "m") {
-    if (num <= 100) return "🟢";
-    if (num <= 500) return "🟡";
-    return "🟠";
-  }
-  return "🔴";
 }
 
 export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
@@ -64,11 +43,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
           <Link
             to="/perfil/$id"
             params={{ id: person.id }}
-            className={`block rounded-2xl overflow-hidden h-full transition-shadow duration-200 hover:shadow-elegant ${
-              person.online
-                ? "border-2 border-transparent bg-clip-padding"
-                : "border border-border bg-surface"
-            }`}
+            className="block rounded-2xl overflow-hidden h-full transition-all duration-200 hover:shadow-elegant active:scale-[0.98]"
             style={
               person.online
                 ? {
@@ -78,7 +53,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                 : undefined
             }
           >
-            <div className="bg-surface h-full flex flex-col">
+            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
               <div className="relative" style={{ paddingBottom: "100%" }}>
                 <img
                   src={person.photo}
@@ -87,10 +62,9 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1 z-10">
-                  <MapPin className="h-2.5 w-2.5" />
-                  {person.distance}
-                </span>
+                <div className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                  {formatPersonDistance(person.distanceMeters)}
+                </div>
               </div>
               <div className="p-2.5 flex flex-col gap-1.5 flex-1">
                 <div className="flex items-center gap-1">
@@ -128,13 +102,8 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   >
                     {person.online ? "Online" : "Offline"}
                   </span>
-                  <span
-                    className={`ml-auto text-[9px] font-medium ${distanceColor(person.distance)}`}
-                  >
-                    {distanceLabel(person.distance)} {person.distance}
-                  </span>
                 </div>
-                <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20">
+                <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20 active:scale-[0.97]">
                   <Eye className="h-3 w-3 inline mr-1" />
                   Visualizar Perfil
                 </div>

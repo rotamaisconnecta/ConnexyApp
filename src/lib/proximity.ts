@@ -59,7 +59,36 @@ export function isNearby(meters: number): boolean {
   return t === "here" || t === "veryClose" || t === "close";
 }
 
-// Privacy-aware helpers for people: hide exact distance/radius within 2 km.
+/* ─── formatPersonDistance ───────────────────────────────
+   Used by all person cards. Hides exact distance up to 2 km,
+   replacing with smart proximity categories.
+   Ready for Supabase: just pass meters from DB, no UI changes needed.
+───────────────────────────────────────────────────────── */
+
+const PERSON_DISTANCE_CATEGORIES = [
+  { max: 100, label: "Muito perto" },
+  { max: 300, label: "Bem próximo" },
+  { max: 700, label: "Na sua região" },
+  { max: 2000, label: "Perto de você" },
+] as const;
+
+export function formatPersonDistance(meters: number): string {
+  for (const cat of PERSON_DISTANCE_CATEGORIES) {
+    if (meters <= cat.max) {
+      return `📍 ${cat.label}`;
+    }
+  }
+  return formatDistance(meters);
+}
+
+/* ─── formatDistance (localised) ──────────────────────────── */
+
+export function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1).replace(".", ",")}km`;
+}
+
+// Legacy helpers kept for backward compatibility.
 export function personProximityLabel(meters: number): string {
   if (meters <= 2000) return "Próximo de você";
   return proximityLabel(meters);
@@ -72,10 +101,10 @@ export function personProximityRadius(meters: number): string | null {
 
 // Home feed proximity: privacy-respecting labels with emojis.
 export function homeProximityLabel(meters: number): string {
-  if (meters <= 100) return "🔥 Muito perto";
+  if (meters <= 100) return "📍 Muito perto";
   if (meters <= 300) return "📍 Bem próximo";
-  if (meters <= 800) return "🚶 Perto de você";
-  if (meters <= 2000) return "🌎 Na sua região";
+  if (meters <= 700) return "📍 Na sua região";
+  if (meters <= 2000) return "📍 Perto de você";
   const km = (meters / 1000).toFixed(1).replace(".", ",");
   return `${km} km`;
 }

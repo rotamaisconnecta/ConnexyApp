@@ -82,7 +82,7 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
       controls
         .start({
           x: -(clamped * step),
-          transition: { type: "spring", stiffness: 260, damping: 28 },
+          transition: { type: "spring", stiffness: 300, damping: 30 },
         })
         .then(() => {
           setIndex(clamped);
@@ -151,21 +151,21 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
 
   return (
     <div className={className}>
-      <div className="relative" ref={containerRef}>
+      <div className="relative group" ref={containerRef}>
         <motion.div
           className="flex"
           style={{ gap: GAP, cursor: "grab" }}
           animate={
             jumpRef.current
               ? { x: -(index * step), transition: { duration: 0 } }
-              : { x: -(index * step), transition: { type: "spring", stiffness: 260, damping: 28 } }
+              : { x: -(index * step), transition: { type: "spring", stiffness: 300, damping: 30 } }
           }
           onAnimationComplete={() => {
             jumpRef.current = false;
           }}
           drag="x"
           dragConstraints={containerRef}
-          dragElastic={0.08}
+          dragElastic={0.05}
           onDragEnd={handleDragEnd}
           whileTap={{ cursor: "grabbing" }}
         >

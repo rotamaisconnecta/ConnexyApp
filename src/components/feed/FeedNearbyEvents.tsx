@@ -9,28 +9,6 @@ interface FeedNearbyEventsProps {
   title?: string;
 }
 
-function distanceColor(distance: string): string {
-  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
-  const unit = distance.includes("km") ? "km" : "m";
-  if (unit === "m") {
-    if (num <= 100) return "text-green-600";
-    if (num <= 500) return "text-yellow-600";
-    return "text-orange-500";
-  }
-  return "text-red-500";
-}
-
-function distanceLabel(distance: string): string {
-  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
-  const unit = distance.includes("km") ? "km" : "m";
-  if (unit === "m") {
-    if (num <= 100) return "🟢";
-    if (num <= 500) return "🟡";
-    return "🟠";
-  }
-  return "🔴";
-}
-
 export function FeedNearbyEvents({ data, title }: FeedNearbyEventsProps) {
   const displayTitle = title ?? "Eventos Próximos";
   const isToday = displayTitle.toLowerCase().includes("hoje");
@@ -67,41 +45,45 @@ export function FeedNearbyEvents({ data, title }: FeedNearbyEventsProps) {
         items={data.events}
         renderCard={(event) => (
           <Link
-            to="/feed"
-            className="block rounded-2xl bg-surface border border-border shadow-soft overflow-hidden h-full transition-shadow duration-200 hover:shadow-elegant"
+            to="/event/$eventId"
+            params={{ eventId: event.id }}
+            className="block rounded-2xl overflow-hidden h-full transition-all duration-200 hover:shadow-elegant active:scale-[0.98]"
           >
-            <div className="relative" style={{ paddingBottom: "66%" }}>
-              <img
-                src={event.banner}
-                alt={event.name}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute top-2 right-2 z-10">
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
-                  <Users className="h-2.5 w-2.5" />
-                  {event.participants}
+            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
+              <div className="relative" style={{ paddingBottom: "66%" }}>
+                <img
+                  src={event.banner}
+                  alt={event.name}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute top-2 right-2 z-10">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
+                    <Users className="h-2.5 w-2.5" />
+                    {event.participants}
+                  </span>
+                </div>
+                <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                  <MapPin className="h-2.5 w-2.5 inline mr-0.5" />
+                  {event.distance}
                 </span>
               </div>
-              <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1 z-10">
-                <MapPin className="h-2.5 w-2.5" />
-                {event.distance}
-              </span>
-            </div>
-            <div className="p-2.5 flex flex-col gap-1">
-              <span className="font-display font-bold text-xs truncate">{event.name}</span>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Calendar className="h-2.5 w-2.5 shrink-0" />
-                <span>
-                  {event.date} às {event.time}
-                </span>
-              </div>
-              <span className={`text-[9px] font-medium ${distanceColor(event.distance)}`}>
-                {distanceLabel(event.distance)} {event.distance}
-              </span>
-              <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20">
-                Ver Evento
+              <div className="p-2.5 flex flex-col gap-1 flex-1">
+                <span className="font-display font-bold text-xs truncate">{event.name}</span>
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <MapPin className="h-2.5 w-2.5 shrink-0" />
+                  <span className="truncate">{event.location}</span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Calendar className="h-2.5 w-2.5 shrink-0" />
+                  <span>
+                    {event.date} às {event.time}
+                  </span>
+                </div>
+                <div className="mt-auto w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20 active:scale-[0.97]">
+                  Ver Evento
+                </div>
               </div>
             </div>
           </Link>
