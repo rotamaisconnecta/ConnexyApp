@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { ChevronLeft } from "lucide-react";
@@ -37,6 +37,8 @@ const gridItem = {
 
 function CreatePage() {
   const nav = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isRoot = pathname === "/create" || pathname === "/_app/create";
   const [roles, setRoles] = useState(() => getStoredRoles().roles);
   const [requiredRole, setRequiredRole] = useState<UserRole | null>(null);
   const actions = getCreateActionsForRoles(roles);
@@ -69,98 +71,106 @@ function CreatePage() {
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
       <StatusBar />
 
-      <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
-        <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
-        <div>
-          <h1 className="font-display font-bold text-base">Criar publicação</h1>
-          <p className="text-[11px] text-muted-foreground">O que você deseja compartilhar?</p>
-        </div>
-      </div>
+      {isRoot ? (
+        <>
+          <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
+            <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+            <div>
+              <h1 className="font-display font-bold text-base">Criar publicação</h1>
+              <p className="text-[11px] text-muted-foreground">O que você deseja compartilhar?</p>
+            </div>
+          </div>
 
-      <div className="flex-1 px-5 pb-[140px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <motion.div
-          variants={gridContainer}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-3 gap-4 justify-items-center"
-        >
-          {actions.map((action) => {
-            const isLocked = !action.enabled;
-            return (
-              <motion.button
-                key={action.id}
-                variants={gridItem}
-                whileTap={{ scale: isLocked ? 0.97 : 0.95 }}
-                whileHover={{ scale: isLocked ? 1.0 : 1.03 }}
-                onClick={() => open(action)}
-                aria-label={`Criar ${action.title}`}
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                style={{
-                  background: Colors.surface,
-                  boxShadow: Shadows.soft,
-                  opacity: isLocked ? 0.55 : 1,
-                }}
-              >
-                <div
-                  className="h-16 w-16 rounded-full grid place-items-center text-3xl relative"
-                  style={{ background: Colors.card, boxShadow: Shadows.soft }}
-                >
-                  {action.emoji}
-                  {isLocked && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                      className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full grid place-items-center"
-                      style={{ background: Colors.brand.primary }}
-                    >
-                      <Lock size={10} className="text-white" />
-                    </motion.div>
-                  )}
-                </div>
-                <div className="text-center">
-                  <div
-                    className="text-xs font-semibold leading-tight"
-                    style={{ color: Colors.text.primary }}
+          <div className="flex-1 px-5 pb-[140px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <motion.div
+              variants={gridContainer}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-3 gap-4 justify-items-center"
+            >
+              {actions.map((action) => {
+                const isLocked = !action.enabled;
+                return (
+                  <motion.button
+                    key={action.id}
+                    variants={gridItem}
+                    whileTap={{ scale: isLocked ? 0.97 : 0.95 }}
+                    whileHover={{ scale: isLocked ? 1.0 : 1.03 }}
+                    onClick={() => open(action)}
+                    aria-label={`Criar ${action.title}`}
+                    className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    style={{
+                      background: Colors.surface,
+                      boxShadow: Shadows.soft,
+                      opacity: isLocked ? 0.55 : 1,
+                    }}
                   >
-                    {action.title}
-                  </div>
-                  {isLocked ? (
                     <div
-                      className="text-[10px] mt-0.5 leading-tight line-clamp-2"
-                      style={{ color: Colors.text.secondary }}
+                      className="h-16 w-16 rounded-full grid place-items-center text-3xl relative"
+                      style={{ background: Colors.card, boxShadow: Shadows.soft }}
                     >
-                      {action.lockedReason}
+                      {action.emoji}
+                      {isLocked && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                          className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full grid place-items-center"
+                          style={{ background: Colors.brand.primary }}
+                        >
+                          <Lock size={10} className="text-white" />
+                        </motion.div>
+                      )}
                     </div>
-                  ) : (
-                    <div
-                      className="text-[10px] mt-0.5 leading-tight"
-                      style={{ color: Colors.text.secondary }}
-                    >
-                      {getActionDescription(action.id)}
+                    <div className="text-center">
+                      <div
+                        className="text-xs font-semibold leading-tight"
+                        style={{ color: Colors.text.primary }}
+                      >
+                        {action.title}
+                      </div>
+                      {isLocked ? (
+                        <div
+                          className="text-[10px] mt-0.5 leading-tight line-clamp-2"
+                          style={{ color: Colors.text.secondary }}
+                        >
+                          {action.lockedReason}
+                        </div>
+                      ) : (
+                        <div
+                          className="text-[10px] mt-0.5 leading-tight"
+                          style={{ color: Colors.text.secondary }}
+                        >
+                          {getActionDescription(action.id)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                {isLocked && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white"
-                    style={{ background: Colors.brand.primary }}
-                  >
-                    <Lock size={8} />
-                    Ativar
-                  </motion.div>
-                )}
-              </motion.button>
-            );
-          })}
-        </motion.div>
-      </div>
+                    {isLocked && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white"
+                        style={{ background: Colors.brand.primary }}
+                      >
+                        <Lock size={8} />
+                        Ativar
+                      </motion.div>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          </div>
 
-      {requiredRole && <RoleActivationModal open role={requiredRole} onClose={handleActivated} />}
+          {requiredRole && (
+            <RoleActivationModal open role={requiredRole} onClose={handleActivated} />
+          )}
+        </>
+      ) : (
+        <Outlet />
+      )}
     </div>
   );
 }
