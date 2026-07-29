@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherFooter } from "@/components/publisher/PublisherFooter";
-import { PublisherGalleryPicker } from "@/components/publisher/PublisherGalleryPicker";
+import { UploadMedia } from "@/components/ui/UploadMedia";
 import { PublisherLocationPicker } from "@/components/publisher/PublisherLocationPicker";
 import { PublisherVisibility } from "@/components/publisher/PublisherVisibility";
 import { PublisherCategory } from "@/components/publisher/PublisherCategory";
@@ -33,7 +33,7 @@ function OfferForm() {
       <PublisherHeader title="Criar oferta" />
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         <PublisherCategory emoji="🏷️" label="Oferta" />
-        <PublisherGalleryPicker label="Imagem da oferta" />
+        <UploadMedia accept="image/*" label="Imagem da oferta" />
         <BrandInput
           label="Título"
           placeholder="Ex: 2x1 em todas as cervejas"

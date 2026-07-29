@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherFooter } from "@/components/publisher/PublisherFooter";
-import { PublisherGalleryPicker } from "@/components/publisher/PublisherGalleryPicker";
+import { UploadMedia } from "@/components/ui/UploadMedia";
 import { PublisherLocationPicker } from "@/components/publisher/PublisherLocationPicker";
 import { PublisherVisibility } from "@/components/publisher/PublisherVisibility";
 import { PublisherHashtags } from "@/components/publisher/PublisherHashtags";
@@ -30,7 +30,7 @@ function PhotoForm() {
       <PublisherHeader title="Criar foto" />
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         <PublisherCategory emoji="📷" label="Foto" />
-        <PublisherGalleryPicker label="Adicionar foto" />
+        <UploadMedia accept="image/*" label="Adicionar foto" />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}

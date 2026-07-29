@@ -2,6 +2,8 @@ export const currentUser = {
   name: "Lucas Almeida",
   handle: "lucas.a",
   photo: "https://i.pravatar.cc/200?img=12",
+  city: "São Paulo, SP",
+  bio: "Explorador urbano | Amante de cafés e tecnologia | Sempre em busca do próximo rolê",
   rating: 4.9,
   trips: 23,
   connections: 48,

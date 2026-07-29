@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import { TrendingUp, Minus, Sparkles } from "lucide-react";
 import type { TrendingSectionData } from "@/lib/feed/feed-types";
 
@@ -34,22 +35,19 @@ export function FeedTrending({ data }: FeedTrendingProps) {
     >
       <div className="flex items-center gap-1.5 mb-3">
         <span className="text-sm" aria-hidden>
-          📈
+          🔥
         </span>
         <h3 className="font-display text-base font-bold">Em Alta</h3>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        {data.items.map((item) => {
+      <PremiumCarousel
+        items={data.items}
+        renderCard={(item) => {
           const TrendIcon = TREND_ICONS[item.trend];
           const trendColor = TREND_COLORS[item.trend];
           const trendLabel = TREND_LABELS[item.trend];
-
           return (
-            <div
-              key={item.id}
-              className="shrink-0 w-36 rounded-xl border border-border bg-surface p-3 shadow-soft transition-all duration-200 hover:shadow-elegant"
-            >
+            <div className="rounded-xl border border-border bg-surface p-3 shadow-soft transition-all duration-200 hover:shadow-elegant h-full flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="text-lg" aria-hidden>
                   {item.emoji}
@@ -67,8 +65,8 @@ export function FeedTrending({ data }: FeedTrendingProps) {
               </div>
             </div>
           );
-        })}
-      </div>
+        }}
+      />
     </motion.div>
   );
 }

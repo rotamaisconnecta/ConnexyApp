@@ -1,13 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
 import { Badge } from "@/components/ui/badge";
-import { DriverProfileCard } from "@/components/driver/driver-profile-card";
-import RoleSwitcher from "@/components/roles/RoleSwitcher";
-import RoleSelector from "@/components/roles/RoleSelector";
 
-import { currentUser, findPlace, places } from "@/lib/mock-data";
+import { currentUser, findPlace } from "@/lib/mock-data";
 import {
   MapPin,
   Star,
@@ -20,8 +16,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
-import { UserRole, type RoleMode, type UserRolesState } from "@/lib/roles/roles-types";
-import { getStoredRoles, saveRoles } from "@/lib/roles/roles-storage";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
@@ -31,49 +25,7 @@ export const Route = createFileRoute("/_app/profile")({
 });
 
 function ProfilePage() {
-  const navigate = useNavigate();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
-  const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
-  const [isOnline, setIsOnline] = useState(false);
-
-  useEffect(() => {
-    function syncRoles() {
-      setRolesState(getStoredRoles());
-    }
-    window.addEventListener("roleChanged", syncRoles);
-    return () => window.removeEventListener("roleChanged", syncRoles);
-  }, []);
-
-  const handleModeChange = useCallback((mode: UserRole) => {
-    setRolesState((prev) => {
-      const next: UserRolesState = {
-        ...prev,
-        activeMode: mode as RoleMode,
-        lastMode: mode as RoleMode,
-      };
-      saveRoles(next);
-      window.dispatchEvent(new Event("roleChanged"));
-      return next;
-    });
-  }, []);
-
-  const handleToggleRole = useCallback((role: UserRole) => {
-    setRolesState((prev) => {
-      const hasRole = prev.roles.includes(role);
-      const newRoles = hasRole ? prev.roles.filter((r) => r !== role) : [...prev.roles, role];
-      if (newRoles.length === 0) newRoles.push(UserRole.USER);
-      const newMode = hasRole && prev.activeMode === role ? UserRole.USER : prev.activeMode;
-      const next: UserRolesState = {
-        ...prev,
-        roles: newRoles,
-        activeMode: newMode,
-        lastMode: newMode,
-      };
-      saveRoles(next);
-      window.dispatchEvent(new Event("roleChanged"));
-      return next;
-    });
-  }, []);
 
   return (
     <div className="flex-1 pb-20">
@@ -86,12 +38,6 @@ function ProfilePage() {
         </Link>
       </header>
 
-      {/* ── Role Switcher ───────────────────────────────────── */}
-
-      <div className="px-4 mb-3">
-        <RoleSwitcher onChange={handleModeChange} />
-      </div>
-
       {/* ── Hero ──────────────────────────────────────────── */}
 
       <div className="px-4">
@@ -99,14 +45,25 @@ function ProfilePage() {
           photo={currentUser.photo}
           name={currentUser.name}
           handle={`@${currentUser.handle}`}
-          subtitle="Conectando perto de você"
+          subtitle={currentUser.city}
           online
           photoVariant="pessoa"
           gradientBg
-          badge={<Badge>Ver perfil público</Badge>}
-          mood={{ emoji: "🎧", text: "explorando o Connexy" }}
         />
       </div>
+
+      {/* ── Bio ──────────────────────────────────────────── */}
+
+      {currentUser.bio && (
+        <motion.p
+          variants={sectionFade(1.5)}
+          initial="hidden"
+          animate="visible"
+          className="mx-4 mt-2 text-sm text-muted-foreground text-center leading-relaxed"
+        >
+          {currentUser.bio}
+        </motion.p>
+      )}
 
       {/* ── Stats ─────────────────────────────────────────── */}
 
@@ -215,22 +172,6 @@ function ProfilePage() {
           </div>
         </motion.section>
       )}
-
-      {/* ── Motorista ────────────────────────────────────── */}
-
-      <motion.div
-        variants={sectionFade(5.5)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3"
-      >
-        <DriverProfileCard
-          hasRegistration={rolesState.roles.includes(UserRole.DRIVER)}
-          isOnline={isOnline}
-          mode={rolesState.activeMode === UserRole.DRIVER ? "driver" : "user"}
-          onModeChange={(m) => handleModeChange(m === "driver" ? UserRole.DRIVER : UserRole.USER)}
-        />
-      </motion.div>
 
       {/* ── Meu Connexy ────────────────────────── */}
 

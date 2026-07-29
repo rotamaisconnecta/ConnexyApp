@@ -18,7 +18,7 @@ export function PublisherSubmitButton({
     <BrandButton
       variant="primary"
       size="lg"
-      className="w-full"
+      className="w-full mb-2"
       onClick={onClick}
       disabled={publishing || disabled}
     >

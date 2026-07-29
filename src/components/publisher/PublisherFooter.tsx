@@ -14,7 +14,7 @@ export function PublisherFooter({
   disabled = false,
 }: PublisherFooterProps) {
   return (
-    <div className="shrink-0 px-4 py-4 border-t border-border/50 bg-background/95 backdrop-blur-xl">
+    <div className="shrink-0 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-border/50 bg-background/95 backdrop-blur-xl z-10 relative">
       <BrandButton
         variant="primary"
         size="lg"

@@ -120,7 +120,6 @@ const ROLE_TEMPLATES: Partial<Record<UserRole, SmartSectionTypeValue[]>> = {
     "NEARBY_EVENTS",
     "NEARBY_EVENTS_TODAY",
     "TRENDING",
-    "NEARBY_PEOPLE",
     "NEARBY_PLACES",
     "NEARBY_BUSINESSES",
     "FOOTER",

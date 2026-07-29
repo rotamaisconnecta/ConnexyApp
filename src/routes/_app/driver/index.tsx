@@ -4,7 +4,6 @@ import { StatusBar } from "@/components/phone-frame";
 import { DriverHeader } from "@/components/driver/driver-header";
 import { DriverPremiumDashboard } from "@/components/driver/driver-premium-dashboard";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
-import { DriverNotifications } from "@/components/driver/driver-notifications";
 import { SmartFeed } from "@/components/feed/SmartFeed";
 import { currentUser } from "@/lib/mock-data";
 import type { DriverEarnings, RideRequest } from "@/lib/driver/driver-types";
@@ -43,57 +42,25 @@ const MOCK_RIDE_REQUEST: RideRequest = {
   createdAt: new Date(),
 };
 
-const MOCK_NOTIFICATIONS = [
-  {
-    id: "n1",
-    type: "hotspot" as const,
-    title: "Av. Paulista esta bombando",
-    body: "3 eventos acontecendo agora na regiao",
-    icon: "📍",
-    priority: "HIGH" as const,
-    read: false,
-    createdAt: "2 min",
-  },
-  {
-    id: "n2",
-    type: "event_nearby" as const,
-    title: "Festival Gastronomico",
-    body: "Evento a 1.2 km — alta demanda de corridas",
-    icon: "📅",
-    priority: "MEDIUM" as const,
-    read: false,
-    createdAt: "5 min",
-  },
-  {
-    id: "n3",
-    type: "earnings" as const,
-    title: "Ganhos de hoje",
-    body: "Voce ja ganhou R$ 156,80 hoje!",
-    icon: "💰",
-    priority: "LOW" as const,
-    read: true,
-    createdAt: "1h",
-  },
-];
-
 function DriverPage() {
   const [isOnline, setIsOnline] = useState(false);
   const [showRideRequest, setShowRideRequest] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
 
   return (
     <div className="flex-1 pb-20">
       <StatusBar />
 
-      <DriverHeader
-        driverName={currentUser.name}
-        rating={4.9}
-        isOnline={isOnline}
-        onToggleOnline={() => {
-          setIsOnline(!isOnline);
-          if (!isOnline) setShowRideRequest(true);
-        }}
-      />
+      <div className="px-4 pt-1">
+        <DriverHeader
+          driverName={currentUser.name}
+          rating={4.9}
+          isOnline={isOnline}
+          onToggleOnline={() => {
+            setIsOnline(!isOnline);
+            if (!isOnline) setShowRideRequest(true);
+          }}
+        />
+      </div>
 
       <div className="px-4 space-y-4">
         <DriverPremiumDashboard
@@ -109,15 +76,6 @@ function DriverPage() {
         />
 
         <SmartFeed />
-
-        <DriverNotifications
-          notifications={notifications}
-          onMarkAsRead={(id) =>
-            setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
-          }
-          onMarkAllRead={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
-          onDismiss={(id) => setNotifications((prev) => prev.filter((n) => n.id !== id))}
-        />
 
         <Link
           to="/driver/history"

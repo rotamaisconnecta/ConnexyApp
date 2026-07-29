@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherFooter } from "@/components/publisher/PublisherFooter";
-import { PublisherGalleryPicker } from "@/components/publisher/PublisherGalleryPicker";
+import { UploadMedia } from "@/components/ui/UploadMedia";
 import { PublisherLocationPicker } from "@/components/publisher/PublisherLocationPicker";
 import { PublisherVisibility } from "@/components/publisher/PublisherVisibility";
 import { PublisherHashtags } from "@/components/publisher/PublisherHashtags";
@@ -32,7 +32,7 @@ function ReelForm() {
       <PublisherHeader title="Criar reel" />
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         <PublisherCategory emoji="▶️" label="Reel" />
-        <PublisherGalleryPicker type="video" label="Gravar ou enviar reel" />
+        <UploadMedia accept="image/*,video/*" label="Gravar ou enviar reel" />
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
             <Music className="h-3.5 w-3.5" />
