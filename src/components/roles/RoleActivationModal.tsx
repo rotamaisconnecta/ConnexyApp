@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, Sparkles, Car, Store, CalendarDays, MapPin } from "lucide-react";
 
-import { UserRole } from "@/lib/roles/roles-types";
-import { addRole } from "@/lib/roles/roles-storage";
+import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
+import { addRole, setActiveMode } from "@/lib/roles/roles-storage";
 import { Colors, Radius, Shadows, Gradients } from "@/theme";
 
 interface RoleActivationModalProps {
@@ -55,6 +55,7 @@ export default function RoleActivationModal({ open, role, onClose }: RoleActivat
 
   function handleActivate() {
     addRole(role);
+    setActiveMode(role as RoleMode);
     onClose();
     window.dispatchEvent(new Event("roleChanged"));
   }

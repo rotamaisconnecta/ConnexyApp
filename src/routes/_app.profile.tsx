@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
@@ -35,6 +35,14 @@ function ProfilePage() {
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
   const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    function syncRoles() {
+      setRolesState(getStoredRoles());
+    }
+    window.addEventListener("roleChanged", syncRoles);
+    return () => window.removeEventListener("roleChanged", syncRoles);
+  }, []);
 
   const handleModeChange = useCallback((mode: UserRole) => {
     setRolesState((prev) => {

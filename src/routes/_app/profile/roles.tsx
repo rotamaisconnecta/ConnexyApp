@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ChevronLeft, Check } from "lucide-react";
@@ -75,6 +75,11 @@ function RolesPage() {
   function handleRoleChanged() {
     setRolesState(getStoredRoles());
   }
+
+  useEffect(() => {
+    window.addEventListener("roleChanged", handleRoleChanged);
+    return () => window.removeEventListener("roleChanged", handleRoleChanged);
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
