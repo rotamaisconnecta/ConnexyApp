@@ -1,11 +1,3 @@
-/* ============================================================
-   CONNEXY
-   Phase 8.4
-   Smart Feed — Builder
-   Assembles feed sections based on context + role.
-   Pure functions. No side effects. No React.
-=========================================================== */
-
 import type { ContextState } from "@/lib/context/context-types";
 import { ContextEnvironment } from "@/lib/context/context-types";
 import type { UserRole } from "@/lib/roles/roles-types";
@@ -17,20 +9,21 @@ import {
   createRecommendationsSection,
   createNearbyPeopleSection,
   createNearbyEventsSection,
+  createNearbyEventsTodaySection,
+  createNearbyEventsUpcomingSection,
   createNearbyBusinessesSection,
   createNearbyDriversSection,
   createTrendingSection,
   createFooterSection,
 } from "./feed-sections";
 
-/* ─── Section Templates per Environment ──────────────────── */
-
 const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
   [ContextEnvironment.CITY]: [
     "HERO",
     "HOT_AREA",
     "NEARBY_PEOPLE",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "NEARBY_BUSINESSES",
     "TRENDING",
     "FOOTER",
@@ -39,7 +32,8 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
     "HERO",
     "NEARBY_BUSINESSES",
     "RECOMMENDATIONS",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "NEARBY_PEOPLE",
     "TRENDING",
     "FOOTER",
@@ -47,7 +41,8 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
   [ContextEnvironment.EVENT]: [
     "HERO",
     "HOT_AREA",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "NEARBY_PEOPLE",
     "NEARBY_BUSINESSES",
     "TRENDING",
@@ -57,7 +52,8 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
     "HERO",
     "NEARBY_DRIVERS",
     "NEARBY_BUSINESSES",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "RECOMMENDATIONS",
     "FOOTER",
   ],
@@ -65,7 +61,8 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
     "HERO",
     "TRENDING",
     "NEARBY_PEOPLE",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "RECOMMENDATIONS",
     "FOOTER",
   ],
@@ -73,7 +70,8 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
     "HERO",
     "NEARBY_BUSINESSES",
     "RECOMMENDATIONS",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "NEARBY_PEOPLE",
     "TRENDING",
     "FOOTER",
@@ -88,7 +86,8 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
   [ContextEnvironment.UNIVERSITY]: [
     "HERO",
     "NEARBY_PEOPLE",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "TRENDING",
     "RECOMMENDATIONS",
     "FOOTER",
@@ -97,29 +96,37 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
     "HERO",
     "NEARBY_PEOPLE",
     "NEARBY_BUSINESSES",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "TRENDING",
     "FOOTER",
   ],
   [ContextEnvironment.PARK]: [
     "HERO",
     "NEARBY_PEOPLE",
-    "NEARBY_EVENTS",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
     "RECOMMENDATIONS",
     "TRENDING",
     "FOOTER",
   ],
 };
 
-/* ─── Role Overrides ─────────────────────────────────────── */
+const ROLE_TEMPLATES: Partial<Record<UserRole, SmartSectionTypeValue[]>> = {
+  DRIVER: [
+    "HERO",
+    "NEARBY_EVENTS_TODAY",
+    "NEARBY_EVENTS_UPCOMING",
+    "NEARBY_PEOPLE",
+    "NEARBY_DRIVERS",
+    "TRENDING",
+    "FOOTER",
+  ],
+};
 
 const ROLE_OVERRIDES: Partial<
   Record<UserRole, { add?: SmartSectionTypeValue[]; remove?: SmartSectionTypeValue[] }>
 > = {
-  DRIVER: {
-    add: ["NEARBY_DRIVERS"],
-    remove: [],
-  },
   BUSINESS: {
     add: ["NEARBY_BUSINESSES", "RECOMMENDATIONS"],
     remove: [],
@@ -130,27 +137,28 @@ const ROLE_OVERRIDES: Partial<
   },
 };
 
-/* ─── Section Creators Map ───────────────────────────────── */
-
 const SECTION_CREATORS: Record<SmartSectionTypeValue, (context: ContextState) => SmartSection> = {
   HERO: createHeroSection,
   HOT_AREA: createHotAreaSection,
   RECOMMENDATIONS: createRecommendationsSection,
   NEARBY_PEOPLE: createNearbyPeopleSection,
   NEARBY_EVENTS: createNearbyEventsSection,
+  NEARBY_EVENTS_TODAY: createNearbyEventsTodaySection,
+  NEARBY_EVENTS_UPCOMING: createNearbyEventsUpcomingSection,
   NEARBY_BUSINESSES: createNearbyBusinessesSection,
   NEARBY_DRIVERS: createNearbyDriversSection,
   TRENDING: createTrendingSection,
   FOOTER: createFooterSection,
 };
 
-/* ─── buildFeed ──────────────────────────────────────────── */
-
 export function buildFeed(context: ContextState): SmartSection[] {
-  const template = [
-    ...(ENVIRONMENT_TEMPLATES[context.environment] ??
-      ENVIRONMENT_TEMPLATES[ContextEnvironment.CITY]),
-  ];
+  const roleTemplate = ROLE_TEMPLATES[context.currentRole];
+  const template = roleTemplate
+    ? [...roleTemplate]
+    : [
+        ...(ENVIRONMENT_TEMPLATES[context.environment] ??
+          ENVIRONMENT_TEMPLATES[ContextEnvironment.CITY]),
+      ];
 
   const roleOverride = ROLE_OVERRIDES[context.currentRole];
   if (roleOverride) {

@@ -150,7 +150,11 @@ function SectionRenderer({ section }: { section: ReturnType<typeof buildFeed>[nu
     case "NEARBY_PEOPLE":
       return <FeedNearbyPeople data={section.data as NearbyPeopleSectionData} />;
     case "NEARBY_EVENTS":
-      return <FeedNearbyEvents data={section.data as NearbyEventsSectionData} />;
+    case "NEARBY_EVENTS_TODAY":
+    case "NEARBY_EVENTS_UPCOMING":
+      return (
+        <FeedNearbyEvents data={section.data as NearbyEventsSectionData} title={section.title} />
+      );
     case "NEARBY_BUSINESSES":
       return <FeedNearbyBusinesses data={section.data as NearbyBusinessesSectionData} />;
     case "NEARBY_DRIVERS":

@@ -58,13 +58,13 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
           { id: "earnings", title: "Ganhos", route: "/driver/finance" },
         ],
         priorityModules: ["rides", "hotspots", "events", "notifications"],
-        createActions: ["ride", "moment", "photo", "video", "text", "reel"],
+        createActions: ["ride", "photo", "video", "text", "reel"],
       };
 
     case UserRole.BUSINESS:
       return {
         bottomLeft: [
-          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "feed", label: "Home", icon: "Home", route: "/home" },
           { id: "marketplace", label: "Marketplace", icon: "Store", route: "/marketplace" },
         ],
         bottomRight: [
@@ -83,13 +83,33 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
           { id: "analytics", title: "Relatórios", route: "/gerenciar" },
         ],
         priorityModules: ["marketplace", "offers", "events", "analytics"],
-        createActions: ["offer", "place", "event", "photo", "video", "text", "moment", "reel"],
+        createActions: ["offer", "place", "event", "photo", "video", "text", "reel"],
+      };
+
+    case UserRole.EVENT_CREATOR:
+      return {
+        bottomLeft: [
+          { id: "events", label: "Eventos", icon: "Calendar", route: "/feed" },
+          { id: "feed", label: "Feed", icon: "FileText", route: "/feed" },
+        ],
+        bottomRight: [
+          { id: "chat", label: "Chat", icon: "MessageCircle", route: "/chat" },
+          { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
+        ],
+        mapFilters: [
+          { id: "attendees", enabled: true },
+          { id: "checkins", enabled: true },
+          { id: "events", enabled: true },
+        ],
+        shortcuts: [{ id: "events", title: "Meus Eventos", route: "/feed" }],
+        priorityModules: ["events", "feed", "people"],
+        createActions: ["event", "photo", "video", "text", "reel"],
       };
 
     default:
       return {
         bottomLeft: [
-          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "feed", label: "Home", icon: "Home", route: "/home" },
           { id: "discover", label: "Mapa", icon: "Map", route: "/discover" },
         ],
         bottomRight: [
@@ -107,7 +127,7 @@ export function getEngineConfiguration(activeRole: UserRole): EngineConfiguratio
           { id: "events", title: "Eventos", route: "/feed" },
         ],
         priorityModules: ["feed", "people", "events", "reels"],
-        createActions: ["photo", "video", "text", "moment", "reel"],
+        createActions: ["photo", "video", "text", "reel"],
       };
   }
 }
@@ -150,15 +170,6 @@ const ALL_CREATE_ACTIONS: Omit<CreateAction, "enabled">[] = [
     emoji: "✍",
     icon: "Type",
     route: "/create/text",
-    requiredRole: null,
-    lockedReason: null,
-  },
-  {
-    id: "moment",
-    title: "Momento",
-    emoji: "⚡",
-    icon: "Zap",
-    route: "/create/moment",
     requiredRole: null,
     lockedReason: null,
   },
@@ -294,7 +305,7 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
     case UserRole.BUSINESS:
       return {
         leftItems: [
-          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "feed", label: "Home", icon: "Home", route: "/home" },
           { id: "marketplace", label: "Marketplace", icon: "Store", route: "/marketplace" },
         ],
         centerItem: CENTER_ITEM,
@@ -346,7 +357,7 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
     default:
       return {
         leftItems: [
-          { id: "feed", label: "Home", icon: "Home", route: "/feed" },
+          { id: "feed", label: "Home", icon: "Home", route: "/home" },
           { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
         ],
         centerItem: CENTER_ITEM,

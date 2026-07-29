@@ -212,7 +212,7 @@ function ConversationPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col h-full pb-20">
       <StatusBar />
 
       <ChatHeader

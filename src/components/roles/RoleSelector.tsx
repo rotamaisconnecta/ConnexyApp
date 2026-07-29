@@ -1,20 +1,12 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
-import { UserRole } from "@/lib/roles/roles-types";
-import { getStoredRoles, toggleRole } from "@/lib/roles/roles-storage";
+import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
+import { getStoredRoles, toggleRole, setActiveMode } from "@/lib/roles/roles-storage";
 import { getActivatableRoles } from "@/lib/roles/roles-utils";
 
 import RoleCard from "./RoleCard";
 import RoleGrid from "./RoleGrid";
-
-const ACTIVATION_ROUTES: Partial<Record<UserRole, string>> = {
-  [UserRole.DRIVER]: "/driver/cadastro",
-  [UserRole.BUSINESS]: "/business/cadastro",
-  [UserRole.EVENT_CREATOR]: "/events/cadastro",
-  [UserRole.PLACE_OWNER]: "/places/cadastro",
-  [UserRole.REELS_CREATOR]: "/create/reel",
-};
 
 export default function RoleSelector() {
   const navigate = useNavigate();
@@ -30,7 +22,11 @@ export default function RoleSelector() {
     (role: UserRole) => {
       const wasActive = hasRole(role);
       toggleRole(role);
+      if (!wasActive) {
+        setActiveMode(role as RoleMode);
+      }
       setRolesState(getStoredRoles());
+      window.dispatchEvent(new Event("roleChanged"));
 
       if (!wasActive) {
         const route = ACTIVATION_ROUTES[role];
@@ -57,3 +53,11 @@ export default function RoleSelector() {
     </RoleGrid>
   );
 }
+
+const ACTIVATION_ROUTES: Partial<Record<UserRole, string>> = {
+  [UserRole.DRIVER]: "/driver",
+  [UserRole.BUSINESS]: "/marketplace",
+  [UserRole.EVENT_CREATOR]: "/feed",
+  [UserRole.PLACE_OWNER]: "/locais",
+  [UserRole.REELS_CREATOR]: "/create/reel",
+};

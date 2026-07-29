@@ -13,7 +13,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     id: NavigationTab.HOME,
     label: "Início",
     icon: "House",
-    route: "/feed",
+    route: "/home",
   },
   {
     id: NavigationTab.MAP,
@@ -71,13 +71,6 @@ export const CREATE_ACTIONS: CreateActionItem[] = [
     label: "Texto",
     description: "Compartilhe uma ideia",
     route: "/create?category=text",
-  },
-  {
-    id: CreateCategory.MOMENT,
-    emoji: "⚡",
-    label: "Momento",
-    description: "Compartilhe o que está acontecendo agora",
-    route: "/create?category=moment",
   },
   {
     id: CreateCategory.PLACE,

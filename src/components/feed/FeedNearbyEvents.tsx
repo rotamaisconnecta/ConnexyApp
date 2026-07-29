@@ -5,9 +5,10 @@ import type { NearbyEventsSectionData } from "@/lib/feed/feed-types";
 
 interface FeedNearbyEventsProps {
   data: NearbyEventsSectionData;
+  title?: string;
 }
 
-export function FeedNearbyEvents({ data }: FeedNearbyEventsProps) {
+export function FeedNearbyEvents({ data, title = "Eventos" }: FeedNearbyEventsProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -21,10 +22,12 @@ export function FeedNearbyEvents({ data }: FeedNearbyEventsProps) {
             <span className="text-sm" aria-hidden>
               🎉
             </span>
-            <h3 className="font-display text-base font-bold truncate">Eventos Proximos</h3>
+            <h3 className="font-display text-base font-bold truncate">{title}</h3>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Acontecendo agora na sua regiao
+            {title === "Eventos Hoje"
+              ? "Acontecendo agora na sua regiao"
+              : "Eventos que vao rolar em breve"}
           </p>
         </div>
         <Link

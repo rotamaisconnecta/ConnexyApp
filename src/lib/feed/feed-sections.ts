@@ -1,11 +1,3 @@
-/* ============================================================
-   CONNEXY
-   Phase 8.4
-   Smart Feed — Section Definitions & Mock Data
-   All mock data lives here. Prepared for API integration.
-   Pure functions. No side effects. No React.
-=========================================================== */
-
 import type { ContextState } from "@/lib/context/context-types";
 import { ContextEnvironment, ContextMovement } from "@/lib/context/context-types";
 import type {
@@ -20,8 +12,6 @@ import type {
   TrendingSectionData,
   FooterSectionData,
 } from "./feed-types";
-
-/* ─── Hero Messages ──────────────────────────────────────── */
 
 const HERO_MESSAGES: Record<string, Array<{ message: string; emoji: string; subtitle: string }>> = {
   [ContextEnvironment.CITY]: [
@@ -126,8 +116,6 @@ const HERO_MESSAGES: Record<string, Array<{ message: string; emoji: string; subt
   ],
 };
 
-/* ─── Movement Labels ────────────────────────────────────── */
-
 const MOVEMENT_LABELS: Record<
   string,
   { level: HotAreaSectionData["level"]; label: string; emoji: string; description: string }
@@ -158,12 +146,11 @@ const MOVEMENT_LABELS: Record<
   },
 };
 
-/* ─── Mock People ────────────────────────────────────────── */
-
 const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
   {
     id: "p1",
     name: "Ana Silva",
+    age: 27,
     photo: "https://i.pravatar.cc/80?img=1",
     distance: "150m",
     interests: ["Musica", "Cafe"],
@@ -172,6 +159,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
   {
     id: "p2",
     name: "Carlos Souza",
+    age: 31,
     photo: "https://i.pravatar.cc/80?img=12",
     distance: "80m",
     interests: ["Tecnologia"],
@@ -180,6 +168,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
   {
     id: "p3",
     name: "Giulia Santos",
+    age: 24,
     photo: "https://i.pravatar.cc/80?img=23",
     distance: "200m",
     interests: ["Arte", "Networking"],
@@ -188,6 +177,7 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
   {
     id: "p4",
     name: "Pedro Lima",
+    age: 29,
     photo: "https://i.pravatar.cc/80?img=15",
     distance: "350m",
     interests: ["Esportes"],
@@ -196,21 +186,38 @@ const MOCK_PEOPLE: NearbyPeopleSectionData["people"] = [
   {
     id: "p5",
     name: "Beatriz Silva",
+    age: 26,
     photo: "https://i.pravatar.cc/80?img=47",
     distance: "120m",
     interests: ["Cafe", "Leitura"],
     online: true,
   },
+  {
+    id: "p6",
+    name: "Rafael Costa",
+    age: 33,
+    photo: "https://i.pravatar.cc/80?img=53",
+    distance: "500m",
+    interests: ["Viagens", "Fotografia"],
+    online: true,
+  },
+  {
+    id: "p7",
+    name: "Marina Lopes",
+    age: 25,
+    photo: "https://i.pravatar.cc/80?img=44",
+    distance: "280m",
+    interests: ["Cinema", "Musica"],
+    online: false,
+  },
 ];
-
-/* ─── Mock Events ────────────────────────────────────────── */
 
 const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
   {
     id: "ev1",
     name: "Sunset no Parque",
     banner: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=400",
-    date: "Sab, 26 Jul",
+    date: "Hoje",
     time: "17:00",
     participants: 128,
     distance: "450m",
@@ -219,7 +226,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     id: "ev2",
     name: "Feira Gastronomica",
     banner: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400",
-    date: "Dom, 27 Jul",
+    date: "Hoje",
     time: "11:00",
     participants: 85,
     distance: "1.2km",
@@ -228,14 +235,75 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     id: "ev3",
     name: "Show MPB ao Vivo",
     banner: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
-    date: "Sex, 25 Jul",
+    date: "Hoje",
     time: "20:00",
     participants: 200,
     distance: "2.1km",
   },
+  {
+    id: "ev4",
+    name: "Workshop de Fotografia",
+    banner: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400",
+    date: "Hoje",
+    time: "14:00",
+    participants: 45,
+    distance: "800m",
+  },
+  {
+    id: "ev5",
+    name: "Aula de Yoga ao Ar Livre",
+    banner: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=400",
+    date: "Hoje",
+    time: "07:00",
+    participants: 32,
+    distance: "1.5km",
+  },
+  {
+    id: "ev6",
+    name: "Noite de Jazz",
+    banner: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=400",
+    date: "Sab, 2 Ago",
+    time: "21:00",
+    participants: 67,
+    distance: "1.8km",
+  },
+  {
+    id: "ev7",
+    name: "Feira de Artesanato",
+    banner: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=400",
+    date: "Dom, 3 Ago",
+    time: "09:00",
+    participants: 110,
+    distance: "3.2km",
+  },
+  {
+    id: "ev8",
+    name: "Palestra Inovacao",
+    banner: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400",
+    date: "Seg, 4 Ago",
+    time: "19:00",
+    participants: 78,
+    distance: "2.5km",
+  },
+  {
+    id: "ev9",
+    name: "Corrida de Rua",
+    banner: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400",
+    date: "Ter, 5 Ago",
+    time: "06:00",
+    participants: 250,
+    distance: "900m",
+  },
+  {
+    id: "ev10",
+    name: "Clube do Livro",
+    banner: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400",
+    date: "Qua, 6 Ago",
+    time: "18:30",
+    participants: 25,
+    distance: "1.1km",
+  },
 ];
-
-/* ─── Mock Businesses ────────────────────────────────────── */
 
 const MOCK_BUSINESSES: NearbyBusinessesSectionData["businesses"] = [
   {
@@ -263,8 +331,6 @@ const MOCK_BUSINESSES: NearbyBusinessesSectionData["businesses"] = [
     distance: "500m",
   },
 ];
-
-/* ─── Mock Drivers ───────────────────────────────────────── */
 
 const MOCK_DRIVERS: NearbyDriversSectionData["drivers"] = [
   {
@@ -296,17 +362,20 @@ const MOCK_DRIVERS: NearbyDriversSectionData["drivers"] = [
   },
 ];
 
-/* ─── Mock Trending ──────────────────────────────────────── */
-
 const MOCK_TRENDING: TrendingSectionData["items"] = [
   { id: "t1", title: "Sunset no Parque", emoji: "🌅", count: 128, trend: "up" },
   { id: "t2", title: "Feira Gastronomica", emoji: "🍽", count: 85, trend: "stable" },
   { id: "t3", title: "Connexy Meetup", emoji: "🤝", count: 64, trend: "new" },
   { id: "t4", title: "Workshop de Fotografia", emoji: "📸", count: 42, trend: "up" },
   { id: "t5", title: "Noite de Jazz", emoji: "🎷", count: 37, trend: "stable" },
+  { id: "t6", title: "Aula de Yoga", emoji: "🧘", count: 32, trend: "new" },
+  { id: "t7", title: "Feira de Artesanato", emoji: "🎨", count: 110, trend: "up" },
+  { id: "t8", title: "Palestra Inovacao", emoji: "💡", count: 78, trend: "stable" },
+  { id: "t9", title: "Corrida de Rua", emoji: "🏃", count: 250, trend: "up" },
+  { id: "t10", title: "Clube do Livro", emoji: "📚", count: 25, trend: "new" },
+  { id: "t11", title: "Pocket Show MPB", emoji: "🎤", count: 56, trend: "stable" },
+  { id: "t12", title: "Hackathon Connexy", emoji: "💻", count: 89, trend: "up" },
 ];
-
-/* ─── Section Factory ────────────────────────────────────── */
 
 function createHeroSection(context: ContextState): SmartSection {
   const messages = HERO_MESSAGES[context.environment] ?? HERO_MESSAGES[ContextEnvironment.CITY];
@@ -353,7 +422,7 @@ function createHotAreaSection(context: ContextState): SmartSection {
   };
 }
 
-function createRecommendationsSection(context: ContextState): SmartSection {
+function createRecommendationsSection(): SmartSection {
   const items: RecommendationsSectionData["items"] = [
     {
       id: "rec-1",
@@ -368,13 +437,6 @@ function createRecommendationsSection(context: ContextState): SmartSection {
       description: "O que acontece na cidade",
       icon: "📅",
       route: "/feed",
-    },
-    {
-      id: "rec-3",
-      title: "Compartilhar momento",
-      description: "O que voce esta fazendo agora?",
-      icon: "⚡",
-      route: "/create/moment",
     },
   ];
 
@@ -394,12 +456,53 @@ function createRecommendationsSection(context: ContextState): SmartSection {
   };
 }
 
+const todayEvents = MOCK_EVENTS.filter((e) => e.date === "Hoje");
+const upcomingEvents = MOCK_EVENTS.filter((e) => e.date !== "Hoje");
+
+function createNearbyEventsTodaySection(context: ContextState): SmartSection {
+  const count = context.nearEvents;
+  const data: NearbyEventsSectionData = {
+    kind: "NEARBY_EVENTS",
+    count,
+    events: todayEvents.slice(0, 5),
+  };
+
+  return {
+    id: "nearby-events-today",
+    type: "NEARBY_EVENTS",
+    title: "Eventos Hoje",
+    subtitle: `${todayEvents.length} eventos acontecendo agora`,
+    emoji: "🎉",
+    priority: 66,
+    data,
+  };
+}
+
+function createNearbyEventsUpcomingSection(context: ContextState): SmartSection {
+  const count = context.nearEvents;
+  const data: NearbyEventsSectionData = {
+    kind: "NEARBY_EVENTS",
+    count,
+    events: upcomingEvents.slice(0, 5),
+  };
+
+  return {
+    id: "nearby-events-upcoming",
+    type: "NEARBY_EVENTS",
+    title: "Eventos Proximos",
+    subtitle: `${upcomingEvents.length} eventos por vir`,
+    emoji: "📅",
+    priority: 65,
+    data,
+  };
+}
+
 function createNearbyPeopleSection(context: ContextState): SmartSection {
   const count = context.nearPeople;
   const data: NearbyPeopleSectionData = {
     kind: "NEARBY_PEOPLE",
     count,
-    people: MOCK_PEOPLE.slice(0, 5),
+    people: MOCK_PEOPLE.slice(0, 7),
   };
 
   return {
@@ -408,28 +511,13 @@ function createNearbyPeopleSection(context: ContextState): SmartSection {
     title: "Pessoas Proximas",
     subtitle: `${count} pessoas por perto`,
     emoji: "👥",
-    priority: 70,
+    priority: 75,
     data,
   };
 }
 
 function createNearbyEventsSection(context: ContextState): SmartSection {
-  const count = context.nearEvents;
-  const data: NearbyEventsSectionData = {
-    kind: "NEARBY_EVENTS",
-    count,
-    events: MOCK_EVENTS.slice(0, 3),
-  };
-
-  return {
-    id: "nearby-events",
-    type: "NEARBY_EVENTS",
-    title: "Eventos Proximos",
-    subtitle: `${count} eventos acontecendo`,
-    emoji: "🎉",
-    priority: 65,
-    data,
-  };
+  return createNearbyEventsTodaySection(context);
 }
 
 function createNearbyBusinessesSection(context: ContextState): SmartSection {
@@ -443,7 +531,7 @@ function createNearbyBusinessesSection(context: ContextState): SmartSection {
   return {
     id: "nearby-businesses",
     type: "NEARBY_BUSINESSES",
-    title: "Lugares Proximos",
+    title: "Negocios Proximos",
     subtitle: `${count} negocios por perto`,
     emoji: "🏪",
     priority: 60,
@@ -504,14 +592,14 @@ function createFooterSection(): SmartSection {
   };
 }
 
-/* ─── Export Section Creators ─────────────────────────────── */
-
 export {
   createHeroSection,
   createHotAreaSection,
   createRecommendationsSection,
   createNearbyPeopleSection,
   createNearbyEventsSection,
+  createNearbyEventsTodaySection,
+  createNearbyEventsUpcomingSection,
   createNearbyBusinessesSection,
   createNearbyDriversSection,
   createTrendingSection,

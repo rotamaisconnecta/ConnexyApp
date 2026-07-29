@@ -70,7 +70,7 @@ function CreatePage() {
       <StatusBar />
 
       <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
-        <Link to="/feed" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
+        <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
           <ChevronLeft className="h-4 w-4" />
         </Link>
         <div>
@@ -175,8 +175,6 @@ function getActionDescription(id: string): string {
       return "Vídeos curtos";
     case "text":
       return "Compartilhe uma ideia";
-    case "moment":
-      return "O que está acontecendo agora";
     case "offer":
       return "Criar oferta";
     case "event":

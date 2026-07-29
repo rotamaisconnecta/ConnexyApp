@@ -2,14 +2,12 @@ import { useState, useCallback } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
-import { Moment } from "@/components/profile/atoms/moment";
 import { Badge } from "@/components/ui/badge";
 import { DriverProfileCard } from "@/components/driver/driver-profile-card";
 import RoleSwitcher from "@/components/roles/RoleSwitcher";
 import RoleSelector from "@/components/roles/RoleSelector";
 
 import { currentUser, findPlace, places } from "@/lib/mock-data";
-import { type MomentData } from "@/lib/profile/moment-expiry";
 import {
   MapPin,
   Star,
@@ -32,20 +30,11 @@ export const Route = createFileRoute("/_app/profile")({
   component: ProfilePage,
 });
 
-const MOCK_MOMENT: MomentData = {
-  id: "self-1",
-  text: "Café da manhã no Central antes do trabalho ☕",
-  createdAt: new Date(Date.now() - 45 * 60 * 1000),
-  active: true,
-  place: { name: "Café Central" },
-};
-
 function ProfilePage() {
   const navigate = useNavigate();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
-  const [isOnline] = useState(false);
-  const [hasRegistration] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
 
   const handleModeChange = useCallback((mode: UserRole) => {
     setRolesState((prev) => {
@@ -108,20 +97,6 @@ function ProfilePage() {
           gradientBg
           badge={<Badge>Ver perfil público</Badge>}
           mood={{ emoji: "🎧", text: "explorando o Connexy" }}
-        />
-      </div>
-
-      {/* ── Moment ────────────────────────────────────────── */}
-
-      <div className="px-4 mt-3">
-        <Moment
-          moment={MOCK_MOMENT}
-          variant="full"
-          profileName={currentUser.name}
-          onPlaceClick={(name) => {
-            const match = places.find((p) => p.name === name);
-            if (match) navigate({ to: `/local/${match.id}` });
-          }}
         />
       </div>
 

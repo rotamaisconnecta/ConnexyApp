@@ -36,7 +36,7 @@ export function DriverBottomSheet({ isOpen, onClose, children }: DriverBottomShe
             animate="visible"
             exit="exit"
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
           />
 
           <motion.div
@@ -46,7 +46,7 @@ export function DriverBottomSheet({ isOpen, onClose, children }: DriverBottomShe
             exit="exit"
             role="dialog"
             aria-modal="true"
-            className="fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-[36px] max-h-[80vh] overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 z-[60] bg-surface rounded-t-[36px] max-h-[80vh] overflow-hidden"
             style={{
               paddingBottom: "env(safe-area-inset-bottom)",
             }}

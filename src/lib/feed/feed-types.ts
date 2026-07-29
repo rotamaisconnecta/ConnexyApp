@@ -155,6 +155,8 @@ export const SmartSectionType = {
   RECOMMENDATIONS: "RECOMMENDATIONS",
   NEARBY_PEOPLE: "NEARBY_PEOPLE",
   NEARBY_EVENTS: "NEARBY_EVENTS",
+  NEARBY_EVENTS_TODAY: "NEARBY_EVENTS_TODAY",
+  NEARBY_EVENTS_UPCOMING: "NEARBY_EVENTS_UPCOMING",
   NEARBY_BUSINESSES: "NEARBY_BUSINESSES",
   NEARBY_DRIVERS: "NEARBY_DRIVERS",
   TRENDING: "TRENDING",
@@ -221,6 +223,7 @@ export interface NearbyPeopleSectionData {
     id: string;
     name: string;
     photo: string;
+    age?: number;
     distance: string;
     interests: string[];
     online: boolean;
