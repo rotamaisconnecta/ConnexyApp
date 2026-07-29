@@ -26,6 +26,7 @@ import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
 import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
+import { Route as AppMyConnexyRouteImport } from './routes/_app/my-connexy'
 import { Route as AppMatchingRouteImport } from './routes/_app.matching'
 import { Route as AppMarketplaceRouteImport } from './routes/_app/marketplace'
 import { Route as AppLocaisRouteImport } from './routes/_app.locais'
@@ -162,6 +163,11 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppNotificacoesRoute = AppNotificacoesRouteImport.update({
   id: '/notificacoes',
   path: '/notificacoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMyConnexyRoute = AppMyConnexyRouteImport.update({
+  id: '/my-connexy',
+  path: '/my-connexy',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMatchingRoute = AppMatchingRouteImport.update({
@@ -455,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/locais': typeof AppLocaisRoute
   '/marketplace': typeof AppMarketplaceRoute
   '/matching': typeof AppMatchingRoute
+  '/my-connexy': typeof AppMyConnexyRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
@@ -526,6 +533,7 @@ export interface FileRoutesByTo {
   '/locais': typeof AppLocaisRoute
   '/marketplace': typeof AppMarketplaceRoute
   '/matching': typeof AppMatchingRoute
+  '/my-connexy': typeof AppMyConnexyRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/notifications': typeof AppNotificationsRoute
   '/pessoas': typeof AppPessoasRoute
@@ -599,6 +607,7 @@ export interface FileRoutesById {
   '/_app/locais': typeof AppLocaisRoute
   '/_app/marketplace': typeof AppMarketplaceRoute
   '/_app/matching': typeof AppMatchingRoute
+  '/_app/my-connexy': typeof AppMyConnexyRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/pessoas': typeof AppPessoasRoute
@@ -672,6 +681,7 @@ export interface FileRouteTypes {
     | '/locais'
     | '/marketplace'
     | '/matching'
+    | '/my-connexy'
     | '/notificacoes'
     | '/notifications'
     | '/pessoas'
@@ -743,6 +753,7 @@ export interface FileRouteTypes {
     | '/locais'
     | '/marketplace'
     | '/matching'
+    | '/my-connexy'
     | '/notificacoes'
     | '/notifications'
     | '/pessoas'
@@ -815,6 +826,7 @@ export interface FileRouteTypes {
     | '/_app/locais'
     | '/_app/marketplace'
     | '/_app/matching'
+    | '/_app/my-connexy'
     | '/_app/notificacoes'
     | '/_app/notifications'
     | '/_app/pessoas'
@@ -993,6 +1005,13 @@ declare module '@tanstack/react-router' {
       path: '/notificacoes'
       fullPath: '/notificacoes'
       preLoaderRoute: typeof AppNotificacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/my-connexy': {
+      id: '/_app/my-connexy'
+      path: '/my-connexy'
+      fullPath: '/my-connexy'
+      preLoaderRoute: typeof AppMyConnexyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/matching': {
@@ -1492,6 +1511,7 @@ interface AppRouteChildren {
   AppLocaisRoute: typeof AppLocaisRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMatchingRoute: typeof AppMatchingRoute
+  AppMyConnexyRoute: typeof AppMyConnexyRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPessoasRoute: typeof AppPessoasRoute
@@ -1532,6 +1552,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLocaisRoute: AppLocaisRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppMatchingRoute: AppMatchingRoute,
+  AppMyConnexyRoute: AppMyConnexyRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPessoasRoute: AppPessoasRoute,

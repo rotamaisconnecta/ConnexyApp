@@ -358,11 +358,11 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
       return {
         leftItems: [
           { id: "feed", label: "Home", icon: "Home", route: "/home" },
-          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
+          { id: "my-connexy", label: "Central", icon: "LayoutDashboard", route: "/my-connexy" },
         ],
         centerItem: CENTER_ITEM,
         rightItems: [
-          { id: "chat", label: "Chat", icon: "MessageCircle", route: "/chat" },
+          { id: "map", label: "Mapa", icon: "Map", route: "/discover" },
           { id: "profile", label: "Perfil", icon: "User", route: "/profile" },
         ],
       };

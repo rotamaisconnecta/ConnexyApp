@@ -241,7 +241,7 @@ function ProfilePage() {
         className="mx-4 mt-4"
       >
         <Link
-          to="/profile/roles"
+          to="/my-connexy"
           className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-shadow"
         >
           <span className="h-11 w-11 grid place-items-center rounded-xl bg-primary/10 text-primary">
@@ -250,7 +250,7 @@ function ProfilePage() {
           <div className="flex-1">
             <div className="text-sm font-bold">Meu Connexy</div>
             <div className="text-[11px] text-muted-foreground">
-              Crie e gerencie seus negócios, eventos e locais
+              Seu centro de gerenciamento completo
             </div>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />

@@ -291,7 +291,7 @@ function Home() {
       {!hasExtraRoles && (
         <section className="mx-5 mt-5">
           <Link
-            to="/profile/roles"
+            to="/my-connexy"
             className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-all active:scale-[0.98]"
           >
             <span className="h-11 w-11 grid place-items-center rounded-xl bg-gradient-brand text-white shadow-floating">

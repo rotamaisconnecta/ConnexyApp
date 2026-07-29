@@ -11,6 +11,7 @@ import {
   MapPin,
   Film,
   Plus,
+  LayoutDashboard,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -31,6 +32,7 @@ const iconMap: Record<string, typeof Home> = {
   MapPin,
   Film,
   Plus,
+  LayoutDashboard,
 };
 
 interface BottomNavProps {

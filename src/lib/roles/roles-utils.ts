@@ -199,7 +199,7 @@ export function getBlockedCategoryMessage(category: string): {
         title: "Crie seu recurso",
         description: "Crie este recurso para acessar esta funcionalidade.",
         ctaLabel: "Criar",
-        ctaRoute: "/profile/roles",
+        ctaRoute: "/my-connexy",
       };
   }
 }
