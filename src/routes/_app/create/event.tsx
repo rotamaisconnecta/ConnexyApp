@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherFooter } from "@/components/publisher/PublisherFooter";
-import { UploadMedia } from "@/components/ui/UploadMedia";
+import { UploadMedia } from "@/components/upload";
 import { PublisherLocationPicker } from "@/components/publisher/PublisherLocationPicker";
 import { PublisherVisibility } from "@/components/publisher/PublisherVisibility";
 import { PublisherCategory } from "@/components/publisher/PublisherCategory";
@@ -42,7 +42,7 @@ function EventForm() {
       <PublisherHeader title="Criar evento" />
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         <PublisherCategory emoji="🎉" label="Evento" />
-        <UploadMedia accept="image/*" label="Banner do evento" />
+        <UploadMedia mode="photo" label="Banner do evento" />
         <BrandInput
           label="Nome do evento"
           placeholder="Ex: Fest Junina"

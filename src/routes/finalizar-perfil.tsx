@@ -1,9 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ImagePlus,
   MapPin,
-  Plus,
   ShieldCheck,
   UserRound,
   CheckCircle2,
@@ -14,6 +12,8 @@ import {
   FileText,
 } from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
+import { UploadMedia } from "@/components/upload";
+import { MediaFile } from "@/lib/upload";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const Route = createFileRoute("/finalizar-perfil")({
@@ -39,8 +39,7 @@ type VerificationStep = "choose" | "progress" | "done";
 
 function FinishProfile() {
   const nav = useNavigate();
-  const inputs = useRef<Array<HTMLInputElement | null>>([]);
-  const [photos, setPhotos] = useState<Array<string | null>>([null, null, null, null, null]);
+  const [photos, setPhotos] = useState<MediaFile[]>([]);
   const [gender, setGender] = useState("Masculino");
   const [status, setStatus] = useState("Disponivel");
   const [location, setLocation] = useState("Carregando localizacao...");
@@ -74,15 +73,6 @@ function FinishProfile() {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
     );
   }, []);
-
-  function addPhoto(index: number, file?: File) {
-    if (!file) return;
-    setPhotos((current) =>
-      current.map((photo, photoIndex) =>
-        photoIndex === index ? URL.createObjectURL(file) : photo,
-      ),
-    );
-  }
 
   function startVerification(methodId: string) {
     setVerifMethod(methodId);
@@ -139,39 +129,15 @@ function FinishProfile() {
             <p className="mt-1 text-base text-muted-foreground">
               Mostre quem voce e! Adicione pelo menos 1 foto.
             </p>
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              {photos.map((photo, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => inputs.current[index]?.click()}
-                  className={`relative aspect-square overflow-hidden rounded-2xl ${index === 0 ? "row-span-2 bg-violet-50" : "border border-dashed border-violet-200 bg-white"}`}
-                >
-                  {photo ? (
-                    <img
-                      src={photo}
-                      alt={`Foto ${index + 1} do perfil`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : index === 0 ? (
-                    <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-lg font-medium text-violet-600">
-                      <ImagePlus className="h-10 w-10" />
-                      Adicionar foto principal
-                    </span>
-                  ) : (
-                    <Plus className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-muted p-1.5 text-muted-foreground" />
-                  )}
-                  <input
-                    ref={(element) => {
-                      inputs.current[index] = element;
-                    }}
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => addPhoto(index, event.target.files?.[0])}
-                    className="hidden"
-                  />
-                </button>
-              ))}
+            <div className="mt-5">
+              <UploadMedia
+                mode="photo"
+                multiple
+                maxFiles={5}
+                value={photos}
+                onChange={setPhotos}
+                label="Fotos do perfil"
+              />
             </div>
           </section>
 

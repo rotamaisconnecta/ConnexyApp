@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, Upload, MapPin, Music, Users, Send, X } from "lucide-react";
+import { ChevronLeft, Loader2, MapPin, Music, Users, Send, X } from "lucide-react";
+import { UploadMedia } from "@/components/upload";
+import { MediaFile } from "@/lib/upload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { StatusBar } from "@/components/phone-frame";
@@ -16,8 +18,9 @@ export const Route = createFileRoute("/_app/gerenciar/novo-reel")({
 function NovoReel() {
   const { user } = useAuth();
   const nav = useNavigate();
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [media, setMedia] = useState<MediaFile[]>([]);
+  const videoFile = media[0]?.file ?? null;
+  const videoUrl = media[0]?.preview ?? null;
   const [posterBlob, setPosterBlob] = useState<Blob | null>(null);
   const [durationS, setDurationS] = useState<number>(0);
   const [caption, setCaption] = useState("");
@@ -35,16 +38,6 @@ function NovoReel() {
       .order("name")
       .then(({ data }) => setPlaces((data as Place[]) ?? []));
   }, []);
-
-  function onPickVideo(file: File) {
-    if (file.size > 60 * 1024 * 1024) {
-      toast.error("Vídeo maior que 60 MB");
-      return;
-    }
-    setVideoFile(file);
-    const url = URL.createObjectURL(file);
-    setVideoUrl(url);
-  }
 
   async function grabPoster() {
     const v = videoRef.current;
@@ -138,21 +131,20 @@ function NovoReel() {
 
       <div className="px-4 space-y-3">
         {!videoUrl ? (
-          <label className="block rounded-3xl border-2 border-dashed border-primary/40 bg-accent/40 p-8 text-center cursor-pointer hover:bg-accent/60 transition">
-            <div className="mx-auto h-14 w-14 grid place-items-center rounded-2xl bg-gradient-brand text-white shadow-elegant">
-              <Upload className="h-6 w-6" />
-            </div>
-            <p className="mt-3 font-semibold text-sm">Escolher vídeo</p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              MP4 ou WebM · até 90s · vertical funciona melhor
-            </p>
-            <input
-              type="file"
-              accept="video/mp4,video/webm"
-              hidden
-              onChange={(e) => e.target.files?.[0] && onPickVideo(e.target.files[0])}
-            />
-          </label>
+          <UploadMedia
+            mode="video"
+            value={media}
+            onChange={(files) => {
+              if (files.length === 0) {
+                setMedia([])
+                setPosterBlob(null);
+                setDurationS(0);
+              } else {
+                setMedia(files)
+              }
+            }}
+            label="Escolher vídeo"
+          />
         ) : (
           <div className="relative rounded-3xl overflow-hidden bg-black aspect-[9/16] max-h-[46vh]">
             <video
@@ -171,8 +163,7 @@ function NovoReel() {
             />
             <button
               onClick={() => {
-                setVideoUrl(null);
-                setVideoFile(null);
+                setMedia([]);
                 setPosterBlob(null);
                 setDurationS(0);
               }}

@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
-import { AtSign, CalendarDays, Camera, ChevronDown, Pencil, UserRound } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AtSign, CalendarDays, ChevronDown, UserRound } from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
-import { Shadows } from "@/theme";
+import { UploadMedia } from "@/components/upload";
+import { MediaFile } from "@/lib/upload";
 
 export const Route = createFileRoute("/completar-perfil")({
   head: () => ({ meta: [{ title: "Complete seu perfil | Connexy" }] }),
@@ -11,19 +12,14 @@ export const Route = createFileRoute("/completar-perfil")({
 
 function CompleteProfile() {
   const nav = useNavigate();
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<MediaFile[]>([]);
+  const photo = photos[0]?.preview ?? null;
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const canContinue = Boolean(name.trim() && username.trim() && birthDate);
   const maxBirthDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
-  function selectPhoto(file?: File) {
-    if (!file) return;
-    setPhoto(URL.createObjectURL(file));
-  }
 
   return (
     <PhoneFrame>
@@ -56,43 +52,12 @@ function CompleteProfile() {
             </p>
           </header>
 
-          <div className="mt-7 flex justify-center">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                className="grid h-36 w-36 place-items-center overflow-hidden rounded-full border-8 border-white bg-violet-50 text-violet-600"
-                style={{ boxShadow: Shadows.glow }}
-              >
-                {photo ? (
-                  <img
-                    className="h-full w-full object-cover"
-                    src={photo}
-                    alt="Foto de perfil selecionada"
-                  />
-                ) : (
-                  <span className="flex flex-col items-center gap-2 text-lg font-medium">
-                    <Camera className="h-9 w-9 fill-violet-600" />
-                    Adicionar foto
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                aria-label="Editar foto"
-                className="absolute bottom-1 right-0 grid h-12 w-12 place-items-center rounded-full bg-violet-100 text-violet-700 shadow-soft"
-              >
-                <Pencil className="h-5 w-5 fill-violet-700" />
-              </button>
-              <input
-                ref={fileInput}
-                type="file"
-                accept="image/*"
-                onChange={(event) => selectPhoto(event.target.files?.[0])}
-                className="hidden"
-              />
-            </div>
+          <div className="mt-7 max-w-[200px] mx-auto">
+            <UploadMedia
+              mode="photo"
+              value={photos}
+              onChange={setPhotos}
+            />
           </div>
 
           <form

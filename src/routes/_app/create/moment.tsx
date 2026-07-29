@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherFooter } from "@/components/publisher/PublisherFooter";
-import { PublisherGalleryPicker } from "@/components/publisher/PublisherGalleryPicker";
+import { UploadMedia } from "@/components/upload";
 import { PublisherLocationPicker } from "@/components/publisher/PublisherLocationPicker";
 import { PublisherVisibility } from "@/components/publisher/PublisherVisibility";
 import { PublisherPreview } from "@/components/publisher/PublisherPreview";
@@ -57,7 +57,7 @@ function MomentForm() {
             ))}
           </div>
         </div>
-        <PublisherGalleryPicker label="Adicionar foto (opcional)" />
+        <UploadMedia mode="photo" label="Adicionar foto (opcional)" />
         <PublisherLocationPicker value={location} onChange={setLocation} />
         <PublisherVisibility value={visibility} onChange={setVisibility} />
         <PublisherPreview text={text} location={location} />

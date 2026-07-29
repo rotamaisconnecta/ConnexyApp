@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherFooter } from "@/components/publisher/PublisherFooter";
-import { UploadMedia } from "@/components/ui/UploadMedia";
+import { UploadMedia } from "@/components/upload";
 import { PublisherVisibility } from "@/components/publisher/PublisherVisibility";
 import { PublisherCategory } from "@/components/publisher/PublisherCategory";
 import { usePublisherForm } from "@/components/publisher/usePublisherForm";
@@ -99,7 +99,7 @@ function PlaceForm() {
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
         />
-        <UploadMedia accept="image/*" multiple maxFiles={5} label="Adicionar fotos" />
+        <UploadMedia mode="photo" multiple maxFiles={5} label="Adicionar fotos" />
         <PublisherVisibility value={visibility} onChange={setVisibility} />
       </div>
       <PublisherFooter publishing={publishing} onSubmit={publish} label="Cadastrar local" />
