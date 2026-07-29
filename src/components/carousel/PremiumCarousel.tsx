@@ -3,7 +3,7 @@ import { motion, useAnimationControls } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 const AUTOPLAY_MS = 5000;
-const AUTOPLAY_RESUME_MS = 5000;
+const AUTOPLAY_RESUME_MS = 8000;
 const GAP = 12;
 const PEEK_DESKTOP = 48;
 const PEEK_TABLET = 40;
@@ -135,10 +135,10 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
       info: { offset: { x: number }; velocity: { x: number } },
     ) => {
       setHasInteracted(true);
-      const threshold = step * 0.2;
-      if (info.offset.x > threshold || info.velocity.x > 400) {
+      const threshold = step * 0.15;
+      if (info.offset.x > threshold || info.velocity.x > 300) {
         slidePrev();
-      } else if (info.offset.x < -threshold || info.velocity.x < -400) {
+      } else if (info.offset.x < -threshold || info.velocity.x < -300) {
         slideNext();
       }
     },
@@ -153,8 +153,8 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
     <div className={className}>
       <div className="relative group" ref={containerRef}>
         <motion.div
-          className="flex"
-          style={{ gap: GAP, cursor: "grab" }}
+          className="flex cursor-grab active:cursor-grabbing"
+          style={{ gap: GAP }}
           animate={
             jumpRef.current
               ? { x: -(index * step), transition: { duration: 0 } }
@@ -164,10 +164,10 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
             jumpRef.current = false;
           }}
           drag="x"
-          dragConstraints={containerRef}
-          dragElastic={0.05}
+          dragElastic={0.15}
+          dragMomentum
           onDragEnd={handleDragEnd}
-          whileTap={{ cursor: "grabbing" }}
+          whileDrag={{ scale: 0.98, cursor: "grabbing" }}
         >
           {looped.map((item, i) => {
             const itemRealIndex = i % total;

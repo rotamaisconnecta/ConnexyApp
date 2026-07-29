@@ -117,11 +117,12 @@ const ENVIRONMENT_TEMPLATES: Record<string, SmartSectionTypeValue[]> = {
 const ROLE_TEMPLATES: Partial<Record<UserRole, SmartSectionTypeValue[]>> = {
   DRIVER: [
     "HERO",
+    "NEARBY_EVENTS",
     "NEARBY_EVENTS_TODAY",
-    "NEARBY_EVENTS_UPCOMING",
-    "NEARBY_PEOPLE",
-    "NEARBY_DRIVERS",
     "TRENDING",
+    "NEARBY_PEOPLE",
+    "NEARBY_PLACES",
+    "NEARBY_BUSINESSES",
     "FOOTER",
   ],
 };
