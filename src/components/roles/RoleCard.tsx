@@ -7,6 +7,14 @@ import { BrandCard } from "@/components/ui/brand-card";
 import { BrandBadge } from "@/components/ui/brand-badge";
 import { BrandButton } from "@/components/ui/brand-button";
 
+const CRIAR_LABELS: Partial<Record<UserRole, string>> = {
+  [UserRole.BUSINESS]: "Criar Negócio",
+  [UserRole.EVENT_CREATOR]: "Criar Evento",
+  [UserRole.PLACE_OWNER]: "Criar Local",
+  [UserRole.DRIVER]: "Começar a Dirigir",
+  [UserRole.REELS_CREATOR]: "Criar Reel",
+};
+
 interface RoleCardProps {
   role: UserRole;
   title?: string;
@@ -28,6 +36,7 @@ export default function RoleCard({
   const isUser = role === UserRole.USER;
   const displayTitle = title ?? def.label;
   const displayDescription = description ?? def.description;
+  const criarLabel = CRIAR_LABELS[role] ?? "Criar";
 
   return (
     <motion.div
@@ -69,13 +78,9 @@ export default function RoleCard({
             <BrandBadge variant="default" className="text-[10px]">
               Sempre ativo
             </BrandBadge>
-          ) : active ? (
-            <BrandButton variant="outline" size="sm" className="w-full">
-              Desativar
-            </BrandButton>
           ) : (
             <BrandButton variant="primary" size="sm" className="w-full">
-              Ativar
+              {active ? "Gerenciar" : criarLabel}
             </BrandButton>
           )}
         </div>

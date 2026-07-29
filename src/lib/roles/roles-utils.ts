@@ -23,10 +23,10 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
   },
   {
     id: UserRole.BUSINESS,
-    label: "Empresa",
+    label: "Negócio",
     emoji: "🏢",
     color: "#F59E0B",
-    description: "Publique ofertas e gerencie seu negócio",
+    description: "Cadastre sua empresa ou estabelecimento",
   },
   {
     id: UserRole.EVENT_CREATOR,
@@ -168,37 +168,37 @@ export function getBlockedCategoryMessage(category: string): {
   switch (category.toLowerCase()) {
     case "offer":
       return {
-        title: "Cadastre sua empresa",
-        description: "Para publicar ofertas, ative a função Empresa nas configurações.",
-        ctaLabel: "Ativar Empresa",
-        ctaRoute: "/profile/roles",
+        title: "Crie seu negócio",
+        description: "Para publicar ofertas, cadastre seu negócio primeiro.",
+        ctaLabel: "Criar Negócio",
+        ctaRoute: "/create/place-business",
       };
     case "event":
       return {
-        title: "Ative Organizador de Eventos",
-        description: "Para criar eventos, ative esta função nas configurações.",
-        ctaLabel: "Ativar Organizador",
-        ctaRoute: "/profile/roles",
+        title: "Crie seu evento",
+        description: "Para criar eventos, acesse a criação de eventos.",
+        ctaLabel: "Criar Evento",
+        ctaRoute: "/create/event",
       };
     case "place":
       return {
-        title: "Ative Proprietário de Local",
-        description: "Para cadastrar locais, ative esta função nas configurações.",
-        ctaLabel: "Ativar Proprietário",
-        ctaRoute: "/profile/roles",
+        title: "Cadastre seu local",
+        description: "Para cadastrar locais, acesse a criação de locais.",
+        ctaLabel: "Cadastrar Local",
+        ctaRoute: "/create/place",
       };
     case "route":
       return {
         title: "Cadastre-se como Motorista",
-        description: "Para oferecer caronas, ative a função Motorista nas configurações.",
-        ctaLabel: "Ativar Motorista",
-        ctaRoute: "/profile/roles",
+        description: "Para oferecer corridas, cadastre-se como motorista.",
+        ctaLabel: "Ser Motorista",
+        ctaRoute: "/driver",
       };
     default:
       return {
-        title: "Função não disponível",
-        description: "Ative esta função para acessar este recurso.",
-        ctaLabel: "Ativar",
+        title: "Crie seu recurso",
+        description: "Crie este recurso para acessar esta funcionalidade.",
+        ctaLabel: "Criar",
         ctaRoute: "/profile/roles",
       };
   }

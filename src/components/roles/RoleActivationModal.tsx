@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "@tanstack/react-router";
 import { X, ArrowRight, Sparkles, Car, Store, CalendarDays, MapPin } from "lucide-react";
 
-import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
-import { addRole, setActiveMode } from "@/lib/roles/roles-storage";
+import { UserRole } from "@/lib/roles/roles-types";
 import { Colors, Radius, Shadows, Gradients } from "@/theme";
 
 interface RoleActivationModalProps {
@@ -16,48 +16,65 @@ const roleData: Record<
   {
     icon: React.ComponentType<{ size?: number; className?: string }>;
     title: string;
+    subtitle: string;
     description: string;
     gradient: string;
+    createRoute: string;
+    createLabel: string;
   }
 > = {
   [UserRole.DRIVER]: {
     icon: Car,
-    title: "Quero ser Motorista",
+    title: "Vamos começar a dirigir",
+    subtitle: "Mobilidade",
     description:
-      "Cadastre-se como motorista para começar a receber solicitações de corridas e aumentar sua renda.",
+      "Você ainda não oferece corridas. Cadastre-se como motorista agora e comece a receber solicitações.",
     gradient: "linear-gradient(135deg, #22C55E, #16A34A)",
+    createRoute: "/driver",
+    createLabel: "Começar a dirigir",
   },
   [UserRole.BUSINESS]: {
     icon: Store,
-    title: "Cadastrar Empresa",
-    description: "Cadastre sua empresa para publicar ofertas, promoções e divulgar seus serviços.",
+    title: "Vamos criar seu negócio",
+    subtitle: "Negócios",
+    description:
+      "Cadastre sua empresa ou estabelecimento para publicar ofertas, divulgar seus serviços e atrair clientes.",
     gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
+    createRoute: "/create/place-business",
+    createLabel: "Criar negócio",
   },
   [UserRole.EVENT_CREATOR]: {
     icon: CalendarDays,
-    title: "Criar Eventos",
-    description: "Ative esta função para organizar eventos, vender ingressos e receber check-ins.",
+    title: "Vamos criar seu evento",
+    subtitle: "Eventos",
+    description:
+      "Organize e promova seus eventos no Connexy. Venda ingressos, receba check-ins e engaje seu público.",
     gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
+    createRoute: "/create/event",
+    createLabel: "Criar evento",
   },
   [UserRole.PLACE_OWNER]: {
     icon: MapPin,
-    title: "Cadastrar Local",
-    description: "Adicione seu estabelecimento ao mapa inteligente do Connexy.",
+    title: "Vamos cadastrar seu local",
+    subtitle: "Locais",
+    description:
+      "Adicione seu estabelecimento ao mapa inteligente do Connexy e seja encontrado por clientes próximos.",
     gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
+    createRoute: "/create/place",
+    createLabel: "Cadastrar local",
   },
 };
 
 export default function RoleActivationModal({ open, role, onClose }: RoleActivationModalProps) {
+  const navigate = useNavigate();
   const data = roleData[role];
   if (!data) return null;
 
   const Icon = data.icon;
 
-  function handleActivate() {
-    addRole(role);
-    setActiveMode(role as RoleMode);
+  function handleCreate() {
     onClose();
-    window.dispatchEvent(new Event("roleChanged"));
+    navigate({ to: data.createRoute as never });
   }
 
   return (
@@ -109,7 +126,7 @@ export default function RoleActivationModal({ open, role, onClose }: RoleActivat
                   <h2 className="text-xl font-bold leading-tight">{data.title}</h2>
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <Sparkles size={14} />
-                    <span className="text-xs opacity-90">Nova funcionalidade</span>
+                    <span className="text-xs opacity-90">{data.subtitle}</span>
                   </div>
                 </div>
               </div>
@@ -123,7 +140,7 @@ export default function RoleActivationModal({ open, role, onClose }: RoleActivat
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleActivate}
+                onClick={handleCreate}
                 className="mt-6 w-full flex items-center justify-center gap-2 py-3.5 text-white font-semibold text-sm"
                 style={{
                   borderRadius: Radius.md,
@@ -131,7 +148,7 @@ export default function RoleActivationModal({ open, role, onClose }: RoleActivat
                   boxShadow: Shadows.floatingButton,
                 }}
               >
-                Ativar agora
+                {data.createLabel}
                 <ArrowRight size={16} />
               </motion.button>
 
@@ -144,7 +161,7 @@ export default function RoleActivationModal({ open, role, onClose }: RoleActivat
                   border: `1px solid ${Colors.border}`,
                 }}
               >
-                Cancelar
+                Agora não
               </motion.button>
             </div>
           </motion.div>

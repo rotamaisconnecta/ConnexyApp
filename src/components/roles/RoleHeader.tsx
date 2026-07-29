@@ -9,8 +9,8 @@ interface RoleHeaderProps {
 }
 
 export default function RoleHeader({
-  title = "ATIVAR FUNCIONALIDADES",
-  subtitle = "Escolha quais recursos deseja utilizar.",
+  title = "MEU CONNEXY",
+  subtitle = "Crie e gerencie seus negócios, eventos e locais.",
 }: RoleHeaderProps) {
   return (
     <motion.div

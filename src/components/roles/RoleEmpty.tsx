@@ -32,14 +32,14 @@ export function RoleEmpty({ onActivate }: RoleEmptyProps) {
           Nenhuma funcionalidade adicional ativa.
         </p>
         <p className="text-xs mt-1.5 leading-relaxed" style={{ color: Colors.text.secondary }}>
-          Ative funcionalidades como Motorista, Empresa ou Organizador para desbloquear mais
+          Ative funcionalidades como Negócio, Motorista ou Organizador para desbloquear mais
           recursos.
         </p>
       </div>
 
       {onActivate && (
         <BrandButton variant="primary" size="sm" onClick={onActivate}>
-          Ativar funcionalidades
+          Expandir meu Connexy
         </BrandButton>
       )}
     </motion.div>

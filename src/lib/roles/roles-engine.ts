@@ -198,7 +198,7 @@ const ALL_CREATE_ACTIONS: Omit<CreateAction, "enabled">[] = [
     icon: "CalendarDays",
     route: "/create/event",
     requiredRole: UserRole.EVENT_CREATOR,
-    lockedReason: "Ative a função Organizador para criar eventos.",
+    lockedReason: "Crie seu primeiro evento para publicar eventos.",
   },
   {
     id: "ride",
@@ -207,7 +207,7 @@ const ALL_CREATE_ACTIONS: Omit<CreateAction, "enabled">[] = [
     icon: "Car",
     route: "/create/ride",
     requiredRole: UserRole.DRIVER,
-    lockedReason: "Cadastre-se como motorista para oferecer caronas.",
+    lockedReason: "Cadastre-se como motorista para oferecer corridas.",
   },
   {
     id: "place",
@@ -216,7 +216,7 @@ const ALL_CREATE_ACTIONS: Omit<CreateAction, "enabled">[] = [
     icon: "MapPin",
     route: "/create/place",
     requiredRole: UserRole.PLACE_OWNER,
-    lockedReason: "Ative a função Proprietário para cadastrar locais.",
+    lockedReason: "Cadastre seu primeiro local para adicionar ao mapa.",
   },
 ];
 

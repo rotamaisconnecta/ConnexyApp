@@ -155,7 +155,7 @@ function CreatePage() {
                         style={{ background: Colors.brand.primary }}
                       >
                         <Lock size={8} />
-                        Ativar
+                        Criar
                       </motion.div>
                     )}
                   </motion.button>

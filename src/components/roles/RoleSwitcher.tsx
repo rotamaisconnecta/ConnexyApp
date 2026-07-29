@@ -19,7 +19,7 @@ const roleIcons: Record<RoleMode, typeof User> = {
 const roleLabels: Record<RoleMode, string> = {
   [UserRole.USER]: "Usuário",
   [UserRole.DRIVER]: "Motorista",
-  [UserRole.BUSINESS]: "Empresa",
+  [UserRole.BUSINESS]: "Negócio",
 };
 
 export default function RoleSwitcher({ onChange }: RoleSwitcherProps) {

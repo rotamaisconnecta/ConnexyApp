@@ -19,6 +19,8 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { SmartFeed } from "@/components/feed/SmartFeed";
 import { currentUser, people, places } from "@/lib/mock-data";
 import { drivers } from "@/lib/mock-data";
+import { getStoredRoles } from "@/lib/roles/roles-storage";
+import { UserRole } from "@/lib/roles/roles-types";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({
@@ -139,13 +141,16 @@ function Home() {
 
   const searchCategories = [
     { label: "Pessoas", icon: "👤", type: "pessoa" as const },
-    { label: "Empresas", icon: "🏢", type: "empresa" as const },
+    { label: "Negócios", icon: "🏢", type: "empresa" as const },
     { label: "Eventos", icon: "🎉", type: "evento" as const },
     { label: "Locais", icon: "📍", type: "local" as const },
     { label: "Ofertas", icon: "🏷️", type: "oferta" as const },
     { label: "Reels", icon: "▶️", type: "reel" as const },
     { label: "Caronas", icon: "🚗", type: "carona" as const },
   ];
+
+  const stored = getStoredRoles();
+  const hasExtraRoles = stored.roles.some((r) => r !== UserRole.USER);
 
   return (
     <div className="flex-1">
@@ -282,6 +287,26 @@ function Home() {
           )}
         </div>
       </section>
+
+      {!hasExtraRoles && (
+        <section className="mx-5 mt-5">
+          <Link
+            to="/profile/roles"
+            className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-all active:scale-[0.98]"
+          >
+            <span className="h-11 w-11 grid place-items-center rounded-xl bg-gradient-brand text-white shadow-floating">
+              <Building2 className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <div className="text-sm font-bold">🚀 Meu Connexy</div>
+              <div className="text-[11px] text-muted-foreground">
+                Crie seu negócio, publique ofertas e muito mais
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        </section>
+      )}
 
       <div className="mt-5">
         <SmartFeed />

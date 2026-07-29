@@ -232,7 +232,7 @@ function ProfilePage() {
         />
       </motion.div>
 
-      {/* ── Ativar Funcionalidades ────────────────────────── */}
+      {/* ── Meu Connexy ────────────────────────── */}
 
       <motion.section
         variants={sectionFade(5.7)}
@@ -248,9 +248,9 @@ function ProfilePage() {
             <Shield className="h-5 w-5" />
           </span>
           <div className="flex-1">
-            <div className="text-sm font-bold">Ativar Funcionalidades</div>
+            <div className="text-sm font-bold">Meu Connexy</div>
             <div className="text-[11px] text-muted-foreground">
-              Motorista, Empresa, Organizador e mais
+              Crie e gerencie seus negócios, eventos e locais
             </div>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
