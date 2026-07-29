@@ -1,10 +1,33 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Star, Tag } from "lucide-react";
+import { ArrowRight, MapPin, Star } from "lucide-react";
+import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import type { NearbyBusinessesSectionData } from "@/lib/feed/feed-types";
 
 interface FeedNearbyBusinessesProps {
   data: NearbyBusinessesSectionData;
+}
+
+function distanceColor(distance: string): string {
+  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
+  const unit = distance.includes("km") ? "km" : "m";
+  if (unit === "m") {
+    if (num <= 100) return "text-green-600";
+    if (num <= 500) return "text-yellow-600";
+    return "text-orange-500";
+  }
+  return "text-red-500";
+}
+
+function distanceLabel(distance: string): string {
+  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
+  const unit = distance.includes("km") ? "km" : "m";
+  if (unit === "m") {
+    if (num <= 100) return "🟢";
+    if (num <= 500) return "🟡";
+    return "🟠";
+  }
+  return "🔴";
 }
 
 export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
@@ -19,12 +42,12 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
-              🏪
+              🏢
             </span>
-            <h3 className="font-display text-base font-bold truncate">Lugares Proximos</h3>
+            <h3 className="font-display text-base font-bold truncate">Negócios Próximos</h3>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Ofertas e negocios perto de voce
+            Empresas e serviços perto de você
           </p>
         </div>
         <Link
@@ -35,43 +58,46 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
         </Link>
       </div>
 
-      <div className="space-y-2.5">
-        {data.businesses.map((biz) => (
+      <PremiumCarousel
+        items={data.businesses}
+        renderCard={(biz) => (
           <Link
-            key={biz.id}
             to="/local/$id"
             params={{ id: biz.id }}
-            className="block rounded-2xl bg-surface border border-border shadow-soft overflow-hidden transition-all duration-200 hover:shadow-elegant active:scale-[0.99]"
+            className="block rounded-2xl bg-surface border border-border shadow-soft overflow-hidden h-full transition-shadow duration-200 hover:shadow-elegant"
           >
-            <div className="grid grid-cols-[minmax(0,1fr)_auto]">
-              <div className="p-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
-                  <Tag className="h-3.5 w-3.5" /> {biz.category}
-                </div>
-                <div className="mt-1.5 font-display font-bold text-[15px] leading-tight truncate">
-                  {biz.name}
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {biz.distance}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-current text-primary" /> {biz.rating}
-                  </span>
-                </div>
+            <div className="relative" style={{ paddingBottom: "66%" }}>
+              <img
+                src={biz.cover}
+                alt={biz.name}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
+              <div className="absolute top-2 right-2 z-10">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
+                  <Star className="h-2.5 w-2.5 text-yellow-500" />
+                  {biz.rating}
+                </span>
               </div>
-              <div className="relative w-24 shrink-0">
-                <img
-                  src={biz.cover}
-                  alt={biz.name}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
+              <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1 z-10">
+                <MapPin className="h-2.5 w-2.5" />
+                {biz.distance}
+              </span>
+            </div>
+            <div className="p-2.5 flex flex-col gap-1">
+              <span className="font-display font-bold text-xs truncate">{biz.name}</span>
+              <span className="text-[10px] text-muted-foreground">{biz.category}</span>
+              <span className={`text-[9px] font-medium ${distanceColor(biz.distance)}`}>
+                {distanceLabel(biz.distance)} {biz.distance}
+              </span>
+              <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20">
+                Ver Negócio
               </div>
             </div>
           </Link>
-        ))}
-      </div>
+        )}
+      />
     </motion.div>
   );
 }

@@ -1,10 +1,33 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Car, Star } from "lucide-react";
+import { ArrowRight, Car, Star, MapPin } from "lucide-react";
+import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import type { NearbyDriversSectionData } from "@/lib/feed/feed-types";
 
 interface FeedNearbyDriversProps {
   data: NearbyDriversSectionData;
+}
+
+function distanceColor(distance: string): string {
+  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
+  const unit = distance.includes("km") ? "km" : "m";
+  if (unit === "m") {
+    if (num <= 100) return "text-green-600";
+    if (num <= 500) return "text-yellow-600";
+    return "text-orange-500";
+  }
+  return "text-red-500";
+}
+
+function distanceLabel(distance: string): string {
+  const num = parseFloat(distance.replace(/[km]/g, "").replace(",", "."));
+  const unit = distance.includes("km") ? "km" : "m";
+  if (unit === "m") {
+    if (num <= 100) return "🟢";
+    if (num <= 500) return "🟡";
+    return "🟠";
+  }
+  return "🔴";
 }
 
 export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
@@ -21,10 +44,10 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
             <span className="text-sm" aria-hidden>
               🚗
             </span>
-            <h3 className="font-display text-base font-bold truncate">Motoristas Disponiveis</h3>
+            <h3 className="font-display text-base font-bold truncate">Motoristas Disponíveis</h3>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {data.count} motoristas proximos
+            {data.count} motoristas próximos
           </p>
         </div>
         <Link
@@ -35,38 +58,46 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
         </Link>
       </div>
 
-      <div className="space-y-2">
-        {data.drivers.map((driver) => (
-          <div
-            key={driver.id}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-soft transition-all duration-200 hover:shadow-elegant"
-          >
-            <img
-              src={driver.photo}
-              alt={driver.name}
-              loading="lazy"
-              className="h-10 w-10 rounded-full shrink-0 object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-display font-bold text-sm truncate">{driver.name}</span>
-                <span className="flex items-center gap-0.5 text-[10px] text-primary">
-                  <Star className="h-3 w-3 fill-current" /> {driver.rating}
-                </span>
+      <PremiumCarousel
+        items={data.drivers}
+        renderCard={(driver) => (
+          <div className="rounded-2xl bg-surface border border-border shadow-soft overflow-hidden h-full transition-shadow duration-200 hover:shadow-elegant flex flex-col">
+            <div className="p-3 flex flex-col items-center text-center gap-2 flex-1">
+              <div className="relative">
+                <img
+                  src={driver.photo}
+                  alt={driver.name}
+                  loading="lazy"
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface ${driver.available ? "bg-green-500" : "bg-gray-300"}`}
+                />
               </div>
-              <div className="text-[11px] text-muted-foreground">
-                {driver.car} · {driver.distance}
+              <div className="min-w-0">
+                <span className="font-display font-bold text-xs block truncate">{driver.name}</span>
+                <div className="flex items-center justify-center gap-1 mt-0.5">
+                  <Car className="h-2.5 w-2.5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">{driver.car}</span>
+                </div>
               </div>
+              <div className="flex items-center gap-1 text-[10px]">
+                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                <span className="font-semibold">{driver.rating}</span>
+              </div>
+              <span className={`text-[9px] font-medium ${distanceColor(driver.distance)}`}>
+                {distanceLabel(driver.distance)} {driver.distance}
+              </span>
+              <Link
+                to="/ride"
+                className="mt-auto w-full rounded-full bg-gradient-brand text-white text-[10px] font-semibold py-1.5 text-center transition-all hover:brightness-110 active:scale-[0.97]"
+              >
+                Solicitar
+              </Link>
             </div>
-            <Link
-              to="/ride"
-              className="shrink-0 rounded-full bg-gradient-brand text-white text-[11px] font-semibold px-3 py-1.5 shadow-soft transition-all duration-200 hover:brightness-110 active:scale-[0.97]"
-            >
-              Solicitar
-            </Link>
           </div>
-        ))}
-      </div>
+        )}
+      />
     </motion.div>
   );
 }

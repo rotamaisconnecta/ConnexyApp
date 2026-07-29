@@ -16,6 +16,7 @@ const BASE_SCORES: Record<SmartSectionTypeValue, number> = {
   HOT_AREA: 85,
   RECOMMENDATIONS: 80,
   NEARBY_PEOPLE: 75,
+  NEARBY_PLACES: 73,
   NEARBY_EVENTS: 66,
   NEARBY_EVENTS_TODAY: 70,
   NEARBY_EVENTS_UPCOMING: 65,
@@ -145,6 +146,8 @@ function getNearbyBoost(context: ContextState, sectionType: SmartSectionTypeValu
   switch (sectionType) {
     case "NEARBY_PEOPLE":
       return Math.min(context.nearPeople * 0.5, 20);
+    case "NEARBY_PLACES":
+      return 12;
     case "NEARBY_EVENTS":
       return Math.min(context.nearEvents * 3, 15);
     case "NEARBY_BUSINESSES":

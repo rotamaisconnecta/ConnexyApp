@@ -9,6 +9,7 @@ import { FeedHotArea } from "./FeedHotArea";
 import { FeedRecommendations } from "./FeedRecommendations";
 import { FeedNearbyPeople } from "./FeedNearbyPeople";
 import { FeedNearbyEvents } from "./FeedNearbyEvents";
+import { FeedNearbyPlaces } from "./FeedNearbyPlaces";
 import { FeedNearbyBusinesses } from "./FeedNearbyBusinesses";
 import { FeedNearbyDrivers } from "./FeedNearbyDrivers";
 import { FeedTrending } from "./FeedTrending";
@@ -18,6 +19,7 @@ import type {
   HotAreaSectionData,
   RecommendationsSectionData,
   NearbyPeopleSectionData,
+  NearbyPlacesSectionData,
   NearbyEventsSectionData,
   NearbyBusinessesSectionData,
   NearbyDriversSectionData,
@@ -149,6 +151,8 @@ function SectionRenderer({ section }: { section: ReturnType<typeof buildFeed>[nu
       return <FeedRecommendations data={section.data as RecommendationsSectionData} />;
     case "NEARBY_PEOPLE":
       return <FeedNearbyPeople data={section.data as NearbyPeopleSectionData} />;
+    case "NEARBY_PLACES":
+      return <FeedNearbyPlaces data={section.data as NearbyPlacesSectionData} />;
     case "NEARBY_EVENTS":
     case "NEARBY_EVENTS_TODAY":
     case "NEARBY_EVENTS_UPCOMING":

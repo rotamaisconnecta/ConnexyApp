@@ -154,6 +154,7 @@ export const SmartSectionType = {
   HOT_AREA: "HOT_AREA",
   RECOMMENDATIONS: "RECOMMENDATIONS",
   NEARBY_PEOPLE: "NEARBY_PEOPLE",
+  NEARBY_PLACES: "NEARBY_PLACES",
   NEARBY_EVENTS: "NEARBY_EVENTS",
   NEARBY_EVENTS_TODAY: "NEARBY_EVENTS_TODAY",
   NEARBY_EVENTS_UPCOMING: "NEARBY_EVENTS_UPCOMING",
@@ -184,6 +185,7 @@ export type SmartSectionData =
   | HotAreaSectionData
   | RecommendationsSectionData
   | NearbyPeopleSectionData
+  | NearbyPlacesSectionData
   | NearbyEventsSectionData
   | NearbyBusinessesSectionData
   | NearbyDriversSectionData
@@ -224,9 +226,25 @@ export interface NearbyPeopleSectionData {
     name: string;
     photo: string;
     age?: number;
+    compatibility?: number;
     distance: string;
     interests: string[];
     online: boolean;
+  }>;
+}
+
+export interface NearbyPlacesSectionData {
+  kind: "NEARBY_PLACES";
+  count: number;
+  places: Array<{
+    id: string;
+    name: string;
+    photo: string;
+    category: string;
+    rating: number;
+    distance: string;
+    open: boolean;
+    hours?: string;
   }>;
 }
 
