@@ -5,6 +5,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { Users, Calendar, Building2, Car, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currentUser, people, places, drivers } from "@/lib/mock-data";
+import { usePresence } from "@/providers/presence/presence-provider";
 
 const searchSchema = z.object({
   filter: z.enum(["places"]).optional(),
@@ -35,6 +36,20 @@ function DiscoverPage() {
   const [activeFilter, setActiveFilter] = useState<MapFilter>("todos");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
+  const { checkins, placeUpdates } = usePresence();
+
+  const presencePeople = useMemo(
+    () =>
+      checkins.filter(
+        (r) => !r.leftAt && (r.visibility === "PUBLIC" || r.visibility === "FRIENDS"),
+      ),
+    [checkins],
+  );
+  const anonymousCheckins = useMemo(
+    () => checkins.filter((r) => !r.leftAt && r.visibility === "ANONYMOUS"),
+    [checkins],
+  );
+
   useEffect(() => {
     if (search.filter === "places") {
       setActiveFilter("locais");
@@ -55,7 +70,7 @@ function DiscoverPage() {
     }> = [];
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
-      people.slice(0, 8).forEach((p) => {
+      people.slice(0, 6).forEach((p) => {
         items.push({
           id: p.id,
           name: p.name,
@@ -70,10 +85,24 @@ function DiscoverPage() {
           subtitle: p.interests.slice(0, 2).join(", "),
         });
       });
+
+      presencePeople.forEach((record) => {
+        items.push({
+          id: `prs-${record.id}`,
+          name: record.userName,
+          type: "pessoas",
+          distance: "presente",
+          photo: record.userPhoto,
+          icon: "📍",
+          color: "bg-emerald-100 border-emerald-200",
+          subtitle: `📍 presente em ${record.targetName}`,
+        });
+      });
     }
 
     if (activeFilter === "todos" || activeFilter === "locais") {
       places.slice(0, 6).forEach((p) => {
+        const update = placeUpdates.find((u) => u.placeId === p.id);
         items.push({
           id: p.id,
           name: p.name,
@@ -84,7 +113,10 @@ function DiscoverPage() {
               : `${(p.distanceMeters / 1000).toFixed(1)}km`,
           icon: "📍",
           color: "bg-purple-100 border-purple-200",
-          subtitle: p.category,
+          subtitle:
+            update && update.checkinCount > 0
+              ? `${p.category} • ${update.checkinCount} presentes${update.anonymousCount > 0 ? ` • 🙈 ${update.anonymousCount} anônimos` : ""}`
+              : p.category,
         });
       });
     }
@@ -109,6 +141,7 @@ function DiscoverPage() {
 
     if (activeFilter === "todos" || activeFilter === "negocios") {
       places.slice(0, 6).forEach((p) => {
+        const update = placeUpdates.find((u) => u.placeId === p.id);
         items.push({
           id: `biz-${p.id}`,
           name: p.name,
@@ -119,7 +152,10 @@ function DiscoverPage() {
               : `${(p.distanceMeters / 1000).toFixed(1)}km`,
           icon: "🏪",
           color: "bg-amber-100 border-amber-200",
-          subtitle: `${p.rating} ★`,
+          subtitle:
+            update && update.checkinCount > 0
+              ? `${p.rating} ★ • ${update.checkinCount} presentes`
+              : `${p.rating} ★`,
         });
       });
     }
@@ -148,7 +184,7 @@ function DiscoverPage() {
       const bDist = parseInt(b.distance);
       return aDist - bDist;
     });
-  }, [activeFilter]);
+  }, [activeFilter, placeUpdates, presencePeople]);
 
   return (
     <div className="flex-1 pb-20">
@@ -245,6 +281,15 @@ function DiscoverPage() {
               </button>
             );
           })}
+        </div>
+        <div className="flex items-center justify-between px-3 py-2">
+          <span className="text-[10px] text-muted-foreground">
+            📍 Presença pública e de amigos no mapa · anônimos não aparecem
+          </span>
+          <span className="text-[10px] font-semibold text-muted-foreground">
+            🙈 {anonymousCheckins.length} anônimo{anonymousCheckins.length !== 1 ? "s" : ""} no
+            total
+          </span>
         </div>
       </div>
 

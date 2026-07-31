@@ -4,6 +4,7 @@ import { Bell, MessageSquare, Search, X, Building2, ArrowRight } from "lucide-re
 import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
+import { PresenceLiveFeed } from "@/components/presence/presence-live-feed";
 import { currentUser, people, places } from "@/lib/mock-data";
 import { drivers } from "@/lib/mock-data";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
@@ -299,6 +300,10 @@ function Home() {
 
       <div className="mt-5">
         <HomePremiumFeed />
+      </div>
+
+      <div className="mt-5">
+        <PresenceLiveFeed />
       </div>
     </div>
   );

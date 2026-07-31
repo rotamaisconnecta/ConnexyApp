@@ -2,6 +2,7 @@
    Pure TypeScript. No React. No side effects. ==== */
 
 import type { ActivityLevelValue } from "@/lib/engine/engine-types";
+import type { PresenceVisibilityValue } from "@/lib/event-checkin/checkin-types";
 
 /* ==== Event flow states ==== */
 
@@ -309,6 +310,7 @@ interface CheckinPayload {
   eventId: string;
   eventName: string;
   transition: CheckinTransitionValue;
+  visibility: PresenceVisibilityValue;
   placeId?: string;
   placeName?: string;
   placeLat?: number;
@@ -594,6 +596,7 @@ export interface ProfileCheckinData {
   placeLng: number;
   transition: CheckinTransitionValue;
   timestamp: string;
+  visibility?: PresenceVisibilityValue;
 }
 
 export interface ProfileEventData {

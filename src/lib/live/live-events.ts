@@ -7,6 +7,8 @@
 
 /* ─── Event Type Enum ────────────────────────────────────── */
 
+import type { PresenceVisibilityValue } from "@/lib/event-checkin/checkin-types";
+
 export const LiveEventType = {
   PHOTO_CREATED: "PHOTO_CREATED",
   VIDEO_CREATED: "VIDEO_CREATED",
@@ -138,6 +140,7 @@ export interface CheckinCreatedPayload {
   eventId: string | null;
   eventName: string | null;
   transition: "CHECKED_IN" | "LEFT";
+  visibility: PresenceVisibilityValue;
 }
 
 export interface DriverOnlinePayload {

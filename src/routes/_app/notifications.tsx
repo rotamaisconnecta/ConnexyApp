@@ -8,6 +8,7 @@ import type {
   NotificationPriorityValue,
 } from "@/lib/notifications/notification-types";
 import { NotificationCategory, NotificationPriority } from "@/lib/notifications/notification-types";
+import { usePresence } from "@/providers/presence/presence-provider";
 
 export const Route = createFileRoute("/_app/notifications")({
   head: () => ({ meta: [{ title: "Notificações — Connexy" }] }),
@@ -97,6 +98,23 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 
 function NotificationsPage() {
   const navigate = useNavigate();
+  const { notifications } = usePresence();
+
+  const presenceNotifications: Notification[] = notifications.map((n) => ({
+    id: n.id,
+    category: (n.category as NotificationCategoryValue) ?? NotificationCategory.NEARBY_PERSON,
+    priority: (n.priority as NotificationPriorityValue) ?? NotificationPriority.MEDIUM,
+    title: n.title,
+    body: n.body,
+    actorName: n.actorName,
+    actorAvatar: n.actorAvatar,
+    imageUrl: n.imageUrl,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+    metadata: n.metadata,
+  }));
+
+  const merged = [...presenceNotifications, ...MOCK_NOTIFICATIONS];
 
   const handleBack = useCallback(() => {
     navigate({ to: "/home" });
@@ -105,7 +123,7 @@ function NotificationsPage() {
   return (
     <div className="flex-1 pb-20">
       <StatusBar />
-      <NotificationCenter notifications={MOCK_NOTIFICATIONS} onBack={handleBack} />
+      <NotificationCenter notifications={merged} onBack={handleBack} />
     </div>
   );
 }

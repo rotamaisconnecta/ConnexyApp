@@ -2,15 +2,31 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Colors, Gradients, Radius, Shadows } from "@/theme";
+import type { PresenceVisibilityValue } from "@/lib/event-checkin/checkin-types";
+import { PresenceVisibilityMeta } from "@/lib/event-checkin/checkin-types";
+import { PresencePrivacyPicker } from "./presence-privacy-picker";
 
 interface CheckinModalProps {
   isOpen: boolean;
   eventName: string;
+  visibility: PresenceVisibilityValue;
+  onVisibilityChange: (visibility: PresenceVisibilityValue) => void;
+  savePreference: boolean;
+  onSavePreferenceChange: (save: boolean) => void;
   onConfirm: () => void;
   onClose: () => void;
 }
 
-export function CheckinModal({ isOpen, eventName, onConfirm, onClose }: CheckinModalProps) {
+export function CheckinModal({
+  isOpen,
+  eventName,
+  visibility,
+  onVisibilityChange,
+  savePreference,
+  onSavePreferenceChange,
+  onConfirm,
+  onClose,
+}: CheckinModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -50,8 +66,28 @@ export function CheckinModal({ isOpen, eventName, onConfirm, onClose }: CheckinM
               Fazer check-in no {eventName}?
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Confirme sua presença neste evento para que outros participantes possam ver.
+              Confirme sua presença para que outros participantes possam ver.
             </p>
+
+            <div className="mt-4">
+              <PresencePrivacyPicker
+                value={visibility}
+                onChange={onVisibilityChange}
+                savePreference={savePreference}
+                onSavePreferenceChange={onSavePreferenceChange}
+              />
+            </div>
+
+            <div className="mt-2 flex items-center gap-2 rounded-xl bg-surface px-3 py-2 text-xs text-muted-foreground">
+              <span aria-hidden>{PresenceVisibilityMeta[visibility].emoji}</span>
+              <span>
+                Sua presença será{" "}
+                <b className="font-semibold text-foreground">
+                  {PresenceVisibilityMeta[visibility].label}
+                </b>
+                . Você poderá alterar depois.
+              </span>
+            </div>
 
             <div className="mt-6 flex gap-3">
               <button
@@ -71,7 +107,7 @@ export function CheckinModal({ isOpen, eventName, onConfirm, onClose }: CheckinM
                 )}
                 style={{ background: Gradients.primary, boxShadow: Shadows.floatingButton }}
               >
-                Confirmar
+                Confirmar presença
               </button>
             </div>
           </motion.div>

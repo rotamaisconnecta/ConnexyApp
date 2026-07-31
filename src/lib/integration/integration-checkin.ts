@@ -11,6 +11,9 @@ import type {
 } from "./integration-types";
 import { IntegrationAction, CheckinTransition, CheckinTransitionMeta } from "./integration-types";
 import { generateIntegrationId, getPlaceStatus, haversineDistance } from "./integration-utils";
+import type { PresenceVisibilityValue } from "@/lib/event-checkin/checkin-types";
+import { PresenceVisibility } from "@/lib/event-checkin/checkin-types";
+import { isAnonymous } from "@/lib/presence/presence-privacy";
 
 /* ==== Checkin integration data ==== */
 
@@ -21,6 +24,7 @@ export interface CheckinIntegrationData {
   eventId: string;
   eventName: string;
   transition: CheckinTransitionValue;
+  visibility: PresenceVisibilityValue;
   placeId?: string;
   placeName?: string;
   placeLat?: number;
@@ -37,6 +41,7 @@ export function createCheckinEvent(
   eventId: string,
   eventName: string,
   transition: CheckinTransitionValue,
+  visibility: PresenceVisibilityValue = PresenceVisibility.PUBLIC,
   placeId?: string,
   placeName?: string,
   placeLat?: number,
@@ -63,6 +68,7 @@ export function createCheckinEvent(
       eventId,
       eventName,
       transition,
+      visibility,
       placeId,
       placeName,
       placeLat,
@@ -198,6 +204,7 @@ export function generateCheckinNotification(
 ): { title: string; body: string; priority: "LOW" | "MEDIUM" | "HIGH" } | null {
   const isFriend = friendIds.includes(checkin.userId);
   if (!isFriend) return null;
+  if (isAnonymous(checkin.visibility)) return null;
 
   if (checkin.transition === CheckinTransition.CHECKED_IN) {
     return {
@@ -255,20 +262,26 @@ export function computeProfileCheckinUpdate(checkin: CheckinIntegrationData): {
 
 /* ==== Checkin map data ==== */
 
-export function createCheckinMapUpdate(
-  checkins: CheckinIntegrationData[],
-  userLat: number,
-  userLng: number,
-  maxDistanceMeters = 5000,
-): {
+export interface CheckinMapPlaceUpdate {
   placeId: string;
   placeName: string;
   lat: number;
   lng: number;
   checkinCount: number;
   isNearby: boolean;
-}[] {
-  const grouped = new Map<string, { placeName: string; lat: number; lng: number; count: number }>();
+  anonymousCount: number;
+}
+
+export function createCheckinMapUpdate(
+  checkins: CheckinIntegrationData[],
+  userLat: number,
+  userLng: number,
+  maxDistanceMeters = 5000,
+): CheckinMapPlaceUpdate[] {
+  const grouped = new Map<
+    string,
+    { placeName: string; lat: number; lng: number; count: number; anonymousCount: number }
+  >();
 
   for (const checkin of checkins) {
     if (!checkin.placeLat || !checkin.placeLng || !checkin.placeId) continue;
@@ -278,8 +291,14 @@ export function createCheckinMapUpdate(
       lat: checkin.placeLat,
       lng: checkin.placeLng,
       count: 0,
+      anonymousCount: 0,
     };
-    existing.count += 1;
+
+    if (isAnonymous(checkin.visibility)) {
+      existing.anonymousCount += 1;
+    } else {
+      existing.count += 1;
+    }
     grouped.set(checkin.placeId, existing);
   }
 
@@ -292,6 +311,7 @@ export function createCheckinMapUpdate(
       lng: data.lng,
       checkinCount: data.count,
       isNearby: distance <= maxDistanceMeters,
+      anonymousCount: data.anonymousCount,
     };
   });
 }

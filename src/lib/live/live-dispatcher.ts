@@ -10,6 +10,7 @@ import type { LiveEvent, LiveEventPayload, LiveEventTypeValue } from "./live-eve
 import { LiveEventType, generateLiveId } from "./live-events";
 import { dispatchLiveEventRaw } from "./live-engine";
 import { storeLiveEvent } from "./live-storage";
+import type { PresenceVisibilityValue } from "@/lib/event-checkin/checkin-types";
 
 /* ─── Dispatch ───────────────────────────────────────────── */
 
@@ -152,6 +153,7 @@ export function dispatchCheckinCreated(data: {
   eventId: string | null;
   eventName: string | null;
   transition: "CHECKED_IN" | "LEFT";
+  visibility: PresenceVisibilityValue;
 }): LiveEvent {
   return dispatchLiveEvent(LiveEventType.CHECKIN_CREATED, data);
 }

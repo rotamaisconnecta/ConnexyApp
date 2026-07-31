@@ -3,7 +3,9 @@ import { StatusBar } from "@/components/phone-frame";
 import { BusinessCard } from "@/components/marketplace/business-card";
 import { EventCalendar } from "@/components/marketplace/event-calendar";
 import { EventList } from "@/components/marketplace/event-list";
-import { ChevronLeft, Calendar, Share2 } from "lucide-react";
+import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
+import { PresentList } from "@/components/event-checkin/present-list";
+import { ChevronLeft, Calendar, Share2, Users } from "lucide-react";
 import { useState, useMemo } from "react";
 import type {
   Business,
@@ -237,6 +239,22 @@ function EventDetailPage() {
             {isAttending ? "Cancelar" : "Participar"}
           </button>
         </div>
+
+        <div className="space-y-2 rounded-2xl bg-gradient-brand p-4 text-white shadow-elegant">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Users className="h-4 w-4" />
+            Quem está presente?
+          </div>
+          <PresenceCheckin
+            target={{ id: event.id, name: event.title, type: "event" }}
+            label="Presença no evento"
+          />
+          <p className="text-[11px] text-white/80">
+            Antes de confirmar, escolha quem poderá ver sua presença.
+          </p>
+        </div>
+
+        <PresentList targetId={event.id} title="Presentes no evento" />
 
         <div className="space-y-2">
           <h3 className="font-semibold text-sm">Organizador</h3>

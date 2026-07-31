@@ -9,6 +9,7 @@ import type {
 } from "./integration-types";
 import { IntegrationAction, CheckinTransition } from "./integration-types";
 import { generateIntegrationId } from "./integration-utils";
+import { isAnonymous } from "@/lib/presence/presence-privacy";
 
 /* ==== Notification generation from integration events ==== */
 
@@ -106,6 +107,7 @@ function generateCheckinNotifications(
   payload: Extract<IntegrationPayload, { kind: "checkin" }>,
   friendIds: string[],
 ): GeneratedNotification[] {
+  if (isAnonymous(payload.visibility)) return [];
   if (!friendIds.includes(payload.userId)) return [];
 
   if (payload.transition === CheckinTransition.CHECKED_IN) {

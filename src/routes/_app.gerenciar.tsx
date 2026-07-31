@@ -20,6 +20,7 @@ import {
 
 import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
+import { PresenceAnalytics } from "@/components/event-checkin/presence-analytics";
 
 export const Route = createFileRoute("/_app/gerenciar")({
   head: () => ({ meta: [{ title: "Meu Connexy — Connexy" }] }),
@@ -231,6 +232,14 @@ function GerenciarLayout() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* Organizer analytics (phase 10.7.1) */}
+      <div className="px-4 mt-6 mb-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Análises de presença
+        </h2>
+        <PresenceAnalytics targetIds={["cafe-central", "evt-1"]} title="Meus locais e eventos" />
       </div>
     </div>
   );

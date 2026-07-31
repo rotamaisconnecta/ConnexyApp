@@ -2,7 +2,11 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { places } from "@/lib/mock-data";
 import { proximityLabel } from "@/lib/proximity";
-import { ChevronLeft, Star, Phone, Navigation, Bookmark, Share2 } from "lucide-react";
+import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
+import { PresentList } from "@/components/event-checkin/present-list";
+import { PlaceStatusMeta } from "@/lib/integration/integration-types";
+import { usePresence } from "@/providers/presence/presence-provider";
+import { ChevronLeft, Star, Phone, Navigation, Bookmark, Share2, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_app/local/$id")({
   head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
@@ -30,6 +34,10 @@ export const Route = createFileRoute("/_app/local/$id")({
 
 function LocalDetail() {
   const p = Route.useLoaderData();
+  const { getMetrics } = usePresence();
+  const metrics = getMetrics(p.id);
+  const movementMeta = PlaceStatusMeta[metrics.movement];
+
   return (
     <div className="flex-1">
       <div className="relative">
@@ -94,6 +102,30 @@ function LocalDetail() {
               {label}
             </button>
           ))}
+        </div>
+
+        <div className="mt-5 rounded-2xl bg-gradient-brand p-4 text-white shadow-elegant">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Users className="h-4 w-4" />
+              Quem está presente?
+            </div>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${movementMeta.bg} ${movementMeta.color}`}
+            >
+              <span aria-hidden>{movementMeta.emoji}</span> {movementMeta.label}
+            </span>
+          </div>
+          <div className="mt-3">
+            <PresenceCheckin target={{ id: p.id, name: p.name, type: "place" }} label="Presença" />
+          </div>
+          <p className="mt-2 text-[11px] text-white/80">
+            Antes de confirmar, escolha quem poderá ver sua presença.
+          </p>
+        </div>
+
+        <div className="mt-5">
+          <PresentList targetId={p.id} title="Presentes agora" />
         </div>
 
         <div className="mt-6">

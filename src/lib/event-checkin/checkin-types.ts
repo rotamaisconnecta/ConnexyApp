@@ -9,6 +9,53 @@ export const CheckinStatus = {
 
 export type CheckinStatus = (typeof CheckinStatus)[keyof typeof CheckinStatus];
 
+export const PresenceVisibility = {
+  PUBLIC: "PUBLIC",
+  FRIENDS: "FRIENDS",
+  ANONYMOUS: "ANONYMOUS",
+} as const;
+
+export type PresenceVisibilityValue = (typeof PresenceVisibility)[keyof typeof PresenceVisibility];
+
+export const PresenceVisibilityMeta: Record<
+  PresenceVisibilityValue,
+  { emoji: string; label: string; description: string }
+> = {
+  PUBLIC: {
+    emoji: "🌍",
+    label: "Público",
+    description: "Todos poderão visualizar que você está presente.",
+  },
+  FRIENDS: {
+    emoji: "👥",
+    label: "Apenas amigos",
+    description: "Somente amigos visualizarão sua presença.",
+  },
+  ANONYMOUS: {
+    emoji: "🙈",
+    label: "Anônimo",
+    description:
+      "Seu check-in contará para o movimento do local, mas seu nome não aparecerá em nenhuma lista.",
+  },
+};
+
+export type PresenceTargetType = "place" | "event";
+
+export interface PresenceRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto: string;
+  visibility: PresenceVisibilityValue;
+  targetId: string;
+  targetName: string;
+  targetType: PresenceTargetType;
+  lat?: number;
+  lng?: number;
+  checkedInAt: string;
+  leftAt?: string;
+}
+
 export const CheckinAction = {
   FAVORITE: "FAVORITE",
   FOLLOW_ORGANIZER: "FOLLOW_ORGANIZER",
@@ -40,6 +87,7 @@ export interface CheckinUser {
   status: CheckinStatus;
   checkedInAt?: Date;
   distanceMeters: number;
+  visibility?: PresenceVisibilityValue;
 }
 
 export interface CheckinFeedItem {

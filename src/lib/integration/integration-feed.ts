@@ -9,6 +9,7 @@ import type {
 } from "./integration-types";
 import { IntegrationAction, IntegrationTarget } from "./integration-types";
 import { generateIntegrationId, sortByDate } from "./integration-utils";
+import { isAnonymous } from "@/lib/presence/presence-privacy";
 
 /* ==== Feed item creation from integration events ==== */
 
@@ -32,6 +33,7 @@ export function createFeedItemFromEvent(event: IntegrationEvent): IntegrationFee
 export function createFeedItemFromCheckin(event: IntegrationEvent): IntegrationFeedItem | null {
   if (event.action === IntegrationAction.CHECKIN_CREATED) {
     const p = event.payload as Extract<IntegrationPayload, { kind: "checkin" }>;
+    if (isAnonymous(p.visibility)) return null;
     return {
       id: generateIntegrationId("feed"),
       source: IntegrationTarget.CHECKIN,

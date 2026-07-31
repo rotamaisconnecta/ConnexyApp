@@ -1,4 +1,5 @@
 export const currentUser = {
+  id: "lucas",
   name: "Lucas Almeida",
   handle: "lucas.a",
   photo: "https://i.pravatar.cc/200?img=12",
