@@ -18,9 +18,22 @@ Redesenhar a Home do Connexy como uma experiência premium com 7 seções (Pesso
 
 ### Componentes
 
-- `PremiumCarousel.tsx`: carrossel compartilhado, reescrito com free-drag (mouse/touch/trackpad), inércia, spring, sem snap-lock, sem bottom bar/contador/indicadores, ~15% de peek do próximo card, cursor grab/grabbing, hover scale 1.03, setas hover no desktop.
-- Cards ~25% maiores (foto, padding e tipografia), com animações Framer Motion (fade/scale/slide/hover/elevation). Responsivo: 4 cards desktop, 3 tablet, 2 mobile.
+- `PremiumCarousel.tsx`: carrossel compartilhado, reescrito com free-drag (mouse/touch/trackpad), inércia, spring, sem snap-lock, sem bottom bar/contador/indicadores, cursor grab/grabbing, hover scale 1.03, tap scale 0.98, setas hover no desktop.
+- Cards ~25% maiores (foto, padding e tipografia), com animações Framer Motion (fade/scale/slide/hover/elevation).
 - Toda seção possui título com "Ver tudo" alinhado à direita + ícone de seta.
+
+### Cards premium (refino 26 — PREMIUM CARDS)
+
+- Largura fixa dos cards: **320px** desktop, **300px** tablet, **290px** mobile.
+- Altura fixa de **420px** para todos os cards.
+- Espaçamento entre cards: **24px** (`gap`), cards nunca colados (estilo Apple News/Airbnb/Netflix).
+- Peek de aproximadamente **20%** do próximo card (carrosséis full-bleed).
+- Padding lateral interno de **24px** (`px-6`) no conteúdo dos cards; headers de seção com `px-6`.
+- Borda arredondada de **24px** (`rounded-[24px]`).
+- Imagem maior, ocupando aproximadamente **60%** do card.
+- Tipografia maior e mais espaçada.
+- Botão CTA de largura total com **48px** de altura (`h-12`).
+- Hover: `scale(1.03)` + `shadow-xl`; clique: `scale(0.98)`.
 
 ### Novas rotas
 
@@ -40,7 +53,7 @@ Redesenhar a Home do Connexy como uma experiência premium com 7 seções (Pesso
 ### Arquivos alterados
 
 - src/components/carousel/PremiumCarousel.tsx
-- src/components/feed/FeedNearbyPeople.tsx / FeedNearbyEvents.tsx / FeedNearbyPlaces.tsx / FeedNearbyBusinesses.tsx / FeedTrending.tsx / FeedRecommendations.tsx / FeedFooter.tsx
+- src/components/feed/FeedNearbyPeople.tsx / FeedNearbyEvents.tsx / FeedNearbyPlaces.tsx / FeedNearbyBusinesses.tsx / FeedNearbyDrivers.tsx / FeedTrending.tsx / FeedRecommendations.tsx / FeedFooter.tsx
 - src/routes/_app.home.tsx (usa HomePremiumFeed) / _app.discover.tsx (search `?filter=places`)
 - src/routeTree.gen.ts (gerado automaticamente)
 

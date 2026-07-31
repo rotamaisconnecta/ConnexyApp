@@ -14,9 +14,9 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="mx-4"
+      className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -39,39 +39,40 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
       <PremiumCarousel
         items={data.drivers}
         renderCard={(driver) => (
-          <div className="rounded-2xl overflow-hidden h-full transition-all duration-200 hover:shadow-elegant active:scale-[0.98]">
-            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
-              <div className="p-3 flex flex-col items-center text-center gap-2 flex-1">
+          <div className="rounded-[24px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]">
+            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-[24px] overflow-hidden">
+              <div
+                className="relative w-full shrink-0 bg-gradient-to-br from-primary/10 to-secondary/40 grid place-items-center"
+                style={{ height: "57%" }}
+              >
                 <div className="relative">
                   <img
                     src={driver.photo}
                     alt={driver.name}
                     loading="lazy"
-                    className="h-14 w-14 rounded-full object-cover"
+                    className="h-28 w-28 rounded-full object-cover ring-4 ring-white shadow-soft"
                   />
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface ${driver.available ? "bg-green-500" : "bg-gray-300"}`}
+                    className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-white ${driver.available ? "bg-green-500" : "bg-gray-300"}`}
                   />
                 </div>
-                <div className="min-w-0">
-                  <span className="font-display font-bold text-xs block truncate">
-                    {driver.name}
-                  </span>
-                  <div className="flex items-center justify-center gap-1 mt-0.5">
-                    <Car className="h-2.5 w-2.5 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">{driver.car}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-[10px]">
-                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                  <span className="font-semibold">{driver.rating}</span>
-                </div>
-                <span className="text-[9px] font-medium text-muted-foreground">
-                  {driver.distance}
+              </div>
+              <div className="flex flex-1 flex-col items-center gap-1 px-6 py-4 text-center min-h-0">
+                <span className="font-display font-bold text-[15px] truncate w-full">
+                  {driver.name}
                 </span>
+                <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                  <Car className="h-3.5 w-3.5" />
+                  <span className="truncate">{driver.car}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[13px]">
+                  <Star className="h-3.5 w-3.5 text-yellow-500 fill-current" />
+                  <span className="font-semibold">{driver.rating}</span>
+                  <span className="text-muted-foreground">· {driver.distance}</span>
+                </div>
                 <Link
                   to="/ride"
-                  className="mt-auto w-full rounded-full bg-gradient-brand text-white text-[10px] font-semibold py-1.5 text-center transition-all hover:brightness-110 active:scale-[0.97]"
+                  className="mt-auto h-12 w-full rounded-full bg-gradient-brand text-white text-[13px] font-semibold grid place-items-center transition-all hover:brightness-110"
                 >
                   Solicitar
                 </Link>

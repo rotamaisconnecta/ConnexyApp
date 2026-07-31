@@ -15,9 +15,9 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="mx-4"
+      className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -43,7 +43,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
           <Link
             to="/perfil/$id"
             params={{ id: person.id }}
-            className="block rounded-2xl overflow-hidden h-full transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
+            className="block rounded-[24px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
             style={
               person.online
                 ? {
@@ -53,8 +53,8 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                 : undefined
             }
           >
-            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
-              <div className="relative" style={{ paddingBottom: "112%" }}>
+            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-[24px] overflow-hidden">
+              <div className="relative w-full shrink-0" style={{ height: "57%" }}>
                 <img
                   src={person.photo}
                   alt={person.name}
@@ -62,49 +62,49 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-2 left-2 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                <div className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
                   {formatPersonDistance(person.distanceMeters)}
                 </div>
               </div>
-              <div className="p-3.5 flex flex-col gap-1.5 flex-1">
-                <div className="flex items-center gap-1">
-                  <span className="font-display font-bold text-sm truncate">{person.name}</span>
+              <div className="flex flex-1 flex-col gap-1 px-6 py-4 min-h-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-display font-bold text-[15px] truncate">{person.name}</span>
                   {person.age != null && (
-                    <span className="text-[11px] text-muted-foreground shrink-0">
+                    <span className="text-xs text-muted-foreground shrink-0">
                       {person.age} anos
                     </span>
                   )}
                 </div>
                 {person.compatibility != null && (
                   <div className="flex items-center gap-1">
-                    <Heart className="h-3 w-3 text-pink-500" />
-                    <span className="text-[11px] font-medium text-pink-600">
+                    <Heart className="h-3.5 w-3.5 text-pink-500" />
+                    <span className="text-xs font-medium text-pink-600">
                       Compatibilidade {person.compatibility}%
                     </span>
                   </div>
                 )}
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-nowrap gap-1.5 overflow-hidden">
                   {person.interests.slice(0, 3).map((interest) => (
                     <span
                       key={interest}
-                      className="text-[11px] bg-secondary rounded-full px-2 py-0.5 truncate max-w-full"
+                      className="text-xs bg-secondary rounded-full px-2.5 py-1 truncate"
                     >
                       {interest}
                     </span>
                   ))}
                 </div>
-                <div className="flex items-center gap-1 mt-auto">
+                <div className="flex items-center gap-1.5">
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${person.online ? "bg-green-500" : "bg-gray-300"}`}
+                    className={`h-2 w-2 rounded-full ${person.online ? "bg-green-500" : "bg-gray-300"}`}
                   />
                   <span
-                    className={`text-[11px] font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
+                    className={`text-xs font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
                   >
                     {person.online ? "Online" : "Offline"}
                   </span>
                 </div>
-                <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-xs font-semibold py-2 transition-colors hover:bg-primary/20 active:scale-[0.97]">
-                  <Eye className="h-3 w-3 inline mr-1" />
+                <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+                  <Eye className="h-3.5 w-3.5 inline mr-1.5" />
                   Visualizar Perfil
                 </div>
               </div>

@@ -1,7 +1,30 @@
 import { Link } from "@tanstack/react-router";
 import { Clock, Gift, MapPin, Star, TrendingUp, Minus, Sparkles, Users } from "lucide-react";
-import { KIND_EMOJI, KIND_LABELS, type PremiumCard } from "@/lib/feed/home-premium";
+import {
+  KIND_EMOJI,
+  KIND_LABELS,
+  type PremiumCard,
+  type PremiumCardKind,
+} from "@/lib/feed/home-premium";
 import { cn } from "@/lib/utils";
+
+const CTA_LABEL: Record<PremiumCardKind, string> = {
+  restaurant: "Ver restaurante",
+  promotion: "Ver oferta",
+  business: "Ver negócio",
+  place: "Ver local",
+  "sponsored-event": "Ver evento",
+  event: "Ver evento",
+  hotel: "Ver hotel",
+  gym: "Ver academia",
+  cinema: "Ver filme",
+  bar: "Ver bar",
+  store: "Ver loja",
+  cafe: "Ver cafeteria",
+  service: "Ver serviço",
+  person: "Ver perfil",
+  post: "Ler publicação",
+};
 
 function TrendBadge({ trend }: { trend: NonNullable<PremiumCard["trend"]> }) {
   const Icon = trend === "up" ? TrendingUp : trend === "new" ? Sparkles : Minus;
@@ -9,8 +32,8 @@ function TrendBadge({ trend }: { trend: NonNullable<PremiumCard["trend"]> }) {
     trend === "up" ? "text-green-600" : trend === "new" ? "text-primary" : "text-muted-foreground";
   const label = trend === "up" ? "Em alta" : trend === "new" ? "Novo" : "Estável";
   return (
-    <span className="absolute top-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-gray-800 shadow-soft">
-      <Icon className={cn("h-3 w-3", color)} />
+    <span className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-gray-800 shadow-soft">
+      <Icon className={cn("h-3.5 w-3.5", color)} />
       {label}
     </span>
   );
@@ -26,7 +49,7 @@ function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap",
         tone === "promo"
           ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white"
           : "bg-secondary text-foreground",
@@ -38,13 +61,12 @@ function Chip({
 }
 
 function CardShell({ card }: { card: PremiumCard }) {
+  const metaLine = card.subtitle ?? card.category;
+
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-border/50 bg-surface overflow-hidden transition-all duration-300 hover:shadow-elevated">
+    <div className="flex h-full flex-col rounded-[24px] border border-border/50 bg-surface overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
       {(card.photo || card.emoji) && (
-        <div
-          className="relative w-full"
-          style={{ paddingBottom: card.kind === "person" ? "100%" : "82%" }}
-        >
+        <div className="relative w-full shrink-0" style={{ height: "57%" }}>
           {card.photo ? (
             <img
               src={card.photo}
@@ -53,14 +75,14 @@ function CardShell({ card }: { card: PremiumCard }) {
               className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary/10 to-secondary/40 text-3xl">
+            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary/10 to-secondary/40 text-4xl">
               {card.emoji ?? KIND_EMOJI[card.kind]}
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
 
           {(card.badge || card.promo || card.kind !== "person") && (
-            <span className="absolute top-2 left-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-gray-800 shadow-soft">
+            <span className="absolute top-3 left-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-gray-800 shadow-soft">
               {card.badge ?? (card.promo ? "Promoção" : KIND_LABELS[card.kind])}
             </span>
           )}
@@ -70,7 +92,7 @@ function CardShell({ card }: { card: PremiumCard }) {
           {card.kind === "person" && card.online != null && (
             <span
               className={cn(
-                "absolute bottom-2 right-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-soft",
+                "absolute bottom-3 right-3 z-10 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-soft",
                 card.online ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700",
               )}
             >
@@ -80,59 +102,53 @@ function CardShell({ card }: { card: PremiumCard }) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-1.5 p-3.5">
-        <div className="flex items-start justify-between gap-1.5">
-          <span className="line-clamp-2 font-display text-sm font-bold leading-snug">
+      <div className="flex flex-1 flex-col gap-1 px-6 py-4 min-h-0">
+        <div className="flex items-start justify-between gap-2">
+          <span className="line-clamp-2 font-display text-[15px] font-bold leading-snug">
             {card.title}
           </span>
           {card.kind === "person" && card.compatibility != null && (
-            <span className="shrink-0 text-[11px] font-bold text-primary">
-              {card.compatibility}%
-            </span>
+            <span className="shrink-0 text-xs font-bold text-primary">{card.compatibility}%</span>
           )}
         </div>
 
-        {card.subtitle && (
-          <span className="line-clamp-1 text-[11px] text-muted-foreground">{card.subtitle}</span>
-        )}
+        {metaLine && <span className="line-clamp-1 text-xs text-muted-foreground">{metaLine}</span>}
 
-        {card.category && card.kind !== "person" && (
-          <span className="line-clamp-1 text-[11px] font-medium text-muted-foreground">
-            {card.category}
-          </span>
-        )}
-
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-1.5">
+        <div className="mt-1 flex flex-nowrap gap-1.5 overflow-hidden">
           {card.rating != null && (
             <Chip>
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               {card.rating}
             </Chip>
           )}
-          {card.distance != null && card.distance !== undefined && (
+          {card.distance != null && (
             <Chip>
-              <MapPin className="h-2.5 w-2.5 text-primary" />
+              <MapPin className="h-3 w-3 text-primary" />
               {card.distance}
             </Chip>
           )}
           {card.people != null && (
             <Chip>
-              <Users className="h-2.5 w-2.5 text-primary" />
+              <Users className="h-3 w-3 text-primary" />
               {card.people}
             </Chip>
           )}
           {card.promo && (
             <Chip tone="promo">
-              <Gift className="h-2.5 w-2.5" />
+              <Gift className="h-3 w-3" />
               {card.promo}
             </Chip>
           )}
           {card.hours && (
             <Chip>
-              <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+              <Clock className="h-3 w-3 text-muted-foreground" />
               {card.hours}
             </Chip>
           )}
+        </div>
+
+        <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+          {CTA_LABEL[card.kind]}
         </div>
       </div>
     </div>
@@ -144,7 +160,7 @@ export function PremiumCardView({ card }: { card: PremiumCard }) {
     return (
       <Link
         to={card.route}
-        className="block h-full rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-elevated active:scale-[0.98]"
+        className="block h-full rounded-[24px] overflow-hidden transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
       >
         <CardShell card={card} />
       </Link>
@@ -152,7 +168,7 @@ export function PremiumCardView({ card }: { card: PremiumCard }) {
   }
 
   return (
-    <div className="h-full rounded-2xl overflow-hidden">
+    <div className="h-full rounded-[24px] overflow-hidden">
       <CardShell card={card} />
     </div>
   );

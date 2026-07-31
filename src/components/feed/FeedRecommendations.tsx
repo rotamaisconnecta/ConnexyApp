@@ -16,9 +16,9 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="mx-4"
+      className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -50,15 +50,17 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
           return (
             <Link
               to={legacy.route}
-              className="block h-full rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
+              className="block h-full rounded-[24px] overflow-hidden transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
             >
-              <div className="flex h-full flex-col gap-2 rounded-2xl border border-border/50 bg-surface p-4 shadow-soft">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-2xl">
+              <div className="flex h-full flex-col gap-2 rounded-[24px] border border-border/50 bg-surface p-6 shadow-soft">
+                <span className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-3xl">
                   {legacy.icon}
                 </span>
-                <div className="font-display font-bold text-sm leading-snug">{legacy.title}</div>
-                <div className="text-[11px] text-muted-foreground">{legacy.description}</div>
-                <div className="mt-auto w-full rounded-full bg-primary/10 py-2 text-center text-xs font-semibold text-primary transition-colors hover:bg-primary/20 active:scale-[0.97]">
+                <div className="font-display font-bold text-[15px] leading-snug">
+                  {legacy.title}
+                </div>
+                <div className="text-xs text-muted-foreground">{legacy.description}</div>
+                <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
                   Explorar
                 </div>
               </div>

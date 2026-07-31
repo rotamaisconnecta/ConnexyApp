@@ -34,9 +34,9 @@ export function FeedTrending({ data }: FeedTrendingProps) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="mx-4"
+      className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -69,21 +69,24 @@ export function FeedTrending({ data }: FeedTrendingProps) {
           const trendLabel = TREND_LABELS[legacy.trend];
 
           return (
-            <div className="rounded-2xl border border-border bg-surface p-4 shadow-soft transition-all duration-300 hover:shadow-elevated h-full flex flex-col">
+            <div className="h-full flex flex-col rounded-[24px] border border-border/50 bg-surface p-6 shadow-soft transition-all duration-300 hover:shadow-xl">
               <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden>
+                <span className="text-3xl" aria-hidden>
                   {legacy.emoji}
                 </span>
                 <div className="min-w-0">
-                  <div className="font-display font-bold text-sm truncate">{legacy.title}</div>
+                  <div className="font-display font-bold text-[15px] truncate">{legacy.title}</div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <TrendIcon className={`h-3.5 w-3.5 ${trendColor}`} />
-                    <span className={`text-[11px] font-semibold ${trendColor}`}>{trendLabel}</span>
+                    <span className={`text-xs font-semibold ${trendColor}`}>{trendLabel}</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-2 text-[11px] text-muted-foreground">
+              <div className="mt-2 text-[13px] text-muted-foreground">
                 {legacy.count} participações
+              </div>
+              <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+                Ver tendência
               </div>
             </div>
           );

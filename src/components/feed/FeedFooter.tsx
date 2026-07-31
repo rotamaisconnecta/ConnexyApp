@@ -11,7 +11,7 @@ export function FeedFooter({ data }: FeedFooterProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="mx-4 px-2 pt-8 text-center"
+      className="px-6 pt-8 text-center"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 144px)" }}
     >
       <div className="mx-auto mb-3 h-px w-16 bg-border" />
