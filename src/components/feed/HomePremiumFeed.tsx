@@ -42,7 +42,11 @@ export const HomePremiumFeed = memo(function HomePremiumFeed() {
         </PremiumSection>
 
         <PremiumSection index={1}>
-          <FeedNearbyEvents data={buildEventsUpcoming()} title="Eventos Próximos" />
+          <FeedNearbyEvents
+            data={buildEventsUpcoming()}
+            title="Eventos Próximos"
+            section="events-upcoming"
+          />
         </PremiumSection>
 
         <PremiumSection index={2}>
@@ -50,7 +54,11 @@ export const HomePremiumFeed = memo(function HomePremiumFeed() {
         </PremiumSection>
 
         <PremiumSection index={3}>
-          <FeedNearbyEvents data={buildEventsToday()} title="Eventos de Hoje" />
+          <FeedNearbyEvents
+            data={buildEventsToday()}
+            title="Eventos de Hoje"
+            section="events-today"
+          />
         </PremiumSection>
 
         <PremiumSection index={4}>

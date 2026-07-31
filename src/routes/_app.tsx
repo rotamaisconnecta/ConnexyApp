@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
@@ -7,8 +7,6 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/use-auth";
 import { ContextEngineProvider } from "@/lib/context/context-provider";
 import { Loader2 } from "lucide-react";
-import { getActiveMode } from "@/lib/roles/roles-storage";
-import type { RoleMode } from "@/lib/roles/roles-types";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -17,20 +15,10 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
-  const [activeMode, setActiveMode] = useState<RoleMode>(getActiveMode);
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
-
-  const handleRoleChanged = useCallback(() => {
-    setActiveMode(getActiveMode());
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("roleChanged", handleRoleChanged);
-    return () => window.removeEventListener("roleChanged", handleRoleChanged);
-  }, [handleRoleChanged]);
 
   if (loading || !user) {
     return (
@@ -53,7 +41,7 @@ function AppLayout() {
             <Outlet />
           </div>
           <PromoPopup />
-          <BottomNav activeRole={activeMode} />
+          <BottomNav />
         </div>
       </ContextEngineProvider>
     </PhoneFrame>

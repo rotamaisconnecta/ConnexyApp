@@ -33,7 +33,7 @@ function OfferForm() {
       <PublisherHeader title="Criar oferta" />
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         <PublisherCategory emoji="🏷️" label="Oferta" />
-        <UploadMedia mode="photo" label="Imagem da oferta" />
+        <UploadMedia mode="photo" multiple maxFiles={5} label="Fotos da oferta" />
         <BrandInput
           label="Título"
           placeholder="Ex: 2x1 em todas as cervejas"

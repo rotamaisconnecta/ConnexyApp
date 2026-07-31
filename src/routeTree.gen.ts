@@ -75,6 +75,7 @@ import { Route as AppCreateVideoRouteImport } from './routes/_app/create/video'
 import { Route as AppCreateTextRouteImport } from './routes/_app/create/text'
 import { Route as AppCreateRideRouteImport } from './routes/_app/create/ride'
 import { Route as AppCreateReelRouteImport } from './routes/_app/create/reel'
+import { Route as AppCreatePlaceBusinessRouteImport } from './routes/_app/create/place-business'
 import { Route as AppCreatePlaceRouteImport } from './routes/_app/create/place'
 import { Route as AppCreatePhotoRouteImport } from './routes/_app/create/photo'
 import { Route as AppCreateOfferRouteImport } from './routes/_app/create/offer'
@@ -414,6 +415,11 @@ const AppCreateReelRoute = AppCreateReelRouteImport.update({
   path: '/reel',
   getParentRoute: () => AppCreateRoute,
 } as any)
+const AppCreatePlaceBusinessRoute = AppCreatePlaceBusinessRouteImport.update({
+  id: '/place-business',
+  path: '/place-business',
+  getParentRoute: () => AppCreateRoute,
+} as any)
 const AppCreatePlaceRoute = AppCreatePlaceRouteImport.update({
   id: '/place',
   path: '/place',
@@ -506,6 +512,7 @@ export interface FileRoutesByFullPath {
   '/create/offer': typeof AppCreateOfferRoute
   '/create/photo': typeof AppCreatePhotoRoute
   '/create/place': typeof AppCreatePlaceRoute
+  '/create/place-business': typeof AppCreatePlaceBusinessRoute
   '/create/reel': typeof AppCreateReelRoute
   '/create/ride': typeof AppCreateRideRoute
   '/create/text': typeof AppCreateTextRoute
@@ -582,6 +589,7 @@ export interface FileRoutesByTo {
   '/create/offer': typeof AppCreateOfferRoute
   '/create/photo': typeof AppCreatePhotoRoute
   '/create/place': typeof AppCreatePlaceRoute
+  '/create/place-business': typeof AppCreatePlaceBusinessRoute
   '/create/reel': typeof AppCreateReelRoute
   '/create/ride': typeof AppCreateRideRoute
   '/create/text': typeof AppCreateTextRoute
@@ -660,6 +668,7 @@ export interface FileRoutesById {
   '/_app/create/offer': typeof AppCreateOfferRoute
   '/_app/create/photo': typeof AppCreatePhotoRoute
   '/_app/create/place': typeof AppCreatePlaceRoute
+  '/_app/create/place-business': typeof AppCreatePlaceBusinessRoute
   '/_app/create/reel': typeof AppCreateReelRoute
   '/_app/create/ride': typeof AppCreateRideRoute
   '/_app/create/text': typeof AppCreateTextRoute
@@ -738,6 +747,7 @@ export interface FileRouteTypes {
     | '/create/offer'
     | '/create/photo'
     | '/create/place'
+    | '/create/place-business'
     | '/create/reel'
     | '/create/ride'
     | '/create/text'
@@ -814,6 +824,7 @@ export interface FileRouteTypes {
     | '/create/offer'
     | '/create/photo'
     | '/create/place'
+    | '/create/place-business'
     | '/create/reel'
     | '/create/ride'
     | '/create/text'
@@ -891,6 +902,7 @@ export interface FileRouteTypes {
     | '/_app/create/offer'
     | '/_app/create/photo'
     | '/_app/create/place'
+    | '/_app/create/place-business'
     | '/_app/create/reel'
     | '/_app/create/ride'
     | '/_app/create/text'
@@ -1398,6 +1410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreateReelRouteImport
       parentRoute: typeof AppCreateRoute
     }
+    '/_app/create/place-business': {
+      id: '/_app/create/place-business'
+      path: '/place-business'
+      fullPath: '/create/place-business'
+      preLoaderRoute: typeof AppCreatePlaceBusinessRouteImport
+      parentRoute: typeof AppCreateRoute
+    }
     '/_app/create/place': {
       id: '/_app/create/place'
       path: '/place'
@@ -1483,6 +1502,7 @@ interface AppCreateRouteChildren {
   AppCreateOfferRoute: typeof AppCreateOfferRoute
   AppCreatePhotoRoute: typeof AppCreatePhotoRoute
   AppCreatePlaceRoute: typeof AppCreatePlaceRoute
+  AppCreatePlaceBusinessRoute: typeof AppCreatePlaceBusinessRoute
   AppCreateReelRoute: typeof AppCreateReelRoute
   AppCreateRideRoute: typeof AppCreateRideRoute
   AppCreateTextRoute: typeof AppCreateTextRoute
@@ -1495,6 +1515,7 @@ const AppCreateRouteChildren: AppCreateRouteChildren = {
   AppCreateOfferRoute: AppCreateOfferRoute,
   AppCreatePhotoRoute: AppCreatePhotoRoute,
   AppCreatePlaceRoute: AppCreatePlaceRoute,
+  AppCreatePlaceBusinessRoute: AppCreatePlaceBusinessRoute,
   AppCreateReelRoute: AppCreateReelRoute,
   AppCreateRideRoute: AppCreateRideRoute,
   AppCreateTextRoute: AppCreateTextRoute,

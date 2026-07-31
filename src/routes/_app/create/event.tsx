@@ -42,7 +42,7 @@ function EventForm() {
       <PublisherHeader title="Criar evento" />
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
         <PublisherCategory emoji="🎉" label="Evento" />
-        <UploadMedia mode="photo" label="Banner do evento" />
+        <UploadMedia mode="photo" multiple maxFiles={5} label="Fotos do evento" />
         <BrandInput
           label="Nome do evento"
           placeholder="Ex: Fest Junina"

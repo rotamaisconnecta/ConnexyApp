@@ -99,7 +99,7 @@ function NotificationsPage() {
   const navigate = useNavigate();
 
   const handleBack = useCallback(() => {
-    navigate({ to: "/feed" });
+    navigate({ to: "/home" });
   }, [navigate]);
 
   return (

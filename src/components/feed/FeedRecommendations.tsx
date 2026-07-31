@@ -39,6 +39,7 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
       </div>
 
       <PremiumCarousel
+        section="recommendations"
         items={data.items}
         renderCard={(item) => {
           if ("kind" in item) {

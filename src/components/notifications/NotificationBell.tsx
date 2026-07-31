@@ -41,7 +41,7 @@ const MOCK_BELL_NOTIFICATIONS: BellNotification[] = [
     description: "Oferta exclusiva perto de voce",
     icon: "🏷",
     createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    redirectTo: "/feed",
+    redirectTo: "/home",
   },
   {
     id: "b4",

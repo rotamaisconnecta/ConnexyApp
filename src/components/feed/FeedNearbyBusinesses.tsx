@@ -37,6 +37,7 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
       </div>
 
       <PremiumCarousel
+        section="businesses"
         items={data.businesses}
         renderCard={(biz) => (
           <Link

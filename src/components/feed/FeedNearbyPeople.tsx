@@ -38,6 +38,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
       </div>
 
       <PremiumCarousel
+        section="people"
         items={data.people}
         renderCard={(person) => (
           <Link

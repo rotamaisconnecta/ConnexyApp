@@ -57,6 +57,7 @@ export function FeedTrending({ data }: FeedTrendingProps) {
       </div>
 
       <PremiumCarousel
+        section="trending"
         items={data.items}
         renderCard={(item) => {
           if ("kind" in item) {

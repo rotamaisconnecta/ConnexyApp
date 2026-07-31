@@ -7,9 +7,10 @@ import type { NearbyEventsSectionData } from "@/lib/feed/feed-types";
 interface FeedNearbyEventsProps {
   data: NearbyEventsSectionData;
   title?: string;
+  section?: string;
 }
 
-export function FeedNearbyEvents({ data, title }: FeedNearbyEventsProps) {
+export function FeedNearbyEvents({ data, title, section }: FeedNearbyEventsProps) {
   const displayTitle = title ?? "Eventos Próximos";
   const isToday = displayTitle.toLowerCase().includes("hoje");
   const emoji = isToday ? "🎉" : "📅";
@@ -43,6 +44,7 @@ export function FeedNearbyEvents({ data, title }: FeedNearbyEventsProps) {
       </div>
 
       <PremiumCarousel
+        section={section}
         items={data.events}
         renderCard={(event) => (
           <Link

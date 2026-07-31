@@ -1,96 +1,89 @@
-import {
-  Home,
-  Map,
-  Car,
-  Store,
-  User,
-  MessageCircle,
-  Navigation,
-  Calendar,
-  FileText,
-  MapPin,
-  Film,
-  Plus,
-  LayoutDashboard,
-} from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
-import { AppIcon } from "@/components/ui/app-icon";
-import { UserRole } from "@/lib/roles/roles-types";
-import { getBottomNavConfig } from "@/lib/roles/roles-engine";
-import type { RoleMode } from "@/lib/roles/roles-types";
+import { Home, Map, LayoutDashboard, User, Plus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-const iconMap: Record<string, typeof Home> = {
-  Home,
-  Map,
-  Car,
-  Store,
-  User,
-  MessageCircle,
-  Navigation,
-  Calendar,
-  FileText,
-  MapPin,
-  Film,
-  Plus,
-  LayoutDashboard,
-};
-
-interface BottomNavProps {
-  activeRole?: RoleMode;
-}
-
-interface NavItem {
+interface BottomNavItem {
+  id: string;
   label: string;
-  icon: typeof Home;
+  icon: LucideIcon;
   route: string;
 }
 
-export default function BottomNav({ activeRole = UserRole.USER }: BottomNavProps) {
+const NAV_ITEMS: BottomNavItem[] = [
+  { id: "home", label: "Home", icon: Home, route: "/home" },
+  { id: "map", label: "Mapa", icon: Map, route: "/discover" },
+  { id: "my-connexy", label: "Meu Connexy", icon: LayoutDashboard, route: "/my-connexy" },
+  { id: "profile", label: "Perfil", icon: User, route: "/profile" },
+];
+
+function isActive(pathname: string, route: string): boolean {
+  if (pathname === route) return true;
+  return pathname.startsWith(route + "/");
+}
+
+export default function BottomNav() {
   const navigate = useNavigate();
-  const config = getBottomNavConfig(activeRole);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const left: NavItem[] = config.leftItems.map((item) => ({
-    label: item.label,
-    icon: iconMap[item.icon] ?? Home,
-    route: item.route,
-  }));
+  const leftItems = NAV_ITEMS.slice(0, 2);
+  const rightItems = NAV_ITEMS.slice(2);
 
-  const right: NavItem[] = config.rightItems.map((item) => ({
-    label: item.label,
-    icon: iconMap[item.icon] ?? Home,
-    route: item.route,
-  }));
+  const renderItem = (item: BottomNavItem) => {
+    const active = isActive(pathname, item.route);
+    const Icon = item.icon;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => navigate({ to: item.route as never })}
+        aria-label={item.label}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex flex-col items-center justify-center gap-1 transition-colors outline-none",
+          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <span className="relative grid place-items-center">
+          <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+          {active && (
+            <motion.span
+              layoutId={`bottom-nav-dot-${item.id}`}
+              className="absolute -bottom-1.5 h-1 w-1 rounded-full bg-primary"
+            />
+          )}
+        </span>
+        <span className="text-[10px] font-medium">{item.label}</span>
+      </button>
+    );
+  };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background border-t flex items-center justify-around z-50">
-      {left.map((item) => (
-        <button
-          key={item.label}
-          onClick={() => navigate({ to: item.route })}
-          className="flex flex-col items-center gap-1"
-        >
-          <item.icon size={22} />
-          <span className="text-xs">{item.label}</span>
-        </button>
-      ))}
+    <nav
+      role="tablist"
+      aria-label="Navegação principal"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-8px_30px_rgba(0,0,0,0.06)]"
+    >
+      <div className="grid h-20 grid-cols-5 items-center px-2">
+        {leftItems.map((item) => renderItem(item))}
 
-      <button
-        onClick={() => navigate({ to: config.centerItem.route })}
-        className="relative -mt-10 h-16 w-16 rounded-full shadow-xl bg-white flex items-center justify-center"
-      >
-        <AppIcon size="xl" priority />
-      </button>
+        <div className="grid place-items-center">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/create" as never })}
+            aria-label="Criar publicação"
+            className={cn(
+              "relative -mt-6 grid h-14 w-14 place-items-center rounded-full bg-gradient-brand text-white shadow-floating transition-transform active:scale-95",
+              isActive(pathname, "/create") && "ring-4 ring-primary/20",
+            )}
+          >
+            <Plus size={26} strokeWidth={2.4} />
+          </button>
+        </div>
 
-      {right.map((item) => (
-        <button
-          key={item.label}
-          onClick={() => navigate({ to: item.route })}
-          className="flex flex-col items-center gap-1"
-        >
-          <item.icon size={22} />
-          <span className="text-xs">{item.label}</span>
-        </button>
-      ))}
+        {rightItems.map((item) => renderItem(item))}
+      </div>
     </nav>
   );
 }

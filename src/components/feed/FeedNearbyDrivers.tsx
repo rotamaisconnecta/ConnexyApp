@@ -37,6 +37,7 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
       </div>
 
       <PremiumCarousel
+        section="drivers"
         items={data.drivers}
         renderCard={(driver) => (
           <div className="rounded-[24px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]">

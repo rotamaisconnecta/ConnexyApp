@@ -11,7 +11,7 @@ export function usePublisherForm() {
     await new Promise((r) => setTimeout(r, 800));
     setPublishing(false);
     toast.success("Publicado com sucesso!");
-    nav({ to: "/feed" });
+    nav({ to: "/home" });
   }, [nav]);
 
   return { publishing, publish };
