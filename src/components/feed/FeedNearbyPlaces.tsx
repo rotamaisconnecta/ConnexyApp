@@ -29,10 +29,11 @@ export function FeedNearbyPlaces({ data }: FeedNearbyPlacesProps) {
           </p>
         </div>
         <Link
-          to="/locais"
+          to="/discover"
+          search={{ filter: "places" }}
           className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
         >
-          Ver todos <ArrowRight className="h-3.5 w-3.5" />
+          Ver tudo <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
@@ -42,10 +43,10 @@ export function FeedNearbyPlaces({ data }: FeedNearbyPlacesProps) {
           <Link
             to="/local/$id"
             params={{ id: place.id }}
-            className="block rounded-2xl overflow-hidden h-full transition-all duration-200 hover:shadow-elegant active:scale-[0.98]"
+            className="block rounded-2xl overflow-hidden h-full transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
           >
             <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
-              <div className="relative" style={{ paddingBottom: "75%" }}>
+              <div className="relative" style={{ paddingBottom: "92%" }}>
                 <img
                   src={place.photo}
                   alt={place.name}
@@ -54,33 +55,33 @@ export function FeedNearbyPlaces({ data }: FeedNearbyPlacesProps) {
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
                 <div className="absolute top-2 right-2 z-10">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
-                    <Star className="h-2.5 w-2.5 text-yellow-500" />
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
+                    <Star className="h-3 w-3 text-yellow-500" />
                     {place.rating}
                   </span>
                 </div>
-                <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
-                  <MapPin className="h-2.5 w-2.5 inline mr-0.5" />
+                <span className="absolute bottom-2 left-2 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                  <MapPin className="h-3 w-3 inline mr-0.5" />
                   {place.distance}
                 </span>
               </div>
-              <div className="p-2.5 flex flex-col gap-1 flex-1">
+              <div className="p-3.5 flex flex-col gap-1.5 flex-1">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="font-display font-bold text-xs truncate">{place.name}</span>
+                  <span className="font-display font-bold text-sm truncate">{place.name}</span>
                   <span
-                    className={`text-[10px] font-medium shrink-0 ${place.open ? "text-green-600" : "text-red-500"}`}
+                    className={`text-[11px] font-medium shrink-0 ${place.open ? "text-green-600" : "text-red-500"}`}
                   >
                     {place.open ? "Aberto" : "Fechado"}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">{place.category}</span>
+                <span className="text-[12px] text-muted-foreground">{place.category}</span>
                 {place.hours && (
-                  <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-2.5 w-2.5" />
+                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
                     {place.hours}
                   </span>
                 )}
-                <div className="mt-auto w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20 active:scale-[0.97]">
+                <div className="mt-auto w-full text-center rounded-full bg-primary/10 text-primary text-xs font-semibold py-2 transition-colors hover:bg-primary/20 active:scale-[0.97]">
                   Ver Local
                 </div>
               </div>

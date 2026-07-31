@@ -1,12 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { Users, Calendar, Building2, Car, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currentUser, people, places, drivers } from "@/lib/mock-data";
 
+const searchSchema = z.object({
+  filter: z.enum(["places"]).optional(),
+});
+
 export const Route = createFileRoute("/_app/discover")({
   head: () => ({ meta: [{ title: "Explorar — Connexy" }] }),
+  validateSearch: searchSchema,
   component: DiscoverPage,
 });
 
@@ -25,8 +31,16 @@ const GRADIENT_BG = "bg-gradient-to-b from-primary/5 to-background";
 
 function DiscoverPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const [activeFilter, setActiveFilter] = useState<MapFilter>("todos");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (search.filter === "places") {
+      setActiveFilter("locais");
+      setSelectedItem(null);
+    }
+  }, [search.filter]);
 
   const mapItems = useMemo(() => {
     const items: Array<{

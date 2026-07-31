@@ -32,7 +32,7 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
           to="/marketplace"
           className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
         >
-          Ver todos <ArrowRight className="h-3.5 w-3.5" />
+          Ver tudo <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
@@ -42,10 +42,10 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
           <Link
             to="/business/$businessId"
             params={{ businessId: biz.id }}
-            className="block rounded-2xl overflow-hidden h-full transition-all duration-200 hover:shadow-elegant active:scale-[0.98]"
+            className="block rounded-2xl overflow-hidden h-full transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
           >
             <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
-              <div className="relative" style={{ paddingBottom: "66%" }}>
+              <div className="relative" style={{ paddingBottom: "82%" }}>
                 <img
                   src={biz.cover}
                   alt={biz.name}
@@ -54,28 +54,28 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
                 <div className="absolute top-2 right-2 z-10">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
-                    <Star className="h-2.5 w-2.5 text-yellow-500" />
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
+                    <Star className="h-3 w-3 text-yellow-500" />
                     {biz.rating}
                   </span>
                 </div>
-                <span className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
-                  <MapPin className="h-2.5 w-2.5 inline mr-0.5" />
+                <span className="absolute bottom-2 left-2 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                  <MapPin className="h-3 w-3 inline mr-0.5" />
                   {biz.distance}
                 </span>
                 {biz.offer && (
                   <div className="absolute top-2 left-2 z-10">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-soft flex items-center gap-1">
-                      <Tag className="h-2.5 w-2.5" />
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-soft flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
                       {biz.offer}
                     </span>
                   </div>
                 )}
               </div>
-              <div className="p-2.5 flex flex-col gap-1 flex-1">
-                <span className="font-display font-bold text-xs truncate">{biz.name}</span>
-                <span className="text-[10px] text-muted-foreground">{biz.category}</span>
-                <div className="mt-auto w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20 active:scale-[0.97]">
+              <div className="p-3.5 flex flex-col gap-1.5 flex-1">
+                <span className="font-display font-bold text-sm truncate">{biz.name}</span>
+                <span className="text-[12px] text-muted-foreground">{biz.category}</span>
+                <div className="mt-auto w-full text-center rounded-full bg-primary/10 text-primary text-xs font-semibold py-2 transition-colors hover:bg-primary/20 active:scale-[0.97]">
                   Ver Negócio
                 </div>
               </div>

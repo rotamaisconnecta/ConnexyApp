@@ -18,12 +18,15 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTrendingRouteImport } from './routes/_app.trending'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
 import { Route as AppRideRouteImport } from './routes/_app/ride'
 import { Route as AppReelsRouteImport } from './routes/_app.reels'
+import { Route as AppRecommendationsRouteImport } from './routes/_app.recommendations'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPrivacidadeRouteImport } from './routes/_app.privacidade'
 import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
+import { Route as AppPeopleRouteImport } from './routes/_app.people'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppNotificacoesRouteImport } from './routes/_app.notificacoes'
 import { Route as AppMyConnexyRouteImport } from './routes/_app/my-connexy'
@@ -33,6 +36,7 @@ import { Route as AppLocaisRouteImport } from './routes/_app.locais'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppGerenciarRouteImport } from './routes/_app.gerenciar'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
+import { Route as AppEventsRouteImport } from './routes/_app.events'
 import { Route as AppEngineRouteImport } from './routes/_app/engine'
 import { Route as AppDiscoverRouteImport } from './routes/_app/discover'
 import { Route as AppDestinoRouteImport } from './routes/_app.destino'
@@ -125,6 +129,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTrendingRoute = AppTrendingRouteImport.update({
+  id: '/trending',
+  path: '/trending',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRotaRoute = AppRotaRouteImport.update({
   id: '/rota',
   path: '/rota',
@@ -140,6 +149,11 @@ const AppReelsRoute = AppReelsRouteImport.update({
   path: '/reels',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRecommendationsRoute = AppRecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -153,6 +167,11 @@ const AppPrivacidadeRoute = AppPrivacidadeRouteImport.update({
 const AppPessoasRoute = AppPessoasRouteImport.update({
   id: '/pessoas',
   path: '/pessoas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPeopleRoute = AppPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
@@ -198,6 +217,11 @@ const AppGerenciarRoute = AppGerenciarRouteImport.update({
 const AppFeedRoute = AppFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEventsRoute = AppEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEngineRoute = AppEngineRouteImport.update({
@@ -455,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/destino': typeof AppDestinoRoute
   '/discover': typeof AppDiscoverRoute
   '/engine': typeof AppEngineRoute
+  '/events': typeof AppEventsRoute
   '/feed': typeof AppFeedRoute
   '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
@@ -464,12 +489,15 @@ export interface FileRoutesByFullPath {
   '/my-connexy': typeof AppMyConnexyRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/notifications': typeof AppNotificationsRoute
+  '/people': typeof AppPeopleRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/profile': typeof AppProfileRouteWithChildren
+  '/recommendations': typeof AppRecommendationsRoute
   '/reels': typeof AppReelsRouteWithChildren
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
+  '/trending': typeof AppTrendingRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
@@ -527,6 +555,7 @@ export interface FileRoutesByTo {
   '/destino': typeof AppDestinoRoute
   '/discover': typeof AppDiscoverRoute
   '/engine': typeof AppEngineRoute
+  '/events': typeof AppEventsRoute
   '/feed': typeof AppFeedRoute
   '/gerenciar': typeof AppGerenciarRouteWithChildren
   '/home': typeof AppHomeRoute
@@ -536,12 +565,15 @@ export interface FileRoutesByTo {
   '/my-connexy': typeof AppMyConnexyRoute
   '/notificacoes': typeof AppNotificacoesRoute
   '/notifications': typeof AppNotificationsRoute
+  '/people': typeof AppPeopleRoute
   '/pessoas': typeof AppPessoasRoute
   '/privacidade': typeof AppPrivacidadeRoute
   '/profile': typeof AppProfileRouteWithChildren
+  '/recommendations': typeof AppRecommendationsRoute
   '/reels': typeof AppReelsRouteWithChildren
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
+  '/trending': typeof AppTrendingRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/chat/$id': typeof AppChatIdRoute
@@ -601,6 +633,7 @@ export interface FileRoutesById {
   '/_app/destino': typeof AppDestinoRoute
   '/_app/discover': typeof AppDiscoverRoute
   '/_app/engine': typeof AppEngineRoute
+  '/_app/events': typeof AppEventsRoute
   '/_app/feed': typeof AppFeedRoute
   '/_app/gerenciar': typeof AppGerenciarRouteWithChildren
   '/_app/home': typeof AppHomeRoute
@@ -610,12 +643,15 @@ export interface FileRoutesById {
   '/_app/my-connexy': typeof AppMyConnexyRoute
   '/_app/notificacoes': typeof AppNotificacoesRoute
   '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/people': typeof AppPeopleRoute
   '/_app/pessoas': typeof AppPessoasRoute
   '/_app/privacidade': typeof AppPrivacidadeRoute
   '/_app/profile': typeof AppProfileRouteWithChildren
+  '/_app/recommendations': typeof AppRecommendationsRoute
   '/_app/reels': typeof AppReelsRouteWithChildren
   '/_app/ride': typeof AppRideRouteWithChildren
   '/_app/rota': typeof AppRotaRoute
+  '/_app/trending': typeof AppTrendingRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/chat/$id': typeof AppChatIdRoute
@@ -675,6 +711,7 @@ export interface FileRouteTypes {
     | '/destino'
     | '/discover'
     | '/engine'
+    | '/events'
     | '/feed'
     | '/gerenciar'
     | '/home'
@@ -684,12 +721,15 @@ export interface FileRouteTypes {
     | '/my-connexy'
     | '/notificacoes'
     | '/notifications'
+    | '/people'
     | '/pessoas'
     | '/privacidade'
     | '/profile'
+    | '/recommendations'
     | '/reels'
     | '/ride'
     | '/rota'
+    | '/trending'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
@@ -747,6 +787,7 @@ export interface FileRouteTypes {
     | '/destino'
     | '/discover'
     | '/engine'
+    | '/events'
     | '/feed'
     | '/gerenciar'
     | '/home'
@@ -756,12 +797,15 @@ export interface FileRouteTypes {
     | '/my-connexy'
     | '/notificacoes'
     | '/notifications'
+    | '/people'
     | '/pessoas'
     | '/privacidade'
     | '/profile'
+    | '/recommendations'
     | '/reels'
     | '/ride'
     | '/rota'
+    | '/trending'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/chat/$id'
@@ -820,6 +864,7 @@ export interface FileRouteTypes {
     | '/_app/destino'
     | '/_app/discover'
     | '/_app/engine'
+    | '/_app/events'
     | '/_app/feed'
     | '/_app/gerenciar'
     | '/_app/home'
@@ -829,12 +874,15 @@ export interface FileRouteTypes {
     | '/_app/my-connexy'
     | '/_app/notificacoes'
     | '/_app/notifications'
+    | '/_app/people'
     | '/_app/pessoas'
     | '/_app/privacidade'
     | '/_app/profile'
+    | '/_app/recommendations'
     | '/_app/reels'
     | '/_app/ride'
     | '/_app/rota'
+    | '/_app/trending'
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/chat/$id'
@@ -951,6 +999,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/trending': {
+      id: '/_app/trending'
+      path: '/trending'
+      fullPath: '/trending'
+      preLoaderRoute: typeof AppTrendingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/rota': {
       id: '/_app/rota'
       path: '/rota'
@@ -972,6 +1027,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReelsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/recommendations': {
+      id: '/_app/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof AppRecommendationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/profile': {
       id: '/_app/profile'
       path: '/profile'
@@ -991,6 +1053,13 @@ declare module '@tanstack/react-router' {
       path: '/pessoas'
       fullPath: '/pessoas'
       preLoaderRoute: typeof AppPessoasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/people': {
+      id: '/_app/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof AppPeopleRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/notifications': {
@@ -1054,6 +1123,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AppFeedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/events': {
+      id: '/_app/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof AppEventsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/engine': {
@@ -1505,6 +1581,7 @@ interface AppRouteChildren {
   AppDestinoRoute: typeof AppDestinoRoute
   AppDiscoverRoute: typeof AppDiscoverRoute
   AppEngineRoute: typeof AppEngineRoute
+  AppEventsRoute: typeof AppEventsRoute
   AppFeedRoute: typeof AppFeedRoute
   AppGerenciarRoute: typeof AppGerenciarRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
@@ -1514,12 +1591,15 @@ interface AppRouteChildren {
   AppMyConnexyRoute: typeof AppMyConnexyRoute
   AppNotificacoesRoute: typeof AppNotificacoesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
+  AppPeopleRoute: typeof AppPeopleRoute
   AppPessoasRoute: typeof AppPessoasRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AppProfileRoute: typeof AppProfileRouteWithChildren
+  AppRecommendationsRoute: typeof AppRecommendationsRoute
   AppReelsRoute: typeof AppReelsRouteWithChildren
   AppRideRoute: typeof AppRideRouteWithChildren
   AppRotaRoute: typeof AppRotaRoute
+  AppTrendingRoute: typeof AppTrendingRoute
   AppBusinessBusinessIdRoute: typeof AppBusinessBusinessIdRoute
   AppDriverCadastroRoute: typeof AppDriverCadastroRoute
   AppDriverFinanceRoute: typeof AppDriverFinanceRoute
@@ -1546,6 +1626,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDestinoRoute: AppDestinoRoute,
   AppDiscoverRoute: AppDiscoverRoute,
   AppEngineRoute: AppEngineRoute,
+  AppEventsRoute: AppEventsRoute,
   AppFeedRoute: AppFeedRoute,
   AppGerenciarRoute: AppGerenciarRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
@@ -1555,12 +1636,15 @@ const AppRouteChildren: AppRouteChildren = {
   AppMyConnexyRoute: AppMyConnexyRoute,
   AppNotificacoesRoute: AppNotificacoesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
+  AppPeopleRoute: AppPeopleRoute,
   AppPessoasRoute: AppPessoasRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AppProfileRoute: AppProfileRouteWithChildren,
+  AppRecommendationsRoute: AppRecommendationsRoute,
   AppReelsRoute: AppReelsRouteWithChildren,
   AppRideRoute: AppRideRouteWithChildren,
   AppRotaRoute: AppRotaRoute,
+  AppTrendingRoute: AppTrendingRoute,
   AppBusinessBusinessIdRoute: AppBusinessBusinessIdRoute,
   AppDriverCadastroRoute: AppDriverCadastroRoute,
   AppDriverFinanceRoute: AppDriverFinanceRoute,

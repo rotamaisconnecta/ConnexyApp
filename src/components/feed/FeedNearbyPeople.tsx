@@ -30,10 +30,10 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
           </p>
         </div>
         <Link
-          to="/pessoas"
+          to="/people"
           className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
         >
-          Ver todas <ArrowRight className="h-3.5 w-3.5" />
+          Ver tudo <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
@@ -43,7 +43,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
           <Link
             to="/perfil/$id"
             params={{ id: person.id }}
-            className="block rounded-2xl overflow-hidden h-full transition-all duration-200 hover:shadow-elegant active:scale-[0.98]"
+            className="block rounded-2xl overflow-hidden h-full transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
             style={
               person.online
                 ? {
@@ -54,7 +54,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
             }
           >
             <div className="bg-surface h-full flex flex-col border border-border/50 rounded-2xl overflow-hidden">
-              <div className="relative" style={{ paddingBottom: "100%" }}>
+              <div className="relative" style={{ paddingBottom: "112%" }}>
                 <img
                   src={person.photo}
                   alt={person.name}
@@ -62,23 +62,23 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                <div className="absolute bottom-2 left-2 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
                   {formatPersonDistance(person.distanceMeters)}
                 </div>
               </div>
-              <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+              <div className="p-3.5 flex flex-col gap-1.5 flex-1">
                 <div className="flex items-center gap-1">
-                  <span className="font-display font-bold text-xs truncate">{person.name}</span>
+                  <span className="font-display font-bold text-sm truncate">{person.name}</span>
                   {person.age != null && (
-                    <span className="text-[10px] text-muted-foreground shrink-0">
+                    <span className="text-[11px] text-muted-foreground shrink-0">
                       {person.age} anos
                     </span>
                   )}
                 </div>
                 {person.compatibility != null && (
                   <div className="flex items-center gap-1">
-                    <Heart className="h-2.5 w-2.5 text-pink-500" />
-                    <span className="text-[9px] font-medium text-pink-600">
+                    <Heart className="h-3 w-3 text-pink-500" />
+                    <span className="text-[11px] font-medium text-pink-600">
                       Compatibilidade {person.compatibility}%
                     </span>
                   </div>
@@ -87,7 +87,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   {person.interests.slice(0, 3).map((interest) => (
                     <span
                       key={interest}
-                      className="text-[9px] bg-secondary rounded-full px-1.5 py-0.5 truncate max-w-full"
+                      className="text-[11px] bg-secondary rounded-full px-2 py-0.5 truncate max-w-full"
                     >
                       {interest}
                     </span>
@@ -98,12 +98,12 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                     className={`h-1.5 w-1.5 rounded-full ${person.online ? "bg-green-500" : "bg-gray-300"}`}
                   />
                   <span
-                    className={`text-[9px] font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
+                    className={`text-[11px] font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
                   >
                     {person.online ? "Online" : "Offline"}
                   </span>
                 </div>
-                <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold py-1.5 transition-colors hover:bg-primary/20 active:scale-[0.97]">
+                <div className="mt-1 w-full text-center rounded-full bg-primary/10 text-primary text-xs font-semibold py-2 transition-colors hover:bg-primary/20 active:scale-[0.97]">
                   <Eye className="h-3 w-3 inline mr-1" />
                   Visualizar Perfil
                 </div>

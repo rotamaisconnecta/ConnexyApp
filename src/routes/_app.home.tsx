@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
-import { SmartFeed } from "@/components/feed/SmartFeed";
+import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
 import { currentUser, people, places } from "@/lib/mock-data";
 import { drivers } from "@/lib/mock-data";
 import { getStoredRoles, setActiveMode } from "@/lib/roles/roles-storage";
@@ -396,7 +396,7 @@ function Home() {
       )}
 
       <div className="mt-5">
-        <SmartFeed />
+        <HomePremiumFeed />
       </div>
     </div>
   );

@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useAnimationControls } from "framer-motion";
+import { motion, useMotionValue, animate } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-const AUTOPLAY_MS = 5000;
-const AUTOPLAY_RESUME_MS = 8000;
-const GAP = 12;
-const PEEK_DESKTOP = 48;
-const PEEK_TABLET = 40;
-const PEEK_MOBILE = 32;
+const GAP = 16;
+const PEEK_RATIO = 0.15;
 const STAGGER = 0.05;
 
 type Breakpoint = "desktop" | "tablet" | "mobile";
@@ -24,26 +20,18 @@ function getVisibleCount(bp: Breakpoint): number {
   return 2;
 }
 
-function getPeek(bp: Breakpoint): number {
-  if (bp === "desktop") return PEEK_DESKTOP;
-  if (bp === "tablet") return PEEK_TABLET;
-  return PEEK_MOBILE;
-}
-
 interface PremiumCarouselProps<T> {
   items: T[];
-  renderCard: (item: T, index: number, isActive: boolean) => React.ReactNode;
+  renderCard: (item: T, index: number) => React.ReactNode;
   className?: string;
 }
 
 export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCarouselProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimationControls();
   const [bp, setBp] = useState<Breakpoint>("desktop");
-  const [index, setIndex] = useState(items.length);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const jumpRef = useRef(false);
+  const [cardWidth, setCardWidth] = useState(0);
+  const [maxScroll, setMaxScroll] = useState(0);
+  const x = useMotionValue(0);
 
   useEffect(() => {
     setBp(getBreakpoint());
@@ -53,163 +41,78 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
   }, []);
 
   const visibleCount = getVisibleCount(bp);
-  const peek = getPeek(bp);
-  const total = items.length;
-  const looped = [...items, ...items, ...items];
-  const base = total;
-
-  const [cardWidth, setCardWidth] = useState(0);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const measure = () => {
-      const w = containerRef.current!.offsetWidth;
-      const cw = (w - (visibleCount - 1) * GAP - peek) / visibleCount;
+      const el = containerRef.current!;
+      const w = el.offsetWidth;
+      const cw = (w - (visibleCount - 1) * GAP) / (visibleCount + PEEK_RATIO);
       setCardWidth(cw);
+      const total = items.length * (cw + GAP) - GAP;
+      setMaxScroll(Math.max(0, total - w));
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [visibleCount, peek]);
+  }, [visibleCount, items.length]);
+
+  useEffect(() => {
+    const clamped = Math.max(-maxScroll, Math.min(0, x.get()));
+    if (Math.abs(clamped - x.get()) > 0.5) {
+      animate(x, clamped, { duration: 0 });
+    }
+  }, [maxScroll, x]);
 
   const step = cardWidth + GAP;
 
-  const animateTo = useCallback(
-    (target: number) => {
-      if (isAnimating) return;
-      setIsAnimating(true);
-      const clamped = Math.max(0, Math.min(target, looped.length - visibleCount));
-      controls
-        .start({
-          x: -(clamped * step),
-          transition: { type: "spring", stiffness: 300, damping: 30 },
-        })
-        .then(() => {
-          setIndex(clamped);
-          setIsAnimating(false);
-        });
+  const scrollByStep = useCallback(
+    (dir: 1 | -1) => {
+      const target = Math.max(-maxScroll, Math.min(0, x.get() - dir * step));
+      animate(x, target, { type: "spring", stiffness: 320, damping: 34 });
     },
-    [controls, step, looped.length, visibleCount, isAnimating],
+    [x, step, maxScroll],
   );
-
-  const slideNext = useCallback(() => {
-    setHasInteracted(true);
-    const next = index + 1;
-    if (next + visibleCount > looped.length) {
-      jumpRef.current = true;
-      setIndex(base);
-      controls.set({ x: -(base * step) });
-    } else {
-      animateTo(next);
-    }
-  }, [index, visibleCount, looped.length, base, controls, step, animateTo]);
-
-  const slidePrev = useCallback(() => {
-    setHasInteracted(true);
-    const prev = index - 1;
-    if (prev < 0) {
-      jumpRef.current = true;
-      const wrapTo = base * 2 - visibleCount;
-      setIndex(wrapTo);
-      controls.set({ x: -(wrapTo * step) });
-    } else {
-      animateTo(prev);
-    }
-  }, [index, base, visibleCount, controls, step, animateTo]);
-
-  useEffect(() => {
-    if (hasInteracted || isAnimating) return;
-    const timer = setInterval(slideNext, AUTOPLAY_MS);
-    return () => clearInterval(timer);
-  }, [hasInteracted, isAnimating, slideNext]);
-
-  useEffect(() => {
-    if (!hasInteracted) return;
-    const timer = setTimeout(() => setHasInteracted(false), AUTOPLAY_RESUME_MS);
-    return () => clearTimeout(timer);
-  }, [hasInteracted]);
-
-  const handleDragEnd = useCallback(
-    (
-      _: MouseEvent | TouchEvent | PointerEvent,
-      info: { offset: { x: number }; velocity: { x: number } },
-    ) => {
-      setHasInteracted(true);
-      const threshold = step * 0.15;
-      if (info.offset.x > threshold || info.velocity.x > 300) {
-        slidePrev();
-      } else if (info.offset.x < -threshold || info.velocity.x < -300) {
-        slideNext();
-      }
-    },
-    [step, slideNext, slidePrev],
-  );
-
-  const rawIndex = Math.round(index);
-  const realIndex = ((rawIndex % total) + total) % total;
-  const progress = ((realIndex + 1) / total) * 100;
 
   return (
     <div className={className}>
       <div className="relative group" ref={containerRef}>
         <motion.div
           className="flex cursor-grab active:cursor-grabbing"
-          style={{ gap: GAP }}
-          animate={
-            jumpRef.current
-              ? { x: -(index * step), transition: { duration: 0 } }
-              : { x: -(index * step), transition: { type: "spring", stiffness: 300, damping: 30 } }
-          }
-          onAnimationComplete={() => {
-            jumpRef.current = false;
-          }}
-          drag="x"
-          dragElastic={0.15}
+          style={{ gap: GAP, x, touchAction: "pan-y" }}
+          drag={maxScroll > 0 ? "x" : false}
+          dragConstraints={{ left: -maxScroll, right: 0 }}
+          dragElastic={0.12}
           dragMomentum
-          onDragEnd={handleDragEnd}
-          whileDrag={{ scale: 0.98, cursor: "grabbing" }}
+          whileDrag={{ scale: 0.99, cursor: "grabbing" }}
         >
-          {looped.map((item, i) => {
-            const itemRealIndex = i % total;
-            const isActive = itemRealIndex === realIndex;
-            return (
-              <motion.div
-                key={`${itemRealIndex}-${i}`}
-                className="shrink-0"
-                style={{ width: cardWidth }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: isActive ? 1 : 0.7, y: 0 }}
-                transition={{
-                  delay: itemRealIndex * STAGGER,
-                  duration: 0.4,
-                  ease: "easeOut",
-                }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onHoverStart={() => setHasInteracted(true)}
-              >
-                <div
-                  className="h-full"
-                  style={{ boxShadow: isActive ? "0 8px 24px rgba(0,0,0,0.08)" : "none" }}
-                >
-                  {renderCard(item, i, isActive)}
-                </div>
-              </motion.div>
-            );
-          })}
+          {items.map((item, i) => (
+            <motion.div
+              key={i}
+              className="shrink-0"
+              style={{ width: cardWidth }}
+              initial={{ opacity: 0, y: 20, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: i * STAGGER, duration: 0.4, ease: "easeOut" }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <div className="h-full">{renderCard(item, i)}</div>
+            </motion.div>
+          ))}
         </motion.div>
 
-        {bp === "desktop" && (
+        {maxScroll > 0 && bp === "desktop" && (
           <>
             <button
-              onClick={slidePrev}
+              onClick={() => scrollByStep(-1)}
               className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg border border-border text-foreground opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:shadow-xl"
               aria-label="Anterior"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <button
-              onClick={slideNext}
+              onClick={() => scrollByStep(1)}
               className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg border border-border text-foreground opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:shadow-xl"
               aria-label="Próximo"
             >
@@ -217,19 +120,6 @@ export function PremiumCarousel<T>({ items, renderCard, className }: PremiumCaro
             </button>
           </>
         )}
-
-        <div className="flex items-center gap-2 mt-3 px-1">
-          <div className="flex-1 h-1 rounded-full bg-muted-foreground/20 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
-              animate={{ width: `${progress}%` }}
-              transition={{ type: "spring", stiffness: 260, damping: 28 }}
-            />
-          </div>
-          <span className="text-[10px] font-medium text-muted-foreground shrink-0 tabular-nums">
-            {realIndex + 1}/{total}
-          </span>
-        </div>
       </div>
     </div>
   );
