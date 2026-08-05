@@ -1,93 +1,103 @@
-import { useCallback, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect } from "react";
 
 const DRAG_THRESHOLD = 6;
+const IGNORED_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT", "VIDEO"]);
 
-interface DragScrollProps {
-  ref: React.RefObject<HTMLDivElement | null>;
-  onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onPointerCancel: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onClickCapture: (e: React.MouseEvent<HTMLDivElement>) => void;
+function findScroller(start: EventTarget | null): HTMLElement | null {
+  let el = start instanceof HTMLElement ? start : null;
+  while (el) {
+    if (el.scrollWidth > el.clientWidth + 1) {
+      const overflowX = getComputedStyle(el).overflowX;
+      if (overflowX === "auto" || overflowX === "scroll") return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
 }
 
-const IGNORED_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
-
 /**
- * Click-and-drag horizontal scrolling for any `overflow-x-auto` container.
- * Touch is left to native scrolling. Suppresses the click that follows a drag.
+ * Enables click-and-drag horizontal scrolling on every horizontally
+ * scrollable container in the app (filters, carousels, galleries, tabs).
+ * Touch input keeps native scrolling. A drag never turns into a click.
  */
-export function useDragScroll(): DragScrollProps {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const startX = useRef(0);
-  const startScroll = useRef(0);
-  const active = useRef(false);
-  const dragged = useRef(false);
+export function useGlobalDragScroll() {
+  useEffect(() => {
+    let scroller: HTMLElement | null = null;
+    let startX = 0;
+    let startScroll = 0;
+    let dragging = false;
+    let moved = false;
 
-  const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "touch" || e.button !== 0) return;
-    const target = e.target as HTMLElement | null;
-    if (target && IGNORED_TAGS.has(target.tagName)) return;
-    const el = ref.current;
-    if (!el || el.scrollWidth <= el.clientWidth + 1) return;
+    function onPointerDown(e: PointerEvent) {
+      if (e.pointerType === "touch" || e.button !== 0) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (IGNORED_TAGS.has(target.tagName) || target.isContentEditable)) return;
+      const found = findScroller(target);
+      if (!found) return;
 
-    active.current = true;
-    dragged.current = false;
-    startX.current = e.clientX;
-    startScroll.current = el.scrollLeft;
-    el.style.cursor = "grab";
-    try {
-      el.setPointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
+      scroller = found;
+      dragging = true;
+      moved = false;
+      startX = e.clientX;
+      startScroll = found.scrollLeft;
     }
-  }, []);
 
-  const onPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!active.current) return;
-    const el = ref.current;
-    if (!el) return;
-    const delta = e.clientX - startX.current;
-    if (!dragged.current && Math.abs(delta) < DRAG_THRESHOLD) return;
-    dragged.current = true;
-    el.style.cursor = "grabbing";
-    el.style.userSelect = "none";
-    el.scrollLeft = startScroll.current - delta;
-  }, []);
-
-  const end = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!active.current) return;
-    active.current = false;
-    const el = ref.current;
-    if (el) {
-      el.style.cursor = "";
-      el.style.userSelect = "";
-      try {
-        el.releasePointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
+    function onPointerMove(e: PointerEvent) {
+      if (!dragging || !scroller) return;
+      const delta = e.clientX - startX;
+      if (!moved) {
+        if (Math.abs(delta) < DRAG_THRESHOLD) return;
+        moved = true;
+        scroller.style.cursor = "grabbing";
+        scroller.style.userSelect = "none";
+        scroller.style.scrollSnapType = "none";
       }
+      scroller.scrollLeft = startScroll - delta;
+      e.preventDefault();
     }
-    if (dragged.current) {
+
+    function reset() {
+      if (scroller) {
+        scroller.style.cursor = "";
+        scroller.style.userSelect = "";
+        scroller.style.scrollSnapType = "";
+      }
+      scroller = null;
+      dragging = false;
       window.setTimeout(() => {
-        dragged.current = false;
+        moved = false;
       }, 0);
     }
-  }, []);
 
-  const onClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (dragged.current) {
+    function onPointerUp() {
+      if (!dragging) return;
+      reset();
+    }
+
+    function onClickCapture(e: MouseEvent) {
+      if (!moved) return;
       e.preventDefault();
       e.stopPropagation();
     }
-  }, []);
 
-  return {
-    ref,
-    onPointerDown,
-    onPointerMove,
-    onPointerUp: end,
-    onPointerCancel: end,
-    onClickCapture,
-  };
+    function onDragStart(e: Event) {
+      if (moved || dragging) e.preventDefault();
+    }
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("pointermove", onPointerMove, { passive: false });
+    document.addEventListener("pointerup", onPointerUp, true);
+    document.addEventListener("pointercancel", onPointerUp, true);
+    document.addEventListener("click", onClickCapture, true);
+    document.addEventListener("dragstart", onDragStart, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp, true);
+      document.removeEventListener("pointercancel", onPointerUp, true);
+      document.removeEventListener("click", onClickCapture, true);
+      document.removeEventListener("dragstart", onDragStart, true);
+    };
+  }, []);
 }
