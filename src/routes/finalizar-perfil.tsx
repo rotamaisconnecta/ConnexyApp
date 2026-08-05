@@ -1,5 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/navigation/back-button";
 import {
   MapPin,
   ShieldCheck,
@@ -96,13 +97,13 @@ function FinishProfile() {
         <StatusBar />
         <div className="px-6 pb-8 pt-4">
           <div className="flex items-center justify-between">
-            <Link
-              to="/interesses"
-              aria-label="Voltar"
+            <BackButton
+              fallbackTo="/interesses"
+              ariaLabel="Voltar"
               className="grid h-11 w-11 place-items-center rounded-2xl border border-violet-100 bg-white text-foreground shadow-soft"
             >
               <span className="text-4xl font-light leading-none">&#8249;</span>
-            </Link>
+            </BackButton>
             <div className="flex gap-2" aria-label="Passo 4 de 4">
               {[0, 1, 2, 3].map((step) => (
                 <span
@@ -322,12 +323,12 @@ function FinishProfile() {
           >
             Criar meu perfil
           </button>
-          <Link
-            to="/interesses"
-            className="mt-6 block text-center text-lg font-medium text-violet-600"
+          <BackButton
+            fallbackTo="/interesses"
+            className="mt-6 block w-full text-center text-lg font-medium text-violet-600"
           >
             Voltar
-          </Link>
+          </BackButton>
         </div>
       </div>
     </PhoneFrame>

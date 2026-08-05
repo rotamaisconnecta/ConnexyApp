@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MapCanvas } from "@/components/map-canvas";
 import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import {
-  ChevronLeft,
   MapPin,
   ArrowUpDown,
   Navigation,
@@ -127,12 +127,10 @@ function DestinationPage() {
         </div>
 
         {/* Back button */}
-        <button
-          onClick={() => nav({ to: "/home" })}
+        <BackButton
+          fallbackTo="/home"
           className="absolute top-14 left-4 h-10 w-10 grid place-items-center rounded-full bg-white shadow-soft"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+        />
       </div>
 
       {/* Bottom sheet */}

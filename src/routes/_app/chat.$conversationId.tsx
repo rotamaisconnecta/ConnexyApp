@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { MessageList } from "@/components/chat/message-list";
@@ -117,7 +117,7 @@ function generateMockMessages(personId: string): ChatMessage[] {
 
 function ConversationPage() {
   const { person } = Route.useLoaderData();
-  const navigate = useNavigate();
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => generateMockMessages(person.id));
@@ -223,7 +223,13 @@ function ConversationPage() {
           online: person.online,
           lastSeen: person.lastSeen,
         }}
-        onBack={() => navigate({ to: "/chat" })}
+        onBack={() => {
+          if (window.history.length > 1) {
+            router.history.back();
+            return;
+          }
+          router.navigate({ to: "/chat" });
+        }}
         onCall={() => {}}
         onVideoCall={() => {}}
         onMenu={() => {}}

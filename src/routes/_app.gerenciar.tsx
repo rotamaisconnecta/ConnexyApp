@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link, Outlet, useRouter } from "@tanstack/react-router";
+import { BackButton } from "@/components/navigation/back-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { StatusBar } from "@/components/phone-frame";
 import { toast } from "sonner";
 import {
-  ChevronLeft,
   LogOut,
   Store,
   Calendar,
@@ -126,9 +126,10 @@ function GerenciarLayout() {
     <div className="flex-1 flex flex-col pb-24">
       <StatusBar />
       <header className="px-4 pt-1 pb-3 flex items-center gap-2">
-        <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/home"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div className="flex-1">
           <h1 className="font-display font-bold text-lg">Meu Connexy</h1>
           <p className="text-[11px] text-muted-foreground">

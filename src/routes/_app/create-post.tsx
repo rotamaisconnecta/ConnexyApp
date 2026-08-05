@@ -3,7 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { CreatePostForm } from "@/components/post/create-post-form";
 import { currentUser } from "@/lib/mock-data";
 import { type PostDraft } from "@/lib/types/post";
-import { ChevronLeft } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 
 export const Route = createFileRoute("/_app/create-post")({
   head: () => ({ meta: [{ title: "Nova publicação — Connexy" }] }),
@@ -22,14 +22,11 @@ function CreatePostPage() {
       <StatusBar />
 
       <header className="px-4 pt-1 pb-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => nav({ to: "/home" })}
+        <BackButton
+          fallbackTo="/home"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+          ariaLabel="Voltar"
+        />
         <h1 className="flex-1 font-display font-bold text-lg">Nova publicação</h1>
         <button
           type="button"

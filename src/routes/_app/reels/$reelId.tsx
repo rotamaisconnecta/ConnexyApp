@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { BackButton } from "@/components/navigation/back-button";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -124,12 +125,13 @@ function ReelDetailPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-60 bg-gradient-to-t from-black/80 to-transparent" />
 
-      <Link
-        to="/reels"
+      <BackButton
+        fallbackTo="/reels"
         className="absolute top-4 left-4 z-30 h-10 w-10 grid place-items-center rounded-full bg-black/40 backdrop-blur border border-white/15"
+        ariaLabel="Voltar"
       >
         <ArrowLeft className="h-5 w-5 text-white" />
-      </Link>
+      </BackButton>
 
       <div className="absolute right-3 bottom-32 z-10 flex flex-col items-center gap-4">
         <ActionButton

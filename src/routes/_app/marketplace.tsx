@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { SearchBar } from "@/components/marketplace/search-bar";
 import { CategoryFilter } from "@/components/marketplace/category-filter";
@@ -7,7 +7,7 @@ import { BusinessGrid } from "@/components/marketplace/business-grid";
 import { OfferCarousel } from "@/components/marketplace/offer-carousel";
 import { LoadingMarketplace } from "@/components/marketplace/loading-marketplace";
 import { EmptyMarketplace } from "@/components/marketplace/empty-marketplace";
-import { ChevronLeft } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { useState, useMemo } from "react";
 import type {
   Business,
@@ -307,9 +307,10 @@ function MarketplacePage() {
       <StatusBar />
 
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/home"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div className="flex-1">
           <h1 className="font-display font-bold text-base">Marketplace</h1>
           <p className="text-[11px] text-muted-foreground">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { ArrowLeft, Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { useState } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
@@ -72,13 +73,11 @@ function EventsPage() {
     <div className="flex-1">
       <StatusBar />
       <header className="px-5 pt-1 pb-3 flex items-center gap-3">
-        <Link
-          to="/home"
+        <BackButton
+          fallbackTo="/home"
           className="h-10 w-10 grid place-items-center rounded-full bg-secondary"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
+          ariaLabel="Voltar"
+        />
         <div className="min-w-0">
           <h1 className="font-display text-xl font-bold">
             {today ? "📅 Eventos de Hoje" : "🎉 Eventos Próximos"}

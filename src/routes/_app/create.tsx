@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
 import { StatusBar } from "@/components/phone-frame";
-import { ChevronLeft, Lock } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { motion } from "framer-motion";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
 import { UserRole } from "@/lib/roles/roles-types";
@@ -152,9 +152,10 @@ function CreatePage() {
       {isRoot ? (
         <>
           <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
-            <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
+            <BackButton
+              fallbackTo="/home"
+              className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+            />
             <div>
               <h1 className="font-display font-bold text-base">Criar publicação</h1>
               <p className="text-[11px] text-muted-foreground">O que você deseja compartilhar?</p>

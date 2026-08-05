@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import { BusinessCard } from "@/components/marketplace/business-card";
 import { EventCalendar } from "@/components/marketplace/event-calendar";
 import { EventList } from "@/components/marketplace/event-list";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
-import { ChevronLeft, Calendar, Share2, Users } from "lucide-react";
+import { Calendar, Share2, Users } from "lucide-react";
 import { useState, useMemo } from "react";
 import type {
   Business,
@@ -149,12 +150,10 @@ function EventDetailPage() {
       <StatusBar />
 
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link
-          to="/marketplace"
+        <BackButton
+          fallbackTo="/marketplace"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        />
         <div className="flex-1">
           <h1 className="font-display font-bold text-base truncate">Evento</h1>
         </div>

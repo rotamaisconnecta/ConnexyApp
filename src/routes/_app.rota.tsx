@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MapCanvas } from "@/components/map-canvas";
 import { StatusBar } from "@/components/phone-frame";
-import { ChevronLeft, MapPin, Search, Home as HomeIcon, Briefcase, Star } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
+import { MapPin, Search, Home as HomeIcon, Briefcase, Star } from "lucide-react";
 import { suggestions } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/_app/rota")({
@@ -26,9 +27,10 @@ function RotaPage() {
         <div className="absolute top-0 left-0 right-0">
           <StatusBar />
         </div>
-        <button className="absolute top-14 left-4 h-10 w-10 grid place-items-center rounded-full bg-white shadow-soft">
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+        <BackButton
+          fallbackTo="/home"
+          className="absolute top-14 left-4 h-10 w-10 grid place-items-center rounded-full bg-white shadow-soft"
+        />
       </div>
 
       <div className="-mt-6 relative bg-surface rounded-t-3xl px-5 pt-5 pb-4 border-t border-border">

@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
-import { Camera, ChevronLeft } from "lucide-react";
+import { Camera } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({ meta: [{ title: "Criar conta — Connexy" }] }),
@@ -17,9 +18,10 @@ function Signup() {
     <PhoneFrame>
       <StatusBar />
       <div className="flex items-center justify-between px-5 pt-2 pb-4">
-        <Link to="/welcome" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/welcome"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <span className="text-xs text-muted-foreground">Passo 1 de 3</span>
         <span className="w-9" />
       </div>

@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import { BusinessHeader } from "@/components/marketplace/business-header";
 import { BusinessDetails } from "@/components/marketplace/business-details";
 import { CouponList } from "@/components/marketplace/coupon-list";
 import { FollowBusinessButton } from "@/components/marketplace/follow-business-button";
-import { ChevronLeft, Navigation, Share2 } from "lucide-react";
+import { Navigation, Share2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import type {
   Business,
@@ -226,12 +227,10 @@ function BusinessDetailPage() {
       <StatusBar />
 
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link
-          to="/marketplace"
+        <BackButton
+          fallbackTo="/marketplace"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        />
         <div className="flex-1">
           <h1 className="font-display font-bold text-base truncate">{business.name}</h1>
         </div>

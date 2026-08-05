@@ -1,6 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { ChevronLeft, Star, MoreHorizontal } from "lucide-react";
+import { Star, MoreHorizontal } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { drivers } from "@/lib/mock-data";
 import { proximityLabel } from "@/lib/proximity";
 import { useState } from "react";
@@ -17,9 +18,10 @@ function Matching() {
     <div className="flex-1 flex flex-col">
       <StatusBar />
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link to="/rota" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/rota"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div>
           <h1 className="font-display font-bold text-base">Motoristas disponíveis</h1>
           <p className="text-[11px] text-muted-foreground">

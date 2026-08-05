@@ -1,15 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import {
-  ChevronLeft,
-  Shield,
-  Bell,
-  CreditCard,
-  Globe,
-  HelpCircle,
-  ChevronRight,
-  EyeOff,
-} from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
+import { Shield, Bell, CreditCard, Globe, HelpCircle, ChevronRight, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const KEY = "rmc:invisible";
@@ -40,9 +32,10 @@ function Privacy() {
     <div className="flex-1">
       <StatusBar />
       <header className="px-5 pt-1 pb-3 flex items-center gap-3">
-        <Link to="/perfil" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/perfil"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <h1 className="font-display font-bold text-lg">Preferências</h1>
       </header>
 

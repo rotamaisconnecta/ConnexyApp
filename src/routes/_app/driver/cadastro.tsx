@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { ChevronLeft, Car, Save } from "lucide-react";
+import { Car, Save } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { currentUser } from "@/lib/mock-data";
 import { motion } from "framer-motion";
 import { addRole, setActiveMode } from "@/lib/roles/roles-storage";
@@ -79,13 +80,11 @@ function DriverCadastroPage() {
       <StatusBar />
 
       <header className="flex items-center gap-3 px-5 pb-3 pt-1">
-        <Link
-          to="/driver"
+        <BackButton
+          fallbackTo="/driver"
           className="grid h-9 w-9 place-items-center rounded-full bg-secondary"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+          ariaLabel="Voltar"
+        />
         <div className="flex-1">
           <h1 className="font-display text-lg font-bold">Cadastro Motorista</h1>
           <p className="text-[11px] text-muted-foreground">Configure seus dados de motorista</p>

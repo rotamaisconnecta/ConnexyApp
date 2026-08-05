@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
 
 import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import RoleHeader from "@/components/roles/RoleHeader";
 import RoleSelector from "@/components/roles/RoleSelector";
 import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
@@ -32,9 +32,10 @@ function RolesPage() {
       <StatusBar />
 
       <div className="flex items-center gap-3 px-5 pt-1 pb-3 shrink-0">
-        <Link to="/profile" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/profile"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div className="flex-1">
           <h1 className="font-display font-bold text-base">Meu Connexy</h1>
           <p className="text-[11px] text-muted-foreground">

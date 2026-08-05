@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import type {
@@ -97,7 +97,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 function NotificationsPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { notifications } = usePresence();
 
   const presenceNotifications: Notification[] = notifications.map((n) => ({
@@ -117,8 +117,12 @@ function NotificationsPage() {
   const merged = [...presenceNotifications, ...MOCK_NOTIFICATIONS];
 
   const handleBack = useCallback(() => {
-    navigate({ to: "/home" });
-  }, [navigate]);
+    if (window.history.length > 1) {
+      router.history.back();
+      return;
+    }
+    router.navigate({ to: "/home" });
+  }, [router]);
 
   return (
     <div className="flex-1 pb-20">

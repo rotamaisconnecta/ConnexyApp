@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { ArrowLeft, TrendingUp } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { PremiumCardView } from "@/components/feed/cards/premium-card";
 import { buildTrendingCards } from "@/lib/feed/home-premium";
 
@@ -16,13 +17,13 @@ function TrendingPage() {
     <div className="flex-1">
       <StatusBar />
       <header className="px-5 pt-1 pb-3 flex items-center gap-3">
-        <Link
-          to="/home"
+        <BackButton
+          fallbackTo="/home"
           className="h-10 w-10 grid place-items-center rounded-full bg-secondary"
-          aria-label="Voltar"
+          ariaLabel="Voltar"
         >
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </BackButton>
         <div className="min-w-0">
           <h1 className="font-display text-xl font-bold">🔥 Em Alta</h1>
           <p className="text-[11px] text-muted-foreground">

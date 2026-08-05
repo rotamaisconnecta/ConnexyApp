@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AtSign, CalendarDays, ChevronDown, UserRound } from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import { UploadMedia } from "@/components/upload";
 import { MediaFile } from "@/lib/upload";
 
@@ -27,13 +28,13 @@ function CompleteProfile() {
         <StatusBar />
         <div className="px-6 pb-8 pt-4">
           <div className="flex items-center justify-between">
-            <Link
-              to="/cadastro"
-              aria-label="Voltar"
+            <BackButton
+              fallbackTo="/cadastro"
+              ariaLabel="Voltar"
               className="grid h-11 w-11 place-items-center rounded-2xl border border-violet-100 bg-white text-foreground shadow-soft"
             >
               <span className="text-4xl font-light leading-none">&#8249;</span>
-            </Link>
+            </BackButton>
             <div className="flex gap-2" aria-label="Passo 2 de 3">
               <span className="h-2 w-14 rounded-full bg-violet-100" />
               <span className="h-2 w-14 rounded-full bg-gradient-brand" />
@@ -53,11 +54,7 @@ function CompleteProfile() {
           </header>
 
           <div className="mt-7 max-w-[200px] mx-auto">
-            <UploadMedia
-              mode="photo"
-              value={photos}
-              onChange={setPhotos}
-            />
+            <UploadMedia mode="photo" value={photos} onChange={setPhotos} />
           </div>
 
           <form
@@ -124,12 +121,12 @@ function CompleteProfile() {
             </button>
           </form>
 
-          <Link
-            to="/cadastro"
-            className="mt-6 block text-center text-lg font-medium text-violet-600"
+          <BackButton
+            fallbackTo="/cadastro"
+            className="mt-6 block w-full text-center text-lg font-medium text-violet-600"
           >
             Voltar
-          </Link>
+          </BackButton>
         </div>
       </div>
     </PhoneFrame>

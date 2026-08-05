@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import { people, commonGround, type Person } from "@/lib/mock-data";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
-import { X, Check, ChevronLeft, UserRound, Sparkles } from "lucide-react";
+import { X, Check, UserRound, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Gradients } from "@/theme";
 
@@ -27,12 +28,10 @@ function Solicitacao() {
     <div className="flex-1 flex flex-col relative" style={{ background: Gradients.soft }}>
       <StatusBar />
       <div className="flex items-center justify-between px-5 pt-1 pb-3">
-        <Link
-          to="/connecta"
+        <BackButton
+          fallbackTo="/connecta"
           className="h-9 w-9 grid place-items-center rounded-full bg-white/70 backdrop-blur"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        />
       </div>
 
       <motion.div

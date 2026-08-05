@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { DriverHistory } from "@/components/driver/driver-history";
-import { ChevronLeft } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import type { RideRequest } from "@/lib/driver/driver-types";
 
 export const Route = createFileRoute("/_app/driver/history")({
@@ -74,9 +74,10 @@ function DriverHistoryPage() {
     <div className="flex-1 pb-20">
       <StatusBar />
       <header className="px-5 pt-1 pb-3 flex items-center gap-3">
-        <Link to="/driver" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/driver"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <h1 className="font-display font-bold text-lg">Histórico</h1>
       </header>
       <div className="px-4">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { PresenceDot } from "@/components/presence-dot";
+import { BackButton } from "@/components/navigation/back-button";
 import {
   findPerson,
   findPlace,
@@ -11,7 +12,6 @@ import {
 } from "@/lib/mock-data";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import {
-  ChevronLeft,
   MoreVertical,
   MapPin,
   Music,
@@ -63,21 +63,15 @@ function Perfil() {
   const favPlaces = (p.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const commonPlaces = cg.sharedPlaces.map(findPlace).filter(Boolean);
 
-  const back =
-    from === "solicitacao" ? "/solicitacao/$id" : from === "chat" ? "/chat/$id" : "/connecta";
-
   return (
     <div className="flex-1 flex flex-col pb-24">
       <StatusBar />
       <div className="flex items-center justify-between px-4 pt-1 pb-2">
-        <Link
-          to={back as "/connecta"}
-          {...(back !== "/connecta" ? { params: { id: p.id } } : {})}
+        <BackButton
+          fallbackTo="/connecta"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+          ariaLabel="Voltar"
+        />
         <button
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
           aria-label="Mais opções"

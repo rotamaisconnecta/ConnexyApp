@@ -2,8 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { DriverCard } from "@/components/mobility/driver-card";
 import { LoadingRide } from "@/components/mobility/loading-ride";
-import { ChevronLeft } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { BackButton } from "@/components/navigation/back-button";
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { DriverMatch } from "@/lib/mobility/ride-types";
@@ -162,9 +161,10 @@ function MatchingPage() {
     <div className="flex-1 flex flex-col">
       <StatusBar />
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link to="/ride" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/ride"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div>
           <h1 className="font-display font-bold text-base">Motoristas disponíveis</h1>
           <p className="text-[11px] text-muted-foreground">

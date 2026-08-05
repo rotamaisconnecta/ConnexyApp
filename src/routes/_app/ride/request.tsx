@@ -7,8 +7,7 @@ import { PaymentSelector } from "@/components/mobility/payment-selector";
 import { CouponSelector } from "@/components/mobility/coupon-selector";
 import { RideTypeSelector } from "@/components/mobility/ride-type-selector";
 import { estimateAllCategories } from "@/lib/mobility/ride-pricing";
-import { ChevronLeft } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { BackButton } from "@/components/navigation/back-button";
 import { useState } from "react";
 import type {
   VehicleCategoryValue,
@@ -75,9 +74,10 @@ function RideRequestConfirmPage() {
     <div className="flex-1 flex flex-col">
       <StatusBar />
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link to="/ride" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/ride"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div>
           <h1 className="font-display font-bold text-base">Confirmar viagem</h1>
           <p className="text-[11px] text-muted-foreground">Revise os detalhes</p>

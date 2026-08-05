@@ -1,6 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, MapPin, Music, Users, Send, X } from "lucide-react";
+import { Loader2, MapPin, Music, Users, Send, X } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { UploadMedia } from "@/components/upload";
 import { MediaFile } from "@/lib/upload";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,9 +119,10 @@ function NovoReel() {
     <div className="flex-1 flex flex-col pb-8">
       <StatusBar />
       <header className="px-4 pt-1 pb-3 flex items-center gap-2">
-        <Link to="/reels" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/reels"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div className="flex-1">
           <h1 className="font-display font-bold text-lg">Novo reel</h1>
           <p className="text-[11px] text-muted-foreground">
@@ -136,11 +138,11 @@ function NovoReel() {
             value={media}
             onChange={(files) => {
               if (files.length === 0) {
-                setMedia([])
+                setMedia([]);
                 setPosterBlob(null);
                 setDurationS(0);
               } else {
-                setMedia(files)
+                setMedia(files);
               }
             }}
             label="Escolher vídeo"

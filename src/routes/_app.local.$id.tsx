@@ -1,12 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
 import { places } from "@/lib/mock-data";
 import { proximityLabel } from "@/lib/proximity";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
 import { PlaceStatusMeta } from "@/lib/integration/integration-types";
 import { usePresence } from "@/providers/presence/presence-provider";
-import { ChevronLeft, Star, Phone, Navigation, Bookmark, Share2, Users } from "lucide-react";
+import { Star, Phone, Navigation, Bookmark, Share2, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_app/local/$id")({
   head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
@@ -45,12 +46,10 @@ function LocalDetail() {
         <div className="absolute inset-x-0 top-0">
           <StatusBar dark />
         </div>
-        <Link
-          to="/locais"
+        <BackButton
+          fallbackTo="/locais"
           className="absolute top-14 left-4 h-10 w-10 grid place-items-center rounded-full bg-white/90 backdrop-blur"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        />
         <div className="absolute top-14 right-4 flex gap-2">
           <button className="h-10 w-10 grid place-items-center rounded-full bg-white/90">
             <Bookmark className="h-4 w-4" />

@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, type KeyboardEvent } from "react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
-import { ChevronLeft, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { BackButton } from "@/components/navigation/back-button";
 import { allInterests } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/interesses")({
@@ -49,12 +50,10 @@ function Interests() {
     <PhoneFrame>
       <StatusBar />
       <div className="flex items-center justify-between px-5 pt-2 pb-4">
-        <Link
-          to="/completar-perfil"
+        <BackButton
+          fallbackTo="/completar-perfil"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        />
         <span className="text-xs text-muted-foreground">Passo 3 de 4</span>
         <span className="w-9" />
       </div>

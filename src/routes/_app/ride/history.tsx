@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { RideHistoryList } from "@/components/mobility/ride-history-list";
-import { ChevronLeft } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { BackButton } from "@/components/navigation/back-button";
 import type { RideHistoryItem } from "@/lib/mobility/ride-types";
 import { VehicleCategory } from "@/lib/mobility/ride-types";
 
@@ -79,9 +78,10 @@ function RideHistoryPage() {
     <div className="flex-1 flex flex-col">
       <StatusBar />
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
-        <Link to="/home" className="h-9 w-9 grid place-items-center rounded-full bg-secondary">
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
+        <BackButton
+          fallbackTo="/home"
+          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+        />
         <div>
           <h1 className="font-display font-bold text-base">Histórico de viagens</h1>
           <p className="text-[11px] text-muted-foreground">{MOCK_HISTORY.length} viagens</p>
