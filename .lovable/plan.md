@@ -1,67 +1,22 @@
-# Redesign da Home + novo ícone Connexa
+# Arrastar com o mouse em todos os carrosséis
 
-## 1. Substituir o ícone/logo do app
+Hoje só o carrossel premium da Home responde a arrastar. Todas as outras faixas horizontais (filtros, galerias, promoções, abas roláveis, etc.) só rolam com trackpad, roda ou toque — clicar e arrastar com o mouse não faz nada.
 
-- Registrar o arquivo `Ícone.png` como asset via `lovable-assets` em `src/assets/connexa-logo.png.asset.json`.
-- Reescrever `src/components/logo.tsx` para renderizar o novo logo (pin gradiente roxo→rosa + wordmark "connexa") a partir do asset, mantendo a prop `size` e `variant`. Remover o quadrado "R+".
-- Atualizar usos que ainda mostram "R+" grande:
-  - `src/routes/index.tsx` (splash) — trocar o bloco "R+" pelo logo Connexa.
-  - `src/routes/welcome.tsx` — trocar o quadradinho "R+" pelo logo.
-  - Onde couber, trocar textos "RotaMais Connecta" por "Connexa" nos títulos visíveis da Home (metadados de SEO podem manter marca atual).
+## O que vai mudar
 
-## 2. Redesenhar `/_app/home` inspirada na referência
+- Criar um comportamento único de "clicar e arrastar para rolar" e aplicá-lo a todas as faixas horizontais do app.
+- Cursor muda para mãozinha (grab / grabbing) enquanto arrasta.
+- Arrastar não dispara clique acidental: se o ponteiro se moveu além de um pequeno limite, o clique no card/filtro é cancelado.
+- Rolagem vertical da página continua normal; toque no celular segue como já é hoje.
+- No carrossel premium, o arrastar existente ganha a mesma proteção contra clique acidental (hoje arrastar sobre um card pode abrir o perfil/local).
 
-Manter o `PhoneFrame`, `StatusBar`, `BottomNav` e tokens/utilitários já existentes (`bg-gradient-brand`, `shadow-elegant`, `text-primary`, `bg-accent`, `bg-surface`, etc.). Nada de cores hardcoded.
+## Onde se aplica
 
-Nova estrutura vertical (de cima para baixo):
-
-1. **Header**
-   - Esquerda: `<Logo />` novo (pin + "connexa").
-   - Direita: sino de notificações (com badge) + ícone de mensagens (link para `/connecta` ou lista de chats), ambos em botões redondos `bg-secondary`.
-
-2. **Saudação + clima**
-   - Linha 1: "Bom dia, {primeiro nome}! 👋" usando `currentUser.name`, com destaque no nome (`text-primary`).
-   - Linha 2: dia da semana + data (pt-BR, via `Intl.DateTimeFormat`).
-   - Card à direita: mini widget de clima mock ("28°C · Ensolarado") + bairro/cidade (`São Paulo, SP`) com `ChevronDown`. Layout em grid `grid-cols-[minmax(0,1fr)_auto]` com `min-w-0`/`shrink-0` (regra responsiva).
-
-3. **Busca + atalhos rápidos**
-   - Input pill "Para onde vamos hoje?" (visual apenas, sem lógica nova) com ícone `Search`.
-   - Chips ao lado: "Casa", "Trabalho", "Outros" (`Home`, `Briefcase`, `MoreHorizontal`).
-
-4. **Grid de ações rápidas (6 ícones circulares)**
-   - Pedir corrida → `/rota`
-   - Pessoas → `/connecta`
-   - Eventos → `/locais` (filtro Eventos, sem alterar rota)
-   - Promoções → `/locais`
-   - Locais → `/locais`
-   - Explorar → `/reels`
-   - Cada item: círculo pastel com ícone colorido + label pequena. Reaproveitar `bg-accent`/`text-primary` e variações via `bg-secondary` para variar tons dentro do design system.
-
-5. **Cabeçalho da seção do feed** (⚠️ mudança pedida)
-   - Título: **"Pessoas interessantes"** (era "Seu feed contextual").
-   - Subtítulo: "Conteúdos selecionados para você, aqui e agora."
-   - Link/botão à direita: "Personalizar" com ícone `SlidersHorizontal`.
-
-6. **Cards do feed (ordem)**
-   1. **Pessoas interessantes** — card destacando "3 pessoas com interesses em comum perto de você" com 3 avatares de `people` + chips de interesses (Música, Viagens, Cafés) e CTA "Ver pessoas →" para `/connecta`. **Este card vai no topo do feed** conforme pedido.
-   2. **Motorista a X min de você** — card com imagem de carro, motorista, preço mock, CTA "Solicitar corrida" → `/rota`.
-   3. **Promoção perto de você** — reaproveita `places[0]` (Café Central 20% OFF) no estilo do mockup: imagem à direita, badge "Só hoje!".
-   4. **Evento recomendado** — `places[1]` (Festa Sunset), com "amigos vão" (avatares) e CTA "Quero ir".
-   5. **Negócio local** — outro item de `places` com desconto e CTA "Ver cardápio".
-   - Todos os cards usam `rounded-2xl bg-surface border border-border shadow-soft`, imagens `object-cover`, tipografia `font-display` para títulos.
-
-7. **Rodapé**: mantém `BottomNav` atual (sem mexer nas rotas de navegação nesta fase).
-
-## 3. Fora de escopo (não fazer agora)
-
-- Não alterar backend, tabelas, `mock-data`, rotas de navegação nem `BottomNav`.
-- Não trocar fontes globais nem tokens em `src/styles.css`.
-- Não substituir marca "RotaMais Connecta" em metadados/SEO globais além do necessário para o header visível.
+Faixas horizontais em: filtros e categorias (locais, marketplace, notificações, feed), abas roláveis, promoções, galeria de negócios, destinos favoritos, seletor de tipo de corrida, hashtags de reels, sheet de pessoa, seletor de emoji, scroller genérico do sistema e o carrossel base do sistema.
 
 ## Detalhes técnicos
 
-- Novo asset: `src/assets/connexa-logo.png.asset.json` importado como `import connexaLogo from "@/assets/connexa-logo.png.asset.json"` e usado como `<img src={connexaLogo.url} />`.
-- `Logo` aceita `size` (altura do pin) e opcionalmente `showWordmark` (default true).
-- Data formatada com `new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })`.
-- Ícones novos do lucide: `Briefcase`, `MoreHorizontal`, `Ticket`, `Tag`, `Store`, `Compass`, `MessageSquare`, `SlidersHorizontal` (já usados no projeto).
-- Manter regra responsiva: linhas com título + widget usam `grid grid-cols-[minmax(0,1fr)_auto]` com `min-w-0` no texto e `shrink-0` nos ícones.
+- Novo hook `src/hooks/system/use-drag-scroll.ts`: retorna uma `ref` e handlers de `pointerdown/move/up/cancel`, usando `setPointerCapture`, ajuste de `scrollLeft`, limite de 6px para distinguir clique de arraste e `click` capture-phase para bloquear o clique após arraste. Ignora `pointerType === "touch"` (rolagem nativa) e alvos de input/range.
+- Aplicar o hook dentro de `src/components/system/horizontal-scroller.tsx` (cobre os usos que já passam por ele) e nos componentes que declaram `overflow-x-auto` diretamente — os 24 locais mapeados nos arquivos de rota e componentes listados acima.
+- `PremiumCarousel`: usar `onDragStart`/`onDragEnd` do Framer Motion para marcar um flag e cancelar o `click` na fase de captura do container quando houve arraste; sem mudanças na física atual (spring, snap, setas, persistência).
+- Nenhuma alteração de dados, rotas ou regras de negócio.
