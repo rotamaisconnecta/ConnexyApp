@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
-import { ATTACHMENT_OPTIONS, type MessageKindValue } from "@/lib/chat/chat-types";
+import { ATTACHMENT_OPTIONS, type AttachmentAction } from "@/lib/chat/chat-types";
 
 interface AttachmentSheetProps {
-  onSelect: (kind: MessageKindValue) => void;
+  onSelect: (kind: AttachmentAction) => void;
   onClose: () => void;
 }
 

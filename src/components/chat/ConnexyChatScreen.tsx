@@ -11,9 +11,9 @@ import { MessageInput } from "./message-input";
 import { TypingIndicator } from "./typing-indicator";
 import { findPerson } from "@/lib/mock-data";
 import type {
+  AttachmentAction,
   ChatMessage,
   ConversationParticipant,
-  MessageKindValue,
   QuickReaction,
   TypingIndicator as TypingType,
 } from "@/lib/chat/chat-types";
@@ -238,7 +238,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     push(draft);
   }
 
-  function handleOpenAttachment(kind: MessageKindValue) {
+  function handleOpenAttachment(kind: AttachmentAction) {
     if (kind === MessageKind.LOCATION) {
       const draft: ChatMessage = {
         id: `${participant.id}-loc-${Date.now()}`,

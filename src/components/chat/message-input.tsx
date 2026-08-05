@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Send, Smile, Paperclip, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { AttachmentAction } from "@/lib/chat/chat-types";
 import { EmojiPicker } from "./emoji-picker";
 import { AttachmentSheet } from "./attachment-sheet";
 import { VoiceRecorder } from "./voice-recorder";
@@ -8,7 +9,7 @@ import { VoiceRecorder } from "./voice-recorder";
 interface MessageInputProps {
   onSendText: (text: string) => void;
   onSendVoice?: (durationSec: number) => void;
-  onOpenAttachment?: (kind: string) => void;
+  onOpenAttachment?: (kind: AttachmentAction) => void;
   disabled?: boolean;
   placeholder?: string;
 }

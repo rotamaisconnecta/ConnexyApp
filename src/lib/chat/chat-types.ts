@@ -176,10 +176,17 @@ export const INITIAL_CONVERSATION_FILTERS: ConversationFilters = {
 /* ─── Attachment Types ───────────────────────────────────── */
 
 export interface AttachmentOption {
-  kind: MessageKindValue;
+  kind: AttachmentAction;
   label: string;
   icon: string;
 }
+
+export type AttachmentAction =
+  | typeof MessageKind.IMAGE
+  | typeof MessageKind.VIDEO
+  | typeof MessageKind.AUDIO
+  | typeof MessageKind.FILE
+  | typeof MessageKind.LOCATION;
 
 export const ATTACHMENT_OPTIONS: AttachmentOption[] = [
   { kind: MessageKind.IMAGE, label: "Foto", icon: "📷" },
