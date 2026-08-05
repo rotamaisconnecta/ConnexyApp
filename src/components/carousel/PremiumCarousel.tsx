@@ -59,6 +59,7 @@ export function PremiumCarousel<T>({
   const containerRef = useRef<HTMLDivElement>(null);
   const stepRef = useRef(0);
   const restoredRef = useRef(false);
+  const draggedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
   const [bp, setBp] = useState<Breakpoint>("desktop");
   const [maxScroll, setMaxScroll] = useState(0);
