@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { useGlobalDragScroll } from "@/hooks/system/use-drag-scroll";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
