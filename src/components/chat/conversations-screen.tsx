@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEventHandler } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
@@ -177,7 +177,6 @@ export function ConversationsScreen() {
                   <ContinueCard
                     key={conversation.id}
                     conversation={conversation}
-                    onOpen={openConversation}
                     onGesture={handleGesture}
                   />
                 ))}
@@ -199,7 +198,6 @@ export function ConversationsScreen() {
                 <ConversationRow
                   key={conversation.id}
                   conversation={conversation}
-                  onOpen={openConversation}
                   onGesture={handleGesture}
                   onMenu={setMenuTarget}
                 />
@@ -237,7 +235,8 @@ export function ConversationsScreen() {
               <SheetAction
                 icon={menuTarget.isMuted ? Bell : BellOff}
                 label={menuTarget.isMuted ? "Ativar notificações" : "Silenciar"}
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   toggleMuted(menuTarget);
                   setMenuTarget(null);
                 }}
@@ -245,12 +244,20 @@ export function ConversationsScreen() {
               <SheetAction
                 icon={Pin}
                 label={menuTarget.isPinned ? "Desafixar" : "Fixar"}
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   togglePinned(menuTarget);
                   setMenuTarget(null);
                 }}
               />
-              <SheetAction icon={Archive} label="Arquivar" onClick={() => archive(menuTarget)} />
+              <SheetAction
+                icon={Archive}
+                label="Arquivar"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  archive(menuTarget);
+                }}
+              />
             </motion.div>
           </motion.div>
         )}
@@ -266,7 +273,7 @@ function SheetAction({
 }: {
   icon: typeof Pin;
   label: string;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 }) {
   return (
     <button

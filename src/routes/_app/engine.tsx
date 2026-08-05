@@ -93,7 +93,7 @@ function EnginePage() {
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto px-4 pb-3 no-scrollbar">
           {enrichedRecommendations
             .filter((r) => selectedIds.has(r.id))
             .slice(0, 10)

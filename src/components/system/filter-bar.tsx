@@ -15,7 +15,7 @@ interface FilterBarProps {
 
 export function FilterBar({ filters, onToggle, className }: FilterBarProps) {
   return (
-    <div className={cn("flex gap-2 overflow-x-auto scrollbar-none py-2 px-4", className)}>
+    <div className={cn("flex gap-2 overflow-x-auto no-scrollbar py-2 px-4", className)}>
       {filters.map((filter) => (
         <button
           key={filter.id}

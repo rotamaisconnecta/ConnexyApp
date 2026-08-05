@@ -43,7 +43,7 @@ export function RecommendationSection({
         </button>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
         {items.map((item) => (
           <RecommendationCard key={item.id} recommendation={item} onSelect={onSelect} />
         ))}

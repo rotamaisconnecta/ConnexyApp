@@ -332,7 +332,7 @@ function Perfil() {
               Voltar
             </Link>
             <button
-              onClick={() => nav({ to: "/chat/$id", params: { id: p.id } })}
+              onClick={() => nav({ to: "/chat/$conversationId", params: { conversationId: p.id } })}
               className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
             >
               Aceitar conversa

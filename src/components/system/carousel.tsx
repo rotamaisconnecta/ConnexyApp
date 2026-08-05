@@ -65,8 +65,8 @@ export function Carousel({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none"
-        style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
+        className="flex overflow-x-auto snap-x snap-proximity no-scrollbar"
+        style={{ scrollSnapType: "x proximity" }}
       >
         {items.map((item) => (
           <div key={item.id} className="min-w-full snap-center flex-shrink-0">

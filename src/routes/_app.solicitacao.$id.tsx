@@ -136,7 +136,7 @@ function Solicitacao() {
             <X className="h-5 w-5" /> Recusar
           </button>
           <button
-            onClick={() => nav({ to: "/chat/$id", params: { id: p.id } })}
+            onClick={() => nav({ to: "/chat/$conversationId", params: { conversationId: p.id } })}
             className="flex-1 h-14 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center gap-2"
           >
             <Check className="h-5 w-5" /> Aceitar

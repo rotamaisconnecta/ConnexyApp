@@ -13,7 +13,7 @@ interface TabsProps {
 export function Tabs({ items, activeTab, onChange, className }: TabsProps) {
   return (
     <div
-      className={cn("flex overflow-x-auto scrollbar-none", className)}
+      className={cn("flex overflow-x-auto no-scrollbar", className)}
       style={{
         borderBottom: `1px solid ${Colors.border}`,
       }}

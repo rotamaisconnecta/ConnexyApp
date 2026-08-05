@@ -10,11 +10,10 @@ interface HorizontalScrollerProps {
 export function HorizontalScroller({ children, className, gap = 12 }: HorizontalScrollerProps) {
   return (
     <div
-      className={cn("flex overflow-x-auto snap-x snap-start scrollbar-none", className)}
+      className={cn("flex overflow-x-auto snap-x snap-proximity no-scrollbar", className)}
       style={{
         gap: `${gap}px`,
-        scrollSnapType: "x mandatory",
-        WebkitOverflowScrolling: "touch",
+        scrollSnapType: "x proximity",
       }}
     >
       {children}

@@ -70,7 +70,7 @@ function RecommendationsPage() {
           </p>
         </div>
 
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
           {FILTERS.map((filter) => (
             <button
               key={filter.label}

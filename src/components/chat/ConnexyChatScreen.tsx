@@ -10,6 +10,7 @@ import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
 import { TypingIndicator } from "./typing-indicator";
 import { findPerson } from "@/lib/mock-data";
+import { MOCK_CONVERSATIONS } from "@/lib/chat/mock-conversations";
 import type {
   AttachmentAction,
   ChatMessage,
@@ -129,6 +130,11 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   const person = useMemo(() => findPerson(conversationId ?? ""), [conversationId]);
 
+  const conversation = useMemo(
+    () => MOCK_CONVERSATIONS.find((item) => item.id === conversationId),
+    [conversationId],
+  );
+
   const participant: ConversationParticipant = useMemo(() => {
     if (person) {
       return {
@@ -139,10 +145,19 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         lastSeen: person.lastSeen,
       };
     }
+    if (conversation) {
+      return {
+        id: conversation.participant.id,
+        name: conversation.participant.name,
+        photo: conversation.participant.photo ?? "",
+        online: conversation.isOnline,
+      };
+    }
     return DEFAULT_PARTICIPANT;
-  }, [person]);
+  }, [person, conversation]);
 
-  const distanceMeters = person?.distanceMeters ?? DEFAULT_DISTANCE_METERS;
+  const distanceMeters =
+    person?.distanceMeters ?? conversation?.proximityMeters ?? DEFAULT_DISTANCE_METERS;
   const proximity = formatChatProximity(distanceMeters);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => buildMockMessages(participant.id));
@@ -287,6 +302,19 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         onSearch={() => setShowSearch((value) => !value)}
         onMenu={() => setMenuOpen(true)}
       />
+
+      {conversation && (
+        <div className="flex items-center gap-2 border-b border-border/50 bg-surface/40 px-4 py-1.5">
+          <span className="min-w-0 truncate text-[11px] font-medium text-primary/80">
+            Fio · {conversation.currentThread}
+          </span>
+          {conversation.sharedInterest && (
+            <span className="shrink-0 text-[11px] text-muted-foreground">
+              Interesse: {conversation.sharedInterest}
+            </span>
+          )}
+        </div>
+      )}
 
       {showSearch && (
         <ChatSearch

@@ -8,7 +8,7 @@ export function ReelHashtags({ hashtags }: ReelHashtagsProps) {
   if (hashtags.length === 0) return null;
 
   return (
-    <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+    <div className="no-scrollbar flex gap-2 overflow-x-auto">
       {hashtags.map((tag) => (
         <span
           key={tag}

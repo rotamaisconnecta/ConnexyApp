@@ -190,7 +190,7 @@ export const MOCK_CONVERSATIONS: MockConversation[] = [
   },
   {
     id: "ana",
-    participant: { id: "ana", name: "Ana Lima" },
+    participant: { id: "ana", name: "Ana Lima", photo: "https://i.pravatar.cc/200?img=5" },
     initials: "AL",
     isOnline: false,
     currentThread: "Viagem para o litoral",
