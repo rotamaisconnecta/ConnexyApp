@@ -59,6 +59,7 @@ export function PremiumCarousel<T>({
   const containerRef = useRef<HTMLDivElement>(null);
   const stepRef = useRef(0);
   const restoredRef = useRef(false);
+  const draggedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
   const [bp, setBp] = useState<Breakpoint>("desktop");
   const [maxScroll, setMaxScroll] = useState(0);
@@ -141,7 +142,16 @@ export function PremiumCarousel<T>({
   return (
     <div className={className}>
       <LayoutGroup>
-        <div className="relative group" ref={containerRef}>
+        <div
+          className="relative group"
+          ref={containerRef}
+          onClickCapture={(e) => {
+            if (draggedRef.current) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+        >
           <motion.div
             className="flex cursor-grab active:cursor-grabbing"
             style={{ gap: GAP, x, touchAction: "pan-y" }}
@@ -150,6 +160,14 @@ export function PremiumCarousel<T>({
             dragElastic={0.12}
             dragMomentum
             whileDrag={{ scale: 0.99, cursor: "grabbing" }}
+            onDragStart={() => {
+              draggedRef.current = true;
+            }}
+            onDragEnd={() => {
+              window.setTimeout(() => {
+                draggedRef.current = false;
+              }, 0);
+            }}
           >
             <AnimatePresence initial={false}>
               {items.map((item, i) => {
