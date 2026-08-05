@@ -1,99 +1,111 @@
 import type { Database } from "@/integrations/supabase/types";
 
 type Tables = Database["public"]["Tables"];
+type TableName = keyof Tables;
 
-export type BioPost = Tables["bio_posts"]["Row"];
-export type BioPostInsert = Tables["bio_posts"]["Insert"];
-export type BioPostUpdate = Tables["bio_posts"]["Update"];
+/**
+ * Some tables referenced by the repository/service layer are not part of the
+ * generated database types yet. These helpers resolve to the generated shape
+ * when available and fall back to a permissive record otherwise.
+ */
+type FallbackRow = Record<string, unknown>;
+
+type Row<T extends string> = T extends TableName ? Tables[T]["Row"] : FallbackRow;
+type Insert<T extends string> = T extends TableName ? Tables[T]["Insert"] : FallbackRow;
+type Update<T extends string> = T extends TableName ? Tables[T]["Update"] : FallbackRow;
+
+export type BioPost = Row<"bio_posts">;
+export type BioPostInsert = Insert<"bio_posts">;
+export type BioPostUpdate = Update<"bio_posts">;
 export type BioPostRow = BioPost;
 
-export type Place = Tables["places"]["Row"];
-export type PlaceInsert = Tables["places"]["Insert"];
-export type PlaceUpdate = Tables["places"]["Update"];
+export type Place = Row<"places">;
+export type PlaceInsert = Insert<"places">;
+export type PlaceUpdate = Update<"places">;
 
-export type Profile = Tables["profiles"]["Row"];
-export type ProfileInsert = Tables["profiles"]["Insert"];
-export type ProfileUpdate = Tables["profiles"]["Update"];
+export type Profile = Row<"profiles">;
+export type ProfileInsert = Insert<"profiles">;
+export type ProfileUpdate = Update<"profiles">;
 export type ProfileRow = Profile;
 
-export type Reel = Tables["reels"]["Row"];
-export type ReelInsert = Tables["reels"]["Insert"];
-export type ReelUpdate = Tables["reels"]["Update"];
+export type Reel = Row<"reels">;
+export type ReelInsert = Insert<"reels">;
+export type ReelUpdate = Update<"reels">;
 
-export type ReelComment = Tables["reel_comments"]["Row"];
-export type ReelCommentInsert = Tables["reel_comments"]["Insert"];
-export type ReelCommentUpdate = Tables["reel_comments"]["Update"];
+export type ReelComment = Row<"reel_comments">;
+export type ReelCommentInsert = Insert<"reel_comments">;
+export type ReelCommentUpdate = Update<"reel_comments">;
 
-export type ReelLike = Tables["reel_likes"]["Row"];
-export type ReelLikeInsert = Tables["reel_likes"]["Insert"];
-export type ReelLikeUpdate = Tables["reel_likes"]["Update"];
+export type ReelLike = Row<"reel_likes">;
+export type ReelLikeInsert = Insert<"reel_likes">;
+export type ReelLikeUpdate = Update<"reel_likes">;
 
-export type Conversation = Tables["conversations"]["Row"];
-export type ConversationInsert = Tables["conversations"]["Insert"];
-export type ConversationUpdate = Tables["conversations"]["Update"];
+export type Conversation = Row<"conversations">;
+export type ConversationInsert = Insert<"conversations">;
+export type ConversationUpdate = Update<"conversations">;
 export type ConversationRow = Conversation;
 
-export type ConversationParticipant = Tables["conversation_participants"]["Row"];
-export type ConversationParticipantInsert = Tables["conversation_participants"]["Insert"];
-export type ConversationParticipantUpdate = Tables["conversation_participants"]["Update"];
+export type ConversationParticipant = Row<"conversation_participants">;
+export type ConversationParticipantInsert = Insert<"conversation_participants">;
+export type ConversationParticipantUpdate = Update<"conversation_participants">;
 
-export type Message = Tables["messages"]["Row"];
-export type MessageInsert = Tables["messages"]["Insert"];
-export type MessageUpdate = Tables["messages"]["Update"];
+export type Message = Row<"messages">;
+export type MessageInsert = Insert<"messages">;
+export type MessageUpdate = Update<"messages">;
 export type MessageRow = Message;
 
-export type Notification = Tables["notifications"]["Row"];
-export type NotificationInsert = Tables["notifications"]["Insert"];
-export type NotificationUpdate = Tables["notifications"]["Update"];
+export type Notification = Row<"notifications">;
+export type NotificationInsert = Insert<"notifications">;
+export type NotificationUpdate = Update<"notifications">;
 export type NotificationRow = Notification;
 
-export type Ride = Tables["rides"]["Row"];
-export type RideInsert = Tables["rides"]["Insert"];
-export type RideUpdate = Tables["rides"]["Update"];
+export type Ride = Row<"rides">;
+export type RideInsert = Insert<"rides">;
+export type RideUpdate = Update<"rides">;
 export type RideRow = Ride;
 
-export type Like = Tables["likes"]["Row"];
-export type LikeInsert = Tables["likes"]["Insert"];
-export type LikeUpdate = Tables["likes"]["Update"];
+export type Like = Row<"likes">;
+export type LikeInsert = Insert<"likes">;
+export type LikeUpdate = Update<"likes">;
 
-export type Moment = Tables["moments"]["Row"];
-export type MomentInsert = Tables["moments"]["Insert"];
-export type MomentUpdate = Tables["moments"]["Update"];
+export type Moment = Row<"moments">;
+export type MomentInsert = Insert<"moments">;
+export type MomentUpdate = Update<"moments">;
 export type MomentRow = Moment;
 
-export type Compatibility = Tables["compatibility"]["Row"];
-export type CompatibilityInsert = Tables["compatibility"]["Insert"];
-export type CompatibilityUpdate = Tables["compatibility"]["Update"];
+export type Compatibility = Row<"compatibility">;
+export type CompatibilityInsert = Insert<"compatibility">;
+export type CompatibilityUpdate = Update<"compatibility">;
 export type CompatibilityRow = Compatibility;
 
-export type ConnectionRequest = Tables["connection_requests"]["Row"];
-export type ConnectionRequestInsert = Tables["connection_requests"]["Insert"];
-export type ConnectionRequestUpdate = Tables["connection_requests"]["Update"];
+export type ConnectionRequest = Row<"connection_requests">;
+export type ConnectionRequestInsert = Insert<"connection_requests">;
+export type ConnectionRequestUpdate = Update<"connection_requests">;
 
-export type Business = Tables["businesses"]["Row"];
-export type BusinessInsert = Tables["businesses"]["Insert"];
-export type BusinessUpdate = Tables["businesses"]["Update"];
+export type Business = Row<"businesses">;
+export type BusinessInsert = Insert<"businesses">;
+export type BusinessUpdate = Update<"businesses">;
 export type BusinessRow = Business;
 
-export type Event = Tables["events"]["Row"];
-export type EventInsert = Tables["events"]["Insert"];
-export type EventUpdate = Tables["events"]["Update"];
+export type Event = Row<"events">;
+export type EventInsert = Insert<"events">;
+export type EventUpdate = Update<"events">;
 export type EventRow = Event;
 
-export type EventUser = Tables["event_users"]["Row"];
-export type EventUserInsert = Tables["event_users"]["Insert"];
-export type EventUserUpdate = Tables["event_users"]["Update"];
+export type EventUser = Row<"event_users">;
+export type EventUserInsert = Insert<"event_users">;
+export type EventUserUpdate = Update<"event_users">;
 
-export type Offer = Tables["offers"]["Row"];
-export type OfferInsert = Tables["offers"]["Insert"];
-export type OfferUpdate = Tables["offers"]["Update"];
+export type Offer = Row<"offers">;
+export type OfferInsert = Insert<"offers">;
+export type OfferUpdate = Update<"offers">;
 export type OfferRow = Offer;
 
-export type Coupon = Tables["coupons"]["Row"];
-export type CouponInsert = Tables["coupons"]["Insert"];
-export type CouponUpdate = Tables["coupons"]["Update"];
+export type Coupon = Row<"coupons">;
+export type CouponInsert = Insert<"coupons">;
+export type CouponUpdate = Update<"coupons">;
 export type CouponRow = Coupon;
 
-export type Review = Tables["reviews"]["Row"];
-export type ReviewInsert = Tables["reviews"]["Insert"];
-export type ReviewUpdate = Tables["reviews"]["Update"];
+export type Review = Row<"reviews">;
+export type ReviewInsert = Insert<"reviews">;
+export type ReviewUpdate = Update<"reviews">;
