@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
+import { Logo } from "@/lib/branding/brand-config";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock } from "lucide-react";
 
@@ -71,9 +72,7 @@ function AuthPage() {
         <StatusBar />
         <div className="flex-1 flex flex-col justify-center px-6 pb-10">
           <div className="text-center mb-6">
-            <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-brand grid place-items-center text-white shadow-elegant text-2xl font-bold">
-              C
-            </div>
+            <img src={Logo.icon} alt="Connexy" className="mx-auto h-56 w-56 object-contain" />
             <h1 className="mt-3 font-display text-2xl font-bold">
               {mode === "signin" ? "Entrar no Connexy" : "Criar sua conta"}
             </h1>
