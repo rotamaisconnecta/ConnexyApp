@@ -1,4 +1,4 @@
-import { Home, Map, LayoutDashboard, User, Plus } from "lucide-react";
+import { Home, Map, MessagesSquare, User, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -14,7 +14,7 @@ interface BottomNavItem {
 const NAV_ITEMS: BottomNavItem[] = [
   { id: "home", label: "Home", icon: Home, route: "/home" },
   { id: "map", label: "Mapa", icon: Map, route: "/discover" },
-  { id: "my-connexy", label: "Meu Connexy", icon: LayoutDashboard, route: "/my-connexy" },
+  { id: "conversas", label: "Conversas", icon: MessagesSquare, route: "/chat" },
   { id: "profile", label: "Perfil", icon: User, route: "/profile" },
 ];
 
