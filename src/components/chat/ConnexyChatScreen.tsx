@@ -1,426 +1,408 @@
-import { useMemo, useRef, useState } from "react";
-import {
-  ArrowLeft,
-  CalendarDays,
-  CheckCheck,
-  ChevronRight,
-  CirclePlus,
-  Ellipsis,
-  Image as ImageIcon,
-  MapPin,
-  Mic,
-  PhoneCall,
-  Play,
-  Send,
-  Sparkles,
-  Video,
-  Volume2,
-  X,
-} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Ban, Bell, BellOff, User, Video } from "lucide-react";
+import { toast } from "sonner";
+import { StatusBar } from "@/components/phone-frame";
+import { ChatHeader } from "./chat-header";
+import { ChatSearch } from "./chat-search";
+import { MessageList } from "./message-list";
+import { MessageInput } from "./message-input";
+import { TypingIndicator } from "./typing-indicator";
+import { findPerson } from "@/lib/mock-data";
+import type {
+  ChatMessage,
+  ConversationParticipant,
+  MessageKindValue,
+  QuickReaction,
+  TypingIndicator as TypingType,
+} from "@/lib/chat/chat-types";
+import { MessageKind, MessageStatus } from "@/lib/chat/chat-types";
+import { createTypingIndicator } from "@/lib/chat/typing-utils";
+import { advanceStatus } from "@/lib/chat/message-status";
+import { formatChatProximity } from "@/lib/chat/proximity";
+import { cn } from "@/lib/utils";
 
-export type ChatMessage = {
-  id: string;
-  sender: "me" | "other";
-  type: "text" | "audio";
-  text?: string;
-  duration?: string;
-  time: string;
-  reaction?: { emoji: string; count: number };
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+
+const DEFAULT_PARTICIPANT: ConversationParticipant = {
+  id: "juliana",
+  name: "Juliana Santos",
+  photo: "/avatars/juliana-santos.jpg",
+  online: true,
 };
 
-const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    id: "1",
-    sender: "other",
-    type: "text",
-    text: "Oi! Vi que você também vai para o evento no sábado 🎉",
-    time: "10:30",
-    reaction: { emoji: "❤️", count: 1 },
-  },
-  {
-    id: "2",
-    sender: "me",
-    type: "text",
-    text: "Oi Juliana! Sim, vou sim 😁",
-    time: "10:31",
-  },
-  {
-    id: "3",
-    sender: "other",
-    type: "text",
-    text: "Que legal! 🙌\nVai de carro ou transporte?",
-    time: "10:32",
-  },
-  {
-    id: "4",
-    sender: "me",
-    type: "audio",
-    duration: "0:12",
-    time: "10:32",
-  },
-  {
-    id: "5",
-    sender: "me",
-    type: "text",
-    text: "Ainda não decidi. Talvez peça uma corrida pelo Connexy.",
-    time: "10:33",
-  },
-  {
-    id: "6",
-    sender: "other",
-    type: "text",
-    text: "Boa! Se quiser, a gente pode ir junto, moro perto de você.",
-    time: "10:34",
-    reaction: { emoji: "💜", count: 1 },
-  },
-  {
-    id: "7",
-    sender: "me",
-    type: "text",
-    text: "Top demais! Chama lá no dia 😃",
-    time: "10:35",
-    reaction: { emoji: "❤️", count: 1 },
-  },
-];
+const DEFAULT_DISTANCE_METERS = 800;
 
-const QUICK_ACTIONS = [
-  {
-    id: "local",
-    icon: "🏝️",
-    title: "Local",
-    subtitle: "Compartilhar",
-    badge: <MapPin className="h-4 w-4" />,
-  },
-  {
-    id: "event",
-    icon: "🗓️",
-    title: "Evento",
-    subtitle: "Convidar",
-    badge: <CalendarDays className="h-4 w-4" />,
-  },
-  {
-    id: "mood",
-    icon: "💗",
-    title: "Mood",
-    subtitle: "Como está se sentindo?",
-    badge: null,
-  },
-  {
-    id: "audio",
-    icon: "🎙️",
-    title: "Áudio rápido",
-    subtitle: "Gravar agora",
-    badge: <Volume2 className="h-4 w-4" />,
-  },
-  {
-    id: "activity",
-    icon: "🎟️",
-    title: "Atividade",
-    subtitle: "Chamar para sair",
-    badge: <ChevronRight className="h-4 w-4" />,
-  },
-];
-
-function formatProximity(distanceKm: number) {
-  if (distanceKm <= 0.5) return "Muito perto";
-  if (distanceKm <= 1) return "Na mesma região";
-  if (distanceKm <= 2) return "Perto de você";
-  return `${distanceKm.toFixed(1).replace(".", ",")} km de distância`;
+interface ConnexyChatScreenProps {
+  conversationId?: string;
 }
 
-function Avatar({ small = false }: { small?: boolean }) {
-  return (
-    <div
-      className={`relative shrink-0 rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-400 to-orange-300 p-[3px] ${
-        small ? "h-12 w-12" : "h-[72px] w-[72px]"
-      }`}
-    >
-      <img
-        src="/avatars/juliana-santos.jpg"
-        alt="Juliana Santos"
-        className="h-full w-full rounded-full border-2 border-white object-cover"
-        onError={(event) => {
-          event.currentTarget.style.display = "none";
-          event.currentTarget.parentElement?.classList.add(
-            "before:absolute",
-            "before:inset-[5px]",
-            "before:grid",
-            "before:place-items-center",
-            "before:rounded-full",
-            "before:bg-[#191724]",
-            "before:text-white",
-            "before:content-['JS']"
-          );
-        }}
-      />
-      {!small && (
-        <span className="absolute bottom-0 right-0 h-5 w-5 rounded-full border-[3px] border-white bg-emerald-500" />
-      )}
-    </div>
-  );
+function buildMockMessages(participantId: string): ChatMessage[] {
+  const now = Date.now();
+
+  return [
+    {
+      id: `${participantId}-1`,
+      conversationId: participantId,
+      from: "them",
+      kind: MessageKind.TEXT,
+      text: "Oi! Vi que a gente tem interesses em comum 😊",
+      at: new Date(now - 3 * HOUR),
+      status: MessageStatus.READ,
+    },
+    {
+      id: `${participantId}-2`,
+      conversationId: participantId,
+      from: "me",
+      kind: MessageKind.TEXT,
+      text: "Oi! Sim, adoro café e fotografia!",
+      at: new Date(now - 3 * HOUR + 5 * MINUTE),
+      status: MessageStatus.READ,
+    },
+    {
+      id: `${participantId}-3`,
+      conversationId: participantId,
+      from: "them",
+      kind: MessageKind.LOCATION,
+      label: "Café Central",
+      proximity: formatChatProximity(1600),
+      cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
+      at: new Date(now - 2 * HOUR),
+      status: MessageStatus.READ,
+    },
+    {
+      id: `${participantId}-4`,
+      conversationId: participantId,
+      from: "me",
+      kind: MessageKind.AUDIO,
+      durationSec: 12,
+      at: new Date(now - 90 * MINUTE),
+      status: MessageStatus.READ,
+    },
+    {
+      id: `${participantId}-5`,
+      conversationId: participantId,
+      from: "them",
+      kind: MessageKind.TEXT,
+      text: "Que vibe boa esse lugar ☕",
+      at: new Date(now - 80 * MINUTE),
+      status: MessageStatus.READ,
+      reaction: "❤️",
+    },
+    {
+      id: `${participantId}-6`,
+      conversationId: participantId,
+      from: "them",
+      kind: MessageKind.EVENT,
+      title: "Sunset no Parque",
+      cover: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400",
+      dateText: "Sáb · 16:00",
+      location: "Parque Ibirapuera",
+      at: new Date(now - 1 * HOUR),
+      status: MessageStatus.READ,
+    },
+    {
+      id: `${participantId}-7`,
+      conversationId: participantId,
+      from: "me",
+      kind: MessageKind.TEXT,
+      text: "Top! Bora marcar um café? 😄",
+      at: new Date(now - 45 * MINUTE),
+      status: MessageStatus.READ,
+    },
+    {
+      id: `${participantId}-8`,
+      conversationId: participantId,
+      from: "them",
+      kind: MessageKind.TEXT,
+      text: "Bora! Quando você pode?",
+      at: new Date(now - 30 * MINUTE),
+      status: MessageStatus.READ,
+    },
+  ];
 }
 
-function AudioBubble() {
-  const bars = useMemo(
-    () => [12, 24, 18, 31, 14, 27, 19, 34, 22, 15, 29, 21, 35, 17, 27, 12, 25, 18, 30, 15],
-    []
-  );
+export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenProps) {
+  const router = useRouter();
 
-  return (
-    <div className="flex min-w-[245px] items-center gap-3">
-      <button
-        type="button"
-        aria-label="Reproduzir áudio"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-500/15 text-violet-600 transition hover:scale-105"
-      >
-        <Play className="h-5 w-5 fill-current" />
-      </button>
-      <div className="flex flex-1 items-center gap-[3px]" aria-hidden="true">
-        {bars.map((height, index) => (
-          <span
-            key={index}
-            className="w-[3px] rounded-full bg-violet-500/70"
-            style={{ height }}
-          />
-        ))}
-      </div>
-      <span className="text-sm text-slate-600">0:12</span>
-    </div>
-  );
-}
+  const person = useMemo(() => findPerson(conversationId ?? ""), [conversationId]);
 
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const mine = message.sender === "me";
+  const participant: ConversationParticipant = useMemo(() => {
+    if (person) {
+      return {
+        id: person.id,
+        name: person.name,
+        photo: person.photo,
+        online: person.online,
+        lastSeen: person.lastSeen,
+      };
+    }
+    return DEFAULT_PARTICIPANT;
+  }, [person]);
 
-  return (
-    <div className={`relative flex w-full ${mine ? "justify-end" : "justify-start"}`}>
-      {!mine && (
-        <div className="mr-3 mt-1">
-          <Avatar small />
-        </div>
-      )}
+  const distanceMeters = person?.distanceMeters ?? DEFAULT_DISTANCE_METERS;
+  const proximity = formatChatProximity(distanceMeters);
 
-      <div className={`max-w-[78%] ${mine ? "items-end" : "items-start"}`}>
-        <div
-          className={`relative rounded-[28px] px-5 py-4 shadow-[0_16px_48px_rgba(88,70,130,0.08)] ${
-            mine
-              ? "bg-gradient-to-r from-violet-200/85 via-fuchsia-100/90 to-orange-100/95"
-              : "border border-white/90 bg-white/95"
-          }`}
-        >
-          {message.type === "audio" ? (
-            <AudioBubble />
-          ) : (
-            <p className="whitespace-pre-line text-[17px] leading-[1.38] text-[#171522]">
-              {message.text}
-            </p>
-          )}
-
-          <div className={`mt-2 flex items-center gap-1 text-xs text-slate-500 ${mine ? "justify-end" : "justify-start"}`}>
-            <span>{message.time}</span>
-            {mine && <CheckCheck className="h-4 w-4 text-violet-600" />}
-          </div>
-        </div>
-
-        {message.reaction && (
-          <button
-            type="button"
-            className={`-mt-1 flex h-9 items-center gap-1 rounded-full border border-white bg-white px-3 text-sm shadow-sm ${
-              mine ? "ml-auto mr-2" : "ml-4"
-            }`}
-          >
-            <span>{message.reaction.emoji}</span>
-            <span className="text-slate-700">{message.reaction.count}</span>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function ConnexyChatScreen() {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
-  const [draft, setDraft] = useState("");
-  const [showActions, setShowActions] = useState(true);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => buildMockMessages(participant.id));
+  const [typing, setTyping] = useState<TypingType | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [muted, setMuted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const distanceKm = 2.4;
+  const didMountRef = useRef(false);
 
-  function sendMessage() {
-    const value = draft.trim();
-    if (!value) return;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+    didMountRef.current = true;
+  }, []);
 
-    const now = new Date();
-    const time = now.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  useEffect(() => {
+    if (!didMountRef.current) return;
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages, typing]);
 
-    setMessages((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        sender: "me",
-        type: "text",
-        text: value,
-        time,
-      },
-    ]);
-    setDraft("");
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      router.history.back();
+      return;
+    }
+    router.navigate({ to: "/chat" });
+  }, [router]);
 
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    });
+  const push = useCallback(
+    (draft: ChatMessage) => {
+      setMessages((prev) => [...prev, draft]);
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === draft.id ? { ...m, status: advanceStatus(draft.status) } : m)),
+        );
+      }, 600);
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== draft.id) return m;
+            return { ...m, status: advanceStatus(advanceStatus(draft.status)) };
+          }),
+        );
+      }, 1200);
+
+      const otherTyping = createTypingIndicator(participant.id, participant.id);
+      setTimeout(() => setTyping(otherTyping), 1500);
+
+      setTimeout(() => {
+        setTyping(null);
+        const reply: ChatMessage = {
+          id: `${participant.id}-reply-${Date.now()}`,
+          conversationId: participant.id,
+          from: "them",
+          kind: MessageKind.TEXT,
+          text: "Show! Combinado então 🎉",
+          at: new Date(),
+          status: MessageStatus.READ,
+        };
+        setMessages((prev) => [...prev, reply]);
+      }, 3200);
+    },
+    [participant.id],
+  );
+
+  function handleSendText(text: string) {
+    const draft: ChatMessage = {
+      id: `${participant.id}-msg-${Date.now()}`,
+      conversationId: participant.id,
+      from: "me",
+      kind: MessageKind.TEXT,
+      text,
+      at: new Date(),
+      status: MessageStatus.SENDING,
+    };
+    push(draft);
   }
 
+  function handleSendVoice(durationSec: number) {
+    const draft: ChatMessage = {
+      id: `${participant.id}-audio-${Date.now()}`,
+      conversationId: participant.id,
+      from: "me",
+      kind: MessageKind.AUDIO,
+      durationSec,
+      at: new Date(),
+      status: MessageStatus.SENDING,
+    };
+    push(draft);
+  }
+
+  function handleOpenAttachment(kind: MessageKindValue) {
+    if (kind === MessageKind.LOCATION) {
+      const draft: ChatMessage = {
+        id: `${participant.id}-loc-${Date.now()}`,
+        conversationId: participant.id,
+        from: "me",
+        kind: MessageKind.LOCATION,
+        label: "Café Central",
+        proximity: formatChatProximity(1600),
+        cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
+        at: new Date(),
+        status: MessageStatus.SENDING,
+      };
+      push(draft);
+      return;
+    }
+    toast.info("Anexo disponível em breve");
+  }
+
+  function handleReaction(messageId: string, reaction: QuickReaction) {
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reaction } : m)));
+  }
+
+  function handleRetry(messageId: string) {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, status: MessageStatus.SENDING } : m)),
+    );
+  }
+
+  function handleSearchResultClick(messageId: string) {
+    const el = document.getElementById(`msg-${messageId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setShowSearch(false);
+  }
+
+  const toggleMuted = useCallback(() => setMuted((value) => !value), []);
+
   return (
-    <main className="relative mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#fbfaff] text-[#161421]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(168,85,247,0.10),transparent_28%),radial-gradient(circle_at_12%_68%,rgba(255,193,7,0.08),transparent_26%)]" />
+    <main className="relative flex-1 flex flex-col h-full min-h-0 pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]">
+      <StatusBar />
 
-      <header className="relative z-20 px-5 pb-3 pt-[max(18px,env(safe-area-inset-top))] backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Voltar"
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white bg-white/80 shadow-[0_12px_34px_rgba(86,70,120,0.08)]"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </button>
+      <ChatHeader
+        participant={participant}
+        proximity={proximity}
+        onBack={handleBack}
+        onVideoCall={() => toast.info("Videocall em breve")}
+        onSearch={() => setShowSearch((value) => !value)}
+        onMenu={() => setMenuOpen(true)}
+      />
 
-          <Avatar />
+      {showSearch && (
+        <ChatSearch
+          messages={messages}
+          onResultClick={handleSearchResultClick}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
 
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xl font-bold tracking-[-0.02em]">Juliana Santos</h1>
-            <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              Online agora
-            </div>
-          </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar min-h-0">
+        <MessageList
+          messages={messages}
+          participantPhoto={participant.photo}
+          onReaction={handleReaction}
+          onRetry={handleRetry}
+        />
 
-          <button
-            type="button"
-            aria-label="Iniciar vídeo"
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white bg-white/80 shadow-[0_12px_34px_rgba(86,70,120,0.08)]"
-          >
-            <Video className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Mais opções"
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white bg-white/80 shadow-[0_12px_34px_rgba(86,70,120,0.08)]"
-          >
-            <Ellipsis className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3 rounded-[24px] border border-white bg-white/80 p-4 shadow-[0_18px_50px_rgba(80,62,120,0.07)]">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-600">
-            <MapPin className="h-5 w-5 fill-current" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <strong className="block text-[15px]">{formatProximity(distanceKm)}</strong>
-            <span className="block truncate text-sm text-slate-500">Jardim das Flores, São Paulo</span>
-          </div>
-          <button
-            type="button"
-            className="rounded-2xl border border-violet-200 px-4 py-3 text-sm font-semibold text-violet-600"
-          >
-            Ver no mapa
-          </button>
-        </div>
-      </header>
-
-      <div
-        ref={scrollRef}
-        className="relative z-10 flex-1 space-y-5 overflow-y-auto px-5 pb-7 pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <div className="flex items-center gap-4 py-2 text-xs font-medium text-slate-500">
-          <span className="h-px flex-1 bg-slate-200" />
-          Hoje
-          <span className="h-px flex-1 bg-slate-200" />
-        </div>
-
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
+        {typing && <TypingIndicator name={participant.name} photo={participant.photo} />}
       </div>
 
-      <footer className="relative z-30 border-t border-white/70 bg-white/75 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur-2xl">
-        <div className="flex items-end gap-2">
-          <div className="flex min-h-12 flex-1 items-end rounded-[24px] border border-slate-200/80 bg-white px-4 py-2 shadow-sm">
-            <textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  sendMessage();
-                }
+      <MessageInput
+        placeholder="Digite uma mensagem"
+        onSendText={handleSendText}
+        onSendVoice={handleSendVoice}
+        onOpenAttachment={handleOpenAttachment}
+      />
+
+      {menuOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50"
+        >
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            onClick={() => setMenuOpen(false)}
+            className="absolute inset-0 bg-black/30"
+          />
+          <motion.div
+            initial={{ y: -8, opacity: 0, scale: 0.98 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            className="absolute right-3 top-[104px] w-60 rounded-2xl border border-border bg-surface p-2 shadow-elegant"
+          >
+            <MenuItem
+              icon={User}
+              label={`Ver perfil de ${participant.name}`}
+              onClick={() => {
+                setMenuOpen(false);
+                toast.info(`Perfil de ${participant.name} — em breve`);
               }}
-              rows={1}
-              placeholder="O que você quer compartilhar?"
-              className="max-h-28 min-h-7 flex-1 resize-none bg-transparent py-1 text-[15px] outline-none placeholder:text-slate-400"
             />
-            <button type="button" aria-label="Gravar áudio" className="grid h-8 w-8 place-items-center text-violet-600">
-              <Mic className="h-5 w-5" />
-            </button>
-          </div>
-
-          <button
-            type="button"
-            aria-label="Adicionar imagem"
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-600"
-          >
-            <ImageIcon className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={draft.trim() ? sendMessage : () => setShowActions((value) => !value)}
-            aria-label={draft.trim() ? "Enviar mensagem" : "Abrir ações inteligentes"}
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-[0_12px_30px_rgba(139,92,246,0.30)]"
-          >
-            {draft.trim() ? <Send className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
-          </button>
-        </div>
-
-        {showActions && (
-          <div className="relative mt-3">
-            <button
-              type="button"
-              onClick={() => setShowActions(false)}
-              className="absolute -top-2 right-0 z-10 grid h-7 w-7 place-items-center rounded-full bg-white shadow"
-              aria-label="Fechar ações"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {QUICK_ACTIONS.map((action) => (
-                <button
-                  key={action.id}
-                  type="button"
-                  className="min-w-[128px] rounded-[24px] border border-white bg-white/90 p-4 text-left shadow-[0_12px_32px_rgba(72,57,100,0.07)]"
-                >
-                  <div className="flex items-start justify-between">
-                    <span className="text-2xl">{action.icon}</span>
-                    {action.badge && (
-                      <span className="grid h-7 w-7 place-items-center rounded-full bg-violet-50 text-violet-600">
-                        {action.badge}
-                      </span>
-                    )}
-                  </div>
-                  <strong className="mt-3 block text-sm">{action.title}</strong>
-                  <span className="mt-1 block text-xs leading-4 text-slate-500">{action.subtitle}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </footer>
+            <MenuItem
+              icon={Video}
+              label="Videocall"
+              onClick={() => {
+                setMenuOpen(false);
+                toast.info("Videocall em breve");
+              }}
+            />
+            <MenuItem
+              icon={muted ? Bell : BellOff}
+              label={muted ? "Ativar notificações" : "Silenciar notificações"}
+              active={muted}
+              onClick={() => {
+                toggleMuted();
+                setMenuOpen(false);
+                toast.success(muted ? "Notificações ativadas" : "Notificações silenciadas");
+              }}
+            />
+            <MenuItem
+              icon={Ban}
+              label="Bloquear"
+              destructive
+              onClick={() => {
+                setMenuOpen(false);
+                toast.info("Usuário bloqueado (simulação)");
+              }}
+            />
+          </motion.div>
+        </motion.div>
+      )}
     </main>
+  );
+}
+
+function MenuItem({
+  icon: Icon,
+  label,
+  onClick,
+  active = false,
+  destructive = false,
+}: {
+  icon: typeof User;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+        destructive
+          ? "text-destructive hover:bg-destructive/10"
+          : active
+            ? "text-primary hover:bg-accent"
+            : "text-foreground hover:bg-accent",
+      )}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
   );
 }

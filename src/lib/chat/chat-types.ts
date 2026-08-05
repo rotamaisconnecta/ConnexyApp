@@ -12,6 +12,7 @@ export const MessageKind = {
   AUDIO: "audio",
   FILE: "file",
   LOCATION: "location",
+  EVENT: "event",
 } as const;
 
 export type MessageKindValue = (typeof MessageKind)[keyof typeof MessageKind];
@@ -92,15 +93,30 @@ export interface LocationMessage extends MessageBase {
   cover?: string;
 }
 
+export interface EventMessage extends MessageBase {
+  kind: typeof MessageKind.EVENT;
+  title: string;
+  cover?: string;
+  dateText?: string;
+  location?: string;
+}
+
 /* ─── Union ──────────────────────────────────────────────── */
 
 export type ChatMessage =
-  TextMessage | ImageMessage | VideoMessage | AudioMessage | FileMessage | LocationMessage;
+  | TextMessage
+  | ImageMessage
+  | VideoMessage
+  | AudioMessage
+  | FileMessage
+  | LocationMessage
+  | EventMessage;
 
 export type MessageDraft =
   | Pick<TextMessage, "from" | "kind" | "text">
   | Pick<AudioMessage, "from" | "kind" | "durationSec">
   | Pick<LocationMessage, "from" | "kind" | "label" | "proximity">
+  | Pick<EventMessage, "from" | "kind" | "title" | "dateText" | "location">
   | Pick<ImageMessage, "from" | "kind" | "url">
   | Pick<VideoMessage, "from" | "kind" | "url">
   | Pick<FileMessage, "from" | "kind" | "fileName" | "fileSize" | "mimeType">;

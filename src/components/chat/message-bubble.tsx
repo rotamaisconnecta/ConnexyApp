@@ -7,6 +7,7 @@ import { VideoMessage } from "./video-message";
 import { AudioPlayer } from "./audio-player";
 import { FileMessage } from "./file-message";
 import { LocationMessage } from "./location-message";
+import { EventMessage } from "./event-message";
 import { QuickReactions } from "./quick-reactions";
 import { formatMessageTime } from "@/lib/chat/chat-format";
 import { getMessageAlignment } from "@/lib/chat/chat-utils";
@@ -32,6 +33,7 @@ export function MessageBubble({
 
   return (
     <div
+      id={`msg-${message.id}`}
       className={cn(
         "flex gap-2",
         isMe ? "justify-end" : "justify-start",
@@ -130,6 +132,16 @@ function renderContent(message: ChatMessage): React.ReactNode {
           label={message.label}
           proximity={message.proximity}
           cover={message.cover}
+        />
+      );
+
+    case MessageKind.EVENT:
+      return (
+        <EventMessage
+          title={message.title}
+          cover={message.cover}
+          dateText={message.dateText}
+          location={message.location}
         />
       );
 

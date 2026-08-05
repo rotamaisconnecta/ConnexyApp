@@ -76,6 +76,10 @@ export function formatConversationPreview(message: ChatMessage | null): string {
       return message.from === "me"
         ? `📍 Você compartilhou ${message.label}`
         : `📍 ${message.label}`;
+    case MessageKind.EVENT:
+      return message.from === "me"
+        ? `🎟️ Você compartilhou o evento ${message.title}`
+        : `🎟️ ${message.title}`;
     default:
       return "";
   }
