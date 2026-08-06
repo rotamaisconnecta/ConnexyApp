@@ -67,6 +67,7 @@ function DiscoverPage() {
       icon: string;
       color: string;
       subtitle: string;
+      targetId?: string;
     }> = [];
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
@@ -83,6 +84,7 @@ function DiscoverPage() {
           icon: "👤",
           color: "bg-blue-100 border-blue-200",
           subtitle: p.interests.slice(0, 2).join(", "),
+          targetId: p.id,
         });
       });
 
@@ -96,6 +98,7 @@ function DiscoverPage() {
           icon: "📍",
           color: "bg-emerald-100 border-emerald-200",
           subtitle: `📍 presente em ${record.targetName}`,
+          targetId: record.userId,
         });
       });
     }
@@ -308,11 +311,17 @@ function DiscoverPage() {
               key={item.id}
               type="button"
               onClick={() => {
-                if (item.type === "pessoas" || item.type === "motoristas") {
-                  navigate({ to: "/perfil" as never });
-                } else if (item.type === "locais" || item.type === "negocios") {
-                  const place = places.find((p) => item.id.includes(p.id) || p.name === item.name);
-                  if (place) navigate({ to: `/local/${place.id}` as never });
+                if (item.type === "pessoas") {
+                  if (item.targetId) {
+                    navigate({ to: "/perfil/$id", params: { id: item.targetId } });
+                  }
+                } else if (item.type === "locais") {
+                  navigate({ to: "/local/$id", params: { id: item.id } });
+                } else if (item.type === "negocios") {
+                  navigate({
+                    to: "/local/$id",
+                    params: { id: item.id.replace(/^biz-/, "") },
+                  });
                 }
               }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border hover:bg-accent/50 transition-colors text-left"

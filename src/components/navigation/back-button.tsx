@@ -2,10 +2,28 @@ import type { ReactNode } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
+type FallbackRoute =
+  | "/cadastro"
+  | "/completar-perfil"
+  | "/connecta"
+  | "/create"
+  | "/driver"
+  | "/events"
+  | "/home"
+  | "/interesses"
+  | "/locais"
+  | "/marketplace"
+  | "/perfil"
+  | "/profile"
+  | "/reels"
+  | "/ride"
+  | "/rota"
+  | "/welcome";
+
 interface BackButtonProps {
   className?: string;
   ariaLabel?: string;
-  fallbackTo?: string;
+  fallbackTo?: FallbackRoute;
   children?: ReactNode;
 }
 
@@ -23,7 +41,7 @@ export function BackButton({
       return;
     }
     if (fallbackTo) {
-      router.navigate({ to: fallbackTo as never });
+      router.navigate({ to: fallbackTo });
     }
   };
 

@@ -8,7 +8,7 @@ interface BottomNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
-  route: string;
+  route: "/home" | "/discover" | "/chat" | "/profile";
 }
 
 const NAV_ITEMS: BottomNavItem[] = [
@@ -37,7 +37,7 @@ export default function BottomNav() {
       <button
         key={item.id}
         type="button"
-        onClick={() => navigate({ to: item.route as never })}
+        onClick={() => navigate({ to: item.route })}
         aria-label={item.label}
         aria-current={active ? "page" : undefined}
         className={cn(
@@ -71,7 +71,7 @@ export default function BottomNav() {
         <div className="grid place-items-center">
           <button
             type="button"
-            onClick={() => navigate({ to: "/create" as never })}
+            onClick={() => navigate({ to: "/create" })}
             aria-label="Criar publicação"
             className={cn(
               "relative -mt-6 grid h-14 w-14 place-items-center rounded-full bg-gradient-brand text-white shadow-floating transition-transform active:scale-95",

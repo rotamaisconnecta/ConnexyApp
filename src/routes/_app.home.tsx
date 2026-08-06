@@ -49,7 +49,6 @@ type SearchResult = {
   label: string;
   subtitle: string;
   icon: string;
-  route: string;
   type: "pessoa" | "empresa" | "evento" | "local" | "oferta" | "reel" | "carona";
 };
 
@@ -89,7 +88,6 @@ function Home() {
           label: p.name,
           subtitle: `${p.distanceMeters < 1000 ? `${p.distanceMeters}m` : `${(p.distanceMeters / 1000).toFixed(1)}km`} • ${p.interests.slice(0, 2).join(", ")}`,
           icon: "👤",
-          route: `/perfil/${p.id}`,
           type: "pessoa",
         });
       });
@@ -109,7 +107,6 @@ function Home() {
                 : p.category === "Eventos"
                   ? "🎉"
                   : "🛍️",
-          route: `/local/${p.id}`,
           type: "local",
         });
       });
@@ -122,7 +119,6 @@ function Home() {
           label: d.name,
           subtitle: `${d.car} • ${d.distanceMeters < 1000 ? `${d.distanceMeters}m` : `${(d.distanceMeters / 1000).toFixed(1)}km`}`,
           icon: "🚗",
-          route: "/ride/request",
           type: "carona",
         });
       });
@@ -152,7 +148,7 @@ function Home() {
         <BrandLogo variant="full" size="lg" />
         <div className="flex items-center gap-2 shrink-0 justify-end pr-12">
           <Link
-            to="/connecta"
+            to="/chat"
             className="relative h-10 w-10 grid place-items-center rounded-full bg-secondary"
             aria-label="Mensagens"
           >
@@ -223,7 +219,13 @@ function Home() {
                       onClick={() => {
                         setSearchQuery("");
                         setSearchFocused(false);
-                        navigate({ to: result.route as never });
+                        if (result.type === "pessoa") {
+                          navigate({ to: "/perfil/$id", params: { id: result.id } });
+                        } else if (result.type === "local") {
+                          navigate({ to: "/local/$id", params: { id: result.id } });
+                        } else if (result.type === "carona") {
+                          navigate({ to: "/ride/request" });
+                        }
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent/50 text-left transition-colors"
                     >

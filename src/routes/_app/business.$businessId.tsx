@@ -1,204 +1,44 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
+import { NotFoundState } from "@/components/navigation/not-found";
 import { BusinessHeader } from "@/components/marketplace/business-header";
 import { BusinessDetails } from "@/components/marketplace/business-details";
 import { CouponList } from "@/components/marketplace/coupon-list";
 import { FollowBusinessButton } from "@/components/marketplace/follow-business-button";
 import { Navigation, Share2 } from "lucide-react";
 import { useState, useMemo } from "react";
-import type {
-  Business,
-  BusinessPhoto,
-  BusinessRating,
-  BusinessHoursSlot,
-  Promotion,
-  BusinessEvent,
-  Coupon,
-} from "@/lib/marketplace/business-types";
-import {
-  BusinessCategory,
-  PriceRange,
-  DayOfWeek,
-  EventStatus,
-  DiscountType,
-} from "@/lib/marketplace/business-types";
+import type { Business } from "@/lib/marketplace/business-types";
+import { MOCK_BUSINESSES, MOCK_COUPONS } from "@/lib/marketplace/mock-businesses";
 
 export const Route = createFileRoute("/_app/business/$businessId")({
-  head: () => ({ meta: [{ title: "Empresa" }] }),
+  head: ({ params }) => ({
+    meta: [{ title: `Empresa — Connexy` }],
+  }),
+  loader: ({ params }) => {
+    const business = MOCK_BUSINESSES.find((b) => b.id === params.businessId);
+    if (!business) throw notFound();
+    return business;
+  },
+  errorComponent: ({ error }) => <div className="p-6 text-sm">{error.message}</div>,
+  notFoundComponent: () => (
+    <NotFoundState
+      title="Empresa não encontrada"
+      description="O negócio que você procura não existe ou foi removido."
+      fallbackTo="/marketplace"
+    />
+  ),
   component: BusinessDetailPage,
 });
 
-function createMockPhotos(count: number, name: string): BusinessPhoto[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `${name.toLowerCase().replace(/\s/g, "-")}-${i}`,
-    url: `https://picsum.photos/seed/${name.toLowerCase().replace(/\s/g, "-")}${i}/400/300`,
-    alt: `${name} foto ${i + 1}`,
-    isPrimary: i === 0,
-  }));
-}
-
-function createMockRating(avg: number, total: number): BusinessRating {
-  return {
-    average: avg,
-    totalReviews: total,
-    distribution: {
-      1: Math.round(total * 0.02),
-      2: Math.round(total * 0.05),
-      3: Math.round(total * 0.15),
-      4: Math.round(total * 0.35),
-      5: Math.round(total * 0.43),
-    },
-  };
-}
-
-function createMockHours(): BusinessHoursSlot[] {
-  return [
-    { day: DayOfWeek.MON, open: "08:00", close: "22:00" },
-    { day: DayOfWeek.TUE, open: "08:00", close: "22:00" },
-    { day: DayOfWeek.WED, open: "08:00", close: "22:00" },
-    { day: DayOfWeek.THU, open: "08:00", close: "22:00" },
-    { day: DayOfWeek.FRI, open: "08:00", close: "23:00" },
-    { day: DayOfWeek.SAT, open: "10:00", close: "23:00" },
-    { day: DayOfWeek.SUN, open: "10:00", close: "20:00" },
-  ];
-}
-
-const MOCK_BUSINESS: Business = {
-  id: "b1",
-  name: "Bistrô Paulista",
-  slug: "bistro-paulista",
-  description:
-    "Gastronomia contemporânea com ingredientes frescos e ambiente aconchegante. Conhecido pelo risoto de cogumelos e pela carta de vinhos premiada.",
-  category: BusinessCategory.RESTAURANT,
-  subcategory: "Restaurante francês",
-  photos: createMockPhotos(6, "Bistrô Paulista"),
-  location: { lat: -23.555, lng: -46.655, label: "Av. Paulista, 1500" },
-  address: "Av. Paulista, 1500 - São Paulo, SP",
-  phone: "+5511999990001",
-  website: "https://bistropaulista.com.br",
-  rating: createMockRating(4.7, 320),
-  priceRange: PriceRange.EXPENSIVE,
-  distanceMeters: 850,
-  isFavorite: true,
-  isFollowing: false,
-  isOpen: true,
-  hours: createMockHours(),
-  tags: ["francês", "romântico", "especial", "espaço privativo", "vinhos"],
-  promotions: [
-    {
-      id: "promo-1",
-      businessId: "b1",
-      title: "Happy Hour",
-      description: "20% em todas as bebidas das 17h às 20h",
-      discountType: DiscountType.PERCENTAGE,
-      discountValue: 20,
-      validFrom: new Date("2026-07-01"),
-      validUntil: new Date("2026-12-31"),
-      isActive: true,
-    },
-    {
-      id: "promo-4",
-      businessId: "b1",
-      title: "Janta executiva",
-      description: "R$25 OFF no menu executivo de segunda a sexta",
-      discountType: DiscountType.FIXED,
-      discountValue: 25,
-      minPurchase: 80,
-      validFrom: new Date("2026-07-01"),
-      validUntil: new Date("2026-10-31"),
-      isActive: true,
-      couponCode: "JANTA25",
-    },
-  ],
-  events: [
-    {
-      id: "evt-1",
-      businessId: "b1",
-      title: "Noite de Jazz",
-      description: "Apresentação ao vivo com quarteto de jazz. Espaço limitado.",
-      photo: "https://picsum.photos/seed/jazz-night/400/200",
-      startDate: new Date("2026-07-25T20:00:00"),
-      endDate: new Date("2026-07-25T23:00:00"),
-      location: "Salão principal",
-      status: EventStatus.UPCOMING,
-      price: 35,
-      capacity: 80,
-      attendeesCount: 42,
-      isFeatured: true,
-    },
-    {
-      id: "evt-2",
-      businessId: "b1",
-      title: "Degustação de Vinhos",
-      description: "Degustação guiada dos melhores vinhos importados da Toscana.",
-      startDate: new Date("2026-08-05T19:00:00"),
-      endDate: new Date("2026-08-05T21:30:00"),
-      status: EventStatus.UPCOMING,
-      price: 89,
-      capacity: 30,
-      attendeesCount: 18,
-      isFeatured: false,
-    },
-  ],
-  couponCount: 3,
-  createdAt: new Date("2024-01-15"),
-};
-
-const MOCK_COUPONS: Coupon[] = [
-  {
-    id: "c1",
-    businessId: "b1",
-    code: "BISTRO20",
-    label: "BISTRO20",
-    description: "20% OFF no pedido acima de R$100",
-    discountType: DiscountType.PERCENTAGE,
-    discountValue: 20,
-    maxDiscount: 40,
-    minPurchase: 100,
-    validFrom: new Date("2026-07-01"),
-    validUntil: new Date("2026-12-31"),
-    isActive: true,
-    usageCount: 15,
-  },
-  {
-    id: "c2",
-    businessId: "b1",
-    code: "JANTA25",
-    label: "JANTA25",
-    description: "R$25 OFF no menu executivo",
-    discountType: DiscountType.FIXED,
-    discountValue: 25,
-    minPurchase: 80,
-    validFrom: new Date("2026-07-01"),
-    validUntil: new Date("2026-10-31"),
-    isActive: true,
-    usageLimit: 50,
-    usageCount: 32,
-  },
-  {
-    id: "c3",
-    businessId: "b1",
-    code: "VINHO10",
-    label: "VINHO10",
-    description: "10% OFF em garrafas de vinho",
-    discountType: DiscountType.PERCENTAGE,
-    discountValue: 10,
-    validFrom: new Date("2026-07-01"),
-    validUntil: new Date("2026-08-15"),
-    isActive: true,
-    usageCount: 8,
-  },
-];
-
 function BusinessDetailPage() {
-  const params = Route.useParams();
+  const initialBusiness = Route.useLoaderData() as Business;
   const nav = useNavigate();
-  const [business, setBusiness] = useState<Business>(MOCK_BUSINESS);
+  const [business, setBusiness] = useState<Business>(initialBusiness);
 
   const filteredCoupons = useMemo(
-    () => MOCK_COUPONS.filter((c) => c.businessId === params.businessId),
-    [params.businessId],
+    () => MOCK_COUPONS.filter((c) => c.businessId === business.id),
+    [business.id],
   );
 
   function handleFavorite() {

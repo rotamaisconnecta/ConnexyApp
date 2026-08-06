@@ -1,134 +1,114 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
+import { NotFoundState } from "@/components/navigation/not-found";
 import { BusinessCard } from "@/components/marketplace/business-card";
-import { EventCalendar } from "@/components/marketplace/event-calendar";
 import { EventList } from "@/components/marketplace/event-list";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
 import { Calendar, Share2, Users } from "lucide-react";
-import { useState, useMemo } from "react";
-import type {
-  Business,
-  BusinessEvent,
-  BusinessPhoto,
-  BusinessRating,
-  BusinessHoursSlot,
-} from "@/lib/marketplace/business-types";
-import {
-  BusinessCategory,
-  PriceRange,
-  DayOfWeek,
-  EventStatus,
-  DiscountType,
-} from "@/lib/marketplace/business-types";
+import { useMemo, useState } from "react";
+import type { Business, BusinessEvent } from "@/lib/marketplace/business-types";
+import { EventStatus } from "@/lib/marketplace/business-types";
+import { MOCK_EVENTS, MOCK_BUSINESSES } from "@/lib/marketplace/mock-businesses";
+import { HOME_EVENTS, type HomeEvent } from "@/lib/feed/home-premium";
 import {
   getEventStatusLabel,
   getEventStatusBgColor,
-  formatEventDate,
-  formatEventTime,
   formatEventDateTimeRange,
-  formatAttendeesCount,
   getEventCapacityPercent,
 } from "@/lib/marketplace/event-utils";
 
 export const Route = createFileRoute("/_app/event/$eventId")({
-  head: () => ({ meta: [{ title: "Evento" }] }),
+  head: ({ params }) => ({
+    meta: [{ title: "Evento — Connexy" }],
+  }),
+  loader: ({ params }) => {
+    const event = ALL_EVENTS.find((e) => e.id === params.eventId);
+    if (!event) throw notFound();
+    return event;
+  },
+  errorComponent: ({ error }) => <div className="p-6 text-sm">{error.message}</div>,
+  notFoundComponent: () => (
+    <NotFoundState
+      title="Evento não encontrado"
+      description="O evento que você procura não existe ou foi removido."
+      fallbackTo="/events"
+    />
+  ),
   component: EventDetailPage,
 });
 
-function createMockRating(avg: number, total: number): BusinessRating {
+const MONTH_ABBR: Record<string, number> = {
+  Jan: 0,
+  Fev: 1,
+  Mar: 2,
+  Abr: 3,
+  Mai: 4,
+  Jun: 5,
+  Jul: 6,
+  Ago: 7,
+  Set: 8,
+  Out: 9,
+  Nov: 10,
+  Dez: 11,
+};
+
+function parseHomeEventDate(dateLabel: string, time: string): Date {
+  const now = new Date();
+  const [h, m] = time.split(":").map(Number);
+  if (dateLabel === "Hoje") {
+    const d = new Date(now);
+    d.setHours(h, m, 0, 0);
+    return d;
+  }
+  const match = dateLabel.match(/(\d{1,2}) ([A-Za-z]{3})/);
+  if (match) {
+    const day = Number(match[1]);
+    const month = MONTH_ABBR[match[2]] ?? 0;
+    return new Date(now.getFullYear(), month, day, h, m);
+  }
+  return new Date(now);
+}
+
+function homeEventToBusinessEvent(e: HomeEvent): BusinessEvent {
+  const startDate = parseHomeEventDate(e.date, e.time);
+  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
   return {
-    average: avg,
-    totalReviews: total,
-    distribution: {
-      1: Math.round(total * 0.02),
-      2: Math.round(total * 0.05),
-      3: Math.round(total * 0.15),
-      4: Math.round(total * 0.35),
-      5: Math.round(total * 0.43),
-    },
+    id: e.id,
+    businessId: "",
+    title: e.name,
+    description: `${e.category ?? "Evento"} perto de você. ${e.location}.`,
+    photo: e.banner,
+    startDate,
+    endDate,
+    location: e.location,
+    status: e.date === "Hoje" ? EventStatus.ONGOING : EventStatus.UPCOMING,
+    attendeesCount: e.participants,
+    isFeatured: false,
   };
 }
 
-const MOCK_HOST_BUSINESS: Business = {
-  id: "b1",
-  name: "Bistrô Paulista",
-  slug: "bistro-paulista",
-  description: "Gastronomia contemporânea com ingredientes frescos",
-  category: BusinessCategory.RESTAURANT,
-  photos: [],
-  location: { lat: -23.555, lng: -46.655 },
-  address: "Av. Paulista, 1500 - São Paulo, SP",
-  rating: createMockRating(4.7, 320),
-  priceRange: PriceRange.EXPENSIVE,
-  distanceMeters: 850,
-  isFavorite: false,
-  isFollowing: false,
-  isOpen: true,
-  hours: [],
-  tags: [],
-  promotions: [],
-  events: [],
-  couponCount: 0,
-  createdAt: new Date("2024-01-15"),
-};
-
-const MOCK_EVENT: BusinessEvent = {
-  id: "evt-1",
-  businessId: "b1",
-  title: "Noite de Jazz",
-  description:
-    "Venha aproveitar uma noite inesquecível com o melhor jazz da cidade. Quarteto instrumental com repertório que vai do clássico ao contemporâneo. Espaço limitado, garanta seu lugar!",
-  photo: "https://picsum.photos/seed/jazz-night/600/300",
-  startDate: new Date("2026-07-25T20:00:00"),
-  endDate: new Date("2026-07-25T23:00:00"),
-  location: "Salão principal do Bistrô Paulista",
-  status: EventStatus.UPCOMING,
-  price: 35,
-  capacity: 80,
-  attendeesCount: 42,
-  isFeatured: true,
-};
-
-const RELATED_EVENTS: BusinessEvent[] = [
-  {
-    id: "evt-2",
-    businessId: "b1",
-    title: "Degustação de Vinhos",
-    description: "Degustação guiada dos melhores vinhos importados da Toscana",
-    startDate: new Date("2026-08-05T19:00:00"),
-    endDate: new Date("2026-08-05T21:30:00"),
-    status: EventStatus.UPCOMING,
-    price: 89,
-    capacity: 30,
-    attendeesCount: 18,
-    isFeatured: false,
-  },
-  {
-    id: "evt-3",
-    businessId: "b3",
-    title: "Festa Junina",
-    description: "Arraial com comidas típicas, forró e fogos",
-    photo: "https://picsum.photos/seed/festa-junina/400/200",
-    startDate: new Date("2026-06-12T18:00:00"),
-    endDate: new Date("2026-06-12T23:00:00"),
-    location: "Área externa",
-    status: EventStatus.FINISHED,
-    price: 0,
-    capacity: 150,
-    attendeesCount: 120,
-    isFeatured: false,
-  },
+const ALL_EVENTS: BusinessEvent[] = [
+  ...MOCK_EVENTS,
+  ...HOME_EVENTS.map(homeEventToBusinessEvent),
 ];
 
 function EventDetailPage() {
-  const params = Route.useParams();
+  const event = Route.useLoaderData() as BusinessEvent;
   const nav = useNavigate();
   const [isAttending, setIsAttending] = useState(false);
 
-  const event = MOCK_EVENT;
-  const hostBusiness = MOCK_HOST_BUSINESS;
+  const hostBusiness = useMemo<Business | undefined>(
+    () => (event.businessId ? MOCK_BUSINESSES.find((b) => b.id === event.businessId) : undefined),
+    [event.businessId],
+  );
+
+  const relatedEvents = useMemo(
+    () => ALL_EVENTS.filter((e) => e.id !== event.id).slice(0, 4),
+    [event.id],
+  );
+
   const capacityPercent = getEventCapacityPercent(event.attendeesCount, event.capacity ?? 0);
 
   function handleShare() {}
@@ -151,7 +131,7 @@ function EventDetailPage() {
 
       <div className="flex items-center gap-3 px-5 pt-1 pb-3">
         <BackButton
-          fallbackTo="/marketplace"
+          fallbackTo="/events"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
         />
         <div className="flex-1">
@@ -255,13 +235,15 @@ function EventDetailPage() {
 
         <PresentList targetId={event.id} title="Presentes no evento" />
 
-        <div className="space-y-2">
-          <h3 className="font-semibold text-sm">Organizador</h3>
-          <BusinessCard business={hostBusiness} onSelect={handleSelectBusiness} />
-        </div>
+        {hostBusiness && (
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm">Organizador</h3>
+            <BusinessCard business={hostBusiness} onSelect={handleSelectBusiness} />
+          </div>
+        )}
 
-        {RELATED_EVENTS.length > 0 && (
-          <EventList events={RELATED_EVENTS} title="Outros eventos" onSelect={handleSelectEvent} />
+        {relatedEvents.length > 0 && (
+          <EventList events={relatedEvents} title="Outros eventos" onSelect={handleSelectEvent} />
         )}
       </div>
     </div>

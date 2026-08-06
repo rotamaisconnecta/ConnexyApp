@@ -29,7 +29,7 @@ import { useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  from: z.enum(["solicitacao", "chat", "connecta", "home"]).optional(),
+  from: z.enum(["solicitacao", "chat", "connecta", "home", "reels"]).optional(),
 });
 
 export const Route = createFileRoute("/_app/perfil/$id")({
