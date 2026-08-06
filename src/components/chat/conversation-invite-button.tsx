@@ -49,7 +49,11 @@ export function ConversationInviteButton({
     if (!invited) {
       toast.success(`Abrindo convite para ${personName}`);
     }
-    navigate({ to: "/solicitacao/$id", params: { id: personId } });
+    navigate({
+      to: "/solicitacao/$id",
+      params: { id: personId },
+      search: { mode: "send" },
+    });
   }
 
   return (
