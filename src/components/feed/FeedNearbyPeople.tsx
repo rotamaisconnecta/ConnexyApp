@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Eye, Heart } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import { formatPersonDistance } from "@/lib/proximity";
+import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import type { NearbyPeopleSectionData } from "@/lib/feed/feed-types";
 
 interface FeedNearbyPeopleProps {
@@ -41,10 +42,8 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
         section="people"
         items={data.people}
         renderCard={(person) => (
-          <Link
-            to="/perfil/$id"
-            params={{ id: person.id }}
-            className="block rounded-[24px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
+          <article
+            className="relative flex h-full flex-col overflow-hidden rounded-[24px] border border-border/50 bg-surface transition-all duration-300 hover:shadow-xl"
             style={
               person.online
                 ? {
@@ -54,8 +53,13 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                 : undefined
             }
           >
-            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-[24px] overflow-hidden">
-              <div className="relative w-full shrink-0" style={{ height: "57%" }}>
+            <Link
+              to="/perfil/$id"
+              params={{ id: person.id }}
+              aria-label={`Ver perfil de ${person.name}`}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="relative w-full shrink-0" style={{ height: "52%" }}>
                 <img
                   src={person.photo}
                   alt={person.name}
@@ -67,7 +71,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   {formatPersonDistance(person.distanceMeters)}
                 </div>
               </div>
-              <div className="flex flex-1 flex-col gap-1 px-6 py-4 min-h-0">
+              <div className="flex flex-1 flex-col gap-1 px-4 py-3 min-h-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-display font-bold text-[15px] truncate">{person.name}</span>
                   {person.age != null && (
@@ -104,13 +108,17 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                     {person.online ? "Online" : "Offline"}
                   </span>
                 </div>
-                <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
-                  <Eye className="h-3.5 w-3.5 inline mr-1.5" />
-                  Visualizar Perfil
-                </div>
               </div>
+            </Link>
+            <div className="px-4 pb-4">
+              <ConversationInviteButton
+                personId={person.id}
+                personName={person.name}
+                variant="compact"
+                className="w-full"
+              />
             </div>
-          </Link>
+          </article>
         )}
       />
     </motion.div>

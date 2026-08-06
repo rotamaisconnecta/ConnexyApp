@@ -88,6 +88,20 @@ export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1).replace(".", ",")}km`;
 }
 
+/* ─── formatProtectedProximity (shared) ────────────────────
+   Official Connexy privacy rule: exact distance is hidden up to
+   2 km, replaced with proximity categories. Above 2 km the
+   distance is shown with one decimal (pt-BR).
+   Used by chat, sponsored content and any privacy-safe surface.
+────────────────────────────────────────────────────────── */
+
+export function formatProtectedProximity(meters: number): string {
+  if (meters <= 500) return "Muito perto";
+  if (meters <= 1000) return "Na mesma região";
+  if (meters <= 2000) return "Perto de você";
+  return `${(meters / 1000).toFixed(1).replace(".", ",")} km de distância`;
+}
+
 // Legacy helpers kept for backward compatibility.
 export function personProximityLabel(meters: number): string {
   if (meters <= 2000) return "Próximo de você";

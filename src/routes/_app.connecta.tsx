@@ -3,6 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
 import { proximityTone, personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
+import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 
@@ -82,13 +83,7 @@ function Connecta() {
                 ))}
               </div>
             </div>
-            <Link
-              to="/solicitacao/$id"
-              params={{ id: p.id }}
-              className="rounded-full bg-gradient-brand text-white text-xs font-semibold px-4 py-2 shadow-soft"
-            >
-              Conectar
-            </Link>
+            <ConversationInviteButton personId={p.id} personName={p.name} variant="compact" />
           </li>
         ))}
       </ul>

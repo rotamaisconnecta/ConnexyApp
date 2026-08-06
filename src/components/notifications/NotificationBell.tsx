@@ -1,9 +1,25 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X, MessageCircle, Calendar, Tag, User, Compass, Building2 } from "lucide-react";
+import {
+  Bell,
+  X,
+  MessageCircle,
+  Calendar,
+  Tag,
+  User,
+  Compass,
+  Building2,
+  ChevronRight,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { formatCount } from "@/lib/notifications/notification-format";
 import { getRelativeTimeLabel } from "@/lib/notifications/notification-utils";
+
+type NotificationDestination =
+  | { type: "conversation"; conversationId: string }
+  | { type: "event"; eventId: string }
+  | { type: "business"; businessId: string }
+  | { type: "route"; to: "/locais" | "/home" };
 
 interface BellNotification {
   id: string;
@@ -12,7 +28,7 @@ interface BellNotification {
   description: string;
   icon: string;
   createdAt: string;
-  redirectTo: string;
+  destination: NotificationDestination;
 }
 
 const MOCK_BELL_NOTIFICATIONS: BellNotification[] = [
@@ -23,7 +39,7 @@ const MOCK_BELL_NOTIFICATIONS: BellNotification[] = [
     description: "Evento acontecendo a 450m de voce",
     icon: "🎉",
     createdAt: new Date(Date.now() - 5 * 60000).toISOString(),
-    redirectTo: "/event/$id",
+    destination: { type: "event", eventId: "evt-1" },
   },
   {
     id: "b2",
@@ -32,7 +48,7 @@ const MOCK_BELL_NOTIFICATIONS: BellNotification[] = [
     description: "Vamos nos encontrar no Cafe Central?",
     icon: "💬",
     createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
-    redirectTo: "/chat/$id",
+    destination: { type: "conversation", conversationId: "maria" },
   },
   {
     id: "b3",
@@ -41,7 +57,7 @@ const MOCK_BELL_NOTIFICATIONS: BellNotification[] = [
     description: "Oferta exclusiva perto de voce",
     icon: "🏷",
     createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    redirectTo: "/home",
+    destination: { type: "route", to: "/locais" },
   },
   {
     id: "b4",
@@ -50,7 +66,7 @@ const MOCK_BELL_NOTIFICATIONS: BellNotification[] = [
     description: "Novo horario de funcionamento",
     icon: "🏢",
     createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
-    redirectTo: "/business/$id",
+    destination: { type: "business", businessId: "b1" },
   },
 ];
 
@@ -90,22 +106,51 @@ export function NotificationBell() {
 
   function handleNotificationClick(n: BellNotification) {
     setIsOpen(false);
-    if (n.redirectTo) {
-      navigate({ to: n.redirectTo as "/" });
+    const destination = n.destination;
+    switch (destination.type) {
+      case "conversation":
+        navigate({
+          to: "/chat/$conversationId",
+          params: { conversationId: destination.conversationId },
+        });
+        break;
+      case "event":
+        navigate({ to: "/event/$eventId", params: { eventId: destination.eventId } });
+        break;
+      case "business":
+        navigate({ to: "/business/$businessId", params: { businessId: destination.businessId } });
+        break;
+      case "route":
+        navigate({ to: destination.to });
+        break;
     }
   }
+
+  function handleViewAll() {
+    setIsOpen(false);
+    navigate({ to: "/notificacoes" });
+  }
+
+  const badgeLabel =
+    unreadCount > 0 ? `${formatCount(unreadCount)} notificações não lidas` : "Notificações";
 
   return (
     <div ref={panelRef} className="relative">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative h-9 w-9 grid place-items-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-        aria-label="Notificações"
+        aria-label={badgeLabel}
+        title={badgeLabel}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        className="relative h-9 w-9 grid place-items-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <Bell className="h-5 w-5 text-foreground" />
+        <Bell className="h-5 w-5 text-foreground" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white leading-none">
+          <span
+            aria-hidden="true"
+            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white leading-none"
+          >
             {formatCount(unreadCount)}
           </span>
         )}
@@ -138,7 +183,7 @@ export function NotificationBell() {
                   <p className="mt-2 text-sm text-muted-foreground">Nenhuma notificacao</p>
                 </div>
               ) : (
-                notifications.map((n, i) => (
+                notifications.map((n) => (
                   <button
                     key={n.id}
                     type="button"
@@ -164,6 +209,17 @@ export function NotificationBell() {
                   </button>
                 ))
               )}
+            </div>
+
+            <div className="border-t border-border/50 p-1">
+              <button
+                type="button"
+                onClick={handleViewAll}
+                className="w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-primary hover:bg-secondary/50 transition-colors"
+              >
+                Ver todas as notificações
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
           </motion.div>
         )}

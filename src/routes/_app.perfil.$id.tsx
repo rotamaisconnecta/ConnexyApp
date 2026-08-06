@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-ro
 import { StatusBar } from "@/components/phone-frame";
 import { PresenceDot } from "@/components/presence-dot";
 import { BackButton } from "@/components/navigation/back-button";
+import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import {
   findPerson,
   findPlace,
@@ -339,13 +340,7 @@ function Perfil() {
             </button>
           </div>
         ) : (
-          <Link
-            to="/solicitacao/$id"
-            params={{ id: p.id }}
-            className="block h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center"
-          >
-            Enviar solicitação de chat
-          </Link>
+          <ConversationInviteButton personId={p.id} personName={p.name} variant="profile" />
         )}
       </div>
     </div>

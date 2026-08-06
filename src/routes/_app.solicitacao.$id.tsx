@@ -3,7 +3,9 @@ import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { people, commonGround, type Person } from "@/lib/mock-data";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
+import { writeStoredInvite } from "@/lib/chat/mock-conversation-invites";
 import { PresenceDot } from "@/components/presence-dot";
+import { toast } from "sonner";
 import { X, Check, UserRound, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Gradients } from "@/theme";
@@ -130,13 +132,20 @@ function Solicitacao() {
 
         <div className="p-4 flex gap-3">
           <button
-            onClick={() => nav({ to: "/connecta" })}
+            onClick={() => {
+              writeStoredInvite(p.id, "rejected");
+              nav({ to: "/connecta" });
+            }}
             className="flex-1 h-14 rounded-2xl bg-secondary text-foreground font-semibold flex items-center justify-center gap-2"
           >
             <X className="h-5 w-5" /> Recusar
           </button>
           <button
-            onClick={() => nav({ to: "/chat/$conversationId", params: { conversationId: p.id } })}
+            onClick={() => {
+              writeStoredInvite(p.id, "invited");
+              toast.success(`Convite enviado para ${p.name}`);
+              nav({ to: "/chat/$conversationId", params: { conversationId: p.id } });
+            }}
             className="flex-1 h-14 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center gap-2"
           >
             <Check className="h-5 w-5" /> Aceitar

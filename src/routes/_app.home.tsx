@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, MessageSquare, Search, X, Building2, ArrowRight } from "lucide-react";
+import { MessageSquare, Search, X, Building2, ArrowRight } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
+import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
 import { PresenceLiveFeed } from "@/components/presence/presence-live-feed";
 import { currentUser, people, places } from "@/lib/mock-data";
 import { drivers } from "@/lib/mock-data";
@@ -149,17 +150,7 @@ function Home() {
       <header className="grid grid-cols-[1fr_auto_1fr] items-center px-5 pt-1 pb-3">
         <div />
         <BrandLogo variant="full" size="lg" />
-        <div className="flex items-center gap-2 shrink-0 justify-end">
-          <Link
-            to="/notificacoes"
-            className="relative h-10 w-10 grid place-items-center rounded-full bg-secondary"
-            aria-label="Notificacoes"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-gradient-brand text-[9px] font-bold text-white grid place-items-center">
-              3
-            </span>
-          </Link>
+        <div className="flex items-center gap-2 shrink-0 justify-end pr-12">
           <Link
             to="/connecta"
             className="relative h-10 w-10 grid place-items-center rounded-full bg-secondary"
@@ -300,6 +291,10 @@ function Home() {
 
       <div className="mt-5">
         <HomePremiumFeed />
+      </div>
+
+      <div className="mt-5">
+        <LocalSponsoredFeed />
       </div>
 
       <div className="mt-5">

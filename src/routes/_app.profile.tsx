@@ -32,7 +32,7 @@ function ProfilePage() {
     <div className="flex-1 pb-20">
       <StatusBar />
 
-      <header className="px-5 pt-1 pb-3 flex items-center justify-between">
+      <header className="pl-5 pr-16 pt-1 pb-3 flex items-center justify-between">
         <h1 className="font-display font-bold text-lg">Meu Perfil</h1>
         <Link to="/gerenciar" className="text-xs font-semibold text-primary">
           Editar
