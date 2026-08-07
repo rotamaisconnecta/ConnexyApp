@@ -4,7 +4,7 @@ import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { prefersReducedMotion } from "@/lib/carousel/hint";
 
 const GAP = 24;
-const CARD_HEIGHT = 330;
+const CARD_HEIGHT = 300;
 const STORAGE_PREFIX = "connexy.carousel.position";
 
 type Breakpoint = "desktop" | "tablet" | "mobile";

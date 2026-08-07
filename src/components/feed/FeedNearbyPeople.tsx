@@ -59,7 +59,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
               aria-label={`Ver perfil de ${person.name}`}
               className="flex min-h-0 flex-1 flex-col"
             >
-              <div className="relative w-full shrink-0" style={{ height: "50%" }}>
+              <div className="relative w-full shrink-0" style={{ height: "48%" }}>
                 <img
                   src={person.photo}
                   alt={person.name}
