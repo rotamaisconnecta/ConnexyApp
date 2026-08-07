@@ -12,7 +12,7 @@ import {
   Play,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MOCK_REELS } from "@/lib/reels/reel-mocks";
+import { getReelById } from "@/lib/reels/reel-feed";
 import type { Reel } from "@/lib/reels/reel-types";
 import { formatReelCount, formatRelativeTime, getCategoryEmoji } from "@/lib/reels/reel-utils";
 import { ReelUser } from "@/components/reels/reel-user";
@@ -21,7 +21,6 @@ import { ReelMusic } from "@/components/reels/reel-music";
 import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
 import { ReelShareSheet } from "@/components/reels/reel-share-sheet";
 import {
-  isReelLiked,
   toggleReelLike,
   getStoredSoundPref,
   setStoredSoundPref,
@@ -46,8 +45,13 @@ function ReelDetailPage() {
   const lastTap = useRef(0);
 
   useEffect(() => {
-    const found = MOCK_REELS.find((r) => r.id === reelId);
-    setReel(found ? { ...found, likedByMe: isReelLiked(found.id) } : null);
+    let cancelled = false;
+    getReelById(reelId).then((found) => {
+      if (!cancelled) setReel(found);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [reelId]);
 
   useEffect(() => {

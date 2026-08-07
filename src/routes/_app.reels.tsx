@@ -6,7 +6,7 @@ import { ReelsFeed } from "@/components/reels/reels-feed";
 import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
 import { ReelShareSheet } from "@/components/reels/reel-share-sheet";
 import { ReelLoading } from "@/components/reels/reel-loading";
-import { MOCK_REELS } from "@/lib/reels/reel-mocks";
+import { getReelFeed } from "@/lib/reels/reel-feed";
 import type { Reel, ReelComment } from "@/lib/reels/reel-types";
 import { sortSmart } from "@/lib/reels/reel-ranking";
 import { filterReels, type ReelFilterState } from "@/lib/reels/reel-filter";
@@ -97,16 +97,25 @@ function ReelsPage() {
 
   useEffect(() => {
     const storedLikes = getReelLikes();
-    const timer = setTimeout(() => {
-      setReels(
-        sortSmart(MOCK_REELS).map((r) => ({
-          ...r,
-          likedByMe: storedLikes[r.id] ?? r.likedByMe,
-        })),
-      );
-      setLoading(false);
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const feed = await getReelFeed();
+        if (cancelled) return;
+        setReels(
+          sortSmart(feed).map((r) => ({
+            ...r,
+            likedByMe: storedLikes[r.id] ?? r.likedByMe,
+          })),
+        );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }, 600);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
