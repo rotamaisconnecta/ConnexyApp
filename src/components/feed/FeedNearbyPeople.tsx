@@ -43,7 +43,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
         items={data.people}
         renderCard={(person) => (
           <article
-            className="relative flex h-full flex-col overflow-hidden rounded-[24px] border border-border/50 bg-surface transition-all duration-300 hover:shadow-xl"
+            className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-border/50 bg-surface transition-all duration-300 hover:shadow-xl"
             style={
               person.online
                 ? {
@@ -59,7 +59,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
               aria-label={`Ver perfil de ${person.name}`}
               className="flex min-h-0 flex-1 flex-col"
             >
-              <div className="relative w-full shrink-0" style={{ height: "52%" }}>
+              <div className="relative w-full shrink-0" style={{ height: "50%" }}>
                 <img
                   src={person.photo}
                   alt={person.name}
@@ -67,32 +67,32 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
+                <div className="absolute bottom-2.5 left-2.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
                   {formatPersonDistance(person.distanceMeters)}
                 </div>
               </div>
-              <div className="flex flex-1 flex-col gap-1 px-4 py-3 min-h-0">
+              <div className="flex flex-1 flex-col gap-1 px-3.5 py-2.5 min-h-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-display font-bold text-[15px] truncate">{person.name}</span>
+                  <span className="font-display font-bold text-sm truncate">{person.name}</span>
                   {person.age != null && (
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="text-[11px] text-muted-foreground shrink-0">
                       {person.age} anos
                     </span>
                   )}
                 </div>
                 {person.compatibility != null && (
                   <div className="flex items-center gap-1">
-                    <Heart className="h-3.5 w-3.5 text-pink-500" />
-                    <span className="text-xs font-medium text-pink-600">
+                    <Heart className="h-3 w-3 text-pink-500" />
+                    <span className="text-[11px] font-medium text-pink-600">
                       Compatibilidade {person.compatibility}%
                     </span>
                   </div>
                 )}
-                <div className="flex flex-nowrap gap-1.5 overflow-hidden">
+                <div className="flex flex-nowrap gap-1 overflow-hidden">
                   {person.interests.slice(0, 3).map((interest) => (
                     <span
                       key={interest}
-                      className="text-xs bg-secondary rounded-full px-2.5 py-1 truncate"
+                      className="text-[11px] bg-secondary rounded-full px-2 py-0.5 truncate"
                     >
                       {interest}
                     </span>
@@ -100,17 +100,17 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span
-                    className={`h-2 w-2 rounded-full ${person.online ? "bg-green-500" : "bg-gray-300"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${person.online ? "bg-green-500" : "bg-gray-300"}`}
                   />
                   <span
-                    className={`text-xs font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
+                    className={`text-[11px] font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
                   >
                     {person.online ? "Online" : "Offline"}
                   </span>
                 </div>
               </div>
             </Link>
-            <div className="px-4 pb-4">
+            <div className="px-3.5 pb-3">
               <ConversationInviteButton
                 personId={person.id}
                 personName={person.name}
