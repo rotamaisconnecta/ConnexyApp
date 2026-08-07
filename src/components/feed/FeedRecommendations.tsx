@@ -51,17 +51,17 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
           return (
             <Link
               to={legacy.route}
-              className="block h-full rounded-[24px] overflow-hidden transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
+              className="block h-full rounded-[20px] overflow-hidden transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
             >
-              <div className="flex h-full flex-col gap-2 rounded-[24px] border border-border/50 bg-surface p-6 shadow-soft">
-                <span className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-3xl">
+              <div className="flex h-full flex-col gap-2 rounded-[20px] border border-border/50 bg-surface p-4 shadow-soft">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-2xl">
                   {legacy.icon}
                 </span>
-                <div className="font-display font-bold text-[15px] leading-snug">
+                <div className="font-display font-bold text-sm leading-snug">
                   {legacy.title}
                 </div>
-                <div className="text-xs text-muted-foreground">{legacy.description}</div>
-                <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+                <div className="text-[11px] text-muted-foreground">{legacy.description}</div>
+                <div className="mt-auto h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold grid place-items-center transition-colors hover:bg-primary/20">
                   Explorar
                 </div>
               </div>

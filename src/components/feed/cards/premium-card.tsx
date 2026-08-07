@@ -64,9 +64,9 @@ function CardShell({ card }: { card: PremiumCard }) {
   const metaLine = card.subtitle ?? card.category;
 
   return (
-    <div className="flex h-full flex-col rounded-[24px] border border-border/50 bg-surface overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+    <div className="flex h-full flex-col rounded-[20px] border border-border/50 bg-surface overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
       {(card.photo || card.emoji) && (
-        <div className="relative w-full shrink-0" style={{ height: "57%" }}>
+        <div className="relative w-full shrink-0" style={{ height: "50%" }}>
           {card.photo ? (
             <img
               src={card.photo}
@@ -75,14 +75,14 @@ function CardShell({ card }: { card: PremiumCard }) {
               className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
-            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary/10 to-secondary/40 text-4xl">
+            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary/10 to-secondary/40 text-3xl">
               {card.emoji ?? KIND_EMOJI[card.kind]}
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
 
           {(card.badge || card.promo || card.kind !== "person") && (
-            <span className="absolute top-3 left-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-gray-800 shadow-soft">
+            <span className="absolute top-2.5 left-2.5 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-bold text-gray-800 shadow-soft">
               {card.badge ?? (card.promo ? "Promoção" : KIND_LABELS[card.kind])}
             </span>
           )}
@@ -92,7 +92,7 @@ function CardShell({ card }: { card: PremiumCard }) {
           {card.kind === "person" && card.online != null && (
             <span
               className={cn(
-                "absolute bottom-3 right-3 z-10 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-soft",
+                "absolute bottom-2.5 right-2.5 z-10 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-soft",
                 card.online ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700",
               )}
             >
@@ -102,17 +102,17 @@ function CardShell({ card }: { card: PremiumCard }) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-1 px-6 py-4 min-h-0">
+      <div className="flex flex-1 flex-col gap-1 px-4 py-3 min-h-0">
         <div className="flex items-start justify-between gap-2">
-          <span className="line-clamp-2 font-display text-[15px] font-bold leading-snug">
+          <span className="line-clamp-2 font-display text-sm font-bold leading-snug">
             {card.title}
           </span>
           {card.kind === "person" && card.compatibility != null && (
-            <span className="shrink-0 text-xs font-bold text-primary">{card.compatibility}%</span>
+            <span className="shrink-0 text-[11px] font-bold text-primary">{card.compatibility}%</span>
           )}
         </div>
 
-        {metaLine && <span className="line-clamp-1 text-xs text-muted-foreground">{metaLine}</span>}
+        {metaLine && <span className="line-clamp-1 text-[11px] text-muted-foreground">{metaLine}</span>}
 
         <div className="mt-1 flex flex-nowrap gap-1.5 overflow-hidden">
           {card.rating != null && (
@@ -147,7 +147,7 @@ function CardShell({ card }: { card: PremiumCard }) {
           )}
         </div>
 
-        <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+        <div className="mt-auto h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold grid place-items-center transition-colors hover:bg-primary/20">
           {CTA_LABEL[card.kind]}
         </div>
       </div>
