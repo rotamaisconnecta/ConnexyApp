@@ -70,23 +70,23 @@ export function FeedTrending({ data }: FeedTrendingProps) {
           const trendLabel = TREND_LABELS[legacy.trend];
 
           return (
-            <div className="h-full flex flex-col rounded-[24px] border border-border/50 bg-surface p-6 shadow-soft transition-all duration-300 hover:shadow-xl">
+            <div className="h-full flex flex-col rounded-[20px] border border-border/50 bg-surface p-4 shadow-soft transition-all duration-300 hover:shadow-xl">
               <div className="flex items-center gap-2">
-                <span className="text-3xl" aria-hidden>
+                <span className="text-2xl" aria-hidden>
                   {legacy.emoji}
                 </span>
                 <div className="min-w-0">
-                  <div className="font-display font-bold text-[15px] truncate">{legacy.title}</div>
+                  <div className="font-display font-bold text-sm truncate">{legacy.title}</div>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <TrendIcon className={`h-3.5 w-3.5 ${trendColor}`} />
-                    <span className={`text-xs font-semibold ${trendColor}`}>{trendLabel}</span>
+                    <TrendIcon className={`h-3 w-3 ${trendColor}`} />
+                    <span className={`text-[11px] font-semibold ${trendColor}`}>{trendLabel}</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-2 text-[13px] text-muted-foreground">
+              <div className="mt-1 text-xs text-muted-foreground">
                 {legacy.count} participações
               </div>
-              <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+              <div className="mt-auto h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold grid place-items-center transition-colors hover:bg-primary/20">
                 Ver tendência
               </div>
             </div>

@@ -50,10 +50,10 @@ export function FeedNearbyEvents({ data, title, section }: FeedNearbyEventsProps
           <Link
             to="/event/$eventId"
             params={{ eventId: event.id }}
-            className="block rounded-[24px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
+            className="block rounded-[20px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
           >
-            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-[24px] overflow-hidden">
-              <div className="relative w-full shrink-0" style={{ height: "57%" }}>
+            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-[20px] overflow-hidden">
+              <div className="relative w-full shrink-0" style={{ height: "50%" }}>
                 <img
                   src={event.banner}
                   alt={event.name}
@@ -61,30 +61,30 @@ export function FeedNearbyEvents({ data, title, section }: FeedNearbyEventsProps
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute top-3 right-3 z-10">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
+                <div className="absolute top-2.5 right-2.5 z-10">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft flex items-center gap-1">
+                    <Users className="h-3 w-3" />
                     {event.participants}
                   </span>
                 </div>
-                <span className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 text-gray-800 shadow-soft z-10">
-                  <MapPin className="h-3.5 w-3.5 inline mr-1" />
+                <span className="absolute bottom-2.5 left-2.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-gray-800 shadow-soft z-10 flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
                   {event.distance}
                 </span>
               </div>
-              <div className="flex flex-1 flex-col gap-1 px-6 py-4 min-h-0">
-                <span className="font-display font-bold text-[15px] truncate">{event.name}</span>
-                <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <div className="flex flex-1 flex-col gap-1 px-4 py-3 min-h-0">
+                <span className="font-display font-bold text-sm truncate">{event.name}</span>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0" />
                   <span className="truncate">{event.location}</span>
                 </div>
-                <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3 shrink-0" />
                   <span>
                     {event.date} às {event.time}
                   </span>
                 </div>
-                <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+                <div className="mt-auto h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold grid place-items-center transition-colors hover:bg-primary/20">
                   Ver Evento
                 </div>
               </div>
