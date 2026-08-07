@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Reel } from "@/lib/reels/reel-types";
 import { ReelActions } from "./reel-actions";
 import { ReelOverlay } from "./reel-overlay";
+import { useActiveReelPlayback } from "@/hooks/use-active-reel-playback";
+import type { ReelContextTarget } from "@/lib/reels/reel-context";
 
 interface ReelPlayerProps {
   reel: Reel;
-  active: boolean;
   muted: boolean;
   onToggleMute: () => void;
   onToggleLike: () => void;
@@ -16,12 +17,11 @@ interface ReelPlayerProps {
   onSave: () => void;
   onFollow: () => void;
   onConnect: () => void;
-  onOpenProfile: () => void;
+  onOpenContext: (target: ReelContextTarget) => void;
 }
 
 export function ReelPlayer({
   reel,
-  active,
   muted,
   onToggleMute,
   onToggleLike,
@@ -30,25 +30,33 @@ export function ReelPlayer({
   onSave,
   onFollow,
   onConnect,
-  onOpenProfile,
+  onOpenContext,
 }: ReelPlayerProps) {
+  const { containerRef, isActive, paused, setPaused, shouldPlay } = useActiveReelPlayback();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [paused, setPaused] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   const [muteHint, setMuteHint] = useState(false);
+  const [videoIndex, setVideoIndex] = useState(0);
   const lastTap = useRef(0);
+
+  const mediaUrls = reel.videos && reel.videos.length > 1 ? reel.videos : [reel.videoUrl];
+  const currentUrl = mediaUrls[videoIndex] ?? reel.videoUrl;
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (active) {
-      v.currentTime = 0;
+    v.currentTime = 0;
+  }, [currentUrl]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (shouldPlay) {
       v.play().catch(() => setPaused(true));
-      setPaused(false);
     } else {
       v.pause();
     }
-  }, [active]);
+  }, [shouldPlay, currentUrl, setPaused]);
 
   function handleTap() {
     const now = Date.now();
@@ -61,15 +69,7 @@ export function ReelPlayer({
     lastTap.current = now;
     setTimeout(() => {
       if (Date.now() - lastTap.current >= 280 && lastTap.current !== 0) {
-        const v = videoRef.current;
-        if (!v) return;
-        if (v.paused) {
-          v.play();
-          setPaused(false);
-        } else {
-          v.pause();
-          setPaused(true);
-        }
+        setPaused((p) => !p);
         lastTap.current = 0;
       }
     }, 290);
@@ -82,21 +82,40 @@ export function ReelPlayer({
   }
 
   return (
-    <section className="relative h-full w-full snap-start shrink-0 bg-black overflow-hidden">
+    <section
+      ref={containerRef}
+      className="relative h-full w-full snap-start shrink-0 bg-black overflow-hidden"
+    >
       <video
+        key={currentUrl}
         ref={videoRef}
-        src={reel.videoUrl}
+        src={currentUrl}
         poster={reel.posterUrl ?? undefined}
         loop
         muted={muted}
         playsInline
-        preload={active ? "auto" : "metadata"}
+        preload={isActive ? "auto" : "metadata"}
         className="absolute inset-0 h-full w-full object-cover"
         onClick={handleTap}
       />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-60 bg-gradient-to-t from-black/80 to-transparent" />
+
+      {mediaUrls.length > 1 && (
+        <div className="absolute top-16 inset-x-0 z-20 flex justify-center gap-1.5">
+          {mediaUrls.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setVideoIndex(i)}
+              aria-label={`Vídeo ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${
+                i === videoIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       <ReelActions
         reel={reel}
@@ -107,10 +126,11 @@ export function ReelPlayer({
         onFollow={onFollow}
         onConnect={onConnect}
         onMute={tapMute}
+        onOpenAuthor={onOpenContext}
         muted={muted}
       />
 
-      <ReelOverlay reel={reel} onOpenProfile={onOpenProfile} />
+      <ReelOverlay reel={reel} onOpenContext={onOpenContext} />
 
       <AnimatePresence>
         {paused && (

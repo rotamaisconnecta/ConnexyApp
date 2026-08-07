@@ -153,6 +153,7 @@ export interface Reel {
   id: string;
   videoUrl: string;
   posterUrl: string | null;
+  videos?: string[];
   caption: string;
   category: ReelCategoryValue;
   author: ReelAuthor;

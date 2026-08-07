@@ -1,8 +1,19 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Smartphone, Instagram, Link, X } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getShareOptions, getShareLabel, getShareColor } from "@/lib/reels/reel-share";
+import {
+  getShareOptions,
+  getShareLabel,
+  getShareColor,
+  getReelShareUrl,
+  getReelWhatsAppUrl,
+  buildReelShareMessage,
+} from "@/lib/reels/reel-share";
+import { findReelById } from "@/lib/reels/reel-mocks";
+import { supportsNativeShare } from "@/lib/share/share-connexy";
 import type { ShareTargetValue } from "@/lib/reels/reel-types";
+import { ShareTarget } from "@/lib/reels/reel-types";
 
 interface ReelShareSheetProps {
   reelId: string;
@@ -18,10 +29,68 @@ const ICON_MAP: Record<ShareTargetValue, React.ComponentType<{ className?: strin
   OTHER: MessageCircle,
 };
 
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "0";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export function ReelShareSheet({ reelId, open, onClose }: ReelShareSheetProps) {
   const options = getShareOptions();
+  const caption = findReelById(reelId)?.caption;
 
-  function handleShare(_target: ShareTargetValue) {
+  function notifyCopied(success: boolean, message: string) {
+    if (success) toast.success(message);
+    else toast.error("Não foi possível copiar o link");
+  }
+
+  function handleShare(target: ShareTargetValue) {
+    const url = getReelShareUrl(reelId);
+    const text = buildReelShareMessage(caption, reelId);
+
+    switch (target) {
+      case ShareTarget.WHATSAPP:
+        window.open(getReelWhatsAppUrl(reelId, caption), "_blank", "noopener,noreferrer");
+        toast.success("Abrindo WhatsApp…");
+        break;
+      case ShareTarget.COPY_LINK:
+        void copyText(text).then((ok) => notifyCopied(ok, "Link copiado!"));
+        break;
+      case ShareTarget.INSTAGRAM:
+        void copyText(text).then((ok) => notifyCopied(ok, "Link copiado — cole no seu story"));
+        break;
+      case ShareTarget.CHAT:
+        void copyText(text).then((ok) => notifyCopied(ok, "Link copiado — cole na conversa"));
+        break;
+      default:
+        if (supportsNativeShare()) {
+          navigator.share({ title: "Connexy", text, url }).catch(() => undefined);
+        } else {
+          void copyText(text).then((ok) => notifyCopied(ok, "Link copiado!"));
+        }
+        break;
+    }
     onClose();
   }
 

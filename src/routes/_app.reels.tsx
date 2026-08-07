@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Search, Send, Plus, Clapperboard, Users } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, Send, Plus, X, Clapperboard, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { ReelsFeed } from "@/components/reels/reels-feed";
 import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
@@ -11,6 +11,16 @@ import type { Reel, ReelComment } from "@/lib/reels/reel-types";
 import { sortSmart } from "@/lib/reels/reel-ranking";
 import { filterReels, type ReelFilterState } from "@/lib/reels/reel-filter";
 import { REEL_CATEGORY_META } from "@/lib/reels/reel-types";
+import {
+  getReelLikes,
+  toggleReelLike,
+  getReelComments,
+  addReelComment,
+  toggleCommentLike,
+  getStoredSoundPref,
+  setStoredSoundPref,
+} from "@/lib/reels/reel-local-storage";
+import type { ReelContextTarget } from "@/lib/reels/reel-context";
 
 export const Route = createFileRoute("/_app/reels")({
   head: () => ({
@@ -28,15 +38,56 @@ export const Route = createFileRoute("/_app/reels")({
 
 type Tab = "reels" | "amigos";
 
+const SEED_COMMENTS: ReelComment[] = [
+  {
+    id: "c1",
+    text: "Que momento incrível! 🔥",
+    authorId: "u1",
+    authorName: "Ana Silva",
+    authorPhoto: "https://i.pravatar.cc/150?img=1",
+    createdAt: "2026-07-21T10:00:00Z",
+    likes: 12,
+    likedByMe: false,
+    replies: [],
+  },
+  {
+    id: "c2",
+    text: "Adorei! Vou lá amanhã",
+    authorId: "u2",
+    authorName: "Carlos Souza",
+    authorPhoto: "https://i.pravatar.cc/150?img=3",
+    createdAt: "2026-07-21T09:30:00Z",
+    likes: 5,
+    likedByMe: true,
+    replies: [],
+  },
+  {
+    id: "c3",
+    text: "Esse lugar é demais 🙌",
+    authorId: "u3",
+    authorName: "Maria Costa",
+    authorPhoto: "https://i.pravatar.cc/150?img=5",
+    createdAt: "2026-07-20T18:00:00Z",
+    likes: 8,
+    likedByMe: false,
+    replies: [],
+  },
+];
+
 function ReelsPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("reels");
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState<boolean>(() => getStoredSoundPref());
+  const [likeMap, setLikeMap] = useState<Record<string, boolean>>(() => getReelLikes());
+  const [commentMap, setCommentMap] = useState<Record<string, ReelComment[]>>(() =>
+    getReelComments(),
+  );
   const [commentsFor, setCommentsFor] = useState<string | null>(null);
   const [shareFor, setShareFor] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [filters, setFilters] = useState<ReelFilterState>({
     category: "ALL",
     searchQuery: "",
@@ -44,45 +95,15 @@ function ReelsPage() {
   });
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
-  const [mockComments, setMockComments] = useState<ReelComment[]>([
-    {
-      id: "c1",
-      text: "Que momento incrível! 🔥",
-      authorId: "u1",
-      authorName: "Ana Silva",
-      authorPhoto: "https://i.pravatar.cc/150?img=1",
-      createdAt: "2026-07-21T10:00:00Z",
-      likes: 12,
-      likedByMe: false,
-      replies: [],
-    },
-    {
-      id: "c2",
-      text: "Adorei! Vou lá amanhã",
-      authorId: "u2",
-      authorName: "Carlos Souza",
-      authorPhoto: "https://i.pravatar.cc/150?img=3",
-      createdAt: "2026-07-21T09:30:00Z",
-      likes: 5,
-      likedByMe: true,
-      replies: [],
-    },
-    {
-      id: "c3",
-      text: "Esse lugar é demais 🙌",
-      authorId: "u3",
-      authorName: "Maria Costa",
-      authorPhoto: "https://i.pravatar.cc/150?img=5",
-      createdAt: "2026-07-20T18:00:00Z",
-      likes: 8,
-      likedByMe: false,
-      replies: [],
-    },
-  ]);
-
   useEffect(() => {
+    const storedLikes = getReelLikes();
     const timer = setTimeout(() => {
-      setReels(sortSmart(MOCK_REELS));
+      setReels(
+        sortSmart(MOCK_REELS).map((r) => ({
+          ...r,
+          likedByMe: storedLikes[r.id] ?? r.likedByMe,
+        })),
+      );
       setLoading(false);
     }, 600);
     return () => clearTimeout(timer);
@@ -99,20 +120,29 @@ function ReelsPage() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [reels.length]);
 
-  const filteredReels = filterReels(reels, filters);
+  const viewReels = useMemo(
+    () =>
+      reels.map((r) => {
+        const liked = likeMap[r.id] ?? r.likedByMe;
+        const baseLikes = r.stats.likes - (r.likedByMe ? 1 : 0);
+        return {
+          ...r,
+          likedByMe: liked,
+          stats: { ...r.stats, likes: baseLikes + (liked ? 1 : 0) },
+        };
+      }),
+    [reels, likeMap],
+  );
+
+  const filteredReels = filterReels(viewReels, filters);
+
+  const openComments = commentsFor
+    ? [...(commentsFor === "reel-001" ? SEED_COMMENTS : []), ...(commentMap[commentsFor] ?? [])]
+    : [];
 
   function handleToggleLike(reelId: string) {
-    setReels((prev) =>
-      prev.map((r) =>
-        r.id === reelId
-          ? {
-              ...r,
-              likedByMe: !r.likedByMe,
-              stats: { ...r.stats, likes: r.stats.likes + (r.likedByMe ? -1 : 1) },
-            }
-          : r,
-      ),
-    );
+    const next = toggleReelLike(reelId);
+    setLikeMap((prev) => ({ ...prev, [reelId]: next }));
   }
 
   function handleToggleSave(reelId: string) {
@@ -138,19 +168,13 @@ function ReelsPage() {
   }
 
   function handleAddComment(text: string) {
-    if (!commentsFor || !text.trim()) return;
-    const newComment: ReelComment = {
-      id: `c-${Date.now()}`,
-      text: text.trim(),
-      authorId: "current-user",
-      authorName: "Você",
-      authorPhoto: "https://i.pravatar.cc/150?img=12",
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      likedByMe: false,
-      replies: [],
-    };
-    setMockComments((prev) => [...prev, newComment]);
+    if (!commentsFor) return;
+    const created = addReelComment(commentsFor, text);
+    if (!created) return;
+    setCommentMap((prev) => ({
+      ...prev,
+      [commentsFor]: [...(prev[commentsFor] ?? []), created],
+    }));
     setReels((prev) =>
       prev.map((r) =>
         r.id === commentsFor ? { ...r, stats: { ...r.stats, comments: r.stats.comments + 1 } } : r,
@@ -159,13 +183,45 @@ function ReelsPage() {
   }
 
   function handleLikeComment(commentId: string) {
-    setMockComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? { ...c, likedByMe: !c.likedByMe, likes: c.likes + (c.likedByMe ? -1 : 1) }
-          : c,
-      ),
-    );
+    if (!commentsFor) return;
+    const target = openComments.find((c) => c.id === commentId);
+    if (!target) return;
+    const next = !target.likedByMe;
+    toggleCommentLike(commentsFor, commentId);
+    const updated: ReelComment = {
+      ...target,
+      likedByMe: next,
+      likes: target.likes + (next ? 1 : -1),
+    };
+    setCommentMap((prev) => {
+      const stored = prev[commentsFor] ?? [];
+      const exists = stored.some((c) => c.id === commentId);
+      const nextList = exists
+        ? stored.map((c) => (c.id === commentId ? updated : c))
+        : [...stored, updated];
+      return { ...prev, [commentsFor]: nextList };
+    });
+  }
+
+  function handleOpenContext(target: ReelContextTarget) {
+    switch (target.type) {
+      case "perfil":
+        navigate({ to: "/perfil/$id", params: { id: target.id } });
+        break;
+      case "local":
+        navigate({ to: "/local/$id", params: { id: target.id } });
+        break;
+      case "negocio":
+      case "oferta":
+        navigate({ to: "/business/$businessId", params: { businessId: target.id } });
+        break;
+      case "evento":
+        navigate({ to: "/event/$eventId", params: { eventId: target.id } });
+        break;
+      case "corrida":
+        navigate({ to: "/ride" });
+        break;
+    }
   }
 
   return (
@@ -175,10 +231,18 @@ function ReelsPage() {
           <span className="font-display text-lg font-bold text-white">connexy</span>
         </div>
         <button
-          className="absolute right-14 top-4 h-9 w-9 grid place-items-center rounded-full bg-white/10 border border-white/15"
-          aria-label="Buscar"
+          onClick={() => setSearchOpen((o) => !o)}
+          className={`absolute right-14 top-4 h-9 w-9 grid place-items-center rounded-full border ${
+            searchOpen ? "bg-primary border-primary text-white" : "bg-white/10 border-white/15"
+          }`}
+          aria-label={searchOpen ? "Fechar busca" : "Buscar"}
+          aria-pressed={searchOpen}
         >
-          <Search className="h-4 w-4 text-white" />
+          {searchOpen ? (
+            <X className="h-4 w-4 text-white" />
+          ) : (
+            <Search className="h-4 w-4 text-white" />
+          )}
         </button>
         <Link
           to="/connecta"
@@ -218,6 +282,18 @@ function ReelsPage() {
             />
           ))}
         </div>
+        {searchOpen && (
+          <div className="absolute left-4 right-4 top-36 z-30">
+            <input
+              autoFocus
+              value={filters.searchQuery}
+              onChange={(e) => setFilters((f) => ({ ...f, searchQuery: e.target.value }))}
+              placeholder="Buscar por nome, hashtag, local, negócio ou evento…"
+              className="w-full h-10 rounded-xl bg-white/10 border border-white/20 px-4 text-sm text-white placeholder:text-white/50 outline-none focus:border-primary"
+              aria-label="Buscar reels"
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex-1">
@@ -230,10 +306,14 @@ function ReelsPage() {
                 <Clapperboard className="h-8 w-8" />
               </div>
               <h2 className="mt-4 font-display text-xl text-white font-bold">
-                Nenhum reel encontrado
+                {filters.searchQuery || filters.category !== "ALL"
+                  ? "Nenhum resultado"
+                  : "Nenhum reel encontrado"}
               </h2>
               <p className="mt-2 text-sm text-white/70">
-                Seja o primeiro a compartilhar um momento real.
+                {filters.searchQuery || filters.category !== "ALL"
+                  ? "Tente outro termo ou categoria."
+                  : "Seja o primeiro a compartilhar um momento real."}
               </p>
               <Link
                 to="/create"
@@ -251,14 +331,20 @@ function ReelsPage() {
             muted={muted}
             scrollRef={scrollerRef}
             onScroll={() => {}}
-            onToggleMute={() => setMuted((m) => !m)}
+            onToggleMute={() =>
+              setMuted((m) => {
+                const next = !m;
+                setStoredSoundPref(next);
+                return next;
+              })
+            }
             onToggleLike={handleToggleLike}
             onOpenComments={(id) => setCommentsFor(id)}
             onShare={(id) => setShareFor(id)}
             onSave={handleToggleSave}
             onFollow={handleToggleFollow}
             onConnect={() => {}}
-            onOpenProfile={(id) => navigate({ to: "/perfil/$id", params: { id } })}
+            onOpenContext={handleOpenContext}
           />
         )}
       </div>
@@ -270,7 +356,7 @@ function ReelsPage() {
               <motion.div
                 className="h-full bg-gradient-brand"
                 initial={false}
-                animate={{ width: i < activeIdx ? "100%" : i === activeIdx ? "100%" : "0%" }}
+                animate={{ width: i <= activeIdx ? "100%" : "0%" }}
                 transition={{ duration: 0.3 }}
               />
             </div>
@@ -291,7 +377,7 @@ function ReelsPage() {
         reelId={commentsFor}
         open={!!commentsFor}
         onClose={() => setCommentsFor(null)}
-        comments={mockComments}
+        comments={openComments}
         onAddComment={handleAddComment}
         onLikeComment={handleLikeComment}
       />

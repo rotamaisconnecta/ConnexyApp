@@ -2,6 +2,7 @@ import type { Reel } from "@/lib/reels/reel-types";
 import { ReelPlayer } from "./reel-player";
 import { ReelProgress } from "./reel-progress";
 import { ReelEmpty } from "./reel-empty";
+import type { ReelContextTarget } from "@/lib/reels/reel-context";
 
 interface ReelsFeedProps {
   reels: Reel[];
@@ -14,7 +15,7 @@ interface ReelsFeedProps {
   onSave: (id: string) => void;
   onFollow: (id: string) => void;
   onConnect: (id: string) => void;
-  onOpenProfile: (id: string) => void;
+  onOpenContext: (target: ReelContextTarget) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   onScroll: () => void;
 }
@@ -30,7 +31,7 @@ export function ReelsFeed({
   onSave,
   onFollow,
   onConnect,
-  onOpenProfile,
+  onOpenContext,
   scrollRef,
   onScroll,
 }: ReelsFeedProps) {
@@ -49,7 +50,6 @@ export function ReelsFeed({
           <div key={reel.id} className="relative h-full w-full snap-start shrink-0">
             <ReelPlayer
               reel={reel}
-              active={idx === activeIdx}
               muted={muted}
               onToggleMute={onToggleMute}
               onToggleLike={() => onToggleLike(reel.id)}
@@ -58,7 +58,7 @@ export function ReelsFeed({
               onSave={() => onSave(reel.id)}
               onFollow={() => onFollow(reel.id)}
               onConnect={() => onConnect(reel.id)}
-              onOpenProfile={() => onOpenProfile(reel.id)}
+              onOpenContext={onOpenContext}
             />
           </div>
         ))}

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BackButton } from "@/components/navigation/back-button";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -20,6 +20,13 @@ import { ReelLocation } from "@/components/reels/reel-location";
 import { ReelMusic } from "@/components/reels/reel-music";
 import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
 import { ReelShareSheet } from "@/components/reels/reel-share-sheet";
+import {
+  isReelLiked,
+  toggleReelLike,
+  getStoredSoundPref,
+  setStoredSoundPref,
+} from "@/lib/reels/reel-local-storage";
+import { getReelContext, type ReelContextTarget } from "@/lib/reels/reel-context";
 
 export const Route = createFileRoute("/_app/reels/$reelId")({
   head: () => ({ meta: [{ title: "Reel — Connexy" }] }),
@@ -27,9 +34,10 @@ export const Route = createFileRoute("/_app/reels/$reelId")({
 });
 
 function ReelDetailPage() {
+  const navigate = useNavigate();
   const { reelId } = Route.useParams();
   const [reel, setReel] = useState<Reel | null>(null);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState<boolean>(() => getStoredSoundPref());
   const [paused, setPaused] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -39,7 +47,7 @@ function ReelDetailPage() {
 
   useEffect(() => {
     const found = MOCK_REELS.find((r) => r.id === reelId);
-    setReel(found ?? null);
+    setReel(found ? { ...found, likedByMe: isReelLiked(found.id) } : null);
   }, [reelId]);
 
   useEffect(() => {
@@ -77,12 +85,13 @@ function ReelDetailPage() {
 
   function handleToggleLike() {
     if (!reel) return;
+    const next = toggleReelLike(reel.id);
     setReel((prev) =>
       prev
         ? {
             ...prev,
-            likedByMe: !prev.likedByMe,
-            stats: { ...prev.stats, likes: prev.stats.likes + (prev.likedByMe ? -1 : 1) },
+            likedByMe: next,
+            stats: { ...prev.stats, likes: prev.stats.likes + (next ? 1 : -1) },
           }
         : prev,
     );
@@ -99,6 +108,27 @@ function ReelDetailPage() {
           }
         : prev,
     );
+  }
+
+  function handleOpenContext(target: ReelContextTarget) {
+    switch (target.type) {
+      case "perfil":
+        navigate({ to: "/perfil/$id", params: { id: target.id } });
+        break;
+      case "local":
+        navigate({ to: "/local/$id", params: { id: target.id } });
+        break;
+      case "negocio":
+      case "oferta":
+        navigate({ to: "/business/$businessId", params: { businessId: target.id } });
+        break;
+      case "evento":
+        navigate({ to: "/event/$eventId", params: { eventId: target.id } });
+        break;
+      case "corrida":
+        navigate({ to: "/ride" });
+        break;
+    }
   }
 
   if (!reel) {
@@ -163,7 +193,13 @@ function ReelDetailPage() {
           onClick={handleToggleSave}
         />
         <button
-          onClick={() => setMuted((m) => !m)}
+          onClick={() =>
+            setMuted((m) => {
+              const next = !m;
+              setStoredSoundPref(next);
+              return next;
+            })
+          }
           className="mt-1 h-9 w-9 grid place-items-center rounded-full bg-white/10 backdrop-blur border border-white/20"
           aria-label={muted ? "Ativar som" : "Silenciar"}
         >
@@ -182,7 +218,10 @@ function ReelDetailPage() {
           </span>
           <span className="text-xs text-white/60">{formatRelativeTime(reel.createdAt)}</span>
         </div>
-        <ReelUser author={reel.author} onOpenProfile={() => {}} />
+        <ReelUser
+          author={reel.author}
+          onOpenProfile={() => handleOpenContext(getReelContext(reel).authorTarget)}
+        />
         {reel.caption && (
           <p className="mt-2 text-white text-[13px] leading-snug max-w-[86%] line-clamp-3 drop-shadow">
             {reel.caption}
@@ -197,10 +236,20 @@ function ReelDetailPage() {
             ))}
           </div>
         )}
-        {reel.location && <ReelLocation location={reel.location} />}
+        {reel.location && (
+          <button
+            onClick={() => handleOpenContext({ type: "local", id: reel.location!.id })}
+            className="block mt-2 max-w-[62%] text-left active:scale-[0.99] transition"
+          >
+            <ReelLocation location={reel.location} />
+          </button>
+        )}
         {reel.music && <ReelMusic music={reel.music} />}
         {reel.business && (
-          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/55 backdrop-blur-md px-3 py-2 border border-white/10">
+          <button
+            onClick={() => handleOpenContext({ type: "negocio", id: reel.business!.id })}
+            className="mt-3 flex w-full max-w-[86%] items-center gap-3 rounded-2xl bg-black/55 backdrop-blur-md px-3 py-2 border border-white/10 text-left active:scale-[0.99] transition"
+          >
             <img src={reel.business.logo} alt="" className="h-8 w-8 rounded-lg object-cover" />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold text-white truncate">
@@ -210,10 +259,13 @@ function ReelDetailPage() {
                 {reel.business.category} · {reel.business.rating.toFixed(1)}★
               </div>
             </div>
-          </div>
+          </button>
         )}
         {reel.event && (
-          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/55 backdrop-blur-md px-3 py-2 border border-white/10">
+          <button
+            onClick={() => handleOpenContext({ type: "evento", id: reel.event!.id })}
+            className="mt-3 flex w-full max-w-[86%] items-center gap-3 rounded-2xl bg-black/55 backdrop-blur-md px-3 py-2 border border-white/10 text-left active:scale-[0.99] transition"
+          >
             <div className="h-8 w-8 rounded-lg bg-pink-500/20 grid place-items-center text-sm">
               🎉
             </div>
@@ -223,10 +275,13 @@ function ReelDetailPage() {
                 {reel.event.date} · {reel.event.attendingCount} vão
               </div>
             </div>
-          </div>
+          </button>
         )}
         {reel.driver && (
-          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/55 backdrop-blur-md px-3 py-2 border border-white/10">
+          <button
+            onClick={() => handleOpenContext({ type: "corrida", id: reel.driver!.id })}
+            className="mt-3 flex w-full max-w-[86%] items-center gap-3 rounded-2xl bg-black/55 backdrop-blur-md px-3 py-2 border border-white/10 text-left active:scale-[0.99] transition"
+          >
             <img src={reel.driver.photo} alt="" className="h-8 w-8 rounded-full object-cover" />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold text-white truncate">
@@ -237,7 +292,7 @@ function ReelDetailPage() {
                 {reel.driver.etaMinutes}min
               </div>
             </div>
-          </div>
+          </button>
         )}
       </div>
 

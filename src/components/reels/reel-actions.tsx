@@ -5,6 +5,7 @@ import { formatReelCount } from "@/lib/reels/reel-utils";
 import { ReelSaveButton } from "./reel-save-button";
 import { ReelFollowButton } from "./reel-follow-button";
 import { ReelConnectButton } from "./reel-connect-button";
+import { getReelContext, type ReelContextTarget } from "@/lib/reels/reel-context";
 
 interface ReelActionsProps {
   reel: Reel;
@@ -15,6 +16,7 @@ interface ReelActionsProps {
   onFollow: () => void;
   onConnect: () => void;
   onMute: () => void;
+  onOpenAuthor: (target: ReelContextTarget) => void;
   muted: boolean;
 }
 
@@ -27,12 +29,19 @@ export function ReelActions({
   onFollow,
   onConnect,
   onMute,
+  onOpenAuthor,
   muted,
 }: ReelActionsProps) {
+  const authorTarget = getReelContext(reel).authorTarget;
+
   return (
     <div className="absolute right-2 bottom-32 z-10 flex flex-col items-center gap-4">
       <div className="relative">
-        <button onClick={() => {}} className="block">
+        <button
+          onClick={() => onOpenAuthor(authorTarget)}
+          aria-label={`Ver ${reel.author.name}`}
+          className="block active:scale-90 transition-transform"
+        >
           <img
             src={
               reel.author.photoUrl ??

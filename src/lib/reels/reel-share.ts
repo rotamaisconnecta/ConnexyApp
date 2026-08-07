@@ -1,8 +1,30 @@
 import type { ShareTargetValue } from "./reel-types";
 import { SHARE_OPTIONS, ShareTarget } from "./reel-types";
+import { getConnexyAppUrl } from "@/lib/share/share-connexy";
+import { truncateCaption } from "./reel-utils";
 
 export function getShareOptions() {
   return SHARE_OPTIONS;
+}
+
+const DEFAULT_SHARE_MESSAGE = "Veja este Reel no Connexy — seu ecossistema digital.";
+
+export function buildReelShareMessage(caption?: string, reelId?: string): string {
+  const title = caption ? truncateCaption(caption, 80) : null;
+  const message = title ? `Veja este Reel sobre "${title}" no Connexy.` : DEFAULT_SHARE_MESSAGE;
+  return reelId ? `${message}\n\n${getReelShareUrl(reelId)}` : message;
+}
+
+export function getReelShareUrl(reelId: string): string {
+  return `${getConnexyAppUrl()}/reels/${reelId}`;
+}
+
+export function getReelShareLink(reelId: string): string {
+  return getReelShareUrl(reelId);
+}
+
+export function getReelWhatsAppUrl(reelId: string, caption?: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(buildReelShareMessage(caption, reelId))}`;
 }
 
 const SHARE_LABELS: Record<ShareTargetValue, string> = {
@@ -42,7 +64,7 @@ export function getShareColor(target: ShareTargetValue): string {
 }
 
 export function getShareMockUrl(target: ShareTargetValue, reelId: string): string {
-  const base = `https://connexy.app/reel/${reelId}`;
+  const base = getReelShareUrl(reelId);
   switch (target) {
     case ShareTarget.WHATSAPP:
       return `https://wa.me/?text=${encodeURIComponent(base)}`;
