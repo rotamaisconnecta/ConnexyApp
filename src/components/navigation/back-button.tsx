@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
-type FallbackRoute =
+export type FallbackRoute =
   | "/cadastro"
   | "/completar-perfil"
   | "/connecta"

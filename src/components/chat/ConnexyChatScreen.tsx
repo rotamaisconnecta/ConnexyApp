@@ -181,10 +181,6 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   }, [messages, typing]);
 
   const handleBack = useCallback(() => {
-    if (window.history.length > 1) {
-      router.history.back();
-      return;
-    }
     router.navigate({ to: "/chat" });
   }, [router]);
 

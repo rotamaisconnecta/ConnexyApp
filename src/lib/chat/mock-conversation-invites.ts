@@ -50,7 +50,7 @@ export function writeStoredInvite(personId: string, status: ConversationInviteSt
 export function getConversationInviteStatus(personId: string): ConversationInviteStatus {
   if (personId in MOCK_CONNECTED) return "connected";
   const stored = readStoredInvites()[personId];
-  if (stored === "invited" || stored === "rejected") return stored;
+  if (stored === "connected" || stored === "invited" || stored === "rejected") return stored;
   if (MOCK_INVITED.includes(personId)) return "invited";
   return "available";
 }

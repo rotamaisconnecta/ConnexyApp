@@ -33,6 +33,8 @@ interface PremiumCarouselProps<T> {
   renderCard: (item: T, index: number) => React.ReactNode;
   className?: string;
   section?: string;
+  cardWidths?: Partial<Record<Breakpoint, number>>;
+  cardHeight?: number;
 }
 
 export function PremiumCarousel<T>({
@@ -40,6 +42,8 @@ export function PremiumCarousel<T>({
   renderCard,
   className,
   section,
+  cardWidths,
+  cardHeight: cardHeightProp,
 }: PremiumCarouselProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
@@ -55,7 +59,8 @@ export function PremiumCarousel<T>({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const cardWidth = CARD_WIDTH[bp];
+  const cardWidth = cardWidths?.[bp] ?? CARD_WIDTH[bp];
+  const cardHeight = cardHeightProp ?? CARD_HEIGHT;
   const step = cardWidth + GAP;
   const reduced = prefersReducedMotion();
 
@@ -135,7 +140,7 @@ export function PremiumCarousel<T>({
                 className="shrink-0"
                 style={{
                   width: cardWidth,
-                  height: CARD_HEIGHT,
+                  height: cardHeight,
                   transform: `scale(${depth.scale})`,
                   opacity: depth.opacity,
                   transition,

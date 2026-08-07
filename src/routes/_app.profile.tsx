@@ -17,6 +17,7 @@ import {
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
 import ModeSwitcher from "@/components/roles/ModeSwitcher";
+import { ConnexyInviteCard } from "@/components/share/connexy-invite-card";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
@@ -199,6 +200,17 @@ function ProfilePage() {
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
+      </motion.section>
+
+      {/* ── Convidar ──────────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(5.8)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-4"
+      >
+        <ConnexyInviteCard compact />
       </motion.section>
 
       {/* ── Quick Links ───────────────────────────────────── */}

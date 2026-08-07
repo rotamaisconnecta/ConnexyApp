@@ -60,7 +60,7 @@ function Chip({
   );
 }
 
-function CardShell({ card }: { card: PremiumCard }) {
+function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boolean }) {
   const metaLine = card.subtitle ?? card.category;
 
   return (
@@ -102,9 +102,16 @@ function CardShell({ card }: { card: PremiumCard }) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-1 px-6 py-4 min-h-0">
+      <div
+        className={cn("flex min-h-0 flex-1 flex-col gap-1", compact ? "px-4 py-3" : "px-6 py-4")}
+      >
         <div className="flex items-start justify-between gap-2">
-          <span className="line-clamp-2 font-display text-[15px] font-bold leading-snug">
+          <span
+            className={cn(
+              "line-clamp-2 font-display font-bold leading-snug",
+              compact ? "text-[14px]" : "text-[15px]",
+            )}
+          >
             {card.title}
           </span>
           {card.kind === "person" && card.compatibility != null && (
@@ -113,6 +120,13 @@ function CardShell({ card }: { card: PremiumCard }) {
         </div>
 
         {metaLine && <span className="line-clamp-1 text-xs text-muted-foreground">{metaLine}</span>}
+
+        {card.kind === "person" && card.commonalities && card.commonalities.total > 0 && (
+          <span className="line-clamp-1 text-[11px] font-medium text-primary">
+            {card.commonalities.total}{" "}
+            {card.commonalities.total === 1 ? "coisa em comum" : "coisas em comum"}
+          </span>
+        )}
 
         <div className="mt-1 flex flex-nowrap gap-1.5 overflow-hidden">
           {card.rating != null && (
@@ -147,7 +161,12 @@ function CardShell({ card }: { card: PremiumCard }) {
           )}
         </div>
 
-        <div className="mt-auto h-12 w-full rounded-full bg-primary/10 text-primary text-[13px] font-semibold grid place-items-center transition-colors hover:bg-primary/20">
+        <div
+          className={cn(
+            "mt-auto w-full rounded-full bg-primary/10 text-primary font-semibold grid place-items-center transition-colors hover:bg-primary/20",
+            compact ? "h-10 text-[12px]" : "h-12 text-[13px]",
+          )}
+        >
           {CTA_LABEL[card.kind]}
         </div>
       </div>
@@ -155,21 +174,21 @@ function CardShell({ card }: { card: PremiumCard }) {
   );
 }
 
-export function PremiumCardView({ card }: { card: PremiumCard }) {
+export function PremiumCardView({ card, compact }: { card: PremiumCard; compact?: boolean }) {
   if (card.route) {
     return (
       <Link
         to={card.route}
         className="block h-full rounded-[24px] overflow-hidden transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
       >
-        <CardShell card={card} />
+        <CardShell card={card} compact={compact} />
       </Link>
     );
   }
 
   return (
     <div className="h-full rounded-[24px] overflow-hidden">
-      <CardShell card={card} />
+      <CardShell card={card} compact={compact} />
     </div>
   );
 }

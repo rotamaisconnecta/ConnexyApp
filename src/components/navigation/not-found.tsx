@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { SearchX } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { BackButton } from "@/components/navigation/back-button";
+import { BackButton, type FallbackRoute } from "@/components/navigation/back-button";
 
 interface NotFoundStateProps {
   title: string;
   description: string;
-  fallbackTo?: string;
+  fallbackTo?: FallbackRoute;
   fallbackLabel?: string;
 }
 

@@ -10,6 +10,9 @@ interface FeedTrendingProps {
   data: { items: Array<TrendingSectionData["items"][number] | PremiumCard> };
 }
 
+const TRENDING_CARD_WIDTH = { mobile: 240, tablet: 248, desktop: 256 } as const;
+const TRENDING_CARD_HEIGHT = 380;
+
 const TREND_ICONS = {
   up: TrendingUp,
   stable: Minus,
@@ -59,9 +62,11 @@ export function FeedTrending({ data }: FeedTrendingProps) {
       <PremiumCarousel
         section="trending"
         items={data.items}
+        cardWidths={TRENDING_CARD_WIDTH}
+        cardHeight={TRENDING_CARD_HEIGHT}
         renderCard={(item) => {
           if ("kind" in item) {
-            return <PremiumCardView card={item} />;
+            return <PremiumCardView card={item} compact />;
           }
 
           const legacy = item as TrendingSectionData["items"][number];

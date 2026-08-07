@@ -231,6 +231,7 @@ export interface NearbyPeopleSectionData {
     distanceMeters: number;
     interests: string[];
     online: boolean;
+    commonalities?: { labels: string[]; total: number };
   }>;
 }
 

@@ -6,6 +6,7 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
 import { PresenceLiveFeed } from "@/components/presence/presence-live-feed";
+import { ConnexyInviteCard } from "@/components/share/connexy-invite-card";
 import { currentUser, people, places } from "@/lib/mock-data";
 import { drivers } from "@/lib/mock-data";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
@@ -145,7 +146,12 @@ function Home() {
 
       <header className="grid grid-cols-[1fr_auto_1fr] items-center px-5 pt-1 pb-3">
         <div />
-        <BrandLogo variant="full" size="lg" />
+        <div className="flex flex-col items-center">
+          <BrandLogo variant="full" size="lg" />
+          <span className="mt-0.5 text-[10px] font-medium text-muted-foreground">
+            Seu ecossistema digital
+          </span>
+        </div>
         <div className="flex items-center gap-2 shrink-0 justify-end pr-12">
           <Link
             to="/chat"
@@ -269,6 +275,10 @@ function Home() {
             </div>
           )}
         </div>
+      </section>
+
+      <section className="mt-4 px-5">
+        <ConnexyInviteCard />
       </section>
 
       {!hasExtraRoles && (

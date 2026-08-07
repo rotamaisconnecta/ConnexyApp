@@ -4,6 +4,11 @@ import { PresenceDot } from "@/components/presence-dot";
 import { BackButton } from "@/components/navigation/back-button";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import {
+  getConversationId,
+  getConversationInviteStatus,
+  writeStoredInvite,
+} from "@/lib/chat/mock-conversation-invites";
+import {
   findPerson,
   findPlace,
   commonGround,
@@ -58,6 +63,7 @@ function Perfil() {
   const { from } = Route.useSearch();
   const nav = useNavigate();
   const cg = commonGround(p);
+  const inviteStatus = getConversationInviteStatus(p.id);
   const label = personProximityLabel(p.distanceMeters);
   const radius = personProximityRadius(p.distanceMeters);
 
@@ -332,12 +338,50 @@ function Perfil() {
             >
               Voltar
             </Link>
-            <button
-              onClick={() => nav({ to: "/chat/$conversationId", params: { conversationId: p.id } })}
-              className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
-            >
-              Aceitar conversa
-            </button>
+            {inviteStatus === "invited" ? (
+              <button
+                type="button"
+                className="flex-1 h-12 rounded-2xl bg-secondary text-muted-foreground font-semibold flex items-center justify-center"
+                aria-label="Convite enviado"
+              >
+                Convite enviado
+              </button>
+            ) : inviteStatus === "connected" ? (
+              <button
+                type="button"
+                onClick={() =>
+                  nav({
+                    to: "/chat/$conversationId",
+                    params: { conversationId: getConversationId(p.id) ?? p.id },
+                  })
+                }
+                className="flex-1 h-12 rounded-2xl bg-primary/10 text-primary font-semibold flex items-center justify-center"
+              >
+                Abrir conversa
+              </button>
+            ) : inviteStatus === "rejected" ? (
+              <Link
+                to="/solicitacao/$id"
+                params={{ id: p.id }}
+                search={{ mode: "send" }}
+                className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center"
+              >
+                Enviar novo convite
+              </Link>
+            ) : (
+              <button
+                onClick={() => {
+                  writeStoredInvite(p.id, "connected");
+                  nav({
+                    to: "/chat/$conversationId",
+                    params: { conversationId: getConversationId(p.id) ?? p.id },
+                  });
+                }}
+                className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
+              >
+                Aceitar conversa
+              </button>
+            )}
           </div>
         ) : (
           <ConversationInviteButton personId={p.id} personName={p.name} variant="profile" />

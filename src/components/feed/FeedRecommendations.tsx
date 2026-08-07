@@ -10,6 +10,9 @@ interface FeedRecommendationsProps {
   data: { items: Array<RecommendationsSectionData["items"][number] | PremiumCard> };
 }
 
+const RECOMMENDATIONS_CARD_WIDTH = { mobile: 240, tablet: 248, desktop: 256 } as const;
+const RECOMMENDATIONS_CARD_HEIGHT = 380;
+
 export function FeedRecommendations({ data }: FeedRecommendationsProps) {
   return (
     <motion.div
@@ -41,9 +44,11 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
       <PremiumCarousel
         section="recommendations"
         items={data.items}
+        cardWidths={RECOMMENDATIONS_CARD_WIDTH}
+        cardHeight={RECOMMENDATIONS_CARD_HEIGHT}
         renderCard={(item) => {
           if ("kind" in item) {
-            return <PremiumCardView card={item} />;
+            return <PremiumCardView card={item} compact />;
           }
 
           const legacy = item as RecommendationsSectionData["items"][number];

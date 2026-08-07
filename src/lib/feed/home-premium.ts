@@ -7,6 +7,8 @@
 
 import { people, places, compatibilityScore, currentUser } from "@/lib/mock-data";
 import { formatDistance } from "@/lib/proximity";
+import { getCommonalities, shouldShowNearbyPerson } from "./commonalities";
+import type { PersonCommonalities } from "./commonalities";
 import type {
   NearbyPeopleSectionData,
   NearbyPlacesSectionData,
@@ -52,6 +54,7 @@ export interface PremiumCard {
   trend?: "up" | "stable" | "new";
   online?: boolean;
   compatibility?: number;
+  commonalities?: PersonCommonalities;
 }
 
 export const KIND_LABELS: Record<PremiumCardKind, string> = {
@@ -297,10 +300,11 @@ export function eventsUpcoming(): HomeEvent[] {
 /* ─── Section builders ────────────────────────────────── */
 
 export function buildNearbyPeople(): NearbyPeopleSectionData {
+  const visible = people.filter((p) => shouldShowNearbyPerson(p.id));
   return {
     kind: "NEARBY_PEOPLE",
-    count: people.length,
-    people: people
+    count: visible.length,
+    people: visible
       .map((p) => ({
         id: p.id,
         name: p.name,
@@ -311,6 +315,7 @@ export function buildNearbyPeople(): NearbyPeopleSectionData {
         distanceMeters: p.distanceMeters,
         interests: p.interests,
         online: p.online,
+        commonalities: getCommonalities(p),
       }))
       .sort((a, b) => a.distanceMeters - b.distanceMeters),
   };
@@ -549,19 +554,22 @@ const TRENDING_POSTS: PremiumCard[] = [
 ];
 
 function peopleToCards(): PremiumCard[] {
-  return people.map((p) => ({
-    id: `person-${p.id}`,
-    kind: "person" as const,
-    title: p.name,
-    subtitle: p.interests.slice(0, 2).join(", "),
-    photo: p.photo,
-    route: `/perfil/${p.id}`,
-    distance: formatDistance(p.distanceMeters),
-    distanceMeters: p.distanceMeters,
-    compatibility: compatibilityScore(p),
-    online: p.online,
-    category: "Pessoas",
-  }));
+  return people
+    .filter((p) => shouldShowNearbyPerson(p.id))
+    .map((p) => ({
+      id: `person-${p.id}`,
+      kind: "person" as const,
+      title: p.name,
+      subtitle: p.interests.slice(0, 2).join(", "),
+      photo: p.photo,
+      route: `/perfil/${p.id}`,
+      distance: formatDistance(p.distanceMeters),
+      distanceMeters: p.distanceMeters,
+      compatibility: compatibilityScore(p),
+      online: p.online,
+      category: "Pessoas",
+      commonalities: getCommonalities(p),
+    }));
 }
 
 function eventsToCards(): PremiumCard[] {
