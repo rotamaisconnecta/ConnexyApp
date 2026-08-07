@@ -69,7 +69,7 @@ export const HomePremiumFeed = memo(function HomePremiumFeed() {
           <FeedRecommendations data={{ items: buildRecommendationCards() }} />
         </PremiumSection>
 
-        <FeedFooter data={{ kind: "FOOTER", message: "Conectando pessoas, lugares e momentos" }} />
+        <FeedFooter data={{ kind: "FOOTER", message: "Seu ecossistema digital" }} />
       </div>
     </LayoutGroup>
   );
