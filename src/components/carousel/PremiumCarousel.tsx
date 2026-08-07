@@ -4,7 +4,7 @@ import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { prefersReducedMotion } from "@/lib/carousel/hint";
 
 const GAP = 24;
-const CARD_HEIGHT = 420;
+const CARD_HEIGHT = 300;
 const STORAGE_PREFIX = "connexy.carousel.position";
 
 type Breakpoint = "desktop" | "tablet" | "mobile";
@@ -17,9 +17,9 @@ function getBreakpoint(): Breakpoint {
 }
 
 const CARD_WIDTH: Record<Breakpoint, number> = {
-  desktop: 320,
-  tablet: 300,
-  mobile: 290,
+  desktop: 290,
+  tablet: 270,
+  mobile: 260,
 };
 
 function depthStyle(distance: number): { scale: number; opacity: number } {

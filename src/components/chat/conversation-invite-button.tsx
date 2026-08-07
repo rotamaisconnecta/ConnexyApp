@@ -63,7 +63,7 @@ export function ConversationInviteButton({
       aria-label={label}
       className={cn(
         "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition-all duration-200 active:scale-[0.98]",
-        variant === "profile" ? "h-12 w-full rounded-2xl text-sm" : "h-10 px-4 text-xs",
+        variant === "profile" ? "h-12 w-full rounded-2xl text-sm" : "h-8 px-3 text-[11px]",
         invited
           ? "bg-secondary text-muted-foreground"
           : connected
