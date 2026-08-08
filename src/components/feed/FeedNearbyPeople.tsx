@@ -35,7 +35,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
           </p>
         </div>
         <Link
-          to="/people"
+          to="/pessoas"
           className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
         >
           Ver tudo <ArrowRight className="h-3.5 w-3.5" />

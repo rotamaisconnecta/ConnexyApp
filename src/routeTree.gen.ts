@@ -81,7 +81,6 @@ import { Route as AppCreatePhotoRouteImport } from './routes/_app/create/photo'
 import { Route as AppCreateOfferRouteImport } from './routes/_app/create/offer'
 import { Route as AppCreateMomentRouteImport } from './routes/_app/create/moment'
 import { Route as AppCreateEventRouteImport } from './routes/_app/create/event'
-import { Route as AppChatIdRouteImport } from './routes/_app.chat.$id'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
 import { Route as AppDriverTripTripIdRouteImport } from './routes/_app/driver/trip/$tripId'
@@ -445,11 +444,6 @@ const AppCreateEventRoute = AppCreateEventRouteImport.update({
   path: '/event',
   getParentRoute: () => AppCreateRoute,
 } as any)
-const AppChatIdRoute = AppChatIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppChatRoute,
-} as any)
 const AppChatConversationIdRoute = AppChatConversationIdRouteImport.update({
   id: '/$conversationId',
   path: '/$conversationId',
@@ -506,7 +500,6 @@ export interface FileRoutesByFullPath {
   '/trending': typeof AppTrendingRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
-  '/chat/$id': typeof AppChatIdRoute
   '/create/event': typeof AppCreateEventRoute
   '/create/moment': typeof AppCreateMomentRoute
   '/create/offer': typeof AppCreateOfferRoute
@@ -583,7 +576,6 @@ export interface FileRoutesByTo {
   '/trending': typeof AppTrendingRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
-  '/chat/$id': typeof AppChatIdRoute
   '/create/event': typeof AppCreateEventRoute
   '/create/moment': typeof AppCreateMomentRoute
   '/create/offer': typeof AppCreateOfferRoute
@@ -662,7 +654,6 @@ export interface FileRoutesById {
   '/_app/trending': typeof AppTrendingRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
-  '/_app/chat/$id': typeof AppChatIdRoute
   '/_app/create/event': typeof AppCreateEventRoute
   '/_app/create/moment': typeof AppCreateMomentRoute
   '/_app/create/offer': typeof AppCreateOfferRoute
@@ -741,7 +732,6 @@ export interface FileRouteTypes {
     | '/trending'
     | '/business/$businessId'
     | '/chat/$conversationId'
-    | '/chat/$id'
     | '/create/event'
     | '/create/moment'
     | '/create/offer'
@@ -818,7 +808,6 @@ export interface FileRouteTypes {
     | '/trending'
     | '/business/$businessId'
     | '/chat/$conversationId'
-    | '/chat/$id'
     | '/create/event'
     | '/create/moment'
     | '/create/offer'
@@ -896,7 +885,6 @@ export interface FileRouteTypes {
     | '/_app/trending'
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
-    | '/_app/chat/$id'
     | '/_app/create/event'
     | '/_app/create/moment'
     | '/_app/create/offer'
@@ -1452,13 +1440,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreateEventRouteImport
       parentRoute: typeof AppCreateRoute
     }
-    '/_app/chat/$id': {
-      id: '/_app/chat/$id'
-      path: '/$id'
-      fullPath: '/chat/$id'
-      preLoaderRoute: typeof AppChatIdRouteImport
-      parentRoute: typeof AppChatRoute
-    }
     '/_app/chat/$conversationId': {
       id: '/_app/chat/$conversationId'
       path: '/$conversationId'
@@ -1485,12 +1466,10 @@ declare module '@tanstack/react-router' {
 
 interface AppChatRouteChildren {
   AppChatConversationIdRoute: typeof AppChatConversationIdRoute
-  AppChatIdRoute: typeof AppChatIdRoute
 }
 
 const AppChatRouteChildren: AppChatRouteChildren = {
   AppChatConversationIdRoute: AppChatConversationIdRoute,
-  AppChatIdRoute: AppChatIdRoute,
 }
 
 const AppChatRouteWithChildren =

@@ -7,9 +7,11 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/use-auth";
 import { ContextEngineProvider } from "@/lib/context/context-provider";
 import { PresenceProvider } from "@/providers/presence/presence-provider";
+import { requireAuth } from "@/lib/auth/route-guard";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app")({
+  beforeLoad: requireAuth,
   component: AppLayout,
 });
 

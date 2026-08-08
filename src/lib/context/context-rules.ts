@@ -65,7 +65,7 @@ const ENVIRONMENT_RULES: Record<ContextEnvironmentValue, Omit<ContextRecommendat
       title: "Networking",
       description: "Conecte-se com participantes",
       icon: "🤝",
-      route: "/people",
+      route: "/pessoas",
       priority: 3,
     },
     {
@@ -211,7 +211,7 @@ const ENVIRONMENT_RULES: Record<ContextEnvironmentValue, Omit<ContextRecommendat
       title: "Pessoas próximas",
       description: "Outros estudantes no campus",
       icon: "👥",
-      route: "/people",
+      route: "/pessoas",
       priority: 1,
     },
     {
@@ -281,7 +281,7 @@ const ENVIRONMENT_RULES: Record<ContextEnvironmentValue, Omit<ContextRecommendat
       title: "Encontrar amigos",
       description: "Quem está no parque",
       icon: "👥",
-      route: "/people",
+      route: "/pessoas",
       priority: 3,
     },
   ],

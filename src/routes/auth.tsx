@@ -1,19 +1,28 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { sanitizeReturnTo } from "@/lib/auth/return-to";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/lib/branding/brand-config";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock } from "lucide-react";
 
+const authSearchSchema = z.object({
+  returnTo: z.string().optional(),
+});
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: authSearchSchema,
   head: () => ({ meta: [{ title: "Entrar — Connexy" }] }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const nav = useNavigate();
+  const { returnTo } = Route.useSearch();
+  const afterAuth = sanitizeReturnTo(returnTo) ?? "/localizacao";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,9 +31,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ to: "/localizacao" });
+      if (data.session) nav({ href: afterAuth });
     });
-  }, [nav]);
+  }, [nav, afterAuth]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +51,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bem-vindo de volta!");
-        nav({ to: "/localizacao" });
+        nav({ href: afterAuth });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
@@ -63,7 +72,7 @@ function AuthPage() {
     }
     if (result.redirected) return;
     toast.success("Bem-vindo!");
-    nav({ to: "/localizacao" });
+    nav({ href: afterAuth });
   }
 
   return (
