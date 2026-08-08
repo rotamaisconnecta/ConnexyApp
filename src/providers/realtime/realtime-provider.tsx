@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RealtimeContextValue {
   subscribe: (channel: string, callback: (payload: unknown) => void) => void;
@@ -19,10 +20,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const supabaseRef = useRef<SupabaseClient<any, any, any, any, any> | null>(null);
 
   useEffect(() => {
-    const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL as string,
-      import.meta.env.VITE_SUPABASE_ANON_KEY as string,
-    );
     supabaseRef.current = supabase;
 
     const channel = supabase.channel("realtime-connection");
