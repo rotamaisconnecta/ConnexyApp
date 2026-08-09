@@ -84,6 +84,7 @@ import { Route as AppCreateMomentRouteImport } from './routes/_app/create/moment
 import { Route as AppCreateEventRouteImport } from './routes/_app/create/event'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AppDriverTripTripIdRouteImport } from './routes/_app/driver/trip/$tripId'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -460,6 +461,11 @@ const AppBusinessBusinessIdRoute = AppBusinessBusinessIdRouteImport.update({
   path: '/business/$businessId',
   getParentRoute: () => AppRoute,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppDriverTripTripIdRoute = AppDriverTripTripIdRouteImport.update({
   id: '/driver/trip/$tripId',
   path: '/driver/trip/$tripId',
@@ -505,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -582,6 +589,7 @@ export interface FileRoutesByTo {
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -661,6 +669,7 @@ export interface FileRoutesById {
   '/_app/rota': typeof AppRotaRoute
   '/_app/trending': typeof AppTrendingRoute
   '/auth_/callback': typeof AuthCallbackRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/create/event': typeof AppCreateEventRoute
@@ -740,6 +749,7 @@ export interface FileRouteTypes {
     | '/rota'
     | '/trending'
     | '/auth/callback'
+    | '/.lovable/oauth/consent'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/create/event'
@@ -817,6 +827,7 @@ export interface FileRouteTypes {
     | '/rota'
     | '/trending'
     | '/auth/callback'
+    | '/.lovable/oauth/consent'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/create/event'
@@ -895,6 +906,7 @@ export interface FileRouteTypes {
     | '/_app/rota'
     | '/_app/trending'
     | '/auth_/callback'
+    | '/.lovable/oauth/consent'
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/create/event'
@@ -945,6 +957,7 @@ export interface RootRouteChildren {
   LocalizacaoRoute: typeof LocalizacaoRoute
   WelcomeRoute: typeof WelcomeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1474,6 +1487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBusinessBusinessIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/driver/trip/$tripId': {
       id: '/_app/driver/trip/$tripId'
       path: '/driver/trip/$tripId'
@@ -1693,6 +1713,7 @@ const rootRouteChildren: RootRouteChildren = {
   LocalizacaoRoute: LocalizacaoRoute,
   WelcomeRoute: WelcomeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
