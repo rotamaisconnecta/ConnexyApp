@@ -20,7 +20,14 @@ type RequireAuthContext = {
  * `returnTo`. The redirect target is sanitized to prevent open redirects.
  */
 export async function requireAuth({ location }: RequireAuthContext) {
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    // Demo/development without Supabase credentials keeps the mock flow intact.
+    // Production must fail closed: missing config cannot silently open protected routes.
+    if (import.meta.env.DEV) return;
+    throw new Error(
+      "Authentication is not configured. Missing SUPABASE_URL and/or SUPABASE_PUBLISHABLE_KEY.",
+    );
+  }
 
   let authenticated = false;
   if (import.meta.env.SSR) {
