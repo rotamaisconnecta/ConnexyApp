@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LocalizacaoRouteImport } from './routes/localizacao'
 import { Route as InteressesRouteImport } from './routes/interesses'
 import { Route as FinalizarPerfilRouteImport } from './routes/finalizar-perfil'
@@ -48,6 +49,8 @@ import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
 import { Route as AppDriverIndexRouteImport } from './routes/_app/driver/index'
 import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
@@ -84,12 +87,18 @@ import { Route as AppCreateMomentRouteImport } from './routes/_app/create/moment
 import { Route as AppCreateEventRouteImport } from './routes/_app/create/event'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AppDriverTripTripIdRouteImport } from './routes/_app/driver/trip/$tripId'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocalizacaoRoute = LocalizacaoRouteImport.update({
@@ -281,6 +290,18 @@ const AppAvaliarRoute = AppAvaliarRouteImport.update({
   path: '/avaliar',
   getParentRoute: () => AppRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
   id: '/perfil/',
   path: '/perfil/',
@@ -461,6 +482,12 @@ const AppBusinessBusinessIdRoute = AppBusinessBusinessIdRouteImport.update({
   path: '/business/$businessId',
   getParentRoute: () => AppRoute,
 } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -480,7 +507,10 @@ export interface FileRoutesByFullPath {
   '/finalizar-perfil': typeof FinalizarPerfilRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
+  '/mcp': typeof McpRoute
   '/welcome': typeof WelcomeRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/avaliar': typeof AppAvaliarRoute
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
@@ -512,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/trending': typeof AppTrendingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -558,7 +589,10 @@ export interface FileRoutesByTo {
   '/finalizar-perfil': typeof FinalizarPerfilRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
+  '/mcp': typeof McpRoute
   '/welcome': typeof WelcomeRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/avaliar': typeof AppAvaliarRoute
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
@@ -590,6 +624,7 @@ export interface FileRoutesByTo {
   '/trending': typeof AppTrendingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -638,7 +673,10 @@ export interface FileRoutesById {
   '/finalizar-perfil': typeof FinalizarPerfilRoute
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
+  '/mcp': typeof McpRoute
   '/welcome': typeof WelcomeRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_app/avaliar': typeof AppAvaliarRoute
   '/_app/chat': typeof AppChatRouteWithChildren
   '/_app/connecta': typeof AppConnectaRoute
@@ -670,6 +708,7 @@ export interface FileRoutesById {
   '/_app/trending': typeof AppTrendingRoute
   '/auth_/callback': typeof AuthCallbackRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/create/event': typeof AppCreateEventRoute
@@ -718,7 +757,10 @@ export interface FileRouteTypes {
     | '/finalizar-perfil'
     | '/interesses'
     | '/localizacao'
+    | '/mcp'
     | '/welcome'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/avaliar'
     | '/chat'
     | '/connecta'
@@ -750,6 +792,7 @@ export interface FileRouteTypes {
     | '/trending'
     | '/auth/callback'
     | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/create/event'
@@ -796,7 +839,10 @@ export interface FileRouteTypes {
     | '/finalizar-perfil'
     | '/interesses'
     | '/localizacao'
+    | '/mcp'
     | '/welcome'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/avaliar'
     | '/chat'
     | '/connecta'
@@ -828,6 +874,7 @@ export interface FileRouteTypes {
     | '/trending'
     | '/auth/callback'
     | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/create/event'
@@ -875,7 +922,10 @@ export interface FileRouteTypes {
     | '/finalizar-perfil'
     | '/interesses'
     | '/localizacao'
+    | '/mcp'
     | '/welcome'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/_app/avaliar'
     | '/_app/chat'
     | '/_app/connecta'
@@ -907,6 +957,7 @@ export interface FileRouteTypes {
     | '/_app/trending'
     | '/auth_/callback'
     | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/create/event'
@@ -955,9 +1006,13 @@ export interface RootRouteChildren {
   FinalizarPerfilRoute: typeof FinalizarPerfilRoute
   InteressesRoute: typeof InteressesRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
+  McpRoute: typeof McpRoute
   WelcomeRoute: typeof WelcomeRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -967,6 +1022,13 @@ declare module '@tanstack/react-router' {
       path: '/welcome'
       fullPath: '/welcome'
       preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/localizacao': {
@@ -1235,6 +1297,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAvaliarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/perfil/': {
       id: '/_app/perfil/'
       path: '/perfil'
@@ -1487,6 +1563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBusinessBusinessIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
       path: '/.lovable/oauth/consent'
@@ -1711,9 +1794,14 @@ const rootRouteChildren: RootRouteChildren = {
   FinalizarPerfilRoute: FinalizarPerfilRoute,
   InteressesRoute: InteressesRoute,
   LocalizacaoRoute: LocalizacaoRoute,
+  McpRoute: McpRoute,
   WelcomeRoute: WelcomeRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
