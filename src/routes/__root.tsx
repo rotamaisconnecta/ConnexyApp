@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { BackendOffline } from "@/components/system/backend-offline";
 import { isBackendConfigError, isBackendConfigured } from "@/lib/supabase/config-status";
 
-
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -48,7 +47,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   if (isBackendConfigError(error)) return <BackendOffline />;
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -164,7 +162,6 @@ function RootComponent() {
   }, [router, queryClient, configured]);
 
   if (!configured) return <BackendOffline />;
-
 
   return (
     <QueryClientProvider client={queryClient}>
