@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 import { useGlobalDragScroll } from "@/hooks/system/use-drag-scroll";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { BackendOffline } from "@/components/system/backend-offline";
+import { isBackendConfigError, isBackendConfigured } from "@/lib/supabase/config-status";
+
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
