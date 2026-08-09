@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link, Outlet, useRouter } from "@tanstack/react-router";
 import { BackButton } from "@/components/navigation/back-button";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "@/lib/auth/sign-out";
 import { useAuth } from "@/hooks/use-auth";
 import { StatusBar } from "@/components/phone-frame";
 import { toast } from "sonner";
@@ -140,7 +140,7 @@ function GerenciarLayout() {
         </div>
         <button
           onClick={async () => {
-            await supabase.auth.signOut();
+            await signOut();
             toast.success("Você saiu");
             nav({ to: "/auth" });
           }}

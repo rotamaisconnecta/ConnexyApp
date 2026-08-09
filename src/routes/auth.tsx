@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { prepareReturnTo } from "@/lib/auth/return-to-prepare";
 import { sanitizeReturnTo } from "@/lib/auth/return-to";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/lib/branding/brand-config";
@@ -62,17 +62,20 @@ function AuthPage() {
 
   async function google() {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    await prepareReturnTo({ data: { returnTo: returnTo } });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
-    if (result.error) {
+    if (error) {
       toast.error("Não foi possível entrar com o Google");
       setLoading(false);
       return;
     }
-    if (result.redirected) return;
-    toast.success("Bem-vindo!");
-    nav({ href: afterAuth });
+    // The browser redirects to the provider; the server-side callback at
+    // /auth/callback completes the PKCE exchange and redirects back.
   }
 
   return (

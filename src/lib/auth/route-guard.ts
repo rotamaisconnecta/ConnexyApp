@@ -1,7 +1,8 @@
 import { redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { resolveAuthenticatedUserId } from "@/lib/supabase/identity";
 import { sanitizeReturnTo } from "./return-to";
-import { isSupabaseConfigured, resolveRequestUser } from "./server-auth";
 
 type RequireAuthContext = {
   location: { href: string };
@@ -11,9 +12,8 @@ type RequireAuthContext = {
  * Route guard (beforeLoad-compatible) that enforces SSR auth only when
  * Supabase is configured. In dev/demo (no credentials) it is a no-op.
  *
- * - Server: validates the session per request via a fresh Supabase client
- *   using the session cookie (or Authorization bearer) — never trusts
- *   localStorage/claims.
+ * - Server: resolves identity per request via the SSR client and verified JWT
+ *   claims (`getClaims`) — never trusts localStorage or the cookie's raw value.
  * - Client: validates the hydrated session from the browser Supabase client.
  *
  * Unauthenticated requests are redirected to `/auth` with an internal-only
@@ -31,7 +31,7 @@ export async function requireAuth({ location }: RequireAuthContext) {
 
   let authenticated = false;
   if (import.meta.env.SSR) {
-    authenticated = (await resolveRequestUser()) !== null;
+    authenticated = (await resolveAuthenticatedUserId()) !== null;
   } else {
     const { data } = await supabase.auth.getSession();
     authenticated = Boolean(data.session);

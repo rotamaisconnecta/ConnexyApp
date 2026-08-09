@@ -428,3 +428,41 @@ Para a autenticação SSR sair de PARCIAL, é necessária **autorização para i
 - **banco remoto alterado:** NÃO · **dependências instaladas:** NÃO · **commit executado:** NÃO
 
 A consolidação de rotas foi preservada, mas a autenticação SSR permanece parcial e não foi autorizada para commit.
+
+---
+
+# Tópico 2B.2-B — Implementação local da autenticação SSR
+
+- **Data:** 2026-08-08
+- **Escopo (autorizado):** instalar `@supabase/ssr@0.12.4` e atualizar `@supabase/supabase-js` para `^2.111.0`; reestruturar o fluxo de autenticação SSR local (clientes canônicos, identidade server-side, callback OAuth/PKCE, logout, returnTo) preservando telas/mocks/design. **Nenhum banco, migration, policy, bucket ou projeto remoto foi alterado. Nenhum commit foi feito.**
+- **Escopo (proibido):** commit/push, Supabase remoto, banco/schema/RLS/policies, substituição de mocks, alteração dos 3 pares bloqueados, mudanças de design, `npm audit fix`.
+
+## Resumo da implementação
+
+### Dependências (autorizadas)
+- `@supabase/ssr@^0.12.4` (lock: `0.12.4`) + `@supabase/supabase-js@^2.111.0` (lock: `2.111.0`, auth-js `2.111.0`) — adicionadas via `npm install`.
+- `@lovable.dev/cloud-auth-js@1.1.2` **removido** (`npm uninstall`) após `src/integrations/lovable/index.ts` ficar sem consumidores; integração Lovable deletada.
+- Lock: `npm install` reportou "added 2, removed 63, changed 10" (1388 linhas a menos). Churn validado: build final passou com os pacotes legítimos preservados e nada relevante removido.
+
+### Arquitetura final
+- **`src/integrations/supabase/client.ts`** — `createBrowserClient<Database>` (cookie `sb-auth-token`, `detectSessionInUrl: false` porque o callback é server-side, `appendPkceFlowIdToRedirects: true`).
+- **`src/lib/supabase/server.server.ts`** — `createServerSupabaseClient()` **por requisição** (import dinâmico do runtime `@tanstack/react-start/server`): `getAll` via `getCookies()`; `setAll` via `setCookie`/`deleteCookie` + propagação de headers e `Vary: Cookie`; `secure = getRequestProtocol() === "https"`.
+- **`src/lib/supabase/identity.ts`** — `resolveAuthenticatedUserId()` via `getClaims()` (valida o JWT, FAIL-CLOSED: erro ou sem `sub` → `null`).
+- **`src/lib/auth/route-guard.ts`** — reescrito contra `isSupabaseConfigured` + `resolveAuthenticatedUserId`; mantém "Continuar sem entrar" apenas em DEV e FAIL-CLOSED em produção; redirect `/auth` com `sanitizeReturnTo`.
+- **`src/routes/auth_.callback.tsx`** — rota `/auth/callback` com `server.handlers.GET`: `exchangeCodeForSession` (PKCE, com `flowId`) → `getClaims()` → remove cookie `connexy-return-to` → redirect seguro (`/auth?error=*` em falha; `no-store`).
+- **`src/lib/auth/return-to-prepare.ts`** — serverFn POST `prepareReturnTo` (cookie HttpOnly 10 min).
+- **`src/lib/auth/sign-out.ts`** — serverFn POST `signOut` (`supabase.auth.signOut()` server-side; CSRF ativo por ser serverFn POST).
+- **Removidos (zero consumidores):** `src/lib/auth/server-auth.ts`, `src/lib/auth/session-cookie.ts`, `src/integrations/lovable/index.ts`, `src/integrations/supabase/auth-attacher.ts` (e `attachSupabaseAuth` retirado do `functionMiddleware` em `src/start.ts`; ordem `requestMiddleware` preservada). `src/routes/__root.tsx` não faz mais espelhamento `syncSessionCookie` (browser client grava cookies JS-readable direto; mantém `onAuthStateChange` para invalidar router).
+
+### Validação final
+- **build:** ✅ (vite + nitro; rota `/auth/callback` presente no `routeTree.gen.ts`; `service_role`/specifiers server-only ausentes de `.output/public`)
+- **TypeScript:** ✅ `npx tsc --noEmit` limpo
+- **lint:** 487/487 (baseline não ultrapassado; novos problemas nos arquivos alterados: 0)
+- **git diff --check:** ✅
+- **pares bloqueados intactos:** `/profile`↔`/perfil`, `/notifications`↔`/notificacoes`, `/ride`↔`/corrida`
+
+## Pendências (validação remota NÃO autorizada)
+- Registrar Google provider (Client ID/Secret) no Supabase remoto e allow-list de redirect: `http://localhost:3000/auth/callback` e a URL de produção + `auth/callback`, com wildcards para query `sb_flow_id` (PKCE flowId), e `secure: true` em HTTPS.
+- Validar em runtime: sign-in Google → callback server-side → cookies; refresh; logout; returnTo pós-login.
+- `requireSupabaseAuth` (auth-middleware.ts) segue órfão; `client.server.ts` (service_role) segue sem importadores — ambos preservados.
+- **status real após esta passagem:** Tópico 2B PARCIAL; autenticação SSR **implementada localmente, não validada remotamente**.

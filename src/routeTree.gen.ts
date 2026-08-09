@@ -18,6 +18,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as AppTrendingRouteImport } from './routes/_app.trending'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
 import { Route as AppRideRouteImport } from './routes/_app/ride'
@@ -127,6 +128,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth_/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppTrendingRoute = AppTrendingRouteImport.update({
@@ -498,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -574,6 +581,7 @@ export interface FileRoutesByTo {
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -652,6 +660,7 @@ export interface FileRoutesById {
   '/_app/ride': typeof AppRideRouteWithChildren
   '/_app/rota': typeof AppRotaRoute
   '/_app/trending': typeof AppTrendingRoute
+  '/auth_/callback': typeof AuthCallbackRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/create/event': typeof AppCreateEventRoute
@@ -730,6 +739,7 @@ export interface FileRouteTypes {
     | '/ride'
     | '/rota'
     | '/trending'
+    | '/auth/callback'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/create/event'
@@ -806,6 +816,7 @@ export interface FileRouteTypes {
     | '/ride'
     | '/rota'
     | '/trending'
+    | '/auth/callback'
     | '/business/$businessId'
     | '/chat/$conversationId'
     | '/create/event'
@@ -883,6 +894,7 @@ export interface FileRouteTypes {
     | '/_app/ride'
     | '/_app/rota'
     | '/_app/trending'
+    | '/auth_/callback'
     | '/_app/business/$businessId'
     | '/_app/chat/$conversationId'
     | '/_app/create/event'
@@ -932,6 +944,7 @@ export interface RootRouteChildren {
   InteressesRoute: typeof InteressesRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
   WelcomeRoute: typeof WelcomeRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -997,6 +1010,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/trending': {
@@ -1672,6 +1692,7 @@ const rootRouteChildren: RootRouteChildren = {
   InteressesRoute: InteressesRoute,
   LocalizacaoRoute: LocalizacaoRoute,
   WelcomeRoute: WelcomeRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
