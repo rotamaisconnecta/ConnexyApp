@@ -150,8 +150,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const configured = isBackendConfigured();
   useGlobalDragScroll();
   useEffect(() => {
+    if (!configured) return;
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         router.invalidate();
@@ -159,7 +161,11 @@ function RootComponent() {
       }
     });
     return () => sub.subscription.unsubscribe();
-  }, [router, queryClient]);
+  }, [router, queryClient, configured]);
+
+  if (!configured) return <BackendOffline />;
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
