@@ -1,7 +1,6 @@
 import { redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { resolveAuthenticatedUserId } from "@/lib/supabase/identity";
+import { isPublicSupabaseConfigured, isSupabaseConfigured } from "@/lib/supabase/config";
+import { getAuthenticatedUserId, resolveAuthenticatedUserId } from "@/lib/supabase/identity";
 import { sanitizeReturnTo } from "./return-to";
 
 type RequireAuthContext = {
@@ -14,12 +13,16 @@ type RequireAuthContext = {
  *
  * - Server: resolves identity per request via the SSR client and verified JWT
  *   claims (`getClaims`) — never trusts localStorage or the cookie's raw value.
- * - Client: validates the hydrated session from the browser Supabase client.
+ * - Client: asks a server function for the verified per-request identity.
  *
  * Unauthenticated requests are redirected to `/auth` with an internal-only
  * `returnTo`. The redirect target is sanitized to prevent open redirects.
  */
 export async function requireAuth({ location }: RequireAuthContext) {
+  // The browser cannot authenticate without the public VITE_* variables. In
+  // development only, keep the existing local mock flow available instead.
+  if (import.meta.env.DEV && !isPublicSupabaseConfigured()) return;
+
   if (!isSupabaseConfigured()) {
     // Demo/development without Supabase credentials keeps the mock flow intact.
     // Production must fail closed: missing config cannot silently open protected routes.
@@ -33,8 +36,8 @@ export async function requireAuth({ location }: RequireAuthContext) {
   if (import.meta.env.SSR) {
     authenticated = (await resolveAuthenticatedUserId()) !== null;
   } else {
-    const { data } = await supabase.auth.getSession();
-    authenticated = Boolean(data.session);
+    const { userId } = await getAuthenticatedUserId();
+    authenticated = typeof userId === "string" && userId.length > 0;
   }
 
   if (authenticated) return;

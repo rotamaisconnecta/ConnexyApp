@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { prepareReturnTo } from "@/lib/auth/return-to-prepare";
 import { sanitizeReturnTo } from "@/lib/auth/return-to";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/lib/branding/brand-config";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ function AuthPage() {
   const nav = useNavigate();
   const { returnTo } = Route.useSearch();
   const afterAuth = sanitizeReturnTo(returnTo) ?? "/localizacao";
+  const configured = isPublicSupabaseConfigured();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,10 +32,11 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!configured) return;
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) nav({ href: afterAuth });
     });
-  }, [nav, afterAuth]);
+  }, [nav, afterAuth, configured]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,6 +65,11 @@ function AuthPage() {
 
   async function google() {
     setLoading(true);
+    if (!configured) {
+      toast.error("Autenticação não configurada neste ambiente.");
+      setLoading(false);
+      return;
+    }
     await prepareReturnTo({ data: { returnTo: returnTo } });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

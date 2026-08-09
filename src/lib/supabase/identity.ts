@@ -1,3 +1,4 @@
+import { createServerFn } from "@tanstack/react-start";
 import { isSupabaseConfigured } from "./config";
 
 /**
@@ -18,3 +19,12 @@ export async function resolveAuthenticatedUserId(): Promise<string | null> {
   if (error || !data?.claims?.sub) return null;
   return data.claims.sub;
 }
+
+/**
+ * Browser-side route guards must ask the server for the verified identity.
+ * The handler runs with a per-request Supabase client and never exposes a
+ * session or token to the browser.
+ */
+export const getAuthenticatedUserId = createServerFn({ method: "GET" }).handler(async () => ({
+  userId: await resolveAuthenticatedUserId(),
+}));

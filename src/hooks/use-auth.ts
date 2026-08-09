@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { currentUser } from "@/lib/mock-data";
+
+const developmentMockUser = { id: currentUser.id } as User;
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -8,6 +12,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isPublicSupabaseConfigured()) {
+      if (import.meta.env.DEV) setUser(developmentMockUser);
+      setLoading(false);
+      return;
+    }
+
     let hydrated = false;
     const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
       setSession(s);

@@ -12,7 +12,7 @@ import { useGlobalDragScroll } from "@/hooks/system/use-drag-scroll";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BackendOffline } from "@/components/system/backend-offline";
-import { isBackendConfigError, isBackendConfigured } from "@/lib/supabase/config-status";
+import { isBackendConfigured, isBackendUnavailableError } from "@/lib/supabase/config-status";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -46,7 +46,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
-  if (isBackendConfigError(error)) return <BackendOffline />;
+  if (isBackendUnavailableError(error)) return <BackendOffline />;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -160,8 +160,6 @@ function RootComponent() {
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient, configured]);
-
-  if (!configured) return <BackendOffline />;
 
   return (
     <QueryClientProvider client={queryClient}>

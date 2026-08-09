@@ -1,22 +1,17 @@
+import { isPublicSupabaseConfigured } from "./config";
+
 /**
  * Checks whether the backend connection settings are available, without ever
  * instantiating the client (which throws when they are missing).
  */
 export function isBackendConfigured(): boolean {
-  const env = import.meta.env as Record<string, string | undefined>;
-  const serverEnv =
-    typeof process !== "undefined" && process.env
-      ? (process.env as Record<string, string | undefined>)
-      : {};
-
-  const url = env.VITE_SUPABASE_URL || serverEnv.SUPABASE_URL;
-  const key = env.VITE_SUPABASE_PUBLISHABLE_KEY || serverEnv.SUPABASE_PUBLISHABLE_KEY;
-
-  return Boolean(url && key);
+  return isPublicSupabaseConfigured();
 }
 
-export function isBackendConfigError(error: unknown): boolean {
-  return (
-    error instanceof Error && error.message.includes("Missing Supabase environment variable(s)")
-  );
+/**
+ * Configuration errors are actionable deployment errors, not temporary backend
+ * outages. Keep the offline UI for actual network failures only.
+ */
+export function isBackendUnavailableError(error: unknown): boolean {
+  return error instanceof TypeError && /(?:fetch|network|failed to fetch)/i.test(error.message);
 }
