@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 import { useGlobalDragScroll } from "@/hooks/system/use-drag-scroll";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { BackendOffline } from "@/components/system/backend-offline";
+import { isBackendConfigError, isBackendConfigured } from "@/lib/supabase/config-status";
+
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -43,6 +46,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+
+  if (isBackendConfigError(error)) return <BackendOffline />;
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -144,8 +150,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const configured = isBackendConfigured();
   useGlobalDragScroll();
   useEffect(() => {
+    if (!configured) return;
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         router.invalidate();
@@ -153,7 +161,11 @@ function RootComponent() {
       }
     });
     return () => sub.subscription.unsubscribe();
-  }, [router, queryClient]);
+  }, [router, queryClient, configured]);
+
+  if (!configured) return <BackendOffline />;
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
