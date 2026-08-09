@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://lzejdgfvtybarpbgwsyp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "appconnexy",
+      "version": "0.1.0",
+      "title": "AppConnexy"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Read the signed-in Connexy user's public profile (bio, mood, interests, vibe).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_my_profile",
+        "title": "Update my profile",
+        "description": "Update fields on the signed-in Connexy user's profile. Only the provided fields change.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Display name.",
+              "type": "string"
+            },
+            "headline": {
+              "description": "Short headline shown on the Vibe Card.",
+              "type": "string"
+            },
+            "bio": {
+              "description": "Personal description.",
+              "type": "string"
+            },
+            "mood_emoji": {
+              "description": "Mood of the day emoji.",
+              "type": "string"
+            },
+            "mood_text": {
+              "description": "Mood of the day text.",
+              "type": "string"
+            },
+            "interests": {
+              "description": "List of interests.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "vibe_tags": {
+              "description": "List of vibe tags.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_moments",
+        "title": "List my moments",
+        "description": "List the signed-in Connexy user's published moments (bio posts), newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "How many moments to return (default 20, max 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_moment",
+        "title": "Create a moment",
+        "description": "Publish a new moment (bio post) as the signed-in Connexy user, optionally tied to a place.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "The moment text."
+            },
+            "place_id": {
+              "description": "Optional place id to attach.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "media_url": {
+              "description": "Optional image or video URL.",
+              "type": "string",
+              "format": "uri"
+            },
+            "media_kind": {
+              "description": "Kind of attached media.",
+              "type": "string",
+              "enum": [
+                "image",
+                "video"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_places",
+        "title": "Search places",
+        "description": "Search Connexy places by name or category (bars, cafés, venues and businesses).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Text matched against the place name.",
+              "type": "string"
+            },
+            "category": {
+              "description": "Exact category filter.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "How many places to return (default 20, max 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_reels",
+        "title": "List my reels",
+        "description": "List reels published by the signed-in Connexy user, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "How many reels to return (default 20, max 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
