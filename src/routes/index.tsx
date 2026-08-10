@@ -3,11 +3,18 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import splashImage from "@/assets/Branding/Connexy-Splash.png";
+
+const SPLASH_MIN_MS = 2000;
+const SESSION_TIMEOUT_MS = 5000;
+const FADE_MS = 600;
 
 export const Route = createFileRoute("/")({
   component: Splash,
 });
+
+type Destination = "/auth" | "/home";
 
 function Splash() {
   const nav = useNavigate();
@@ -15,16 +22,54 @@ function Splash() {
 
   useEffect(() => {
     let cancelled = false;
-    const t = setTimeout(async () => {
-      setShowSplash(false);
-      await new Promise((r) => setTimeout(r, 600));
+    let transitionTimer: ReturnType<typeof setTimeout> | undefined;
+    let sessionTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const startTransition = (destination: Destination) => {
       if (cancelled) return;
-      const { data } = await supabase.auth.getSession();
-      if (!cancelled) nav({ to: data.session ? "/home" : "/auth" });
-    }, 2000);
+      setShowSplash(false);
+      transitionTimer = setTimeout(() => {
+        if (cancelled) return;
+        try {
+          nav({ to: destination, replace: true });
+        } catch {
+          setShowSplash(true);
+        }
+      }, FADE_MS);
+    };
+
+    const resolveDestination = (): Promise<Destination> => {
+      if (!isPublicSupabaseConfigured()) return Promise.resolve("/auth");
+
+      const getDestination = async (): Promise<Destination> => {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          if (import.meta.env.DEV) console.warn("[auth] getSession failed; redirecting to /auth");
+          return "/auth";
+        }
+        return data.session ? "/home" : "/auth";
+      };
+
+      return Promise.race([
+        getDestination().catch(() => {
+          if (import.meta.env.DEV) console.warn("[auth] getSession error; redirecting to /auth");
+          return "/auth" as Destination;
+        }),
+        new Promise<Destination>((resolve) => {
+          sessionTimeout = setTimeout(() => resolve("/auth"), SESSION_TIMEOUT_MS);
+        }),
+      ]);
+    };
+
+    const splashTimer = setTimeout(() => {
+      resolveDestination().then(startTransition);
+    }, SPLASH_MIN_MS);
+
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(splashTimer);
+      clearTimeout(transitionTimer);
+      clearTimeout(sessionTimeout);
     };
   }, [nav]);
 
