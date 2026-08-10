@@ -4,6 +4,9 @@
    and provides convenient access patterns.
 ========================================================= */
 
+import connexyLogo from "../../assets/Branding/connexy-logo.png";
+import connexyIcon from "../../assets/Branding/connexy-icon.png";
+
 import {
   Colors,
   Gradients,
@@ -40,8 +43,8 @@ export const Brand = {
    Logo — import paths (use with <img> or next/image)
 ----------------------------------------------------------- */
 export const Logo = {
-  default: new URL("../../assets/Branding/connexy-logo.png", import.meta.url).href,
-  icon: new URL("../../assets/Branding/connexy-icon.png", import.meta.url).href,
+  default: connexyLogo,
+  icon: connexyIcon,
 } as const;
 
 export { Colors, Typography, Radius, Gradients, Shadows, IconConfig as Icons, Spacing, Animations };
