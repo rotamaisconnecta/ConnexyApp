@@ -20,7 +20,7 @@ function Splash() {
       await new Promise((r) => setTimeout(r, 600));
       if (cancelled) return;
       const { data } = await supabase.auth.getSession();
-      if (!cancelled) nav({ to: data.session ? "/localizacao" : "/welcome" });
+      if (!cancelled) nav({ to: data.session ? "/home" : "/auth" });
     }, 2000);
     return () => {
       cancelled = true;
