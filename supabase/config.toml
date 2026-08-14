@@ -1,1 +1,4 @@
 project_id = "lzejdgfvtybarpbgwsyp"
+
+[db.seed]
+enabled = false
