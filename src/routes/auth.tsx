@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { prepareReturnTo } from "@/lib/auth/return-to-prepare";
 import { sanitizeReturnTo } from "@/lib/auth/return-to";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { getProfileStatusClient } from "@/lib/profile/profile-status";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/lib/branding/brand-config";
 import { toast } from "sonner";
@@ -23,47 +24,100 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const { returnTo } = Route.useSearch();
-  const afterAuth = sanitizeReturnTo(returnTo) ?? "/localizacao";
+  const afterAuth = sanitizeReturnTo(returnTo) ?? "/home";
   const configured = isPublicSupabaseConfigured();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const mountedRef = useRef(true);
+  const authOperationRef = useRef(0);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      authOperationRef.current += 1;
+    };
+  }, []);
+
+  function isCurrentAuthOperation(operation: number) {
+    return mountedRef.current && authOperationRef.current === operation;
+  }
+
+  function beginAuthOperation() {
+    return ++authOperationRef.current;
+  }
+
+  async function redirectAfterSession(operation: number, target?: string) {
+    if (!isCurrentAuthOperation(operation)) return;
+    let destination = target ?? afterAuth;
+    try {
+      const status = await getProfileStatusClient();
+      if (!isCurrentAuthOperation(operation)) return;
+      if (status.authenticated && !status.complete) {
+        destination = status.step === "interesses" ? "/interesses" : "/completar-perfil";
+      }
+    } catch {
+      // Keep the default destination when the status cannot be resolved.
+    }
+    if (isCurrentAuthOperation(operation)) nav({ href: destination, replace: true });
+  }
 
   useEffect(() => {
     if (!configured) return;
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ href: afterAuth });
-    });
+    const operation = beginAuthOperation();
+    void (async () => {
+      const { data, error } = await supabase.auth.getSession();
+      // A submit, a newer session lookup, or an unmount invalidates this
+      // snapshot. Its result must never be allowed to navigate afterward.
+      if (!isCurrentAuthOperation(operation) || error || !data.session) return;
+      await redirectAfterSession(operation);
+    })();
+    return () => {
+      if (authOperationRef.current === operation) authOperationRef.current += 1;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nav, afterAuth, configured]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Invalidate the session lookup started when /auth mounted before the
+    // authentication request yields. Only this submit may navigate afterward.
+    const operation = beginAuthOperation();
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { name }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("Conta criada! Você já pode entrar.");
+        if (!isCurrentAuthOperation(operation)) return;
+        if (data.session) {
+          toast.success("Conta criada! Complete seu perfil.");
+          nav({ href: "/completar-perfil", replace: true });
+        } else {
+          toast.success(`Verifique seu e-mail (${email}) para confirmar e entrar.`);
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!isCurrentAuthOperation(operation)) return;
         toast.success("Bem-vindo de volta!");
-        nav({ href: afterAuth });
+        await redirectAfterSession(operation);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
     } finally {
-      setLoading(false);
+      if (isCurrentAuthOperation(operation)) setLoading(false);
     }
   }
 
   async function google() {
+    const operation = beginAuthOperation();
     setLoading(true);
     if (!configured) {
       toast.error("Autenticação não configurada neste ambiente.");
@@ -71,12 +125,14 @@ function AuthPage() {
       return;
     }
     await prepareReturnTo({ data: { returnTo: returnTo } });
+    if (!isCurrentAuthOperation(operation)) return;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
+    if (!isCurrentAuthOperation(operation)) return;
     if (error) {
       toast.error("Não foi possível entrar com o Google");
       setLoading(false);

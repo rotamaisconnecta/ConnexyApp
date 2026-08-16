@@ -1,7 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/system/confirm-dialog";
+import { signOut } from "@/lib/auth/sign-out";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { toast } from "sonner";
 
 import { currentUser, findPlace } from "@/lib/mock-data";
 import {
@@ -13,6 +18,9 @@ import {
   Handshake,
   CalendarCheck,
   Shield,
+  MoreVertical,
+  LogOut,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
@@ -27,7 +35,24 @@ export const Route = createFileRoute("/_app/profile")({
 });
 
 function ProfilePage() {
+  const nav = useNavigate();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function doSignOut() {
+    setSigningOut(true);
+    try {
+      if (isPublicSupabaseConfigured()) await signOut();
+      toast.success("Você saiu da sua conta.");
+      nav({ to: "/auth", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível sair da conta.");
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <div className="flex-1 pb-20">
@@ -35,9 +60,47 @@ function ProfilePage() {
 
       <header className="pl-5 pr-16 pt-1 pb-3 flex items-center justify-between">
         <h1 className="font-display font-bold text-lg">Meu Perfil</h1>
-        <Link to="/gerenciar" className="text-xs font-semibold text-primary">
-          Editar
-        </Link>
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Opções do perfil"
+            onClick={() => setMenuOpen((open) => !open)}
+            className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-muted-foreground hover:bg-accent transition-colors"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-2xl border border-border bg-surface p-1.5 shadow-elevated">
+                <Link
+                  to="/gerenciar"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Editar perfil
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setConfirmOpen(true);
+                  }}
+                  disabled={signingOut}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  {signingOut ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
+                  Sair da conta
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* ── Hero ──────────────────────────────────────────── */}
@@ -246,6 +309,17 @@ function ProfilePage() {
       </motion.section>
 
       <div className="h-6" />
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={doSignOut}
+        title="Sair da conta"
+        message="Tem certeza de que deseja sair? Você precisará entrar novamente para continuar."
+        confirmLabel="Sair"
+        cancelLabel="Cancelar"
+        danger
+      />
     </div>
   );
 }

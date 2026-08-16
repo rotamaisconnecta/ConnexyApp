@@ -1,26 +1,72 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AtSign, CalendarDays, ChevronDown, UserRound } from "lucide-react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { UploadMedia } from "@/components/upload";
 import { MediaFile } from "@/lib/upload";
+import { useAuth } from "@/hooks/use-auth";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { profileCompletionForGuard } from "@/lib/profile/profile-status";
+import { ProfileRepository } from "@/repositories/profile.repository";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/completar-perfil")({
+  beforeLoad: async () => {
+    const status = await profileCompletionForGuard();
+    if (status.authenticated && status.complete) {
+      throw redirect({ to: "/home", replace: true });
+    }
+  },
   head: () => ({ meta: [{ title: "Complete seu perfil | Connexy" }] }),
   component: CompleteProfile,
 });
 
+function ageFromBirthDate(value: string): number | null {
+  if (!value) return null;
+  const birth = new Date(value);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const months = now.getMonth() - birth.getMonth();
+  if (months < 0 || (months === 0 && now.getDate() < birth.getDate())) age -= 1;
+  return age;
+}
+
 function CompleteProfile() {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const configured = isPublicSupabaseConfigured();
   const [photos, setPhotos] = useState<MediaFile[]>([]);
   const photo = photos[0]?.preview ?? null;
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [saving, setSaving] = useState(false);
   const canContinue = Boolean(name.trim() && username.trim() && birthDate);
   const maxBirthDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!canContinue || saving) return;
+    if (configured && user) {
+      setSaving(true);
+      try {
+        await ProfileRepository.updateProfile(user.id, {
+          name: name.trim(),
+          handle: username.trim().toLowerCase(),
+          bio: bio.trim() || null,
+          age: ageFromBirthDate(birthDate),
+        });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Não foi possível salvar seu perfil.");
+        setSaving(false);
+        return;
+      }
+    }
+    nav({ to: "/interesses" });
+  }
 
   return (
     <PhoneFrame>
@@ -57,13 +103,7 @@ function CompleteProfile() {
             <UploadMedia mode="photo" value={photos} onChange={setPhotos} />
           </div>
 
-          <form
-            className="mt-8 space-y-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (canContinue) nav({ to: "/interesses" });
-            }}
-          >
+          <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <Field label="Nome completo" icon={UserRound}>
               <input
                 required
@@ -114,10 +154,10 @@ function CompleteProfile() {
 
             <button
               type="submit"
-              disabled={!canContinue}
+              disabled={!canContinue || saving}
               className="mt-7 h-14 w-full rounded-2xl bg-gradient-brand text-xl font-semibold text-white shadow-elegant disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Continuar
+              {saving ? "Salvando..." : "Continuar"}
             </button>
           </form>
 

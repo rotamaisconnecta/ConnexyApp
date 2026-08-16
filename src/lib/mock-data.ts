@@ -414,7 +414,7 @@ export const drivers: Driver[] = [
 export type Place = {
   id: string;
   name: string;
-  category: "Restaurantes" | "Cafés" | "Eventos" | "Lojas";
+  category: string;
   distanceMeters: number;
   rating: number;
   reviews: number;

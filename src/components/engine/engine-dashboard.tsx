@@ -18,6 +18,7 @@ interface DashboardData {
 
 interface EngineDashboardProps {
   data: DashboardData;
+  onSelect?: (id: string) => void;
 }
 
 const SECTION_CONFIG = [
@@ -58,7 +59,7 @@ const SECTION_CONFIG = [
   },
 ];
 
-export function EngineDashboard({ data }: EngineDashboardProps) {
+export function EngineDashboard({ data, onSelect }: EngineDashboardProps) {
   const allItems = [
     ...data.topPeople,
     ...data.topEvents,
@@ -91,7 +92,13 @@ export function EngineDashboard({ data }: EngineDashboardProps) {
 
       <div className="space-y-6 py-4">
         {SECTION_CONFIG.map(({ key, title, icon }) => (
-          <RecommendationSection key={key} title={title} icon={icon} items={data[key]} />
+          <RecommendationSection
+            key={key}
+            title={title}
+            icon={icon}
+            items={data[key]}
+            onSelect={onSelect}
+          />
         ))}
 
         {data.notifications.length > 0 && (

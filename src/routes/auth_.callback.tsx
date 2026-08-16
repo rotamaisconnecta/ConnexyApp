@@ -43,7 +43,7 @@ export const Route = createFileRoute("/auth_/callback")({
         const returnTo = sanitizeReturnTo(getCookie(RETURN_TO_COOKIE_NAME));
         deleteCookie(RETURN_TO_COOKIE_NAME, { path: "/" });
 
-        return redirectTo(returnTo ?? "/localizacao");
+        return redirectTo(returnTo ?? "/home");
       },
     },
   },

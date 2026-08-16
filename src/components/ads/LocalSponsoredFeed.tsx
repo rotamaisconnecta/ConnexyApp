@@ -1,11 +1,28 @@
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { MapPin } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { formatProtectedProximity } from "@/lib/proximity";
-import { SPONSORED_ADS, sponsoredActionMessage } from "@/lib/ads/mock-sponsored-content";
+import {
+  SPONSORED_ADS,
+  sponsoredActionMessage,
+  type SponsoredAction,
+} from "@/lib/ads/mock-sponsored-content";
+import { resolveSponsoredRoute } from "@/lib/navigation/detail-routes";
 
 export function LocalSponsoredFeed() {
+  const nav = useNavigate();
+
+  function handleClick(adId: string, action: string, title: string) {
+    const ad = SPONSORED_ADS.find((a) => a.id === adId);
+    const route = ad ? resolveSponsoredRoute(ad) : null;
+    if (route) {
+      nav({ href: route });
+      return;
+    }
+    toast.success(sponsoredActionMessage(action as SponsoredAction, title));
+  }
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -67,7 +84,7 @@ export function LocalSponsoredFeed() {
               )}
               <button
                 type="button"
-                onClick={() => toast.success(sponsoredActionMessage(ad.action, ad.title))}
+                onClick={() => handleClick(ad.id, ad.action, ad.title)}
                 className="mt-3 h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold transition-colors hover:bg-primary/20 active:scale-[0.98]"
               >
                 {ad.ctaLabel}

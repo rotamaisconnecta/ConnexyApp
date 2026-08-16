@@ -16,6 +16,7 @@ import {
   type Moment,
   type Person,
 } from "@/lib/mock-data";
+import { enginePersonById } from "@/lib/engine/engine-detail";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import {
   MoreVertical,
@@ -49,7 +50,7 @@ export const Route = createFileRoute("/_app/perfil/$id")({
   }),
   validateSearch: searchSchema,
   loader: ({ params }) => {
-    const person = findPerson(params.id);
+    const person = findPerson(params.id) ?? enginePersonById(params.id);
     if (!person) throw notFound();
     return person;
   },
@@ -71,7 +72,7 @@ function Perfil() {
   const commonPlaces = cg.sharedPlaces.map(findPlace).filter(Boolean);
 
   return (
-    <div className="flex-1 flex flex-col pb-24">
+    <div className="flex-1 flex flex-col pb-8">
       <StatusBar />
       <div className="flex items-center justify-between px-4 pt-1 pb-2">
         <BackButton
@@ -327,66 +328,68 @@ function Perfil() {
         </section>
       )}
 
-      {/* Sticky footer */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] px-4 pb-4 pt-3 bg-gradient-to-t from-background via-background/95 to-transparent">
-        {from === "solicitacao" ? (
-          <div className="flex gap-2">
-            <Link
-              to="/solicitacao/$id"
-              params={{ id: p.id }}
-              className="flex-1 h-12 rounded-2xl bg-secondary text-foreground font-semibold flex items-center justify-center"
-            >
-              Voltar
-            </Link>
-            {inviteStatus === "invited" ? (
-              <button
-                type="button"
-                className="flex-1 h-12 rounded-2xl bg-secondary text-muted-foreground font-semibold flex items-center justify-center"
-                aria-label="Convite enviado"
-              >
-                Convite enviado
-              </button>
-            ) : inviteStatus === "connected" ? (
-              <button
-                type="button"
-                onClick={() =>
-                  nav({
-                    to: "/chat/$conversationId",
-                    params: { conversationId: getConversationId(p.id) ?? p.id },
-                  })
-                }
-                className="flex-1 h-12 rounded-2xl bg-primary/10 text-primary font-semibold flex items-center justify-center"
-              >
-                Abrir conversa
-              </button>
-            ) : inviteStatus === "rejected" ? (
+      {/* Convite para conversa */}
+      {p.id !== currentUser.id && (
+        <section className="mx-4 mt-4 pb-4">
+          {from === "solicitacao" ? (
+            <div className="flex gap-2">
               <Link
                 to="/solicitacao/$id"
                 params={{ id: p.id }}
-                search={{ mode: "send" }}
-                className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center"
+                className="flex-1 h-12 rounded-2xl bg-secondary text-foreground font-semibold flex items-center justify-center"
               >
-                Enviar novo convite
+                Voltar
               </Link>
-            ) : (
-              <button
-                onClick={() => {
-                  writeStoredInvite(p.id, "connected");
-                  nav({
-                    to: "/chat/$conversationId",
-                    params: { conversationId: getConversationId(p.id) ?? p.id },
-                  });
-                }}
-                className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
-              >
-                Aceitar conversa
-              </button>
-            )}
-          </div>
-        ) : (
-          <ConversationInviteButton personId={p.id} personName={p.name} variant="profile" />
-        )}
-      </div>
+              {inviteStatus === "invited" ? (
+                <button
+                  type="button"
+                  className="flex-1 h-12 rounded-2xl bg-secondary text-muted-foreground font-semibold flex items-center justify-center"
+                  aria-label="Convite enviado"
+                >
+                  Convite enviado
+                </button>
+              ) : inviteStatus === "connected" ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    nav({
+                      to: "/chat/$conversationId",
+                      params: { conversationId: getConversationId(p.id) ?? p.id },
+                    })
+                  }
+                  className="flex-1 h-12 rounded-2xl bg-primary/10 text-primary font-semibold flex items-center justify-center"
+                >
+                  Abrir conversa
+                </button>
+              ) : inviteStatus === "rejected" ? (
+                <Link
+                  to="/solicitacao/$id"
+                  params={{ id: p.id }}
+                  search={{ mode: "send" }}
+                  className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center"
+                >
+                  Enviar novo convite
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    writeStoredInvite(p.id, "connected");
+                    nav({
+                      to: "/chat/$conversationId",
+                      params: { conversationId: getConversationId(p.id) ?? p.id },
+                    });
+                  }}
+                  className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
+                >
+                  Aceitar conversa
+                </button>
+              )}
+            </div>
+          ) : (
+            <ConversationInviteButton personId={p.id} personName={p.name} variant="profile" />
+          )}
+        </section>
+      )}
     </div>
   );
 }
@@ -449,6 +452,3 @@ function Stat({
     </div>
   );
 }
-
-// Suppress unused-import warning for currentUser (used indirectly via commonGround)
-void currentUser;

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { eventsToday, eventsUpcoming, type HomeEvent } from "@/lib/feed/home-premium";
+import { formatEventDistance } from "@/lib/marketplace/event-utils";
 
 const searchSchema = z.object({
   today: z.enum(["true", "false"]).optional(),
@@ -18,6 +19,8 @@ export const Route = createFileRoute("/_app/events")({
 });
 
 function EventCard({ event }: { event: HomeEvent }) {
+  const distanceLabel = formatEventDistance(event.distance);
+
   return (
     <Link
       to="/event/$eventId"
@@ -36,10 +39,12 @@ function EventCard({ event }: { event: HomeEvent }) {
           <Users className="h-3 w-3" />
           {event.participants}
         </span>
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-gray-800 shadow-soft">
-          <MapPin className="h-3 w-3" />
-          {event.distance}
-        </span>
+        {distanceLabel && (
+          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-gray-800 shadow-soft">
+            <MapPin className="h-3 w-3" />
+            {distanceLabel}
+          </span>
+        )}
       </div>
       <div className="p-3.5">
         <div className="flex items-center justify-between gap-2">
@@ -114,11 +119,23 @@ function EventsPage() {
       </div>
 
       <div className="px-4 py-4 pb-6">
-        <div className="grid grid-cols-2 gap-3">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {events.length === 0 ? (
+          <div className="rounded-3xl border border-border bg-surface p-8 text-center shadow-soft">
+            <div className="text-4xl">🗓️</div>
+            <h2 className="mt-3 font-display font-bold text-base">Nenhum evento por aqui</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {today
+                ? "Ainda não há eventos acontecendo hoje. Volte mais tarde."
+                : "Não há eventos futuros no momento. Verifique novamente em breve."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

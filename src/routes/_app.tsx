@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createFileRoute, Outlet, useNavigate, useMatch } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useMatch, redirect } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
 import { PromoPopup } from "@/components/promo-popup";
@@ -8,10 +8,19 @@ import { useAuth } from "@/hooks/use-auth";
 import { ContextEngineProvider } from "@/lib/context/context-provider";
 import { PresenceProvider } from "@/providers/presence/presence-provider";
 import { requireAuth } from "@/lib/auth/route-guard";
+import { profileCompletionForGuard } from "@/lib/profile/profile-status";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app")({
-  beforeLoad: requireAuth,
+  beforeLoad: async ({ location }) => {
+    await requireAuth({ location });
+    const status = await profileCompletionForGuard();
+    if (status.authenticated && !status.complete) {
+      const to =
+        status.step === "interesses" ? ("/interesses" as const) : ("/completar-perfil" as const);
+      throw redirect({ to, replace: true });
+    }
+  },
   component: AppLayout,
 });
 

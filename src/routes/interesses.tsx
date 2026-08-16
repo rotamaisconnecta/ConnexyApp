@@ -1,17 +1,30 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useState, useRef, type KeyboardEvent } from "react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { Plus, X } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
 import { allInterests } from "@/lib/mock-data";
+import { useAuth } from "@/hooks/use-auth";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { profileCompletionForGuard } from "@/lib/profile/profile-status";
+import { ProfileRepository } from "@/repositories/profile.repository";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/interesses")({
+  beforeLoad: async () => {
+    const status = await profileCompletionForGuard();
+    if (status.authenticated && status.complete) {
+      throw redirect({ to: "/home", replace: true });
+    }
+  },
   head: () => ({ meta: [{ title: "Interesses — Connexy" }] }),
   component: Interests,
 });
 
 function Interests() {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const configured = isPublicSupabaseConfigured();
   const [selected, setSelected] = useState<string[]>([
     "Viagens",
     "Socializar",
@@ -20,6 +33,7 @@ function Interests() {
   ]);
   const [customInterests, setCustomInterests] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const allCustoms = [...allInterests, ...customInterests.filter((c) => !allInterests.includes(c))];
@@ -46,6 +60,23 @@ function Interests() {
     }
   };
 
+  async function finish() {
+    if (selected.length < 3 || saving) return;
+    if (configured && user) {
+      setSaving(true);
+      try {
+        await ProfileRepository.updateProfile(user.id, { interests: selected });
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Não foi possível salvar seus interesses.",
+        );
+        setSaving(false);
+        return;
+      }
+    }
+    nav({ to: "/home" });
+  }
+
   return (
     <PhoneFrame>
       <StatusBar />
@@ -54,7 +85,7 @@ function Interests() {
           fallbackTo="/completar-perfil"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
         />
-        <span className="text-xs text-muted-foreground">Passo 3 de 4</span>
+        <span className="text-xs text-muted-foreground">Passo 3 de 3</span>
         <span className="w-9" />
       </div>
 
@@ -132,11 +163,11 @@ function Interests() {
             {selected.length} selecionados
           </div>
           <button
-            onClick={() => nav({ to: "/finalizar-perfil" })}
-            disabled={selected.length < 3}
+            onClick={finish}
+            disabled={selected.length < 3 || saving}
             className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant disabled:opacity-50"
           >
-            Continuar
+            {saving ? "Salvando..." : "Continuar"}
           </button>
         </div>
       </div>

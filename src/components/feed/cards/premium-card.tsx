@@ -6,6 +6,7 @@ import {
   type PremiumCard,
   type PremiumCardKind,
 } from "@/lib/feed/home-premium";
+import { resolvePremiumCardRoute } from "@/lib/navigation/detail-routes";
 import { cn } from "@/lib/utils";
 
 const CTA_LABEL: Record<PremiumCardKind, string> = {
@@ -175,10 +176,12 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
 }
 
 export function PremiumCardView({ card, compact }: { card: PremiumCard; compact?: boolean }) {
-  if (card.route) {
+  const route = resolvePremiumCardRoute(card);
+
+  if (route) {
     return (
       <Link
-        to={card.route}
+        to={route}
         className="block h-full rounded-[24px] overflow-hidden transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
       >
         <CardShell card={card} compact={compact} />

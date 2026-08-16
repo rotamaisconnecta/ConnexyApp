@@ -390,7 +390,9 @@ function placeToCard(p: (typeof places)[number]): PremiumCard {
         ? "cafe"
         : p.category === "Eventos"
           ? "sponsored-event"
-          : "store";
+          : p.category === "Lojas"
+            ? "store"
+            : "place";
 
   return {
     id: p.id,
@@ -416,7 +418,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Hotel Paulista Prime",
     subtitle: "Conforto no coração da cidade",
     photo: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400",
-    route: "/discover",
+    route: "/business/hotel-prime",
     rating: 4.8,
     distance: "2,1km",
     distanceMeters: 2100,
@@ -431,7 +433,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Academia Arena Fit",
     subtitle: "Treine com os melhores equipamentos",
     photo: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400",
-    route: "/discover",
+    route: "/business/gym-arena",
     rating: 4.6,
     distance: "950m",
     distanceMeters: 950,
@@ -446,7 +448,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Cine Palace",
     subtitle: "Sessões de estreia em IMAX",
     photo: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400",
-    route: "/discover",
+    route: "/business/cine-palace",
     rating: 4.5,
     distance: "1,3km",
     distanceMeters: 1300,
@@ -461,7 +463,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Bar do Zé",
     subtitle: "Petiscos e música ao vivo",
     photo: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400",
-    route: "/discover",
+    route: "/business/bar-ze",
     rating: 4.4,
     distance: "700m",
     distanceMeters: 700,
@@ -476,7 +478,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Sushi Tanaka",
     subtitle: "Culinária japonesa autêntica",
     photo: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400",
-    route: "/discover",
+    route: "/business/sushi-tanaka",
     rating: 4.9,
     distance: "180m",
     distanceMeters: 180,
@@ -491,7 +493,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Studio Criativo",
     subtitle: "Coworking e salas de evento",
     photo: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400",
-    route: "/discover",
+    route: "/business/studio-criativo",
     rating: 4.3,
     distance: "350m",
     distanceMeters: 350,
@@ -506,7 +508,7 @@ const EXTRA_CARDS: PremiumCard[] = [
     title: "Praça Central",
     subtitle: "Encontro de pessoas e eventos",
     photo: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400",
-    route: "/discover",
+    route: "/business/praca-central",
     rating: 4.7,
     distance: "80m",
     distanceMeters: 80,

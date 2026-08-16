@@ -9,14 +9,15 @@ import { FollowBusinessButton } from "@/components/marketplace/follow-business-b
 import { Navigation, Share2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import type { Business } from "@/lib/marketplace/business-types";
-import { MOCK_BUSINESSES, MOCK_COUPONS } from "@/lib/marketplace/mock-businesses";
+import { MOCK_COUPONS, getBusinessById } from "@/lib/marketplace/mock-businesses";
+import { engineBusinessById } from "@/lib/engine/engine-detail";
 
 export const Route = createFileRoute("/_app/business/$businessId")({
   head: ({ params }) => ({
     meta: [{ title: `Empresa — Connexy` }],
   }),
   loader: ({ params }) => {
-    const business = MOCK_BUSINESSES.find((b) => b.id === params.businessId);
+    const business = getBusinessById(params.businessId) ?? engineBusinessById(params.businessId);
     if (!business) throw notFound();
     return business;
   },

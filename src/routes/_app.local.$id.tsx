@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { places } from "@/lib/mock-data";
+import { enginePlaceById } from "@/lib/engine/engine-detail";
 import { proximityLabel } from "@/lib/proximity";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/_app/local/$id")({
     ],
   }),
   loader: ({ params }) => {
-    const p = places.find((x) => x.id === params.id);
+    const p = places.find((x) => x.id === params.id) ?? enginePlaceById(params.id);
     if (!p) throw notFound();
     return p;
   },

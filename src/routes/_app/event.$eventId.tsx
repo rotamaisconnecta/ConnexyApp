@@ -10,12 +10,20 @@ import { Calendar, Share2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Business, BusinessEvent } from "@/lib/marketplace/business-types";
 import { EventStatus } from "@/lib/marketplace/business-types";
-import { MOCK_EVENTS, MOCK_BUSINESSES } from "@/lib/marketplace/mock-businesses";
+import {
+  MOCK_EVENTS,
+  MOCK_EXTRA_EVENTS,
+  MOCK_BUSINESSES,
+  getEventById,
+} from "@/lib/marketplace/mock-businesses";
 import { HOME_EVENTS, type HomeEvent } from "@/lib/feed/home-premium";
+import { allEngineEvents } from "@/lib/engine/engine-detail";
 import {
   getEventStatusLabel,
   getEventStatusBgColor,
   formatEventDateTimeRange,
+  formatEventPrice,
+  formatEventCapacity,
   getEventCapacityPercent,
 } from "@/lib/marketplace/event-utils";
 
@@ -91,7 +99,9 @@ function homeEventToBusinessEvent(e: HomeEvent): BusinessEvent {
 
 const ALL_EVENTS: BusinessEvent[] = [
   ...MOCK_EVENTS,
+  ...MOCK_EXTRA_EVENTS,
   ...HOME_EVENTS.map(homeEventToBusinessEvent),
+  ...allEngineEvents(),
 ];
 
 function EventDetailPage() {
@@ -187,7 +197,7 @@ function EventDetailPage() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Vagas</span>
             <span className="font-medium">
-              {event.attendeesCount}/{event.capacity} participantes
+              {formatEventCapacity(event.attendeesCount, event.capacity)}
             </span>
           </div>
           <div className="h-2 rounded-full bg-secondary overflow-hidden">
@@ -202,9 +212,7 @@ function EventDetailPage() {
 
         <div className="flex items-center justify-between rounded-2xl bg-secondary/50 p-4">
           <div>
-            <div className="text-2xl font-bold">
-              {event.price === 0 ? "Grátis" : `R$ ${event.price!.toFixed(2).replace(".", ",")}`}
-            </div>
+            <div className="text-2xl font-bold">{formatEventPrice(event.price)}</div>
             <div className="text-[11px] text-muted-foreground">por pessoa</div>
           </div>
           <button

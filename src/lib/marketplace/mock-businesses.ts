@@ -15,6 +15,8 @@ import type {
   Promotion,
   BusinessEvent,
   Coupon,
+  BusinessCategoryValue,
+  PriceRangeValue,
 } from "./business-types";
 import {
   BusinessCategory,
@@ -277,6 +279,273 @@ export const MOCK_BUSINESSES: Business[] = [
   },
 ];
 
+/* ─── Extra businesses ──────────────────────────────────
+   Entities referenced by premium cards (EXTRA_CARDS) and by
+   sponsored content (LocalSponsoredFeed). Their ids are stable
+   so a click on a card resolves to a real detail page.
+========================================================= */
+
+interface ExtraBusinessSeed {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: BusinessCategoryValue;
+  distanceMeters: number;
+  rating: number;
+  reviewCount: number;
+  priceRange: PriceRangeValue;
+  address?: string;
+  photoCount?: number;
+  isOpen?: boolean;
+  hours?: BusinessHoursSlot[];
+  tags?: string[];
+}
+
+export function createMockBusiness(seed: ExtraBusinessSeed): Business {
+  return {
+    id: seed.id,
+    name: seed.name,
+    slug: seed.slug,
+    description: seed.description,
+    category: seed.category,
+    photos: createMockPhotos(seed.photoCount ?? 3, seed.name),
+    location: { lat: -23.5505, lng: -46.6333, label: seed.address ?? "São Paulo, SP" },
+    address: seed.address ?? "São Paulo, SP",
+    rating: createMockRating(seed.rating, seed.reviewCount),
+    priceRange: seed.priceRange,
+    distanceMeters: seed.distanceMeters,
+    isFavorite: false,
+    isFollowing: false,
+    isOpen: seed.isOpen ?? true,
+    hours: seed.hours ?? createMockHours(),
+    tags: seed.tags ?? [],
+    promotions: [],
+    events: [],
+    couponCount: 0,
+    createdAt: new Date("2026-01-01"),
+  };
+}
+
+export const MOCK_EXTRA_BUSINESSES: Business[] = [
+  createMockBusiness({
+    id: "hotel-prime",
+    name: "Hotel Paulista Prime",
+    slug: "hotel-paulista-prime",
+    description: "Conforto no coração da cidade, com spa, piscina e gastronomia premiada.",
+    category: BusinessCategory.HOTEL,
+    distanceMeters: 2100,
+    rating: 4.8,
+    reviewCount: 320,
+    priceRange: PriceRange.PREMIUM,
+    address: "Av. Paulista, 1500 - São Paulo, SP",
+    photoCount: 4,
+    tags: ["hotel", "spa", "premium"],
+  }),
+  createMockBusiness({
+    id: "gym-arena",
+    name: "Academia Arena Fit",
+    slug: "academia-arena-fit",
+    description: "Treine com os melhores equipamentos e acompanhamento de personal trainers.",
+    category: BusinessCategory.GYM,
+    distanceMeters: 950,
+    rating: 4.6,
+    reviewCount: 189,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua Haddock Lobo, 700 - São Paulo, SP",
+    photoCount: 2,
+    tags: ["academia", "musculação", "personal"],
+  }),
+  createMockBusiness({
+    id: "cine-palace",
+    name: "Cine Palace",
+    slug: "cine-palace",
+    description: "Sessões de estreia em IMAX com som imersivo e poltronas premium.",
+    category: BusinessCategory.ENTERTAINMENT,
+    distanceMeters: 1300,
+    rating: 4.5,
+    reviewCount: 540,
+    priceRange: PriceRange.MODERATE,
+    address: "Shopping Center 3, São Paulo, SP",
+    photoCount: 3,
+    tags: ["cinema", "imax", "entretenimento"],
+  }),
+  createMockBusiness({
+    id: "bar-ze",
+    name: "Bar do Zé",
+    slug: "bar-do-ze",
+    description: "Petiscos e música ao vivo para o melhor happy hour da região.",
+    category: BusinessCategory.BAR,
+    distanceMeters: 700,
+    rating: 4.4,
+    reviewCount: 267,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua Oscar Freire, 400 - São Paulo, SP",
+    photoCount: 3,
+    tags: ["bar", "música ao vivo", "petiscos"],
+  }),
+  createMockBusiness({
+    id: "sushi-tanaka",
+    name: "Sushi Tanaka",
+    slug: "sushi-tanaka",
+    description: "Culinária japonesa autêntica com peixes frescos e ambiente sofisticado.",
+    category: BusinessCategory.RESTAURANT,
+    distanceMeters: 180,
+    rating: 4.9,
+    reviewCount: 312,
+    priceRange: PriceRange.EXPENSIVE,
+    address: "Rua Augusta, 500 - São Paulo, SP",
+    photoCount: 4,
+    tags: ["sushi", "japonesa", "premium"],
+  }),
+  createMockBusiness({
+    id: "studio-criativo",
+    name: "Studio Criativo",
+    slug: "studio-criativo",
+    description: "Coworking e salas de evento para projetos criativos e reuniões.",
+    category: BusinessCategory.SERVICE,
+    distanceMeters: 350,
+    rating: 4.3,
+    reviewCount: 87,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua Consolação, 1200 - São Paulo, SP",
+    photoCount: 3,
+    tags: ["coworking", "eventos", "criativo"],
+  }),
+  createMockBusiness({
+    id: "praca-central",
+    name: "Praça Central",
+    slug: "praca-central",
+    description: "Encontro de pessoas e eventos ao ar livre no coração do bairro.",
+    category: BusinessCategory.ENTERTAINMENT,
+    distanceMeters: 80,
+    rating: 4.7,
+    reviewCount: 456,
+    priceRange: PriceRange.BUDGET,
+    address: "Praça Central - São Paulo, SP",
+    photoCount: 2,
+    isOpen: true,
+    tags: ["praça", "ao ar livre", "eventos"],
+  }),
+  createMockBusiness({
+    id: "cafe-aurora",
+    name: "Café Aurora",
+    slug: "cafe-aurora",
+    description: "Novo blend de torra média e brunch servido até as 13h.",
+    category: BusinessCategory.CAFE,
+    distanceMeters: 600,
+    rating: 4.6,
+    reviewCount: 140,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua Augusta, 900 - São Paulo, SP",
+    photoCount: 3,
+    tags: ["café", "brunch", "torra média"],
+  }),
+  createMockBusiness({
+    id: "arena-move",
+    name: "Arena Move",
+    slug: "arena-move",
+    description: "Aula experimental gratuita de treino funcional e cross training.",
+    category: BusinessCategory.GYM,
+    distanceMeters: 1800,
+    rating: 4.5,
+    reviewCount: 95,
+    priceRange: PriceRange.BUDGET,
+    address: "Av. Faria Lima, 1800 - São Paulo, SP",
+    photoCount: 2,
+    tags: ["funcional", "aula experimental", "treino"],
+  }),
+  createMockBusiness({
+    id: "estudio-alma",
+    name: "Estúdio Alma",
+    slug: "estudio-alma",
+    description: "Sessão de yoga no rooftop ao pôr do sol, além de meditação guiada.",
+    category: BusinessCategory.HEALTH,
+    distanceMeters: 750,
+    rating: 4.8,
+    reviewCount: 62,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua Harmonia, 300 - São Paulo, SP",
+    photoCount: 2,
+    tags: ["yoga", "bem-estar", "meditação"],
+  }),
+  createMockBusiness({
+    id: "vinil-da-esquina",
+    name: "Vinil da Esquina",
+    slug: "vinil-da-esquina",
+    description: "Discos raros, toca-discos e acessórios para colecionadores.",
+    category: BusinessCategory.STORE,
+    distanceMeters: 1200,
+    rating: 4.6,
+    reviewCount: 180,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua dos Vinis, 42 - São Paulo, SP",
+    photoCount: 3,
+    tags: ["vinil", "música", "colecionadores"],
+  }),
+  createMockBusiness({
+    id: "restaurante-horizonte",
+    name: "Restaurante Horizonte",
+    slug: "restaurante-horizonte",
+    description: "Menu degustação com vista para o parque e ingredientes sazonais.",
+    category: BusinessCategory.RESTAURANT,
+    distanceMeters: 5200,
+    rating: 4.7,
+    reviewCount: 220,
+    priceRange: PriceRange.EXPENSIVE,
+    address: "Alameda Horizonte, 800 - São Paulo, SP",
+    photoCount: 4,
+    tags: ["degustação", "vista", "gastronomia"],
+  }),
+  createMockBusiness({
+    id: "padaria-paulista",
+    name: "Padaria Paulista",
+    slug: "padaria-paulista",
+    description: "Pães de fermentação natural e café da manhã servido o dia todo.",
+    category: BusinessCategory.RESTAURANT,
+    distanceMeters: 450,
+    rating: 4.7,
+    reviewCount: 150,
+    priceRange: PriceRange.MODERATE,
+    address: "Av. Paulista, 900 - São Paulo, SP",
+    photoCount: 3,
+    tags: ["padaria", "pães", "café da manhã"],
+  }),
+  createMockBusiness({
+    id: "farmacia-saude",
+    name: "Farmacia Saude",
+    slug: "farmacia-saude",
+    description: "Manipulados, vitaminas e cuidados com a saúde a preços justos.",
+    category: BusinessCategory.HEALTH,
+    distanceMeters: 600,
+    rating: 4.4,
+    reviewCount: 95,
+    priceRange: PriceRange.MODERATE,
+    address: "Rua da Saúde, 250 - São Paulo, SP",
+    photoCount: 2,
+    tags: ["farmácia", "vitaminas", "saúde"],
+  }),
+];
+
+/* ─── Extra events ────────────────────────────────────── */
+
+export const MOCK_EXTRA_EVENTS: BusinessEvent[] = [
+  {
+    id: "festival-conecta",
+    businessId: "",
+    title: "Festival Conecta",
+    description: "3 dias de música e cultura no centro da cidade.",
+    photo: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800",
+    startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+    location: "Centro — São Paulo",
+    status: EventStatus.UPCOMING,
+    capacity: 500,
+    attendeesCount: 0,
+    isFeatured: false,
+  },
+];
+
 /* ─── Coupons ──────────────────────────────────────────── */
 
 export const MOCK_COUPONS: Coupon[] = [
@@ -327,8 +596,16 @@ export const MOCK_COUPONS: Coupon[] = [
 
 /* ─── Lookups ──────────────────────────────────────────── */
 
+export function getAllBusinesses(): Business[] {
+  return [...MOCK_BUSINESSES, ...MOCK_EXTRA_BUSINESSES];
+}
+
 export function getBusinessById(id: string): Business | undefined {
-  return MOCK_BUSINESSES.find((b) => b.id === id);
+  return getAllBusinesses().find((b) => b.id === id);
+}
+
+export function getExtraBusinessById(id: string): Business | undefined {
+  return MOCK_EXTRA_BUSINESSES.find((b) => b.id === id);
 }
 
 export function getEventById(id: string): BusinessEvent | undefined {

@@ -124,6 +124,33 @@ export function formatAttendeesCount(count: number): string {
   return `${count} participantes`;
 }
 
+/* ─── formatEventPrice ──────────────────────────────────── */
+
+export function formatEventPrice(price: number | undefined): string {
+  if (price == null) return "Consulte";
+  if (price === 0) return "Grátis";
+  return `R$ ${price.toFixed(2).replace(".", ",")}`;
+}
+
+/* ─── formatEventCapacity ───────────────────────────────── */
+
+export function formatEventCapacity(attendeesCount: number, capacity: number | undefined): string {
+  if (capacity == null) return formatAttendeesCount(attendeesCount);
+  return `${attendeesCount}/${capacity} participantes`;
+}
+
+/* ─── formatEventDistance ───────────────────────────────── */
+
+export function formatEventDistance(distance: string | undefined): string | null {
+  if (!distance) return null;
+  const normalized = distance.trim().toLowerCase().replace(",", ".");
+  const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(m|km)$/);
+  if (!match) return distance;
+  const meters = parseFloat(match[1]) * (match[2] === "km" ? 1000 : 1);
+  if (meters <= 2000) return "Perto de você";
+  return distance;
+}
+
 /* ─── getEventCapacityPercent ───────────────────────────── */
 
 export function getEventCapacityPercent(attendeesCount: number, capacity: number): number {

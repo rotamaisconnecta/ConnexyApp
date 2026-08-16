@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter, notFound } from "@tansta
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { people, commonGround, type Person } from "@/lib/mock-data";
+import { enginePersonById } from "@/lib/engine/engine-detail";
 import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import {
   getConversationId,
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import { X, Check, ChevronLeft, UserRound, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Gradients } from "@/theme";
+import { useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/_app/solicitacao/$id")({
   head: () => ({ meta: [{ title: "Solicitação de chat — Connexy" }] }),
   validateSearch: searchSchema,
   loader: ({ params }) => {
-    const person = people.find((p) => p.id === params.id);
+    const person = people.find((p) => p.id === params.id) ?? enginePersonById(params.id);
     if (!person) throw notFound();
     return person;
   },
@@ -42,6 +44,7 @@ function Solicitacao() {
   const status = getConversationInviteStatus(p.id);
   const invited = status === "invited";
   const receive = !invited && mode === "receive";
+  const [sending, setSending] = useState(false);
 
   const title = invited
     ? "Convite enviado"
@@ -70,6 +73,8 @@ function Solicitacao() {
   }
 
   function sendInvite() {
+    if (sending) return;
+    setSending(true);
     writeStoredInvite(p.id, "invited");
     toast.success(`Convite enviado para ${p.name}`);
     goBack();
@@ -206,14 +211,17 @@ function Solicitacao() {
               <button
                 type="button"
                 onClick={receive ? acceptInvite : sendInvite}
-                className="flex-1 h-14 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center gap-2"
+                disabled={sending}
+                className="flex-1 h-14 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 <Check className="h-5 w-5" />
                 {receive
                   ? "Aceitar conversa"
                   : status === "rejected"
                     ? "Enviar novo convite"
-                    : "Enviar convite"}
+                    : sending
+                      ? "Enviando convite…"
+                      : "Enviar convite"}
               </button>
             </div>
           )}

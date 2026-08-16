@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { StatusBar } from "@/components/phone-frame";
 import { EngineDashboard } from "@/components/engine/engine-dashboard";
 import { EngineLoading } from "@/components/engine/engine-loading";
@@ -10,6 +11,7 @@ import { mockUser, mockContext, mockRecommendations } from "@/lib/engine/engine-
 import { getDashboardData, type DashboardData } from "@/lib/engine/engine";
 import { sortRecommendations } from "@/lib/engine/engine-ranking";
 import { buildContext } from "@/lib/engine/engine-context";
+import { resolveRecommendationRoute } from "@/lib/navigation/detail-routes";
 import type { Recommendation } from "@/lib/engine/engine-types";
 
 export const Route = createFileRoute("/_app/engine")({
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/_app/engine")({
 });
 
 function EnginePage() {
+  const nav = useNavigate();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const context = useMemo(() => buildContext(mockUser), []);
@@ -55,6 +58,14 @@ function EnginePage() {
       else next.add(id);
       return next;
     });
+    const rec = enrichedRecommendations.find((r) => r.id === id);
+    if (!rec) return;
+    const route = resolveRecommendationRoute(rec);
+    if (route) {
+      nav({ href: route });
+      return;
+    }
+    toast.info("Conteúdo em breve");
   }
 
   if (loading) {
@@ -103,7 +114,7 @@ function EnginePage() {
         </div>
       )}
 
-      <EngineDashboard data={dashboardData} />
+      <EngineDashboard data={dashboardData} onSelect={handleSelect} />
     </div>
   );
 }
