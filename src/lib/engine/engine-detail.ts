@@ -170,6 +170,9 @@ export function enginePlaceById(id: string): Place | undefined {
     hours: meta.isOpen ? "Aberto agora" : "Fechado no momento",
     cover: rec.imageUrl,
     description: rec.subtitle,
+    lat: -23.5505,
+    lng: -46.6333,
+    address: "São Paulo, SP",
   };
 }
 

@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
-import { createFileRoute, Outlet, useNavigate, useMatch, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, redirect } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
-import { PromoPopup } from "@/components/promo-popup";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/use-auth";
 import { ContextEngineProvider } from "@/lib/context/context-provider";
 import { PresenceProvider } from "@/providers/presence/presence-provider";
@@ -28,11 +26,6 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
 
-  const onNotificacoes = useMatch({ from: "/_app/notificacoes", shouldThrow: false });
-  const onNotifications = useMatch({ from: "/_app/notifications", shouldThrow: false });
-  const onChat = useMatch({ from: "/_app/chat", shouldThrow: false });
-  const hideBell = Boolean(onNotificacoes || onNotifications || onChat);
-
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
@@ -53,19 +46,8 @@ function AppLayout() {
         <PresenceProvider>
           <div className="flex-1 flex flex-col relative overflow-hidden">
             <div className="flex-1 overflow-y-auto no-scrollbar pb-2 relative">
-              {!hideBell && (
-                <div
-                  className="pointer-events-none absolute inset-x-0 top-0 z-50 flex justify-end px-4"
-                  style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 2.5rem)" }}
-                >
-                  <div className="pointer-events-auto">
-                    <NotificationBell />
-                  </div>
-                </div>
-              )}
               <Outlet />
             </div>
-            <PromoPopup />
             <BottomNav />
           </div>
         </PresenceProvider>

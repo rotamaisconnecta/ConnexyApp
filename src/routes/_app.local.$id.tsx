@@ -8,7 +8,16 @@ import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
 import { PlaceStatusMeta } from "@/lib/integration/integration-types";
 import { usePresence } from "@/providers/presence/presence-provider";
-import { Star, Phone, Navigation, Bookmark, Share2, Users } from "lucide-react";
+import {
+  Star,
+  Phone,
+  Navigation,
+  Bookmark,
+  Share2,
+  Users,
+  MapPinned,
+  CarFront,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_app/local/$id")({
   head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
@@ -146,12 +155,38 @@ function LocalDetail() {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-5 space-y-3">
+        {p.lat != null && p.lng != null ? (
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${p.lat},${p.lng}`)}`}
+            target="_blank"
+            rel="noopener,noreferrer"
+            className="flex items-center justify-center gap-2 w-full rounded-full border-2 border-border py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary active:scale-[0.98]"
+          >
+            <MapPinned className="h-4 w-4 text-primary" />
+            Abrir no Google Maps
+          </a>
+        ) : (
+          <div className="flex items-center justify-center gap-2 w-full rounded-full border-2 border-border py-3.5 text-sm font-semibold text-muted-foreground">
+            <MapPinned className="h-4 w-4" />
+            Localização indisponível
+          </div>
+        )}
         <Link
-          to="/rota"
-          className="block w-full rounded-full bg-gradient-brand py-4 text-center text-white font-semibold shadow-elegant"
+          to="/ride/request"
+          search={{
+            destinationId: p.id,
+            destinationName: p.name,
+            destinationAddress: p.address ?? null,
+            destinationLat: p.lat ?? null,
+            destinationLng: p.lng ?? null,
+            source: "local",
+          }}
+          className="flex items-center justify-center gap-2 w-full rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition-all hover:shadow-xl active:scale-[0.98]"
         >
-          Ir até lá
+          <CarFront className="h-4 w-4" />
+          Pedir corrida
+          <span className="text-xs opacity-80">Pelo Connexy</span>
         </Link>
       </div>
     </div>

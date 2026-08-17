@@ -422,6 +422,9 @@ export type Place = {
   cover: string;
   promo?: string;
   description: string;
+  lat?: number;
+  lng?: number;
+  address?: string;
 };
 
 export const places: Place[] = [
@@ -436,6 +439,9 @@ export const places: Place[] = [
     cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800",
     promo: "20% OFF em cafés especiais",
     description: "Cafeteria com grãos especiais, torra artesanal e boa trilha sonora.",
+    lat: -23.561,
+    lng: -46.656,
+    address: "Rua Augusta, 1200 — São Paulo, SP",
   },
   {
     id: "sunset-parque",
@@ -447,6 +453,9 @@ export const places: Place[] = [
     hours: "Hoje · 16:00",
     cover: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800",
     description: "Pôr do sol com DJ set e food trucks no Parque Ibirapuera.",
+    lat: -23.5874,
+    lng: -46.6576,
+    address: "Parque Ibirapuera — São Paulo, SP",
   },
   {
     id: "burger-house",
@@ -459,6 +468,9 @@ export const places: Place[] = [
     cover: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800",
     promo: "Combo duplo por R$ 39",
     description: "Smash burgers, batata rústica e chopes gelados.",
+    lat: -23.562,
+    lng: -46.655,
+    address: "Rua Oscar Freire, 500 — São Paulo, SP",
   },
   {
     id: "vinil-store",
@@ -470,6 +482,9 @@ export const places: Place[] = [
     hours: "Aberto até 20:00",
     cover: "https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?w=800",
     description: "Discos raros, toca-discos e acessórios.",
+    lat: -23.564,
+    lng: -46.658,
+    address: "Rua Haddock Lobo, 900 — São Paulo, SP",
   },
 ];
 

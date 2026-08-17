@@ -4,8 +4,8 @@ import { resolveAuthenticatedUserId } from "@/lib/supabase/identity";
 
 /**
  * A profile is considered complete when the user has a name, a handle and at
- * least PROFILE_MIN_INTERESTS interests. Photo is intentionally not required
- * (there is no avatars bucket in this environment).
+ * least PROFILE_MIN_INTERESTS interests. Photo is optional — the avatars
+ * bucket exists but absence of a photo must not trigger an onboarding loop.
  */
 export const PROFILE_MIN_INTERESTS = 3;
 

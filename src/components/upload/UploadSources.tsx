@@ -53,7 +53,7 @@ function getOptions(mode: UploadMode, multiple: boolean): SourceOption[] {
       label: "Tirar foto",
       icon: Camera,
       accept: "image/*",
-      capture: "environment",
+      capture: "user",
       kind: "photo",
       audio: true,
     },
