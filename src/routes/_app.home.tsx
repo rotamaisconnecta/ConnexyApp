@@ -65,6 +65,7 @@ function Home() {
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   useEffect(() => {
     if (!configured || !user) return;
@@ -90,6 +91,8 @@ function Home() {
   const firstName = displayName.split(" ")[0];
   const avatarUrl = profile?.photo_url ?? null;
   const initials = getInitials(displayName);
+
+  useEffect(() => setAvatarFailed(false), [avatarUrl]);
 
   const stored = getStoredRoles();
   const hasExtraRoles = stored.roles.some((r) => r !== UserRole.USER);
@@ -132,18 +135,19 @@ function Home() {
             aria-label="Abrir meu perfil"
             className="shrink-0 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
           >
-            {avatarUrl ? (
+            {avatarUrl && !avatarFailed ? (
               <img
                 src={avatarUrl}
                 alt={`Foto de ${displayName}`}
+                onError={() => setAvatarFailed(true)}
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-soft"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 ring-2 ring-white shadow-soft">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand text-white ring-2 ring-white shadow-soft">
                 {initials ? (
-                  <span className="text-sm font-bold text-violet-400">{initials}</span>
+                  <span className="text-sm font-bold">{initials}</span>
                 ) : (
-                  <UserRound className="h-5 w-5 text-violet-300" />
+                  <UserRound className="h-5 w-5" />
                 )}
               </div>
             )}

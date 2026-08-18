@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter, notFound } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { PresenceDot } from "@/components/presence-dot";
 import { BackButton } from "@/components/navigation/back-button";
@@ -29,10 +29,15 @@ import {
   Users,
   Handshake,
   CalendarCheck,
+  UserRound,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { z } from "zod";
+import { supabase } from "@/lib/supabase/client";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { useAuth } from "@/hooks/use-auth";
+import type { ProfileRow } from "@/types/database/tables";
 
 const searchSchema = z.object({
   from: z.enum(["solicitacao", "chat", "connecta", "home", "reels"]).optional(),
@@ -49,24 +54,114 @@ export const Route = createFileRoute("/_app/perfil/$id")({
     ],
   }),
   validateSearch: searchSchema,
-  loader: ({ params }) => {
+  shouldReload: true,
+  loader: async ({ params }) => {
     const person = findPerson(params.id) ?? enginePersonById(params.id);
-    if (!person) throw notFound();
-    return person;
+    if (person) return person;
+
+    if (!isPublicSupabaseConfigured()) throw notFound();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(params.id)) throw notFound();
+
+    const loaderSupabase = import.meta.env.SSR
+      ? await import("@/lib/supabase/server.server").then(({ createServerSupabaseClient }) =>
+          createServerSupabaseClient(),
+        )
+      : supabase;
+
+    const { data: profileRow, error: profileError } = await loaderSupabase
+      .from("profiles")
+      .select("*")
+      .eq("id", params.id)
+      .maybeSingle();
+    if (profileError) throw new Error("Não foi possível carregar este perfil.");
+    if (!profileRow) throw notFound();
+
+    const { data: postsRows, error: postsError } = await loaderSupabase
+      .from("bio_posts")
+      .select("*")
+      .eq("author_id", params.id)
+      .order("created_at", { ascending: false });
+    if (postsError) throw new Error("Não foi possível carregar as publicações deste perfil.");
+
+    const r = profileRow as ProfileRow;
+    const moments: Moment[] = (postsRows ?? []).map((p: Record<string, unknown>) => {
+      const mediaKind = p.media_kind === "image" || p.media_kind === "video" ? p.media_kind : null;
+      return {
+        id: p.id as string,
+        text: (p.text as string) || "",
+        mediaUrl: typeof p.media_url === "string" ? p.media_url : undefined,
+        mediaKind,
+        createdAgo: p.created_at
+          ? new Date(p.created_at as string).toLocaleDateString("pt-BR")
+          : "",
+        likes: 0,
+      };
+    });
+
+    return {
+      id: r.id,
+      name: r.name ?? "Usuario",
+      handle: r.handle ?? undefined,
+      age: r.age ?? 25,
+      photo: r.photo_url ?? "",
+      headline: r.headline ?? undefined,
+      bio: r.bio ?? undefined,
+      distanceMeters: 0,
+      online: false,
+      lastSeen: undefined,
+      favoritePlaceIds: undefined,
+      interests: (r.interests as string[]) ?? [],
+      vibeTags: (r.vibe_tags as string[]) ?? [],
+      looksFor: (r.looks_for as string[]) ?? [],
+      mood: r.mood_emoji ? { emoji: r.mood_emoji, text: r.mood_text ?? "" } : undefined,
+      nowPlaying:
+        r.now_playing_kind && r.now_playing_title
+          ? {
+              kind: r.now_playing_kind as "music" | "reading" | "watching",
+              title: r.now_playing_title,
+              subtitle: r.now_playing_subtitle ?? undefined,
+            }
+          : undefined,
+      moments,
+      stats: undefined,
+    } satisfies Person;
   },
-  errorComponent: ({ error }) => <div className="p-6 text-sm">{error.message}</div>,
+  errorComponent: ProfileLoadError,
   notFoundComponent: () => <div className="p-6 text-sm">Perfil não encontrado.</div>,
   component: Perfil,
 });
 
+function ProfileLoadError() {
+  const router = useRouter();
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-6 text-center">
+      <p className="text-sm text-muted-foreground">Não foi possível carregar este perfil.</p>
+      <button
+        type="button"
+        onClick={() => router.invalidate()}
+        className="rounded-full bg-gradient-brand px-4 py-2 text-sm font-semibold text-white"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  );
+}
+
 function Perfil() {
   const p = Route.useLoaderData() as Person;
   const { from } = Route.useSearch();
+  const { user } = useAuth();
   const nav = useNavigate();
   const cg = commonGround(p);
   const inviteStatus = getConversationInviteStatus(p.id);
   const label = personProximityLabel(p.distanceMeters);
   const radius = personProximityRadius(p.distanceMeters);
+  const isOwnProfile = user?.id === p.id;
+  const [avatarFailed, setAvatarFailed] = useState(false);
+
+  const avatarInitials = getProfileInitials(p.name, p.handle);
+  const showAvatarFallback = !p.photo || avatarFailed;
 
   const favPlaces = (p.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const commonPlaces = cg.sharedPlaces.map(findPlace).filter(Boolean);
@@ -99,11 +194,25 @@ function Perfil() {
           <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           <div className="relative flex items-start gap-4">
             <div className="relative">
-              <img
-                src={p.photo}
-                alt={p.name}
-                className="h-24 w-24 rounded-3xl object-cover ring-4 ring-white/30"
-              />
+              {showAvatarFallback ? (
+                <div
+                  className="flex h-24 w-24 items-center justify-center rounded-full bg-white/20 text-white ring-4 ring-white/30"
+                  aria-label={`Avatar de ${p.name}`}
+                >
+                  {avatarInitials ? (
+                    <span className="text-2xl font-bold">{avatarInitials}</span>
+                  ) : (
+                    <UserRound className="h-9 w-9" aria-hidden />
+                  )}
+                </div>
+              ) : (
+                <img
+                  src={p.photo}
+                  alt={`Foto de ${p.name}`}
+                  onError={() => setAvatarFailed(true)}
+                  className="h-24 w-24 rounded-full object-cover ring-4 ring-white/30"
+                />
+              )}
               <PresenceDot online={p.online} size={16} className="absolute -bottom-1 -right-1" />
             </div>
             <div className="flex-1 min-w-0 pt-1">
@@ -329,7 +438,7 @@ function Perfil() {
       )}
 
       {/* Convite para conversa */}
-      {p.id !== currentUser.id && (
+      {!isOwnProfile && p.id !== currentUser.id && (
         <section className="mx-4 mt-4 pb-4">
           {from === "solicitacao" ? (
             <div className="flex gap-2">
@@ -402,11 +511,42 @@ function NowPlayingIcon({ kind }: { kind: "music" | "reading" | "watching" }) {
 
 function MomentItem({ m }: { m: Moment }) {
   const [liked, setLiked] = useState(false);
+  const [mediaFailed, setMediaFailed] = useState(false);
   const place = m.placeId ? findPlace(m.placeId) : undefined;
   const likes = m.likes + (liked ? 1 : 0);
+  const mediaUrl = m.mediaUrl ?? m.photo;
+  const mediaKind = m.mediaKind ?? (m.photo ? "image" : null);
   return (
     <li className="rounded-2xl border border-border bg-surface overflow-hidden shadow-soft">
-      {m.photo && <img src={m.photo} alt="" className="w-full h-40 object-cover" />}
+      {mediaKind === "image" && mediaUrl && !mediaFailed && (
+        <img
+          src={mediaUrl}
+          alt="Imagem da publicação"
+          onError={() => setMediaFailed(true)}
+          className="w-full h-40 object-cover"
+        />
+      )}
+      {mediaKind === "image" && mediaFailed && (
+        <div className="flex h-40 items-center justify-center bg-secondary px-4 text-sm text-muted-foreground">
+          Imagem indisponível
+        </div>
+      )}
+      {mediaKind === "video" && mediaUrl && !mediaFailed && (
+        <video
+          src={mediaUrl}
+          controls
+          preload="metadata"
+          onError={() => setMediaFailed(true)}
+          className="w-full h-40 bg-black object-contain"
+        >
+          Vídeo indisponível
+        </video>
+      )}
+      {mediaKind === "video" && (!mediaUrl || mediaFailed) && (
+        <div className="flex h-40 items-center justify-center bg-secondary px-4 text-sm text-muted-foreground">
+          Vídeo indisponível
+        </div>
+      )}
       <div className="p-3">
         <p className="text-sm text-foreground leading-snug">{m.text}</p>
         <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
@@ -433,6 +573,15 @@ function MomentItem({ m }: { m: Moment }) {
       </div>
     </li>
   );
+}
+
+function getProfileInitials(name?: string, handle?: string): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length > 1) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (handle ?? "").trim().charAt(0).toUpperCase();
 }
 
 function Stat({

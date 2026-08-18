@@ -36,12 +36,16 @@ export function useUpload() {
     }
   }, []);
 
-  const uploadPostMedia = useCallback(async (postId: string, file: File) => {
+  const uploadPostMedia = useCallback(async (userId: string, file: File, bucket: string) => {
     setIsUploading(true);
     setProgress(0);
     setError(null);
     try {
-      const result = await UploadService.uploadPostMedia(postId, file);
+      const result = await UploadService.uploadPostMedia(
+        userId,
+        file,
+        bucket as Parameters<typeof UploadService.uploadPostMedia>[2],
+      );
       return result;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Upload failed"));

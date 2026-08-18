@@ -17,6 +17,8 @@ export type Moment = {
   id: string;
   text: string;
   photo?: string;
+  mediaUrl?: string;
+  mediaKind?: "image" | "video" | null;
   placeId?: string;
   createdAgo: string;
   likes: number;

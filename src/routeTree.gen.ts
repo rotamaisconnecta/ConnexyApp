@@ -69,6 +69,7 @@ import { Route as AppGerenciarNovoLocalRouteImport } from './routes/_app.gerenci
 import { Route as AppGerenciarNovoEventoRouteImport } from './routes/_app.gerenciar.novo-evento'
 import { Route as AppGerenciarNovaOfertaRouteImport } from './routes/_app.gerenciar.nova-oferta'
 import { Route as AppGerenciarNovaFotoRouteImport } from './routes/_app.gerenciar.nova-foto'
+import { Route as AppGerenciarBioRouteImport } from './routes/_app.gerenciar.bio'
 import { Route as AppEventEventIdRouteImport } from './routes/_app/event.$eventId'
 import { Route as AppDriverProfileRouteImport } from './routes/_app/driver/profile'
 import { Route as AppDriverPerformanceRouteImport } from './routes/_app/driver/performance'
@@ -392,6 +393,11 @@ const AppGerenciarNovaFotoRoute = AppGerenciarNovaFotoRouteImport.update({
   path: '/nova-foto',
   getParentRoute: () => AppGerenciarRoute,
 } as any)
+const AppGerenciarBioRoute = AppGerenciarBioRouteImport.update({
+  id: '/bio',
+  path: '/bio',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
 const AppEventEventIdRoute = AppEventEventIdRouteImport.update({
   id: '/event/$eventId',
   path: '/event/$eventId',
@@ -561,6 +567,7 @@ export interface FileRoutesByFullPath {
   '/driver/performance': typeof AppDriverPerformanceRoute
   '/driver/profile': typeof AppDriverProfileRoute
   '/event/$eventId': typeof AppEventEventIdRoute
+  '/gerenciar/bio': typeof AppGerenciarBioRoute
   '/gerenciar/nova-foto': typeof AppGerenciarNovaFotoRoute
   '/gerenciar/nova-oferta': typeof AppGerenciarNovaOfertaRoute
   '/gerenciar/novo-evento': typeof AppGerenciarNovoEventoRoute
@@ -643,6 +650,7 @@ export interface FileRoutesByTo {
   '/driver/performance': typeof AppDriverPerformanceRoute
   '/driver/profile': typeof AppDriverProfileRoute
   '/event/$eventId': typeof AppEventEventIdRoute
+  '/gerenciar/bio': typeof AppGerenciarBioRoute
   '/gerenciar/nova-foto': typeof AppGerenciarNovaFotoRoute
   '/gerenciar/nova-oferta': typeof AppGerenciarNovaOfertaRoute
   '/gerenciar/novo-evento': typeof AppGerenciarNovoEventoRoute
@@ -727,6 +735,7 @@ export interface FileRoutesById {
   '/_app/driver/performance': typeof AppDriverPerformanceRoute
   '/_app/driver/profile': typeof AppDriverProfileRoute
   '/_app/event/$eventId': typeof AppEventEventIdRoute
+  '/_app/gerenciar/bio': typeof AppGerenciarBioRoute
   '/_app/gerenciar/nova-foto': typeof AppGerenciarNovaFotoRoute
   '/_app/gerenciar/nova-oferta': typeof AppGerenciarNovaOfertaRoute
   '/_app/gerenciar/novo-evento': typeof AppGerenciarNovoEventoRoute
@@ -811,6 +820,7 @@ export interface FileRouteTypes {
     | '/driver/performance'
     | '/driver/profile'
     | '/event/$eventId'
+    | '/gerenciar/bio'
     | '/gerenciar/nova-foto'
     | '/gerenciar/nova-oferta'
     | '/gerenciar/novo-evento'
@@ -893,6 +903,7 @@ export interface FileRouteTypes {
     | '/driver/performance'
     | '/driver/profile'
     | '/event/$eventId'
+    | '/gerenciar/bio'
     | '/gerenciar/nova-foto'
     | '/gerenciar/nova-oferta'
     | '/gerenciar/novo-evento'
@@ -976,6 +987,7 @@ export interface FileRouteTypes {
     | '/_app/driver/performance'
     | '/_app/driver/profile'
     | '/_app/event/$eventId'
+    | '/_app/gerenciar/bio'
     | '/_app/gerenciar/nova-foto'
     | '/_app/gerenciar/nova-oferta'
     | '/_app/gerenciar/novo-evento'
@@ -1437,6 +1449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGerenciarNovaFotoRouteImport
       parentRoute: typeof AppGerenciarRoute
     }
+    '/_app/gerenciar/bio': {
+      id: '/_app/gerenciar/bio'
+      path: '/bio'
+      fullPath: '/gerenciar/bio'
+      preLoaderRoute: typeof AppGerenciarBioRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
     '/_app/event/$eventId': {
       id: '/_app/event/$eventId'
       path: '/event/$eventId'
@@ -1629,6 +1648,7 @@ const AppCreateRouteWithChildren = AppCreateRoute._addFileChildren(
 )
 
 interface AppGerenciarRouteChildren {
+  AppGerenciarBioRoute: typeof AppGerenciarBioRoute
   AppGerenciarNovaFotoRoute: typeof AppGerenciarNovaFotoRoute
   AppGerenciarNovaOfertaRoute: typeof AppGerenciarNovaOfertaRoute
   AppGerenciarNovoEventoRoute: typeof AppGerenciarNovoEventoRoute
@@ -1639,6 +1659,7 @@ interface AppGerenciarRouteChildren {
 }
 
 const AppGerenciarRouteChildren: AppGerenciarRouteChildren = {
+  AppGerenciarBioRoute: AppGerenciarBioRoute,
   AppGerenciarNovaFotoRoute: AppGerenciarNovaFotoRoute,
   AppGerenciarNovaOfertaRoute: AppGerenciarNovaOfertaRoute,
   AppGerenciarNovoEventoRoute: AppGerenciarNovoEventoRoute,

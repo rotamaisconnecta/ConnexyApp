@@ -39,8 +39,39 @@ export const FeedRepository = {
     return created;
   },
 
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from("bio_posts").delete().eq("id", id);
+  async getByAuthor(authorId: string, limit = 50): Promise<BioPostRow[]> {
+    const { data, error } = await supabase
+      .from("bio_posts")
+      .select("*")
+      .eq("author_id", authorId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new SupabaseError(error.message, error.code);
+    return data ?? [];
+  },
+
+  async update(
+    id: string,
+    authorId: string,
+    data: Partial<Pick<BioPostRow, "text" | "media_url" | "media_kind">>,
+  ): Promise<BioPostRow> {
+    const { data: updated, error } = await supabase
+      .from("bio_posts")
+      .update(data)
+      .eq("id", id)
+      .eq("author_id", authorId)
+      .select()
+      .single();
+    if (error) throw new SupabaseError(error.message, error.code);
+    return updated;
+  },
+
+  async delete(id: string, authorId: string): Promise<void> {
+    const { error } = await supabase
+      .from("bio_posts")
+      .delete()
+      .eq("id", id)
+      .eq("author_id", authorId);
     if (error) throw new SupabaseError(error.message, error.code);
   },
 

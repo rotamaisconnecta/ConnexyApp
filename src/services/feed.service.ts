@@ -27,15 +27,7 @@ export const FeedService = {
   },
 
   async deletePost(postId: string, authorId: string) {
-    const post = await FeedRepository.getById(postId);
-    if (!post) {
-      throw new Error("Post not found");
-    }
-    if (post.author_id !== authorId) {
-      throw new Error("Not authorized to delete this post");
-    }
-
-    await FeedRepository.delete(postId);
+    await FeedRepository.delete(postId, authorId);
   },
 
   async likePost(postId: string, userId: string) {

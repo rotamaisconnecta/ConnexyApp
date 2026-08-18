@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createFileRoute, useNavigate, Link, Outlet, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { BackButton } from "@/components/navigation/back-button";
 import { signOut } from "@/lib/auth/sign-out";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,7 @@ import {
   Plus,
   Settings,
   Building2,
+  UserRound,
 } from "lucide-react";
 
 import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
@@ -97,8 +98,8 @@ const roleIcons: Record<UserRole, string> = {
 function GerenciarLayout() {
   const { user } = useAuth();
   const nav = useNavigate();
-  const router = useRouter();
-  const isRoot = router.state.location.pathname === "/gerenciar";
+  const location = useLocation();
+  const isRoot = location.pathname === "/gerenciar";
   const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
 
   useEffect(() => {
@@ -211,15 +212,34 @@ function GerenciarLayout() {
         })}
       </div>
 
+      {/* Bio management */}
+      <div className="px-4 mt-6">
+        <Link
+          to="/gerenciar/bio"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 shadow-soft transition-all active:scale-[0.98]"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-floating">
+            <UserRound className="h-5 w-5" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold">Gerenciar minha bio</div>
+            <div className="text-[11px] text-muted-foreground">
+              Edite dados, foto, publicacoes, humor e interesses
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </Link>
+      </div>
+
       {/* Quick create links */}
       <div className="px-4 mt-6">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Criar conteúdo
+          Criar conteudo
         </h2>
         <div className="grid grid-cols-4 gap-2">
           {[
             { label: "Foto", icon: "📷", route: "/gerenciar/nova-foto" },
-            { label: "Vídeo", icon: "🎥", route: "/gerenciar/novo-video" },
+            { label: "Video", icon: "🎥", route: "/gerenciar/novo-video" },
             { label: "Texto", icon: "✍", route: "/gerenciar/novo-texto" },
             { label: "Reel", icon: "▶", route: "/gerenciar/novo-reel" },
           ].map((item) => (
