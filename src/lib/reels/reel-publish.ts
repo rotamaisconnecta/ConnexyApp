@@ -13,7 +13,7 @@
 import type { Reel, ReelAuthor, ReelCategoryValue } from "./reel-types";
 import { ReelCategory } from "./reel-types";
 import { currentUser } from "@/lib/mock-data";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { saveReelMedia, getReelVideoUrl, getReelPosterUrl } from "./reel-local-media-db";
 import {
   saveStoredPublishedReel,

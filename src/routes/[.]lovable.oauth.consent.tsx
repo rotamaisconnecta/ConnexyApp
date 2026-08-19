@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { Loader2, ShieldCheck } from "lucide-react";
 
