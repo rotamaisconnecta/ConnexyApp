@@ -4,13 +4,22 @@ import { Loader2, Send, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
+type ProfileSnippet = { name: string | null; photo_url: string | null };
+
 type Comment = {
   id: string;
   text: string;
   created_at: string;
   author_id: string;
-  author?: { name: string | null; photo_url: string | null } | null;
+  author?: ProfileSnippet | null;
 };
+
+/** The `profiles:author_id(...)` join returns an array; normalize to a single
+ *  object (or null) so the UI can render one author per comment. */
+function normalizeAuthor(p: unknown): ProfileSnippet | null {
+  if (Array.isArray(p)) return (p[0] as ProfileSnippet | undefined) ?? null;
+  return (p as ProfileSnippet | null) ?? null;
+}
 
 export function CommentsSheet({
   reelId,
@@ -39,21 +48,14 @@ export function CommentsSheet({
       .eq("reel_id", reelId)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
-        const rows = (data ?? []).map(
-          (r: {
-            id: string;
-            text: string;
-            created_at: string;
-            author_id: string;
-            profiles: { name: string | null; photo_url: string | null } | null;
-          }) => ({
-            id: r.id,
-            text: r.text,
-            created_at: r.created_at,
-            author_id: r.author_id,
-            author: r.profiles,
-          }),
-        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rows = (data ?? []).map((r: any) => ({
+          id: r.id as string,
+          text: r.text as string,
+          created_at: r.created_at as string,
+          author_id: r.author_id as string,
+          author: normalizeAuthor(r.profiles),
+        }));
         setComments(rows);
         setLoading(false);
       });
@@ -79,7 +81,8 @@ export function CommentsSheet({
         text: data.text,
         created_at: data.created_at,
         author_id: data.author_id,
-        author: data.profiles,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        author: normalizeAuthor((data as any).profiles),
       },
     ]);
     setText("");
