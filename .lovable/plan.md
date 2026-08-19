@@ -1,36 +1,98 @@
-# Migrar o backend para o seu Supabase externo
+# Apontar o app para o seu Supabase externo (sem fallback para o Cloud)
 
-Objetivo: o app passa a usar o **seu** projeto Supabase (banco, auth, storage) em vez do backend gerenciado.
+Objetivo: o app passa a usar **somente** o seu projeto Supabase externo, lendo
+`VITE_APP_SUPABASE_URL` e `VITE_APP_SUPABASE_PUBLISHABLE_KEY`. Nada de Cloud
+gerenciado, nada de fallback. Sem mexer em banco, migrations, tabelas, políticas
+RLS, buckets ou dados. Sem pedir/exibir credenciais no chat.
 
-## Importante saber antes
+## Por que este caminho (e não o fluxo oficial)
 
-O backend gerenciado (Lovable Cloud) não pode ser removido deste projeto — as variáveis geradas (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) são de arquivos automáticos e não podem ser editadas por mim. Então a migração é feita com uma **camada de configuração própria**: se as suas credenciais estiverem presentes, o app usa o seu Supabase; caso contrário, continua no backend atual. Isso torna a troca reversível e sem downtime.
+O fluxo oficial de conectar Supabase externo é bloqueado para projetos no
+Lovable Cloud (que não pode ser removido). Os arquivos de cliente Supabase em
+`src/integrations/supabase/` são **autogerados e travados** — eles leem
+`VITE_SUPABASE_URL`/`SUPABASE_URL` (gerenciados = Cloud) e não podem ser
+editados. Por isso a única forma de usar o seu Supabase externo é criar uma
+**camada própria de cliente** que lê `VITE_APP_*` e redirecionar todo o código
+do app para ela. Os arquivos autogerados continuam intactos e viram código morto
+(nenhum importador vivo).
 
-## O que vou fazer
+## O que vou construir
 
-1. **Camada de conexão própria**
-   - Novo módulo de configuração que lê credenciais suas: `VITE_APP_SUPABASE_URL` e `VITE_APP_SUPABASE_PUBLISHABLE_KEY` (mais as equivalentes de servidor).
-   - Os clientes do app (`src/lib/supabase/client.ts`, `config.ts`, `server.server.ts`, `src/lib/mcp/supabase.ts`) passam a apontar para essa camada, com fallback automático para o backend atual.
-   - Os arquivos autogerados em `src/integrations/supabase/` continuam intactos.
+### 1. Novo cliente de navegador próprio — `src/lib/supabase/client.ts` (reescrito)
+Hoje é só um alias do cliente gerado. Vira um cliente real via
+`createBrowserClient` (`@supabase/ssr`) lendo:
+- `import.meta.env.VITE_APP_SUPABASE_URL`
+- `import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY`
 
-2. **Script de exportação do schema**
-   - Um único arquivo SQL consolidado (`supabase/external/schema.sql`) reunindo as 6 migrações existentes: tabelas `profiles`, `bio_posts`, `places`, `reels`, `reel_likes`, `reel_comments`, as funções `handle_new_user` e `set_updated_at`, o trigger de novo usuário, GRANTs e todas as políticas de acesso.
-   - Inclui a criação dos buckets `bio-media` e `reels-media` (privados) e suas políticas de storage, incluindo a regra de upload por pasta do próprio usuário.
-   - Você roda esse SQL uma vez no SQL Editor do seu projeto.
+Inclui o mesmo tratamento de chaves opacas `sb_publishable_*` (remove header
+`Authorization` e envia `apikey`) já usado no cliente gerado, evitando o erro
+`Expected 3 parts in JWT`. Usa o mesmo nome de cookie (`sb-auth-token`) e opções
+de `src/lib/supabase/constants.ts`. Instância lazy via `Proxy` (não quebra o
+build se as envs ainda não estiverem setadas).
 
-3. **Guia de configuração**
-   - `supabase/external/README.md` com o passo a passo: rodar o SQL, ativar o provedor Google no seu projeto, definir as URLs de redirect, e onde colar cada credencial.
-   - Instruções para exportar/importar os dados atuais (hoje há poucas linhas de conteúdo real; posso listar exatamente o que existe antes de migrar, se quiser).
+### 2. Redirecionar todos os importadores do cliente gerado
+Trocar `@/integrations/supabase/client` → `@/lib/supabase/client` nos arquivos
+que importam o cliente gerado diretamente:
 
-4. **Verificação**
-   - Tela de diagnóstico simples em `/gerenciar` mostrando qual backend está ativo (gerenciado ou o seu), para confirmar a troca sem adivinhação.
+```
+src/routes/__root.tsx
+src/routes/index.tsx
+src/routes/auth.tsx
+src/routes/[.]lovable.oauth.consent.tsx
+src/hooks/use-auth.ts
+src/providers/realtime/realtime-provider.tsx
+src/providers/realtime/presence-provider.tsx
+src/lib/supabase/storage.ts
+src/lib/supabase/rpc.ts
+src/lib/supabase/realtime.ts
+src/lib/supabase/database.ts
+src/lib/reels/reel-publish.ts
+src/components/reels/comments-sheet.tsx
+```
 
-## Detalhes técnicos
+### 3. Cliente SSR próprio — `src/lib/supabase/server.server.ts` (reescrito)
+Passa a ler `process.env.APP_SUPABASE_URL || import.meta.env.VITE_APP_SUPABASE_URL`
+e `process.env.APP_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY`.
+Mantém o fluxo de cookies SSR (`createServerClient`) e o `getClaims`. O
+`identity.ts` e o `route-guard.ts` continuam funcionando via este arquivo.
 
-- Chaves novas (`sb_publishable_*`) são opacas, não JWT — o cliente próprio replica o tratamento de header `apikey` já usado no cliente gerado, evitando o erro `Expected 3 parts in JWT`.
-- Segredos de servidor (service role) serão pedidos pelo fluxo de segredos, nunca colocados no código.
-- Auth: as sessões atuais não migram; usuários existentes precisam ser recriados/convidados no seu projeto (posso incluir o comando de export de `auth.users` no guia).
+### 4. Configuração sem fallback — `src/lib/supabase/config.ts` (reescrito)
+- `isPublicSupabaseConfigured()` → checa `VITE_APP_SUPABASE_URL` + `VITE_APP_SUPABASE_PUBLISHABLE_KEY`.
+- `isSupabaseConfigured()` → no servidor checa `APP_SUPABASE_URL` + `APP_SUPABASE_PUBLISHABLE_KEY`.
+Nunca lê `VITE_SUPABASE_URL`/`SUPABASE_URL`. `config-status.ts` herda a mudança.
 
-## O que preciso de você
+### 5. Attacher de bearer próprio — novo `src/lib/supabase/auth-attacher.ts`
+Cria `attachAppSupabaseAuth` usando o cliente externo (`@/lib/supabase/client`).
+Edita `src/start.ts` para usar este attacher no lugar do `attachSupabaseAuth`
+gerado. Assim o token anexado às server fns vem da sessão do Supabase externo.
 
-Depois da aprovação: a **URL do projeto**, a **chave publishable/anon** e, se quiser operações privilegiadas, a **service role key** — que pedirei pelo campo seguro de segredos.
+### 6. MCP e uploads apontando para o externo
+- `src/lib/mcp/supabase.ts`: lê `APP_SUPABASE_URL`/`VITE_APP_SUPABASE_URL` e
+  `APP_SUPABASE_PUBLISHABLE_KEY`/`VITE_APP_SUPABASE_PUBLISHABLE_KEY`.
+- `src/lib/reels/reel-publish.ts`: lê `VITE_APP_SUPABASE_URL` e
+  `VITE_APP_SUPABASE_PUBLISHABLE_KEY` (em vez de `VITE_SUPABASE_*`).
+- `src/lib/auth/route-guard.ts`: atualiza só a mensagem de erro (cosmético).
+
+### 7. Arquivos autogerados — intocados
+`src/integrations/supabase/{client,client.server,auth-middleware,auth-attacher,types}.ts`
+não são editados. Sem importadores vivos após o passo 2, viram código morto.
+
+## Variáveis que você precisará definir (você mesmo, pelo formulário seguro)
+
+- **Browser/build (Vite):** `VITE_APP_SUPABASE_URL`,
+  `VITE_APP_SUPABASE_PUBLISHABLE_KEY`
+- **Servidor (runtime, para SSR/SSG):** `APP_SUPABASE_URL`,
+  `APP_SUPABASE_PUBLISHABLE_KEY`
+- **Opcional (operações privilegiadas/admin):** `APP_SUPABASE_SERVICE_ROLE_KEY`
+
+Eu NÃO peço nem exibo esses valores. Você os adiciona como segredos do projeto.
+Enquanto não estiverem definidos, o app mostra a tela de "backend não
+configurado" (já existe) — isso é o estado "ainda não configurado", não um
+fallback para o Cloud.
+
+## Verificação
+- Build/preview sobe sem erros de tipo.
+- `isBackendConfigured()` reflete `VITE_APP_*`.
+- Com as envs setadas, login/SSR/realtime apontam para o seu projeto.
+- Nenhuma referência viva a `VITE_SUPABASE_URL`/`SUPABASE_URL` no `src` (apenas
+  nos arquivos autogerados mortos).
