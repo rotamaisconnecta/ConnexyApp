@@ -20,34 +20,15 @@ function configuredEnv(names: readonly string[]): string | undefined {
 }
 
 function supabaseProjectUrl(): string {
-  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
-  if (!url) throw new Error("SUPABASE_URL (or VITE_SUPABASE_URL) is required");
+  const url = configuredEnv(["VITE_APP_SUPABASE_URL"]);
+  if (!url) throw new Error("VITE_APP_SUPABASE_URL is required");
   return url;
 }
 
 function supabasePublishableKey(): string {
-  const direct = configuredEnv(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
-  if (direct) return direct;
-  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
-  if (keyset) {
-    try {
-      const parsed: unknown = JSON.parse(keyset);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        const keys = parsed as Record<string, unknown>;
-        const key = [keys.default, ...Object.values(keys)]
-          .find((v): v is string => typeof v === "string" && v.trim().startsWith("sb_publishable_"))
-          ?.trim();
-        if (key) return key;
-      }
-    } catch {
-      // Malformed dictionary; fall through to the legacy names below.
-    }
-  }
-  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
-  if (legacy) return legacy;
-  throw new Error(
-    "SUPABASE_PUBLISHABLE_KEY, SUPABASE_PUBLISHABLE_KEYS, or SUPABASE_ANON_KEY is required",
-  );
+  const key = configuredEnv(["VITE_APP_SUPABASE_PUBLISHABLE_KEY"]);
+  if (!key) throw new Error("VITE_APP_SUPABASE_PUBLISHABLE_KEY is required");
+  return key;
 }
 
 /** Forwards the verified bearer token so RLS runs as the signed-in user. */
