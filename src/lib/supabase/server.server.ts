@@ -28,13 +28,16 @@ export async function createServerSupabaseClient() {
     setResponseHeader,
   } = await import("@tanstack/react-start/server");
 
-  const SUPABASE_URL = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+  // External Supabase only — no fallback to the Lovable-managed backend.
+  const SUPABASE_URL =
+    process.env.APP_SUPABASE_URL || import.meta.env.VITE_APP_SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY =
-    process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    process.env.APP_SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     throw new Error(
-      "Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY. Connect Supabase in Lovable Cloud.",
+      "Missing external Supabase environment variable(s): APP_SUPABASE_URL, APP_SUPABASE_PUBLISHABLE_KEY. Set VITE_APP_SUPABASE_URL / VITE_APP_SUPABASE_PUBLISHABLE_KEY (browser) and APP_SUPABASE_* (server) as project secrets pointing to your external Supabase project.",
     );
   }
 

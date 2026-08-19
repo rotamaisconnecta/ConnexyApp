@@ -28,7 +28,7 @@ export async function requireAuth({ location }: RequireAuthContext) {
     // Production must fail closed: missing config cannot silently open protected routes.
     if (import.meta.env.DEV) return;
     throw new Error(
-      "Authentication is not configured. Missing SUPABASE_URL and/or SUPABASE_PUBLISHABLE_KEY.",
+      "Authentication is not configured. Missing APP_SUPABASE_URL and/or APP_SUPABASE_PUBLISHABLE_KEY.",
     );
   }
 

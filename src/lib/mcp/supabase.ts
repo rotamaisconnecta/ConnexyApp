@@ -19,16 +19,21 @@ function configuredEnv(names: readonly string[]): string | undefined {
   return undefined;
 }
 
+// External Supabase only — the APP_* namespace. No fallback to the
+// Lovable-managed backend (SUPABASE_* / VITE_SUPABASE_*).
 function supabaseProjectUrl(): string {
-  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
-  if (!url) throw new Error("SUPABASE_URL (or VITE_SUPABASE_URL) is required");
+  const url = configuredEnv(["APP_SUPABASE_URL", "VITE_APP_SUPABASE_URL"]);
+  if (!url) throw new Error("APP_SUPABASE_URL (or VITE_APP_SUPABASE_URL) is required");
   return url;
 }
 
 function supabasePublishableKey(): string {
-  const direct = configuredEnv(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
+  const direct = configuredEnv([
+    "APP_SUPABASE_PUBLISHABLE_KEY",
+    "VITE_APP_SUPABASE_PUBLISHABLE_KEY",
+  ]);
   if (direct) return direct;
-  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  const keyset = runtimeEnv("APP_SUPABASE_PUBLISHABLE_KEYS");
   if (keyset) {
     try {
       const parsed: unknown = JSON.parse(keyset);
@@ -43,10 +48,10 @@ function supabasePublishableKey(): string {
       // Malformed dictionary; fall through to the legacy names below.
     }
   }
-  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  const legacy = configuredEnv(["APP_SUPABASE_ANON_KEY", "VITE_APP_SUPABASE_ANON_KEY"]);
   if (legacy) return legacy;
   throw new Error(
-    "SUPABASE_PUBLISHABLE_KEY, SUPABASE_PUBLISHABLE_KEYS, or SUPABASE_ANON_KEY is required",
+    "APP_SUPABASE_PUBLISHABLE_KEY, APP_SUPABASE_PUBLISHABLE_KEYS, or APP_SUPABASE_ANON_KEY is required",
   );
 }
 
