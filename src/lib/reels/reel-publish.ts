@@ -91,8 +91,9 @@ function generateReelId(): string {
 }
 
 export function isSupabaseConfigured(): boolean {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  // External Supabase only — no fallback to the managed backend.
+  const url = import.meta.env.VITE_APP_SUPABASE_URL;
+  const key = import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY;
   return Boolean(url && key);
 }
 
