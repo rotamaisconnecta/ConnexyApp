@@ -13,7 +13,7 @@
 import type { Reel, ReelAuthor, ReelCategoryValue } from "./reel-types";
 import { ReelCategory } from "./reel-types";
 import { currentUser } from "@/lib/mock-data";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { saveReelMedia, getReelVideoUrl, getReelPosterUrl } from "./reel-local-media-db";
 import {
   saveStoredPublishedReel,
@@ -91,6 +91,7 @@ function generateReelId(): string {
 }
 
 export function isSupabaseConfigured(): boolean {
+  // External Supabase only — no fallback to the managed backend.
   const url = import.meta.env.VITE_APP_SUPABASE_URL;
   const key = import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY;
   return Boolean(url && key);

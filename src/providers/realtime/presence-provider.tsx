@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 interface PresenceContextValue {
   onlineUsers: Set<string>;

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { prepareReturnTo } from "@/lib/auth/return-to-prepare";
 import { sanitizeReturnTo } from "@/lib/auth/return-to";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";

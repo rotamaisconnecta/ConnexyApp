@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export const StorageHelper = {
   upload(bucket: string, path: string, file: File, options?: Record<string, unknown>) {
