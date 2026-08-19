@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { currentUser } from "@/lib/mock-data";
 
