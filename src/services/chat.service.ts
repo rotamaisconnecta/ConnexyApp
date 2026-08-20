@@ -36,13 +36,7 @@ export const ChatService = {
     await ChatRepository.markAsRead(conversationId, userId);
   },
 
-  async startConversation(participantIds: string[]) {
-    if (participantIds.length < 2) {
-      throw new Error("A conversation requires at least 2 participants");
-    }
-
-    const uniqueIds = [...new Set(participantIds)];
-    const conversation = await ChatRepository.createConversation(uniqueIds);
-    return conversation;
+  async findDirectConversation(otherUserId: string) {
+    return ChatRepository.getDirectConversation(otherUserId);
   },
 };

@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase/client";
+import { createContext, useCallback, useContext } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useConnectionPresence } from "@/hooks/use-connection-presence";
+import { PresenceService } from "@/services/presence.service";
 
 interface PresenceContextValue {
   onlineUsers: Set<string>;
@@ -11,51 +12,11 @@ interface PresenceContextValue {
 const PresenceContext = createContext<PresenceContextValue | undefined>(undefined);
 
 export function PresenceProvider({ children }: { children: React.ReactNode }) {
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
-  const channelRef = useRef<RealtimeChannel | null>(null);
-
-  useEffect(() => {
-    const channel = supabase.channel("online-users", {
-      config: {
-        presence: { key: "online-users" },
-      },
-    });
-
-    channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState() as Record<string, { user_id: string }[]>;
-        const userIds = new Set<string>();
-        for (const presences of Object.values(state)) {
-          for (const presence of presences) {
-            if (presence.user_id) {
-              userIds.add(presence.user_id);
-            }
-          }
-        }
-        setOnlineUsers(userIds);
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ user_id: "current" });
-        }
-      });
-
-    channelRef.current = channel;
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
-    };
-  }, []);
-
+  const { user } = useAuth();
+  const { onlineUsers, isOnline } = useConnectionPresence(user?.id ?? null, "online");
   const trackPresence = useCallback((userId: string) => {
-    if (channelRef.current) {
-      channelRef.current.track({ user_id: userId });
-    }
+    void PresenceService.publish(userId, "online");
   }, []);
-
-  const isOnline = useCallback((userId: string) => onlineUsers.has(userId), [onlineUsers]);
 
   const value: PresenceContextValue = {
     onlineUsers,
@@ -68,7 +29,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
 
 export function usePresenceContext() {
   const context = useContext(PresenceContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("usePresenceContext must be used within a PresenceProvider");
   }
   return context;

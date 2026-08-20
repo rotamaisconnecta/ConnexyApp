@@ -39,32 +39,18 @@ export const ChatRepository = {
 
   async markAsRead(conversationId: string, userId: string): Promise<void> {
     const { error } = await supabase
-      .from("messages")
-      .update({ read_at: new Date().toISOString() })
+      .from("conversation_participants")
+      .update({ last_read_at: new Date().toISOString() })
       .eq("conversation_id", conversationId)
-      .neq("sender_id", userId)
-      .is("read_at", null);
+      .eq("user_id", userId);
     if (error) throw new SupabaseError(error.message, error.code);
   },
 
-  async createConversation(participantIds: string[]): Promise<ConversationRow> {
-    const { data: conversation, error: convError } = await supabase
-      .from("conversations")
-      .insert({})
-      .select()
-      .single();
-    if (convError) throw new SupabaseError(convError.message, convError.code);
-
-    const participants = participantIds.map((userId) => ({
-      conversation_id: conversation.id,
-      user_id: userId,
-    }));
-
-    const { error: partError } = await supabase
-      .from("conversation_participants")
-      .insert(participants);
-    if (partError) throw new SupabaseError(partError.message, partError.code);
-
-    return conversation;
+  async getDirectConversation(otherUserId: string): Promise<string | null> {
+    const { data, error } = await supabase.rpc("get_direct_conversation", {
+      other_user_id: otherUserId,
+    });
+    if (error) throw new SupabaseError(error.message, error.code);
+    return data as string | null;
   },
 };

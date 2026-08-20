@@ -63,10 +63,8 @@ export const UserRepository = {
     return data ?? [];
   },
 
-  async getNearby(latitude: number, longitude: number, radiusKm: number): Promise<ProfileRow[]> {
+  async getNearby(radiusKm: number): Promise<ProfileRow[]> {
     const { data, error } = await supabase.rpc("get_nearby_profiles", {
-      p_lat: latitude,
-      p_lng: longitude,
       p_radius_km: radiusKm,
     });
     if (error) throw new SupabaseError(error.message, error.code);

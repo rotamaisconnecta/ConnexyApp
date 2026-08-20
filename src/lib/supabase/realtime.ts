@@ -20,15 +20,4 @@ export const RealtimeHelper = {
   removeChannel(channel: Channel) {
     return supabase.removeChannel(channel);
   },
-
-  subscribePresence(channel: string) {
-    return supabase
-      .channel(channel)
-      .on("presence", { event: "sync" }, () => {})
-      .subscribe();
-  },
-
-  trackPresence(channel: Channel, key: string, state: Record<string, unknown>) {
-    return channel.track({ key, ...state });
-  },
 };

@@ -6,20 +6,20 @@ export function useDiscovery() {
   const [isLoading, setIsLoading] = useState(false);
   const [compatibility, setCompatibility] = useState<unknown>(null);
 
-  const refresh = useCallback(async (userId: string, lat: number, lng: number, radius: number) => {
+  const refresh = useCallback(async (radiusKm = 25, limit = 50) => {
     setIsLoading(true);
     try {
-      const result = await DiscoveryService.getNearbyPeople(userId, lat, lng, radius);
+      const result = await DiscoveryService.getNearbyPeople(radiusKm, limit);
       setPeople(result ?? []);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const sendRequest = useCallback(async (fromId: string, toId: string) => {
+  const sendRequest = useCallback(async (receiverId: string) => {
     setIsLoading(true);
     try {
-      const result = await DiscoveryService.sendConnectionRequest(fromId, toId);
+      const result = await DiscoveryService.sendConnectionRequest(receiverId);
       return result;
     } finally {
       setIsLoading(false);

@@ -40,18 +40,12 @@ export const UserService = {
     return users;
   },
 
-  async getNearbyUsers(lat: number, lng: number, radius: number) {
-    if (lat < -90 || lat > 90) {
-      throw new Error("Invalid latitude");
-    }
-    if (lng < -180 || lng > 180) {
-      throw new Error("Invalid longitude");
-    }
+  async getNearbyUsers(radius: number) {
     if (radius <= 0 || radius > 100) {
       throw new Error("Radius must be between 0 and 100 km");
     }
 
-    const users = await UserRepository.getNearby(lat, lng, radius);
+    const users = await UserRepository.getNearby(radius);
     return users;
   },
 };
