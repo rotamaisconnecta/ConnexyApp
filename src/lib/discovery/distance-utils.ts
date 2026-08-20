@@ -13,16 +13,17 @@ export function formatDistance(meters: number): string {
 /* ─── distanceLabel ──────────────────────────────────────── */
 
 export function distanceLabel(meters: number): string {
-  if (meters <= 200) return "Muito perto";
-  if (meters <= 2000) return "Próximo";
+  if (meters <= 300) return "Muito perto";
+  if (meters <= 800) return "Por aqui";
+  if (meters < 2000) return "Nas proximidades";
   return `${formatDistance(meters)}`;
 }
 
 /* ─── distanceTone ───────────────────────────────────────── */
 
 export function distanceTone(meters: number): string {
-  if (meters <= 200) return "bg-success/15 text-success";
-  if (meters <= 2000) return "bg-accent text-primary";
+  if (meters <= 300) return "bg-success/15 text-success";
+  if (meters < 2000) return "bg-accent text-primary";
   return "bg-secondary text-muted-foreground";
 }
 

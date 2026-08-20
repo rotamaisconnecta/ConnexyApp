@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createFileRoute, Outlet, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatch, useNavigate, redirect } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,6 +26,13 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
 
+  const conversationOpen = Boolean(
+    useMatch({
+      from: "/_app/chat/$conversationId",
+      shouldThrow: false,
+    }),
+  );
+
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
@@ -45,10 +52,10 @@ function AppLayout() {
       <ContextEngineProvider>
         <PresenceProvider>
           <div className="flex-1 flex flex-col relative overflow-hidden">
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-2 relative">
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] relative">
               <Outlet />
             </div>
-            <BottomNav />
+            {!conversationOpen && <BottomNav />}
           </div>
         </PresenceProvider>
       </ContextEngineProvider>

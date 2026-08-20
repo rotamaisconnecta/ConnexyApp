@@ -9,7 +9,7 @@ import { ChatSearch } from "./chat-search";
 import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
 import { TypingIndicator } from "./typing-indicator";
-import { findPerson } from "@/lib/mock-data";
+import { findPerson, currentUser } from "@/lib/mock-data";
 import { MOCK_CONVERSATIONS } from "@/lib/chat/mock-conversations";
 import type {
   AttachmentAction,
@@ -286,6 +286,9 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   const toggleMuted = useCallback(() => setMuted((value) => !value), []);
 
+  const isOwnProfile = participant.id === currentUser.id;
+  const hasValidProfileId = Boolean(participant.id && participant.id.length > 0);
+
   return (
     <main className="relative flex-1 flex flex-col h-full min-h-0 pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]">
       <StatusBar />
@@ -359,10 +362,18 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
           >
             <MenuItem
               icon={User}
-              label={`Ver perfil de ${participant.name}`}
+              label={isOwnProfile ? "Meu perfil" : `Ver perfil de ${participant.name}`}
+              disabled={isOwnProfile || !hasValidProfileId}
               onClick={() => {
                 setMenuOpen(false);
-                toast.info(`Perfil de ${participant.name} — em breve`);
+                if (isOwnProfile) {
+                  router.navigate({ to: "/profile" });
+                } else if (hasValidProfileId) {
+                  router.navigate({
+                    to: "/perfil/$id",
+                    params: { id: participant.id },
+                  });
+                }
               }}
             />
             <MenuItem
@@ -405,19 +416,23 @@ function MenuItem({
   onClick,
   active = false,
   destructive = false,
+  disabled = false,
 }: {
   icon: typeof User;
   label: string;
   onClick: () => void;
   active?: boolean;
   destructive?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+        disabled && "opacity-40 cursor-not-allowed",
         destructive
           ? "text-destructive hover:bg-destructive/10"
           : active

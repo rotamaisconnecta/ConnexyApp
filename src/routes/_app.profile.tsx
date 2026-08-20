@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/system/confirm-dialog";
 import { signOut } from "@/lib/auth/sign-out";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
@@ -21,6 +20,8 @@ import {
   MoreVertical,
   LogOut,
   Loader2,
+  Heart,
+  BookOpen,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
@@ -42,6 +43,7 @@ function ProfilePage() {
   const [signingOut, setSigningOut] = useState(false);
 
   async function doSignOut() {
+    if (signingOut) return;
     setSigningOut(true);
     try {
       if (isPublicSupabaseConfigured()) await signOut();
@@ -55,7 +57,7 @@ function ProfilePage() {
   }
 
   return (
-    <div className="flex-1 pb-20">
+    <div className="flex-1">
       <StatusBar />
 
       <header className="pl-5 pr-16 pt-1 pb-3 flex items-center justify-between">
@@ -81,22 +83,6 @@ function ProfilePage() {
                   <Settings className="h-4 w-4 text-muted-foreground" />
                   Editar perfil
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setConfirmOpen(true);
-                  }}
-                  disabled={signingOut}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  {signingOut ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4" />
-                  )}
-                  Sair da conta
-                </button>
               </div>
             </>
           )}
@@ -132,76 +118,11 @@ function ProfilePage() {
         </motion.p>
       )}
 
-      {/* ── Stats ─────────────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(2)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-3 flex items-center justify-around text-center shadow-soft"
-      >
-        <Stat icon={Star} value={currentUser.rating} label="Avaliação" />
-        <div className="h-8 w-px bg-border" />
-        <Stat icon={Handshake} value={currentUser.trips} label="Corridas" />
-        <div className="h-8 w-px bg-border" />
-        <Stat icon={Users} value={currentUser.connections} label="Conexões" />
-      </motion.section>
-
-      {/* ── Interests ─────────────────────────────────────── */}
-
-      {currentUser.interests.length > 0 && (
-        <motion.section
-          variants={sectionFade(3)}
-          initial="hidden"
-          animate="visible"
-          className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-        >
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Interesses
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {currentUser.interests.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-accent text-primary text-[11px] font-semibold px-2.5 py-1"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        </motion.section>
-      )}
-
-      {/* ── Vibe Tags ─────────────────────────────────────── */}
-
-      {currentUser.vibeTags && currentUser.vibeTags.length > 0 && (
-        <motion.section
-          variants={sectionFade(4)}
-          initial="hidden"
-          animate="visible"
-          className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-        >
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Vibe
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {currentUser.vibeTags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-surface text-foreground border border-border text-[11px] font-semibold px-2.5 py-1"
-              >
-                ✦ {t}
-              </span>
-            ))}
-          </div>
-        </motion.section>
-      )}
-
       {/* ── Favorite Places ───────────────────────────────── */}
 
       {favPlaces.length > 0 && (
         <motion.section
-          variants={sectionFade(5)}
+          variants={sectionFade(2)}
           initial="hidden"
           animate="visible"
           className="mt-4"
@@ -240,41 +161,165 @@ function ProfilePage() {
         </motion.section>
       )}
 
-      {/* ── Meu Connexy ────────────────────────── */}
+      {/* ── Conexões ──────────────────────────────────────── */}
 
       <motion.section
-        variants={sectionFade(5.7)}
+        variants={sectionFade(2.5)}
         initial="hidden"
         animate="visible"
-        className="mx-4 mt-4"
+        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
       >
-        <Link
-          to="/my-connexy"
-          className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-shadow"
-        >
-          <span className="h-11 w-11 grid place-items-center rounded-xl bg-primary/10 text-primary">
-            <Shield className="h-5 w-5" />
-          </span>
-          <div className="flex-1">
-            <div className="text-sm font-bold">Meu Connexy</div>
-            <div className="text-[11px] text-muted-foreground">
-              Seu centro de gerenciamento completo
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
+              <Users className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-sm font-bold">{currentUser.connections}</div>
+              <div className="text-[11px] text-muted-foreground">Conexões</div>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
+          <Link to="/connecta" className="text-[11px] font-semibold text-primary hover:underline">
+            Ver todas
+          </Link>
+        </div>
       </motion.section>
 
-      {/* ── Convidar ──────────────────────────────────────── */}
+      {/* ── Encontros ─────────────────────────────────────── */}
 
       <motion.section
-        variants={sectionFade(5.8)}
+        variants={sectionFade(3)}
         initial="hidden"
         animate="visible"
-        className="mx-4 mt-4"
+        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
       >
-        <ConnexyInviteCard compact />
+        <div className="flex items-center gap-2">
+          <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
+            <Handshake className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="text-sm font-bold">{currentUser.trips}</div>
+            <div className="text-[11px] text-muted-foreground">Encontros</div>
+          </div>
+        </div>
       </motion.section>
+
+      {/* ── Membro desde ──────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(3.5)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
+      >
+        <div className="flex items-center gap-2">
+          <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
+            <CalendarCheck className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="text-sm font-bold">Membro desde</div>
+            <div className="text-[11px] text-muted-foreground">
+              {/* real date would come from Supabase profiles.created_at */}
+              Connexy
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* ── Momentos ──────────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(4)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
+      >
+        <div className="flex items-center gap-2">
+          <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
+            <BookOpen className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="text-sm font-bold">Momentos</div>
+            <div className="text-[11px] text-muted-foreground">
+              {/* moments would come from bio_posts when connected to Supabase */}
+              Seus momentos aparecerão aqui
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* ── Postagens ─────────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(4.5)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
+              <Heart className="h-4 w-4" />
+            </span>
+            <div>
+              <div className="text-sm font-bold">Postagens</div>
+              <div className="text-[11px] text-muted-foreground">
+                {/* post count would come from bio_posts when connected to Supabase */}0 publicações
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* ── Interests ─────────────────────────────────────── */}
+
+      {currentUser.interests.length > 0 && (
+        <motion.section
+          variants={sectionFade(5)}
+          initial="hidden"
+          animate="visible"
+          className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
+        >
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Interesses
+          </h2>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {currentUser.interests.map((t) => (
+              <span
+                key={t}
+                className="rounded-full bg-accent text-primary text-[11px] font-semibold px-2.5 py-1"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </motion.section>
+      )}
+
+      {/* ── Vibe Tags ─────────────────────────────────────── */}
+
+      {currentUser.vibeTags && currentUser.vibeTags.length > 0 && (
+        <motion.section
+          variants={sectionFade(5.5)}
+          initial="hidden"
+          animate="visible"
+          className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
+        >
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Vibe
+          </h2>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {currentUser.vibeTags.map((t) => (
+              <span
+                key={t}
+                className="rounded-full bg-surface text-foreground border border-border text-[11px] font-semibold px-2.5 py-1"
+              >
+                ✦ {t}
+              </span>
+            ))}
+          </div>
+        </motion.section>
+      )}
 
       {/* ── Quick Links ───────────────────────────────────── */}
 
@@ -308,7 +353,66 @@ function ProfilePage() {
         </Link>
       </motion.section>
 
-      <div className="h-6" />
+      {/* ── Meu Connexy ────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(6.3)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-4"
+      >
+        <Link
+          to="/my-connexy"
+          className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-shadow"
+        >
+          <span className="h-11 w-11 grid place-items-center rounded-xl bg-primary/10 text-primary">
+            <Shield className="h-5 w-5" />
+          </span>
+          <div className="flex-1">
+            <div className="text-sm font-bold">Meu Connexy</div>
+            <div className="text-[11px] text-muted-foreground">
+              Seu centro de gerenciamento completo
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      </motion.section>
+
+      {/* ── Convidar ──────────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(6.5)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-4"
+      >
+        <ConnexyInviteCard compact />
+      </motion.section>
+
+      {/* ── Sair ──────────────────────────────────────────── */}
+
+      <motion.section
+        variants={sectionFade(7)}
+        initial="hidden"
+        animate="visible"
+        className="mx-4 mt-6 mb-4"
+      >
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          disabled={signingOut}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3.5 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          {signingOut ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4" />
+          )}
+          Sair da conta
+        </button>
+      </motion.section>
+
+      <div className="h-4" />
 
       <ConfirmDialog
         isOpen={confirmOpen}
@@ -320,24 +424,6 @@ function ProfilePage() {
         cancelLabel="Cancelar"
         danger
       />
-    </div>
-  );
-}
-
-function Stat({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  value: number | string;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-col items-center">
-      <Icon className="h-4 w-4 text-primary" />
-      <div className="text-sm font-bold mt-0.5">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
     </div>
   );
 }

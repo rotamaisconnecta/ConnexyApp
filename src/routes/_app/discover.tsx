@@ -6,6 +6,7 @@ import { Users, Calendar, Building2, Car, MapPin, Map as MapIcon } from "lucide-
 import { cn } from "@/lib/utils";
 import { currentUser, people, places, drivers } from "@/lib/mock-data";
 import { usePresence } from "@/providers/presence/presence-provider";
+import { formatPersonDistance } from "@/lib/proximity";
 
 const searchSchema = z.object({
   filter: z.enum(["places"]).optional(),
@@ -62,7 +63,8 @@ function DiscoverPage() {
       id: string;
       name: string;
       type: MapFilter;
-      distance: string;
+      distanceMeters: number;
+      distanceLabel: string;
       photo?: string;
       icon: string;
       color: string;
@@ -76,10 +78,8 @@ function DiscoverPage() {
           id: p.id,
           name: p.name,
           type: "pessoas",
-          distance:
-            p.distanceMeters < 1000
-              ? `${p.distanceMeters}m`
-              : `${(p.distanceMeters / 1000).toFixed(1)}km`,
+          distanceMeters: p.distanceMeters,
+          distanceLabel: formatPersonDistance(p.distanceMeters),
           photo: p.photo,
           icon: "👤",
           color: "bg-blue-100 border-blue-200",
@@ -93,7 +93,8 @@ function DiscoverPage() {
           id: `prs-${record.id}`,
           name: record.userName,
           type: "pessoas",
-          distance: "presente",
+          distanceMeters: 0,
+          distanceLabel: "presente",
           photo: record.userPhoto,
           icon: "📍",
           color: "bg-emerald-100 border-emerald-200",
@@ -110,7 +111,8 @@ function DiscoverPage() {
           id: p.id,
           name: p.name,
           type: "locais",
-          distance:
+          distanceMeters: p.distanceMeters,
+          distanceLabel:
             p.distanceMeters < 1000
               ? `${p.distanceMeters}m`
               : `${(p.distanceMeters / 1000).toFixed(1)}km`,
@@ -130,7 +132,8 @@ function DiscoverPage() {
           id: d.id,
           name: d.name,
           type: "motoristas",
-          distance:
+          distanceMeters: d.distanceMeters,
+          distanceLabel:
             d.distanceMeters < 1000
               ? `${d.distanceMeters}m`
               : `${(d.distanceMeters / 1000).toFixed(1)}km`,
@@ -149,7 +152,8 @@ function DiscoverPage() {
           id: `biz-${p.id}`,
           name: p.name,
           type: "negocios",
-          distance:
+          distanceMeters: p.distanceMeters,
+          distanceLabel:
             p.distanceMeters < 1000
               ? `${p.distanceMeters}m`
               : `${(p.distanceMeters / 1000).toFixed(1)}km`,
@@ -171,7 +175,8 @@ function DiscoverPage() {
             id: `evt-${p.id}`,
             name: p.name,
             type: "eventos",
-            distance:
+            distanceMeters: p.distanceMeters,
+            distanceLabel:
               p.distanceMeters < 1000
                 ? `${p.distanceMeters}m`
                 : `${(p.distanceMeters / 1000).toFixed(1)}km`,
@@ -182,15 +187,11 @@ function DiscoverPage() {
         });
     }
 
-    return items.sort((a, b) => {
-      const aDist = parseInt(a.distance);
-      const bDist = parseInt(b.distance);
-      return aDist - bDist;
-    });
+    return items.sort((a, b) => a.distanceMeters - b.distanceMeters);
   }, [activeFilter, placeUpdates, presencePeople]);
 
   return (
-    <div className="flex-1 pb-20">
+    <div className="flex-1">
       <StatusBar />
 
       <header className="px-5 pt-1 pb-3">
@@ -346,7 +347,7 @@ function DiscoverPage() {
                 <div className="text-sm font-semibold truncate">{item.name}</div>
                 <div className="text-[11px] text-muted-foreground truncate">{item.subtitle}</div>
               </div>
-              <div className="text-[10px] text-muted-foreground shrink-0">{item.distance}</div>
+              <div className="text-[10px] text-muted-foreground shrink-0">{item.distanceLabel}</div>
             </button>
           ))}
         </div>

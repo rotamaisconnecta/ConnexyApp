@@ -1,5 +1,11 @@
 export type ProximityTier =
-  "here" | "veryClose" | "close" | "around" | "neighborhood" | "far" | "veryFar";
+  | "here"
+  | "veryClose"
+  | "close"
+  | "around"
+  | "neighborhood"
+  | "far"
+  | "veryFar";
 
 export function proximityTier(meters: number): ProximityTier {
   if (meters <= 20) return "here";
@@ -66,10 +72,9 @@ export function isNearby(meters: number): boolean {
 ───────────────────────────────────────────────────────── */
 
 const PERSON_DISTANCE_CATEGORIES = [
-  { max: 100, label: "Muito perto" },
-  { max: 300, label: "Bem próximo" },
-  { max: 700, label: "Na sua região" },
-  { max: 2000, label: "Perto de você" },
+  { max: 300, label: "Muito perto" },
+  { max: 800, label: "Por aqui" },
+  { max: 1999, label: "Nas proximidades" },
 ] as const;
 
 export function formatPersonDistance(meters: number): string {
@@ -78,7 +83,7 @@ export function formatPersonDistance(meters: number): string {
       return `📍 ${cat.label}`;
     }
   }
-  return formatDistance(meters);
+  return `📍 ${formatDistance(meters)}`;
 }
 
 /* ─── formatDistance (localised) ──────────────────────────── */
