@@ -4,9 +4,12 @@ import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { Users, Calendar, Building2, Car, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser, people, places, drivers } from "@/lib/mock-data";
+import { currentUser, places, drivers } from "@/lib/mock-data";
 import { usePresence } from "@/providers/presence/presence-provider";
 import { formatPersonDistance } from "@/lib/proximity";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { useDiscovery } from "@/hooks/api/use-discovery";
+import type { NearbyProfile } from "@/types/phase-13b";
 
 const searchSchema = z.object({
   filter: z.enum(["places"]).optional(),
@@ -38,6 +41,7 @@ function DiscoverPage() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
   const { checkins, placeUpdates } = usePresence();
+  const { people: nearbyProfiles } = useDiscovery();
 
   const presencePeople = useMemo(
     () =>
@@ -73,7 +77,18 @@ function DiscoverPage() {
     }> = [];
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
-      people.slice(0, 6).forEach((p) => {
+      const profilesToUse =
+        isPublicSupabaseConfigured() && nearbyProfiles.length > 0
+          ? nearbyProfiles.slice(0, 6).map((p: NearbyProfile) => ({
+              id: p.id,
+              name: p.name,
+              distanceMeters: (p.distance_km ?? 0) * 1000,
+              photo: p.photo_url ?? undefined,
+              interests: p.common_interests,
+            }))
+          : [];
+
+      profilesToUse.forEach((p) => {
         items.push({
           id: p.id,
           name: p.name,
@@ -188,7 +203,7 @@ function DiscoverPage() {
     }
 
     return items.sort((a, b) => a.distanceMeters - b.distanceMeters);
-  }, [activeFilter, placeUpdates, presencePeople]);
+  }, [activeFilter, placeUpdates, presencePeople, nearbyProfiles]);
 
   return (
     <div className="flex-1">

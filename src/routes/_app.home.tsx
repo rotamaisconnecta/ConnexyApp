@@ -7,6 +7,7 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
 import { PresenceLiveFeed } from "@/components/presence/presence-live-feed";
+import { PresenceLiveFeedReal } from "@/components/presence/presence-live-feed-real";
 import { ConnexyInviteCard } from "@/components/share/connexy-invite-card";
 import { useAuth } from "@/hooks/use-auth";
 import { ProfileRepository } from "@/repositories/profile.repository";
@@ -193,7 +194,7 @@ function Home() {
       </div>
 
       <div className="mt-5">
-        <PresenceLiveFeed />
+        {isPublicSupabaseConfigured() && user ? <PresenceLiveFeedReal /> : <PresenceLiveFeed />}
       </div>
 
       <section className="mt-5 px-5 pb-6">

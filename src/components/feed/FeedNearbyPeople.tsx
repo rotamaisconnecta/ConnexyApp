@@ -5,16 +5,43 @@ import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import { formatPersonDistance } from "@/lib/proximity";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import type { NearbyPeopleSectionData } from "@/lib/feed/feed-types";
+import type { NearbyProfile } from "@/types/phase-13b";
 
 const PEOPLE_CARD_WIDTH = { mobile: 160, tablet: 168, desktop: 176 } as const;
 const PEOPLE_CARD_HEIGHT = 252;
 const MAX_AFFINITY_CHIPS = 3;
 
-interface FeedNearbyPeopleProps {
-  data: NearbyPeopleSectionData;
+function profileToFeedPerson(profile: NearbyProfile): NearbyPeopleSectionData["people"][number] {
+  const distanceMeters = profile.distance_km != null ? profile.distance_km * 1000 : 0;
+  const labels = [
+    ...profile.common_interests,
+    ...profile.common_vibe_tags,
+    ...profile.common_looks_for,
+  ].slice(0, 5);
+  return {
+    id: profile.id,
+    name: profile.name,
+    photo: profile.photo_url ?? "",
+    age: profile.age ?? undefined,
+    compatibility: profile.compatibility_score ?? undefined,
+    distance: formatPersonDistance(distanceMeters),
+    distanceMeters,
+    interests: profile.common_interests,
+    online: false,
+    commonalities: labels.length > 0 ? { labels, total: labels.length } : undefined,
+  };
 }
 
-export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
+interface FeedNearbyPeopleProps {
+  data?: NearbyPeopleSectionData;
+  profiles?: NearbyProfile[];
+}
+
+export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
+  const people = profiles ? profiles.map(profileToFeedPerson) : (data?.people ?? []);
+
+  if (people.length === 0) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -44,7 +71,7 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
 
       <PremiumCarousel
         section="people"
-        items={data.people}
+        items={people}
         cardWidths={PEOPLE_CARD_WIDTH}
         cardHeight={PEOPLE_CARD_HEIGHT}
         renderCard={(person) => {
@@ -73,12 +100,20 @@ export function FeedNearbyPeople({ data }: FeedNearbyPeopleProps) {
                 className="flex min-h-0 flex-1 flex-col"
               >
                 <div className="relative w-full shrink-0" style={{ height: 112 }}>
-                  <img
-                    src={person.photo}
-                    alt={person.name}
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+                  {person.photo ? (
+                    <img
+                      src={person.photo}
+                      alt={person.name}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-primary">
+                        {person.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
                   <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800 shadow-soft">
                     {formatPersonDistance(person.distanceMeters)}

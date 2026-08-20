@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { Hero } from "@/components/profile/atoms/hero";
 import { ConfirmDialog } from "@/components/system/confirm-dialog";
@@ -27,6 +27,8 @@ import { motion } from "framer-motion";
 import { sectionFade } from "@/components/profile/animations";
 import ModeSwitcher from "@/components/roles/ModeSwitcher";
 import { ConnexyInviteCard } from "@/components/share/connexy-invite-card";
+import { useAuth } from "@/hooks/use-auth";
+import { useConnections } from "@/hooks/use-connections";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
@@ -37,6 +39,8 @@ export const Route = createFileRoute("/_app/profile")({
 
 function ProfilePage() {
   const nav = useNavigate();
+  const { user } = useAuth();
+  const { count: connectionsCount } = useConnections(user?.id ?? null);
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -175,7 +179,9 @@ function ProfilePage() {
               <Users className="h-4 w-4" />
             </span>
             <div>
-              <div className="text-sm font-bold">{currentUser.connections}</div>
+              <div className="text-sm font-bold">
+                {isPublicSupabaseConfigured() ? connectionsCount : currentUser.connections}
+              </div>
               <div className="text-[11px] text-muted-foreground">Conexões</div>
             </div>
           </div>

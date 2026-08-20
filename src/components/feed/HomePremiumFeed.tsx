@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { FeedNearbyPeople } from "./FeedNearbyPeople";
 import { FeedNearbyEvents } from "./FeedNearbyEvents";
@@ -14,6 +14,9 @@ import {
   buildTrendingCards,
   buildRecommendationCards,
 } from "@/lib/feed/home-premium";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { DiscoveryService } from "@/services/discovery.service";
+import type { NearbyProfile } from "@/types/phase-13b";
 
 function PremiumSection({ index, children }: { index: number; children: React.ReactNode }) {
   return (
@@ -34,11 +37,30 @@ function PremiumSection({ index, children }: { index: number; children: React.Re
 }
 
 export const HomePremiumFeed = memo(function HomePremiumFeed() {
+  const [nearbyProfiles, setNearbyProfiles] = useState<NearbyProfile[]>([]);
+
+  useEffect(() => {
+    if (!isPublicSupabaseConfigured()) return;
+    let cancelled = false;
+    void DiscoveryService.getNearbyPeople(25, 10).then((result) => {
+      if (!cancelled) setNearbyProfiles(result ?? []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const useRealPeople = isPublicSupabaseConfigured() && nearbyProfiles.length > 0;
+
   return (
     <LayoutGroup>
       <div className="space-y-6">
         <PremiumSection index={0}>
-          <FeedNearbyPeople data={buildNearbyPeople()} />
+          {useRealPeople ? (
+            <FeedNearbyPeople profiles={nearbyProfiles} />
+          ) : (
+            <FeedNearbyPeople data={buildNearbyPeople()} />
+          )}
         </PremiumSection>
 
         <PremiumSection index={1}>

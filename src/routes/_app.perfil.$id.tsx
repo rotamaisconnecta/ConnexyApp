@@ -4,11 +4,6 @@ import { PresenceDot } from "@/components/presence-dot";
 import { BackButton } from "@/components/navigation/back-button";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import {
-  getConversationId,
-  getConversationInviteStatus,
-  writeStoredInvite,
-} from "@/lib/chat/mock-conversation-invites";
-import {
   findPerson,
   findPlace,
   commonGround,
@@ -32,11 +27,12 @@ import {
   UserRound,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { useAuth } from "@/hooks/use-auth";
+import { ConnectionsService } from "@/services/connections.service";
 import type { ProfileRow } from "@/types/database/tables";
 
 const searchSchema = z.object({
@@ -154,17 +150,38 @@ function Perfil() {
   const { user } = useAuth();
   const nav = useNavigate();
   const cg = commonGround(p);
-  const inviteStatus = getConversationInviteStatus(p.id);
   const label = personProximityLabel(p.distanceMeters);
   const radius = personProximityRadius(p.distanceMeters);
   const isOwnProfile = user?.id === p.id;
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"loading" | "connected" | "available">(
+    "loading",
+  );
 
   const avatarInitials = getProfileInitials(p.name, p.handle);
   const showAvatarFallback = !p.photo || avatarFailed;
 
   const favPlaces = (p.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const commonPlaces = cg.sharedPlaces.map(findPlace).filter(Boolean);
+
+  useEffect(() => {
+    if (!isPublicSupabaseConfigured() || isOwnProfile || p.id === currentUser.id) {
+      setConnectionStatus("available");
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const conversationId = await ConnectionsService.getDirectConversation(p.id);
+        if (!cancelled) setConnectionStatus(conversationId ? "connected" : "available");
+      } catch {
+        if (!cancelled) setConnectionStatus("available");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [p.id, isOwnProfile]);
 
   return (
     <div className="flex-1 flex flex-col pb-8">
@@ -449,48 +466,45 @@ function Perfil() {
               >
                 Voltar
               </Link>
-              {inviteStatus === "invited" ? (
+              {connectionStatus === "connected" ? (
                 <button
                   type="button"
-                  className="flex-1 h-12 rounded-2xl bg-secondary text-muted-foreground font-semibold flex items-center justify-center"
-                  aria-label="Convite enviado"
-                >
-                  Convite enviado
-                </button>
-              ) : inviteStatus === "connected" ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    nav({
-                      to: "/chat/$conversationId",
-                      params: { conversationId: getConversationId(p.id) ?? p.id },
-                    })
-                  }
+                  onClick={async () => {
+                    try {
+                      const conversationId = await ConnectionsService.getDirectConversation(p.id);
+                      nav({
+                        to: "/chat/$conversationId",
+                        params: { conversationId: conversationId ?? p.id },
+                      });
+                    } catch {
+                      nav({
+                        to: "/chat/$conversationId",
+                        params: { conversationId: p.id },
+                      });
+                    }
+                  }}
                   className="flex-1 h-12 rounded-2xl bg-primary/10 text-primary font-semibold flex items-center justify-center"
                 >
                   Abrir conversa
                 </button>
-              ) : inviteStatus === "rejected" ? (
-                <Link
-                  to="/solicitacao/$id"
-                  params={{ id: p.id }}
-                  search={{ mode: "send" }}
-                  className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant flex items-center justify-center"
-                >
-                  Enviar novo convite
-                </Link>
               ) : (
                 <button
-                  onClick={() => {
-                    writeStoredInvite(p.id, "connected");
-                    nav({
-                      to: "/chat/$conversationId",
-                      params: { conversationId: getConversationId(p.id) ?? p.id },
-                    });
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await ConnectionsService.sendRequest(p.id);
+                      nav({
+                        to: "/chat/$conversationId",
+                        params: { conversationId: p.id },
+                      });
+                    } catch (err) {
+                      const toast = await import("sonner").then((m) => m.toast);
+                      toast.error(err instanceof Error ? err.message : "Erro ao enviar convite");
+                    }
                   }}
                   className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
                 >
-                  Aceitar conversa
+                  Enviar convite
                 </button>
               )}
             </div>

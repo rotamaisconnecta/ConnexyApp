@@ -6,6 +6,9 @@ import { PresenceDot } from "@/components/presence-dot";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { useDiscovery } from "@/hooks/api/use-discovery";
+import { formatPersonDistance } from "@/lib/proximity";
 
 export const Route = createFileRoute("/_app/connecta")({
   head: () => ({ meta: [{ title: "Connexy — Pessoas próximas" }] }),
@@ -14,6 +17,10 @@ export const Route = createFileRoute("/_app/connecta")({
 
 function Connecta() {
   const [tab, setTab] = useState<"pessoas" | "solicitacoes">("pessoas");
+  const { people: nearbyProfiles } = useDiscovery();
+
+  const useRealPeople = isPublicSupabaseConfigured() && nearbyProfiles.length > 0;
+
   return (
     <div className="flex-1">
       <StatusBar />
@@ -40,52 +47,104 @@ function Connecta() {
       </div>
 
       <ul className="mt-4 px-5 space-y-3 pb-4">
-        {people.map((p) => (
-          <li
-            key={p.id}
-            className="rounded-2xl bg-surface border border-border p-3 shadow-soft flex items-center gap-3"
-          >
-            <Link
-              to="/perfil/$id"
-              params={{ id: p.id }}
-              search={{ from: "connecta" }}
-              className="relative shrink-0"
-              aria-label={`Ver perfil de ${p.name}`}
-            >
-              <img src={p.photo} alt={p.name} className="h-14 w-14 rounded-full object-cover" />
-              <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
-            </Link>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">
-                {p.name}, {p.age}
-              </div>
-              <div className="mt-0.5 flex items-center gap-1.5">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${proximityTone(p.distanceMeters)}`}
+        {useRealPeople
+          ? nearbyProfiles.map((p) => {
+              const distanceMeters = (p.distance_km ?? 0) * 1000;
+              return (
+                <li
+                  key={p.id}
+                  className="rounded-2xl bg-surface border border-border p-3 shadow-soft flex items-center gap-3"
                 >
-                  {personProximityLabel(p.distanceMeters)}
-                </span>
-                {(() => {
-                  const radius = personProximityRadius(p.distanceMeters);
-                  return radius ? (
-                    <span className="text-[10px] text-muted-foreground">· {radius}</span>
-                  ) : null;
-                })()}
-              </div>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {p.interests.slice(0, 2).map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full bg-accent text-primary text-[10px] font-semibold px-2 py-0.5"
+                  <Link
+                    to="/perfil/$id"
+                    params={{ id: p.id }}
+                    search={{ from: "connecta" }}
+                    className="relative shrink-0"
+                    aria-label={`Ver perfil de ${p.name}`}
                   >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <ConversationInviteButton personId={p.id} personName={p.name} variant="compact" />
-          </li>
-        ))}
+                    {p.photo_url ? (
+                      <img
+                        src={p.photo_url}
+                        alt={p.name}
+                        className="h-14 w-14 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary text-lg font-bold">
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm">
+                      {p.name}
+                      {p.age ? `, ${p.age}` : ""}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-accent text-primary">
+                        {formatPersonDistance(distanceMeters)}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {p.common_interests.slice(0, 2).map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-full bg-accent text-primary text-[10px] font-semibold px-2 py-0.5"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <ConversationInviteButton personId={p.id} personName={p.name} variant="compact" />
+                </li>
+              );
+            })
+          : people.map((p) => (
+              <li
+                key={p.id}
+                className="rounded-2xl bg-surface border border-border p-3 shadow-soft flex items-center gap-3"
+              >
+                <Link
+                  to="/perfil/$id"
+                  params={{ id: p.id }}
+                  search={{ from: "connecta" }}
+                  className="relative shrink-0"
+                  aria-label={`Ver perfil de ${p.name}`}
+                >
+                  <img src={p.photo} alt={p.name} className="h-14 w-14 rounded-full object-cover" />
+                  <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
+                </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">
+                    {p.name}, {p.age}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${proximityTone(p.distanceMeters)}`}
+                    >
+                      {personProximityLabel(p.distanceMeters)}
+                    </span>
+                    {(() => {
+                      const radius = personProximityRadius(p.distanceMeters);
+                      return radius ? (
+                        <span className="text-[10px] text-muted-foreground">· {radius}</span>
+                      ) : null;
+                    })()}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {p.interests.slice(0, 2).map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full bg-accent text-primary text-[10px] font-semibold px-2 py-0.5"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <ConversationInviteButton personId={p.id} personName={p.name} variant="compact" />
+              </li>
+            ))}
       </ul>
     </div>
   );
