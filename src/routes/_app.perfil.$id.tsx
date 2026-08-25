@@ -485,7 +485,7 @@ function Perfil() {
                   }}
                   className="flex-1 h-12 rounded-2xl bg-primary/10 text-primary font-semibold flex items-center justify-center"
                 >
-                  Abrir conversa
+                  Conversar
                 </button>
               ) : (
                 <button

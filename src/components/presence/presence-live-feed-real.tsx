@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { Wifi, WifiOff } from "lucide-react";
+import { Wifi } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useConnections } from "@/hooks/use-connections";
 import { useConnectionPresence } from "@/hooks/use-connection-presence";
+import { useUserPresenceControl } from "@/hooks/use-user-presence-control";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 
 function formatTimeAgo(iso: string): string {
@@ -26,8 +27,9 @@ interface OnlineConnection {
 
 export function PresenceLiveFeedReal() {
   const { user } = useAuth();
+  const { preference } = useUserPresenceControl(user?.id ?? null);
   const { connections, isLoading: connectionsLoading } = useConnections(user?.id ?? null);
-  const { presenceByUser, isOnline } = useConnectionPresence(user?.id ?? null, "online");
+  const { presenceByUser, isOnline } = useConnectionPresence(user?.id ?? null, preference);
 
   const onlineConnections = useMemo<OnlineConnection[]>(() => {
     if (!user) return [];
@@ -47,8 +49,42 @@ export function PresenceLiveFeedReal() {
   }, [user, connections, isOnline, presenceByUser]);
 
   if (!isPublicSupabaseConfigured()) return null;
-  if (connectionsLoading) return null;
-  if (onlineConnections.length === 0) return null;
+
+  if (connectionsLoading) {
+    return (
+      <section className="px-4">
+        <div className="rounded-2xl bg-surface shadow-soft p-4">
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                  <div className="h-2.5 w-16 rounded bg-muted animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (onlineConnections.length === 0) {
+    return (
+      <section className="px-4">
+        <div className="rounded-2xl bg-surface shadow-soft p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Wifi className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-display text-sm font-bold text-foreground">Conexões online</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Seus amigos conectados aparecerão aqui quando estiverem ao vivo.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="px-4">
@@ -94,10 +130,10 @@ export function PresenceLiveFeedReal() {
                   <p className="truncate text-sm font-semibold text-foreground">{person.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {person.status === "online"
-                      ? "Online agora"
+                      ? "Online"
                       : person.status === "available"
-                        ? "Disponivel"
-                        : "Nao perturbe"}
+                        ? "Disponível agora"
+                        : "Não perturbe"}
                   </p>
                 </div>
                 <span className="shrink-0 text-[10px] font-medium text-muted-foreground">

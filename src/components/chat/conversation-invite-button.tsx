@@ -48,7 +48,7 @@ export function ConversationInviteButton({
   const invited = status === "invited";
 
   const label = connected
-    ? "Abrir conversa"
+    ? "Conversar"
     : invited
       ? "Convite enviado"
       : status === "loading"

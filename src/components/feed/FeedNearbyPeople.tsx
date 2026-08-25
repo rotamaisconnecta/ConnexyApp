@@ -11,6 +11,13 @@ const PEOPLE_CARD_WIDTH = { mobile: 160, tablet: 168, desktop: 176 } as const;
 const PEOPLE_CARD_HEIGHT = 252;
 const MAX_AFFINITY_CHIPS = 3;
 
+const PROXIMITY_TIER_LABELS: Record<string, string> = {
+  very_close: "Muito perto",
+  around_here: "Por aqui",
+  nearby: "Nas redondezas",
+  distance: "Um pouco mais longe",
+};
+
 function profileToFeedPerson(profile: NearbyProfile): NearbyPeopleSectionData["people"][number] {
   const distanceMeters = profile.distance_km != null ? profile.distance_km * 1000 : 0;
   const labels = [
@@ -24,7 +31,7 @@ function profileToFeedPerson(profile: NearbyProfile): NearbyPeopleSectionData["p
     photo: profile.photo_url ?? "",
     age: profile.age ?? undefined,
     compatibility: profile.compatibility_score ?? undefined,
-    distance: formatPersonDistance(distanceMeters),
+    distance: PROXIMITY_TIER_LABELS[profile.proximity_tier] ?? formatPersonDistance(distanceMeters),
     distanceMeters,
     interests: profile.common_interests,
     online: false,
@@ -40,7 +47,13 @@ interface FeedNearbyPeopleProps {
 export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
   const people = profiles ? profiles.map(profileToFeedPerson) : (data?.people ?? []);
 
-  if (people.length === 0) return null;
+  if (people.length === 0) {
+    return (
+      <div className="px-6 py-6 text-center">
+        <p className="text-xs text-muted-foreground">Nenhuma pessoa nova nas proximidades agora.</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -116,14 +129,18 @@ export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
                   )}
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
                   <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800 shadow-soft">
-                    {formatPersonDistance(person.distanceMeters)}
+                    {person.distance}
                   </span>
-                  {person.compatibility != null && (
+                  {person.compatibility != null ? (
                     <span
                       aria-label={`Compatibilidade de ${person.compatibility}%`}
                       className="absolute top-2 right-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-pink-600 shadow-soft"
                     >
                       {person.compatibility}%
+                    </span>
+                  ) : (
+                    <span className="absolute top-2 right-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] text-muted-foreground shadow-soft">
+                      Complete seus interesses para descobrir a afinidade.
                     </span>
                   )}
                 </div>

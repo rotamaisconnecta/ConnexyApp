@@ -77,16 +77,15 @@ function DiscoverPage() {
     }> = [];
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
-      const profilesToUse =
-        isPublicSupabaseConfigured() && nearbyProfiles.length > 0
-          ? nearbyProfiles.slice(0, 6).map((p: NearbyProfile) => ({
-              id: p.id,
-              name: p.name,
-              distanceMeters: (p.distance_km ?? 0) * 1000,
-              photo: p.photo_url ?? undefined,
-              interests: p.common_interests,
-            }))
-          : [];
+      const profilesToUse = isPublicSupabaseConfigured()
+        ? nearbyProfiles.slice(0, 6).map((p: NearbyProfile) => ({
+            id: p.id,
+            name: p.name,
+            distanceMeters: (p.distance_km ?? 0) * 1000,
+            photo: p.photo_url ?? undefined,
+            interests: p.common_interests,
+          }))
+        : [];
 
       profilesToUse.forEach((p) => {
         items.push({

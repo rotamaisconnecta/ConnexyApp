@@ -65,6 +65,14 @@ export const ConnectionsRepository = {
     if (error) throw new Error(error.message);
   },
 
+  async findIncomingPendingRequest(senderId: string): Promise<string | null> {
+    const { data, error } = await supabase.rpc("find_pending_request_for_receiver", {
+      p_sender_id: senderId,
+    });
+    if (error) throw new Error(error.message);
+    return (data as string | null) ?? null;
+  },
+
   async getDirectConversation(otherUserId: string): Promise<string | null> {
     const { data, error } = await supabase.rpc("get_direct_conversation", {
       other_user_id: otherUserId,

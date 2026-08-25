@@ -21,7 +21,6 @@ export function useGeolocation(options?: { enableHighAccuracy?: boolean }) {
     error: null,
   });
 
-  const watchIdRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -29,13 +28,6 @@ export function useGeolocation(options?: { enableHighAccuracy?: boolean }) {
     return () => {
       mountedRef.current = false;
     };
-  }, []);
-
-  const stopWatching = useCallback(() => {
-    if (watchIdRef.current !== null && navigator.geolocation) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
   }, []);
 
   const request = useCallback(() => {
@@ -80,36 +72,5 @@ export function useGeolocation(options?: { enableHighAccuracy?: boolean }) {
     );
   }, [options?.enableHighAccuracy]);
 
-  const watch = useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-
-    stopWatching();
-
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        if (!mountedRef.current) return;
-        setState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          permission: "granted",
-          isLoading: false,
-          error: null,
-        });
-      },
-      () => {},
-      {
-        enableHighAccuracy: options?.enableHighAccuracy ?? true,
-        timeout: 15000,
-        maximumAge: 30000,
-      },
-    );
-    watchIdRef.current = id;
-  }, [options?.enableHighAccuracy, stopWatching]);
-
-  useEffect(() => {
-    return () => stopWatching();
-  }, [stopWatching]);
-
-  return { ...state, request, watch, stopWatching };
+  return { ...state, request };
 }

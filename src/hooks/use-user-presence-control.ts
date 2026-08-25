@@ -5,14 +5,14 @@ import type { PresencePreference } from "@/types/phase-13b";
 const STORAGE_KEY = "connexy.presence.preference";
 
 function loadStoredPreference(): PresencePreference {
-  if (typeof window === "undefined") return "online";
+  if (typeof window === "undefined") return "invisible";
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw === "online" || raw === "available" || raw === "dnd" || raw === "invisible") return raw;
   } catch {
     // storage unavailable, use default
   }
-  return "online";
+  return "invisible";
 }
 
 function storePreference(pref: PresencePreference): void {

@@ -12,6 +12,8 @@ export const ConnectionsService = {
   removeConnection: (connectionId: string) => ConnectionsRepository.remove(connectionId),
   blockUser: (userId: string) => ConnectionsRepository.block(userId),
   unblockUser: (userId: string) => ConnectionsRepository.unblock(userId),
+  findIncomingPendingRequest: (senderId: string) =>
+    ConnectionsRepository.findIncomingPendingRequest(senderId),
   getDirectConversation: (otherUserId: string) =>
     ConnectionsRepository.getDirectConversation(otherUserId),
   updateLocation: (userId: string, location: UserLocationInput) =>

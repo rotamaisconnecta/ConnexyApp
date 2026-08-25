@@ -46,6 +46,15 @@ import {
 } from "@/lib/integration/integration-notifications";
 import { dispatchCheckinCreated } from "@/lib/live/live-dispatcher";
 import { currentUser } from "@/lib/mock-data";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+
+/* ==== Mock presence gate: demo data only runs in DEV, with Supabase
+   unconfigured AND an explicit opt-in flag. The authenticated/configured
+   path never seeds, persists or serves fictional presence records. ==== */
+const MOCK_PRESENCE_ENABLED =
+  import.meta.env.DEV &&
+  !isPublicSupabaseConfigured() &&
+  import.meta.env.VITE_APP_ENABLE_MOCK_PRESENCE === "1";
 
 const CURRENT_USER_ID = "lucas";
 const VIEWER_LAT = -23.55;
@@ -269,12 +278,15 @@ interface PresenceProviderProps {
 }
 
 export function PresenceProvider({ children }: PresenceProviderProps) {
-  const [checkins, setCheckins] = useState<PresenceRecord[]>(loadOrSeedRecords);
+  const [checkins, setCheckins] = useState<PresenceRecord[]>(() =>
+    MOCK_PRESENCE_ENABLED ? loadOrSeedRecords() : [],
+  );
   const [visibility, setVisibilityState] = useState<PresenceVisibilityValue>(
     getStoredPresenceVisibility,
   );
 
   useEffect(() => {
+    if (!MOCK_PRESENCE_ENABLED) return;
     savePresenceRecords(checkins);
   }, [checkins]);
 

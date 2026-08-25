@@ -40,7 +40,12 @@ export const Route = createFileRoute("/_app/profile")({
 function ProfilePage() {
   const nav = useNavigate();
   const { user } = useAuth();
-  const { count: connectionsCount } = useConnections(user?.id ?? null);
+  const {
+    count: connectionsCount,
+    isLoading: connectionsLoading,
+    error: connectionsError,
+  } = useConnections(user?.id ?? null);
+  const configured = isPublicSupabaseConfigured();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -180,7 +185,13 @@ function ProfilePage() {
             </span>
             <div>
               <div className="text-sm font-bold">
-                {isPublicSupabaseConfigured() ? connectionsCount : currentUser.connections}
+                {configured
+                  ? connectionsLoading
+                    ? "—"
+                    : connectionsError
+                      ? "0"
+                      : connectionsCount
+                  : currentUser.connections}
               </div>
               <div className="text-[11px] text-muted-foreground">Conexões</div>
             </div>
