@@ -171,14 +171,24 @@ function CompleteProfile() {
           const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
           const { error: uploadError } = await supabase.storage
             .from("avatars")
-            .upload(path, avatarFile, { contentType: "image/jpeg" });
+            .upload(path, avatarFile, { contentType: "image/jpeg", upsert: true });
           if (uploadError) {
-            throw new Error("Falha ao enviar a foto. Tente novamente.");
+            throw new Error(
+              uploadError.message
+                ? `Falha ao enviar a foto: ${uploadError.message}`
+                : "Falha ao enviar a foto. Tente novamente.",
+            );
           }
           uploadedPath = path;
-          const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-          photoUrl = urlData.publicUrl;
+          const { data: signed, error: signedError } = await supabase.storage
+            .from("avatars")
+            .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+          if (signedError || !signed?.signedUrl) {
+            throw new Error("Falha ao processar a foto. Tente novamente.");
+          }
+          photoUrl = signed.signedUrl;
         }
+
 
         try {
           await ProfileRepository.updateProfile(user.id, {
