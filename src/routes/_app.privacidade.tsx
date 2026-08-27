@@ -1,32 +1,68 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
-import { Shield, Bell, CreditCard, Globe, HelpCircle, ChevronRight, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
-
-const KEY = "rmc:invisible";
+import {
+  Shield,
+  Bell,
+  CreditCard,
+  Globe,
+  HelpCircle,
+  ChevronRight,
+  EyeOff,
+  Circle,
+} from "lucide-react";
+import { usePresenceContext } from "@/providers/presence/presence-context";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 
 export const Route = createFileRoute("/_app/privacidade")({
-  head: () => ({ meta: [{ title: "Privacidade e modo invisível — RotaMais" }] }),
+  head: () => ({ meta: [{ title: "Privacidade e modo invisível — Connexy" }] }),
   component: Privacy,
 });
 
+const STATUS_OPTIONS = [
+  {
+    value: "online" as const,
+    label: "Online",
+    description: "Visível para conexões. Aparece como ativo.",
+  },
+  {
+    value: "available" as const,
+    label: "Disponível",
+    description: "Visível mas marcado como disponível para conversar.",
+  },
+  {
+    value: "dnd" as const,
+    label: "Não perturbe",
+    description: "Visível mas com modo de não perturbar.",
+  },
+  {
+    value: "invisible" as const,
+    label: "Invisível",
+    description: "Removido da tabela de presença. Ninguém vê seu status.",
+  },
+] as const;
+
 function Privacy() {
-  const [invisible, setInvisible] = useState(false);
-  const [visibility, setVisibility] = useState<"todos" | "conexoes" | "ninguem">("todos");
+  const { preference, goOnline, goAvailable, goDnd, goInvisible } = usePresenceContext();
+  const configured = isPublicSupabaseConfigured();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setInvisible(localStorage.getItem(KEY) === "1");
-  }, []);
-
-  const toggle = () => {
-    setInvisible((v) => {
-      const next = !v;
-      if (typeof window !== "undefined") localStorage.setItem(KEY, next ? "1" : "0");
-      return next;
-    });
-  };
+  function handleStatusChange(status: "online" | "available" | "dnd" | "invisible") {
+    if (!configured) return;
+    switch (status) {
+      case "online":
+        goOnline();
+        break;
+      case "available":
+        goAvailable();
+        break;
+      case "dnd":
+        goDnd();
+        break;
+      case "invisible":
+        goInvisible();
+        break;
+    }
+  }
 
   return (
     <div className="flex-1">
@@ -48,11 +84,17 @@ function Privacy() {
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold">Modo invisível</div>
               <button
-                onClick={toggle}
-                className={`h-6 w-11 rounded-full ${invisible ? "bg-primary" : "bg-border"} relative transition`}
+                onClick={() =>
+                  handleStatusChange(preference === "invisible" ? "online" : "invisible")
+                }
+                className={`h-6 w-11 rounded-full ${
+                  preference === "invisible" ? "bg-primary" : "bg-border"
+                } relative transition`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${invisible ? "left-5" : "left-0.5"}`}
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
+                    preference === "invisible" ? "left-5" : "left-0.5"
+                  }`}
                 />
               </button>
             </div>
@@ -64,30 +106,34 @@ function Privacy() {
 
         <div className="mt-4">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Quem pode me ver
+            Status de presença
           </div>
           <div className="mt-2 space-y-1">
-            {[
-              { id: "todos", label: "Todos" },
-              { id: "conexoes", label: "Apenas conexões" },
-              { id: "ninguem", label: "Ninguém" },
-            ].map((o) => (
-              <label key={o.id} className="flex items-center justify-between py-2 text-sm">
-                <span>{o.label}</span>
+            {STATUS_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className="flex items-center justify-between py-2 text-sm cursor-pointer"
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium">{option.label}</span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{option.description}</p>
+                </div>
                 <input
                   type="radio"
-                  name="vis"
-                  checked={visibility === o.id}
-                  onChange={() => setVisibility(o.id as typeof visibility)}
-                  className="h-4 w-4 accent-[color:var(--primary)]"
+                  name="presence-status"
+                  checked={preference === option.value}
+                  onChange={() => handleStatusChange(option.value)}
+                  className="h-4 w-4 accent-[color:var(--primary)] ml-3"
                 />
               </label>
             ))}
           </div>
         </div>
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Isso não afeta suas corridas e funcionalidades do app.
-        </p>
+        {!configured && (
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Conecte ao Supabase para ativar o controle de presença.
+          </p>
+        )}
       </section>
 
       <section className="mt-5 mx-5 rounded-2xl bg-surface border border-border divide-y divide-border">

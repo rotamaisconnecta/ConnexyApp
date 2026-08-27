@@ -4,8 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Wifi } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useConnections } from "@/hooks/use-connections";
-import { useConnectionPresence } from "@/hooks/use-connection-presence";
-import { useUserPresenceControl } from "@/hooks/use-user-presence-control";
+import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 
 function formatTimeAgo(iso: string): string {
@@ -27,9 +26,8 @@ interface OnlineConnection {
 
 export function PresenceLiveFeedReal() {
   const { user } = useAuth();
-  const { preference } = useUserPresenceControl(user?.id ?? null);
+  const { presenceByUser, isOnline } = usePresenceContext();
   const { connections, isLoading: connectionsLoading } = useConnections(user?.id ?? null);
-  const { presenceByUser, isOnline } = useConnectionPresence(user?.id ?? null, preference);
 
   const onlineConnections = useMemo<OnlineConnection[]>(() => {
     if (!user) return [];
