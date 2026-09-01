@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { prefersReducedMotion } from "@/lib/carousel/hint";
 
-const GAP = 24;
+const GAP = 16;
 const CARD_HEIGHT = 300;
 const STORAGE_PREFIX = "connexy.carousel.position";
 
@@ -21,12 +21,6 @@ const CARD_WIDTH: Record<Breakpoint, number> = {
   tablet: 270,
   mobile: 260,
 };
-
-function depthStyle(distance: number): { scale: number; opacity: number } {
-  if (distance === 0) return { scale: 1, opacity: 1 };
-  if (distance === 1) return { scale: 0.96, opacity: 0.85 };
-  return { scale: 0.92, opacity: 0.7 };
-}
 
 interface PremiumCarouselProps<T> {
   items: T[];
@@ -48,122 +42,106 @@ export function PremiumCarousel<T>({
   const scrollRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
-  const [bp, setBp] = useState<Breakpoint>("mobile");
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>("mobile");
   const [maxScroll, setMaxScroll] = useState(0);
-  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    setBp(getBreakpoint());
-    const onResize = () => setBp(getBreakpoint());
+    setBreakpoint(getBreakpoint());
+    const onResize = () => setBreakpoint(getBreakpoint());
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const cardWidth = cardWidths?.[bp] ?? CARD_WIDTH[bp];
+  const cardWidth = cardWidths?.[breakpoint] ?? CARD_WIDTH[breakpoint];
   const cardHeight = cardHeightProp ?? CARD_HEIGHT;
   const step = cardWidth + GAP;
   const reduced = prefersReducedMotion();
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
+    const element = scrollRef.current;
+    if (!element) return;
     const measure = () => {
-      const w = el.clientWidth;
       const total = items.length * cardWidth + Math.max(0, items.length - 1) * GAP;
-      const next = Math.max(0, total - w);
+      const next = Math.max(0, total - element.clientWidth);
       setMaxScroll(next);
       if (next > 0 && section && !restoredRef.current) {
         const saved = Number(localStorage.getItem(`${STORAGE_PREFIX}.${section}`));
         if (Number.isFinite(saved)) {
           restoredRef.current = true;
-          el.scrollTo({ left: Math.max(0, Math.min(next, -saved)), behavior: "auto" });
+          element.scrollTo({ left: Math.max(0, Math.min(next, -saved)), behavior: "auto" });
         }
       }
     };
     measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
     window.addEventListener("resize", measure);
     return () => {
-      ro.disconnect();
+      observer.disconnect();
       window.removeEventListener("resize", measure);
     };
   }, [cardWidth, items.length, section]);
 
   const onScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const index = Math.round(el.scrollLeft / step);
-    setActiveIndex(Math.max(0, Math.min(items.length - 1, index)));
-    if (!section) return;
-    if (saveTimerRef.current !== null) {
-      window.clearTimeout(saveTimerRef.current);
-    }
+    const element = scrollRef.current;
+    if (!element || !section) return;
+    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
-      localStorage.setItem(`${STORAGE_PREFIX}.${section}`, String(-el.scrollLeft));
+      localStorage.setItem(`${STORAGE_PREFIX}.${section}`, String(-element.scrollLeft));
     }, 200);
-  }, [step, items.length, section]);
+  }, [section]);
 
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current !== null) {
-        window.clearTimeout(saveTimerRef.current);
-      }
-    };
-  }, []);
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    },
+    [],
+  );
 
   const scrollByStep = useCallback(
-    (dir: 1 | -1) => {
-      const el = scrollRef.current;
-      if (!el) return;
-      el.scrollBy({ left: dir * step, behavior: reduced ? "auto" : "smooth" });
+    (direction: 1 | -1) => {
+      scrollRef.current?.scrollBy({
+        left: direction * step,
+        behavior: reduced ? "auto" : "smooth",
+      });
     },
     [step, reduced],
   );
 
-  const transition = reduced ? undefined : "transform 0.35s ease, opacity 0.35s ease";
-
   return (
     <div className={className}>
-      <div className="relative group">
+      <div className="group relative">
         <SwipeCarousel
           scrollRef={scrollRef}
           onScroll={onScroll}
           ariaLabel={section ? `Carrossel ${section}` : "Carrossel"}
-          className="gap-6"
+          className="gap-4"
         >
-          {items.map((item, i) => {
-            const depth = depthStyle(Math.abs(i - activeIndex));
-            return (
-              <div
-                key={i}
-                className="shrink-0"
-                style={{
-                  width: cardWidth,
-                  height: cardHeight,
-                  transform: `scale(${depth.scale})`,
-                  opacity: depth.opacity,
-                  transition,
-                }}
-              >
-                {renderCard(item, i)}
-              </div>
-            );
-          })}
+          {items.map((item, index) => (
+            <div
+              key={index}
+              className="shrink-0"
+              style={{ width: cardWidth, height: cardHeight }}
+            >
+              {renderCard(item, index)}
+            </div>
+          ))}
         </SwipeCarousel>
 
-        {maxScroll > 0 && bp === "desktop" && (
+        {maxScroll > 0 && breakpoint === "desktop" && (
           <>
             <button
+              type="button"
               onClick={() => scrollByStep(-1)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-border text-foreground opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:shadow-xl"
+              className="absolute left-0 top-1/2 z-20 flex h-9 w-9 -translate-x-3 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-foreground opacity-0 shadow-lg transition-all hover:scale-110 hover:shadow-xl group-hover:opacity-100"
               aria-label="Anterior"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <button
+              type="button"
               onClick={() => scrollByStep(1)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-border text-foreground opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:shadow-xl"
+              className="absolute right-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 translate-x-3 items-center justify-center rounded-full border border-border bg-white text-foreground opacity-0 shadow-lg transition-all hover:scale-110 hover:shadow-xl group-hover:opacity-100"
               aria-label="Próximo"
             >
               <ArrowRight className="h-4 w-4" />
