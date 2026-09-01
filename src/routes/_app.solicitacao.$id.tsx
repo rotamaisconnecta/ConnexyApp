@@ -325,7 +325,7 @@ function Solicitacao() {
         initial={{ y: 48, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="absolute inset-x-0 bottom-0 z-20 flex max-h-[76%] flex-col overflow-hidden rounded-t-[32px] bg-white text-gray-950 shadow-2xl"
+        className="absolute inset-x-0 bottom-0 z-20 flex max-h-[76%] flex-col overflow-visible rounded-t-[32px] bg-white text-gray-950 shadow-2xl"
       >
         <div className="relative shrink-0 px-5 pb-3 pt-10 text-center">
           <div className="absolute left-1/2 top-0 h-16 w-16 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-[3px] border-white bg-gray-100 shadow-lg">
