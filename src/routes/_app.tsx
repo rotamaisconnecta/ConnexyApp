@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { createFileRoute, Outlet, useMatch, useNavigate, redirect } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
@@ -33,6 +33,13 @@ function AppLayout() {
       shouldThrow: false,
     }),
   );
+  const requestOpen = Boolean(
+    useMatch({
+      from: "/_app/solicitacao/$id",
+      shouldThrow: false,
+    }),
+  );
+  const immersiveRouteOpen = conversationOpen || requestOpen;
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
@@ -41,7 +48,7 @@ function AppLayout() {
   if (loading || !user) {
     return (
       <PhoneFrame>
-        <div className="flex-1 grid place-items-center">
+        <div className="grid flex-1 place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       </PhoneFrame>
@@ -53,11 +60,15 @@ function AppLayout() {
       <CheckInPresenceProvider>
         <ContextEngineProvider>
           <PresenceProvider userId={user.id}>
-            <div className="flex-1 flex flex-col relative overflow-hidden">
-              <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] relative">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div
+                className={`relative min-h-0 flex-1 overflow-y-auto no-scrollbar ${
+                  immersiveRouteOpen ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]"
+                }`}
+              >
                 <Outlet />
               </div>
-              {!conversationOpen && <BottomNav />}
+              {!immersiveRouteOpen && <BottomNav />}
             </div>
           </PresenceProvider>
         </ContextEngineProvider>

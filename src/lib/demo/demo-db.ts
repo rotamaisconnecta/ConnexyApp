@@ -103,8 +103,13 @@ export function getConnectionsCount(): number {
 /** Creates a direct connection and conversation with the peer. */
 export function connectUser(userId: string): void {
   const db = read();
-  if (db.connections.some((c) => c.userId === userId)) return;
-  db.connections.push({ userId, connectedAt: Date.now() });
+  const pendingRequest = db.requests.find(
+    (request) => request.fromUserId === userId && request.status === "pending",
+  );
+  if (pendingRequest) pendingRequest.status = "accepted";
+  if (!db.connections.some((connection) => connection.userId === userId)) {
+    db.connections.push({ userId, connectedAt: Date.now() });
+  }
   write(db);
   emitChange();
 }
@@ -129,6 +134,17 @@ export function sendRequest(fromUserId: string): DemoRequest {
 
 export function hasPendingRequest(fromUserId: string): DemoRequest | null {
   return read().requests.find((r) => r.fromUserId === fromUserId && r.status === "pending") ?? null;
+}
+
+export function declineRequest(fromUserId: string): void {
+  const db = read();
+  const pendingRequest = db.requests.find(
+    (request) => request.fromUserId === fromUserId && request.status === "pending",
+  );
+  if (!pendingRequest) return;
+  pendingRequest.status = "declined";
+  write(db);
+  emitChange();
 }
 
 /* ─── Messages ────────────────────────────────────────────── */
