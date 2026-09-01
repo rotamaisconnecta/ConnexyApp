@@ -5,6 +5,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
+import { ConnexyPulse } from "@/components/home/ConnexyPulse";
 import { useAuth } from "@/hooks/use-auth";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
@@ -149,6 +150,8 @@ function Home() {
           </Link>
         </div>
       </section>
+
+      <ConnexyPulse />
 
       <div className="mt-8">
         <HomePremiumFeed />
