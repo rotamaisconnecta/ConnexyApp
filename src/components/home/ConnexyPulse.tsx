@@ -1,6 +1,7 @@
 import { ChevronRight, Coffee, MapPin, Star, UsersRound } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { people, type Person } from "@/lib/mock-data";
+import { commonGround, compatibilityScore, people, type Person } from "@/lib/mock-data";
+import { formatPersonDistance } from "@/lib/proximity";
 
 const FEATURED_IDS = ["luana", "pedro-henrique", "marina"];
 
@@ -65,11 +66,16 @@ function AvatarMarker({ person, className }: { person: Person; className: string
 }
 
 function PersonCard({ person }: { person: Person }) {
+  const compatibility = compatibilityScore(person);
+  const common = commonGround(person);
+  const commonLabels = [...common.sharedInterests, ...common.sharedVibe, ...common.sharedPlaces];
+  const commonCount = commonLabels.length;
+
   return (
     <Link
       to="/perfil/$id"
       params={{ id: person.id }}
-      className="group relative aspect-[0.78] min-w-0 overflow-hidden rounded-[18px] bg-muted shadow-soft transition-transform active:scale-[0.98]"
+      className="group relative aspect-[0.68] min-w-0 overflow-hidden rounded-[18px] bg-muted shadow-soft transition-transform active:scale-[0.98]"
       aria-label={`Ver perfil de ${person.name}`}
     >
       <img
@@ -79,11 +85,19 @@ function PersonCard({ person }: { person: Person }) {
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
+      <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold text-primary shadow-soft backdrop-blur">
+        {compatibility}%
+      </span>
       <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-        <div className="truncate font-display text-[15px] font-bold leading-tight">{person.name.split(" ")[0]}</div>
-        <span className="mt-1 inline-flex max-w-full rounded-full bg-primary/90 px-2 py-0.5 text-[9px] font-medium backdrop-blur">
-          <span className="truncate">{person.interests[0]}</span>
-        </span>
+        <p className="truncate text-[9px] font-medium text-white/90">
+          {formatPersonDistance(person.distanceMeters)}
+        </p>
+        <div className="mt-0.5 truncate font-display text-[15px] font-bold leading-tight">
+          {person.name.split(" ")[0]}
+        </div>
+        <p className="mt-1 truncate rounded-full bg-primary/90 px-2 py-0.5 text-[9px] font-medium backdrop-blur">
+          {commonCount > 0 ? `${commonCount} em comum · ${commonLabels[0]}` : "0 em comum"}
+        </p>
       </div>
     </Link>
   );

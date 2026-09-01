@@ -74,7 +74,7 @@ export function isNearby(meters: number): boolean {
 const PERSON_DISTANCE_CATEGORIES = [
   { max: 300, label: "Muito perto" },
   { max: 800, label: "Por aqui" },
-  { max: 1999, label: "Nas proximidades" },
+  { max: 2000, label: "Nas proximidades" },
 ] as const;
 
 export function formatPersonDistance(meters: number): string {
