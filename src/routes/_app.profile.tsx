@@ -5,6 +5,9 @@ import { Hero } from "@/components/profile/atoms/hero";
 import { ConfirmDialog } from "@/components/system/confirm-dialog";
 import { signOut } from "@/lib/auth/sign-out";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { exitDemoSession } from "@/lib/demo/demo-auth";
+import { useDemoConnectionsCount } from "@/lib/demo/use-demo-db";
 import { toast } from "sonner";
 
 import { currentUser, findPlace } from "@/lib/mock-data";
@@ -46,6 +49,7 @@ function ProfilePage() {
     error: connectionsError,
   } = useConnections(user?.id ?? null);
   const configured = isPublicSupabaseConfigured();
+  const demoConnections = useDemoConnectionsCount();
   const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -55,7 +59,11 @@ function ProfilePage() {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      if (isPublicSupabaseConfigured()) await signOut();
+      if (isDemoMode()) {
+        exitDemoSession();
+      } else if (isPublicSupabaseConfigured()) {
+        await signOut();
+      }
       toast.success("Você saiu da sua conta.");
       nav({ to: "/auth", replace: true });
     } catch (err) {
@@ -191,7 +199,9 @@ function ProfilePage() {
                     : connectionsError
                       ? "0"
                       : connectionsCount
-                  : currentUser.connections}
+                  : isDemoMode()
+                    ? demoConnections
+                    : currentUser.connections}
               </div>
               <div className="text-[11px] text-muted-foreground">Conexões</div>
             </div>

@@ -5,6 +5,8 @@ import { Check, MessageSquare, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConnectionsService } from "@/services/connections.service";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { useDemoIsConnected } from "@/lib/demo/use-demo-db";
 
 type InviteStatus = "loading" | "connected" | "invited" | "available";
 
@@ -24,8 +26,15 @@ export function ConversationInviteButton({
   const navigate = useNavigate();
   const [status, setStatus] = useState<InviteStatus>("loading");
   const [isSending, setIsSending] = useState(false);
+  const demoConnected = useDemoIsConnected(personId);
+
+  const demo = isDemoMode();
 
   useEffect(() => {
+    if (demo) {
+      setStatus(demoConnected ? "connected" : "available");
+      return;
+    }
     if (!isPublicSupabaseConfigured()) {
       setStatus("available");
       return;
@@ -42,7 +51,7 @@ export function ConversationInviteButton({
     return () => {
       cancelled = true;
     };
-  }, [personId]);
+  }, [personId, demo, demoConnected]);
 
   const connected = status === "connected";
   const invited = status === "invited";
@@ -61,6 +70,10 @@ export function ConversationInviteButton({
 
   const handleClick = useCallback(async () => {
     if (connected) {
+      if (demo) {
+        navigate({ to: "/chat/$conversationId", params: { conversationId: personId } });
+        return;
+      }
       try {
         const conversationId = await ConnectionsService.getDirectConversation(personId);
         navigate({
@@ -73,7 +86,7 @@ export function ConversationInviteButton({
       return;
     }
     if (invited) return;
-    if (!isPublicSupabaseConfigured()) {
+    if (!isPublicSupabaseConfigured() || demo) {
       navigate({
         to: "/solicitacao/$id",
         params: { id: personId },
@@ -91,7 +104,7 @@ export function ConversationInviteButton({
     } finally {
       setIsSending(false);
     }
-  }, [connected, invited, navigate, personId, personName]);
+  }, [connected, invited, navigate, personId, personName, demo]);
 
   return (
     <button

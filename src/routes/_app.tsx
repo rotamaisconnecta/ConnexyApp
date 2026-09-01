@@ -4,6 +4,7 @@ import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { ContextEngineProvider } from "@/lib/context/context-provider";
+import { PresenceProvider as CheckInPresenceProvider } from "@/providers/presence/presence-provider";
 import { PresenceProvider } from "@/providers/presence/presence-context";
 import { requireAuth } from "@/lib/auth/route-guard";
 import { profileCompletionForGuard } from "@/lib/profile/profile-status";
@@ -49,16 +50,18 @@ function AppLayout() {
 
   return (
     <PhoneFrame>
-      <ContextEngineProvider>
-        <PresenceProvider userId={user.id}>
-          <div className="flex-1 flex flex-col relative overflow-hidden">
-            <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] relative">
-              <Outlet />
+      <CheckInPresenceProvider>
+        <ContextEngineProvider>
+          <PresenceProvider userId={user.id}>
+            <div className="flex-1 flex flex-col relative overflow-hidden">
+              <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] relative">
+                <Outlet />
+              </div>
+              {!conversationOpen && <BottomNav />}
             </div>
-            {!conversationOpen && <BottomNav />}
-          </div>
-        </PresenceProvider>
-      </ContextEngineProvider>
+          </PresenceProvider>
+        </ContextEngineProvider>
+      </CheckInPresenceProvider>
     </PhoneFrame>
   );
 }

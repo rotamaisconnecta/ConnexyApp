@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
 
 export const Route = createFileRoute("/_app/privacidade")({
   head: () => ({ meta: [{ title: "Privacidade e modo invisível — Connexy" }] }),
@@ -45,9 +46,10 @@ const STATUS_OPTIONS = [
 function Privacy() {
   const { preference, goOnline, goAvailable, goDnd, goInvisible } = usePresenceContext();
   const configured = isPublicSupabaseConfigured();
+  const demo = isDemoMode();
 
   function handleStatusChange(status: "online" | "available" | "dnd" | "invisible") {
-    if (!configured) return;
+    if (!configured && !demo) return;
     switch (status) {
       case "online":
         goOnline();
@@ -129,9 +131,14 @@ function Privacy() {
             ))}
           </div>
         </div>
-        {!configured && (
+        {!configured && !demo && (
           <p className="mt-3 text-[11px] text-muted-foreground">
             Conecte ao Supabase para ativar o controle de presença.
+          </p>
+        )}
+        {demo && (
+          <p className="mt-3 text-[11px] text-primary">
+            Modo demo: o status é refletido localmente na interface.
           </p>
         )}
       </section>

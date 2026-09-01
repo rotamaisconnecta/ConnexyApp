@@ -6,6 +6,8 @@ import { dbRowsToChatMessages, dbRowToChatMessage } from "@/lib/chat/chat-adapte
 import type { ChatMessage } from "@/lib/chat/chat-types";
 import { MessageKind } from "@/lib/chat/chat-types";
 import { supabase } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { getMessages, sendLocalMessage } from "@/lib/demo/demo-db";
 
 const PAGE_SIZE = 50;
 
@@ -29,6 +31,55 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
   const currentUserIdRef = useRef(currentUserId);
   currentUserIdRef.current = currentUserId;
 
+  // ── Demo mode: fully local messages, no Supabase/Realtime ──────────────
+  const demo = isDemoMode();
+
+  useEffect(() => {
+    if (!demo || !conversationId) return;
+    const sync = () => {
+      const rows = getMessages(conversationId);
+      const adapted: ChatMessage[] = rows.map((m) => ({
+        id: m.id,
+        conversationId: m.conversationId,
+        from: m.from,
+        kind: MessageKind.TEXT,
+        text: m.text,
+        at: new Date(m.at),
+        status: "read" as const,
+      }));
+      setMessages(adapted);
+      setHasMore(false);
+      setError(null);
+      setIsLoading(false);
+    };
+    sync();
+    setSubscriptionStatus("connected");
+    window.addEventListener("connexy:demo:db", sync);
+    return () => window.removeEventListener("connexy:demo:db", sync);
+  }, [demo, conversationId]);
+
+  const demoSend = useCallback(
+    (text: string) => {
+      if (!demo || !conversationId) return;
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const local = sendLocalMessage(conversationId, "me", trimmed);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: local.id,
+          conversationId: local.conversationId,
+          from: "me",
+          kind: MessageKind.TEXT,
+          text: local.text,
+          at: new Date(local.at),
+          status: "sent" as const,
+        },
+      ]);
+    },
+    [demo, conversationId],
+  );
+
   // Load initial messages
   const loadMessages = useCallback(async () => {
     if (!conversationId || !currentUserId || !isPublicSupabaseConfigured()) return;
@@ -48,11 +99,13 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
   }, [conversationId, currentUserId]);
 
   useEffect(() => {
+    if (demo) return;
     void loadMessages();
-  }, [loadMessages]);
+  }, [loadMessages, demo]);
 
   // Realtime subscription
   useEffect(() => {
+    if (demo) return;
     if (!conversationId || !isPublicSupabaseConfigured()) {
       setSubscriptionStatus("disconnected");
       return;
@@ -121,7 +174,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       channelRef.current = null;
       setSubscriptionStatus("disconnected");
     };
-  }, [conversationId]);
+  }, [conversationId, demo]);
 
   // Send message
   const sendMessage = useCallback(
@@ -187,6 +240,19 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       setIsLoading(false);
     }
   }, [conversationId, currentUserId, isLoading, hasMore]);
+
+  if (demo) {
+    return {
+      messages,
+      isLoading: false,
+      error: null,
+      hasMore: false,
+      sendMessage: demoSend,
+      loadMore: () => Promise.resolve(),
+      retry: demoSend,
+      subscriptionStatus,
+    };
+  }
 
   return {
     messages,

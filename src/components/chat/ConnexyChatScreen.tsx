@@ -14,6 +14,8 @@ import { ChatRepository } from "@/repositories/chat.repository";
 import { UserRepository } from "@/repositories/user.repository";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { people } from "@/lib/mock-data";
 import type { ChatMessage, ConversationParticipant, QuickReaction } from "@/lib/chat/chat-types";
 import type { ProfileRow } from "@/types/database/tables";
 
@@ -37,6 +39,17 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   // Resolve the other participant from conversation_participants
   useEffect(() => {
+    if (isDemoMode() && conversationId && user?.id) {
+      const mock = people.find((p) => p.id === conversationId);
+      setParticipant({
+        id: conversationId,
+        name: mock?.name ?? "Conversa",
+        photo: mock?.photo ?? "",
+        online: mock?.online ?? false,
+      });
+      setParticipantLoading(false);
+      return;
+    }
     if (!conversationId || !user?.id || !isPublicSupabaseConfigured()) {
       setParticipantLoading(false);
       return;

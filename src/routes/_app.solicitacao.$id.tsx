@@ -13,6 +13,9 @@ import { ConnectionsService } from "@/services/connections.service";
 import { DiscoveryService } from "@/services/discovery.service";
 import { UserRepository } from "@/repositories/user.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { sendRequest, connectUser } from "@/lib/demo/demo-db";
+import { useDemoIsConnected } from "@/lib/demo/use-demo-db";
 import type { ProfileRow } from "@/types/database/tables";
 import { people, type Person } from "@/lib/mock-data";
 import { enginePersonById } from "@/lib/engine/engine-detail";
@@ -42,6 +45,8 @@ function Solicitacao() {
   const { mode } = Route.useSearch();
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
+  const demo = isDemoMode();
+  const demoConnected = useDemoIsConnected(id);
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -50,6 +55,10 @@ function Solicitacao() {
   );
   const [actionLoading, setActionLoading] = useState(false);
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (demo && demoConnected) setStatus("connected");
+  }, [demo, demoConnected]);
 
   useEffect(() => {
     if (!configured) {
@@ -118,8 +127,20 @@ function Solicitacao() {
   }
 
   async function sendInvite() {
-    if (actionLoading || !configured) return;
+    if (actionLoading) return;
     setActionLoading(true);
+    if (demo) {
+      sendRequest(id);
+      setStatus("sent");
+      toast.success(`Convite enviado para ${profile?.name ?? "essa pessoa"}`);
+      goBack();
+      setActionLoading(false);
+      return;
+    }
+    if (!configured) {
+      setActionLoading(false);
+      return;
+    }
     try {
       await ConnectionsService.sendRequest(id);
       setStatus("sent");
@@ -133,8 +154,19 @@ function Solicitacao() {
   }
 
   async function acceptInvite() {
-    if (actionLoading || !configured) return;
+    if (actionLoading) return;
     setActionLoading(true);
+    if (demo) {
+      connectUser(id);
+      toast.success(`Conversa com ${profile?.name ?? "essa pessoa"} iniciada!`);
+      nav({ to: "/chat/$conversationId", params: { conversationId: id } });
+      setActionLoading(false);
+      return;
+    }
+    if (!configured) {
+      setActionLoading(false);
+      return;
+    }
     try {
       const requestId =
         pendingRequestId ?? (await ConnectionsService.findIncomingPendingRequest(id));
@@ -317,6 +349,10 @@ function Solicitacao() {
             <button
               type="button"
               onClick={() => {
+                if (demo) {
+                  nav({ to: "/chat/$conversationId", params: { conversationId: id } });
+                  return;
+                }
                 void (async () => {
                   try {
                     const cid = await ConnectionsService.getDirectConversation(id);

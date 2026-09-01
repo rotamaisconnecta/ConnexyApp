@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
 import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { isDemoAuthenticated } from "@/lib/demo/demo-auth";
 import splashImage from "@/assets/Branding/Connexy-Splash.png";
 
 const SPLASH_MIN_MS = 2000;
@@ -39,6 +41,10 @@ function Splash() {
     };
 
     const resolveDestination = (): Promise<Destination> => {
+      if (isDemoMode()) {
+        return Promise.resolve(isDemoAuthenticated() ? "/home" : "/auth");
+      }
+
       if (!isPublicSupabaseConfigured()) return Promise.resolve("/auth");
 
       const getDestination = async (): Promise<Destination> => {

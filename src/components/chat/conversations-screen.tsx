@@ -11,13 +11,18 @@ import { useAuth } from "@/hooks/use-auth";
 import { ChatService } from "@/services/chat.service";
 import { UserRepository } from "@/repositories/user.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { subscribeDemoDB, isConnected, getConversationLastMessage } from "@/lib/demo/demo-db";
+import { people } from "@/lib/mock-data";
 import {
   MOCK_CONVERSATIONS,
   NextGesture,
   searchMockConversations,
   sortMockConversations,
+  ThreadIcon,
+  LastMessageType,
+  type MockConversation,
 } from "@/lib/chat/mock-conversations";
-import type { MockConversation } from "@/lib/chat/mock-conversations";
 import type { ConversationRow as ConversationRowDB } from "@/types/database/tables";
 
 const listContainer = {
@@ -50,6 +55,43 @@ export function ConversationsScreen() {
   );
   const [query, setQuery] = useState("");
   const [menuTarget, setMenuTarget] = useState<MockConversation | RealConversation | null>(null);
+
+  // In demo mode, merge locally-created connections into the conversation list.
+  const demo = isDemoMode();
+  useEffect(() => {
+    if (!demo) return;
+    const sync = () => {
+      const created: MockConversation[] = people
+        .filter((p) => isConnected(p.id))
+        .map((p) => {
+          const last = getConversationLastMessage(p.id);
+          return {
+            id: p.id,
+            participant: { id: p.id, name: p.name, photo: p.photo },
+            initials: p.name.slice(0, 2).toUpperCase(),
+            isOnline: p.online,
+            proximityMeters: p.distanceMeters,
+            currentThread: "Conexão local",
+            threadIcon: ThreadIcon.COFFEE,
+            lastMessage: last?.text ?? "Vocês estão conectados",
+            lastMessageType: LastMessageType.TEXT,
+            updatedAt: new Date(last?.at ?? Date.now()),
+            unreadCount: last && last.from === "them" ? 1 : 0,
+            isMuted: false,
+            isPinned: false,
+            sharedInterest: p.interests[0],
+          };
+        });
+      const existingIds = new Set(mockConversations.map((c) => c.id));
+      const addNew = created.filter((c) => !existingIds.has(c.id));
+      if (addNew.length > 0) {
+        setMockConversations((prev) => [...addNew, ...prev]);
+      }
+    };
+    sync();
+    return subscribeDemoDB(sync);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo]);
 
   // Load real conversations when Supabase is configured
   useEffect(() => {
