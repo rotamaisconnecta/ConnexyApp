@@ -38,6 +38,12 @@ interface ProfileData {
   distanceMeters: number | null;
 }
 
+function suggestedInvitation(name: string, interests: string[]): string {
+  const firstName = name.split(" ")[0];
+  const interestText = interests.slice(0, 2).join(" e ").toLowerCase();
+  return `Oi, ${firstName}! Vi que você curte ${interestText || "descobrir coisas novas"}. Gostaria de conversar e conhecer um pouco mais sobre você. 💜`;
+}
+
 function Solicitacao() {
   const nav = useNavigate();
   const router = useRouter();
@@ -53,6 +59,7 @@ function Solicitacao() {
   const [status, setStatus] = useState<RequestStatus>("loading");
   const [actionLoading, setActionLoading] = useState(false);
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+  const [invitationMessage, setInvitationMessage] = useState("");
 
   useEffect(() => {
     if (demo && demoConnected) setStatus("connected");
@@ -63,6 +70,7 @@ function Solicitacao() {
       const nearbyPerson = people.find((person) => person.id === id);
       const mockPerson = nearbyPerson ?? enginePersonById(id);
       if (mockPerson) {
+        const pendingRequest = demo ? hasPendingRequest(id) : null;
         setProfile({
           name: mockPerson.name,
           photo_url: mockPerson.photo,
@@ -71,6 +79,9 @@ function Solicitacao() {
           age: nearbyPerson?.age ?? null,
           distanceMeters: nearbyPerson?.distanceMeters ?? null,
         });
+        setInvitationMessage(
+          pendingRequest?.message || suggestedInvitation(mockPerson.name, mockPerson.interests),
+        );
         setStatus(
           demo && demoConnected
             ? "connected"
@@ -99,6 +110,7 @@ function Solicitacao() {
           age: profileWithAge.age ?? null,
           distanceMeters: null,
         });
+        setInvitationMessage(suggestedInvitation(result.name ?? "Usuário", result.interests ?? []));
 
         if (user?.id) {
           const conversationId = await ConnectionsService.getDirectConversation(id);
@@ -126,6 +138,7 @@ function Solicitacao() {
             age: null,
             distanceMeters: null,
           });
+          setInvitationMessage("Olá! Gostaria de começar uma conversa com você. 💜");
           setStatus(mode === "receive" ? "receive" : "send");
         }
       } finally {
@@ -147,9 +160,14 @@ function Solicitacao() {
 
   async function sendInvite() {
     if (actionLoading) return;
+    const message = invitationMessage.trim();
+    if (!message) {
+      toast.error("Escreva uma mensagem antes de enviar.");
+      return;
+    }
     setActionLoading(true);
     if (demo) {
-      sendRequest(id);
+      sendRequest(id, message);
       setStatus("sent");
       toast.success(`Solicitação enviada para ${profile?.name ?? "essa pessoa"}`);
       setActionLoading(false);
@@ -176,7 +194,7 @@ function Solicitacao() {
     if (demo) {
       connectUser(id);
       toast.success(`${profile?.name ?? "Essa pessoa"} agora está nas suas conversas.`);
-      nav({ to: "/chat" });
+      nav({ to: "/chat/$conversationId", params: { conversationId: id } });
       setActionLoading(false);
       return;
     }
@@ -192,8 +210,12 @@ function Solicitacao() {
         return;
       }
       await ConnectionsService.acceptRequest(requestId);
+      const conversationId = await ConnectionsService.getDirectConversation(id);
       toast.success(`${profile?.name ?? "Essa pessoa"} agora está nas suas conversas.`);
-      nav({ to: "/chat" });
+      nav({
+        to: "/chat/$conversationId",
+        params: { conversationId: conversationId ?? id },
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível aceitar a solicitação");
     } finally {
@@ -276,10 +298,6 @@ function Solicitacao() {
   const ageLabel = profile.age ? `, ${profile.age}` : "";
   const proximity =
     profile.distanceMeters != null ? formatPersonDistance(profile.distanceMeters) : "Perto de você";
-  const interestText = profile.interests.slice(0, 2).join(" e ").toLowerCase();
-  const invitationText = receive
-    ? `Oi! Vi que temos interesses como ${interestText || "novas experiências"}. Gostaria de começar uma conversa com você. 💜`
-    : `Oi, ${firstName}! Vi que você curte ${interestText || "descobrir coisas novas"}. Também amo descobrir novos lugares para boas conversas. 💜`;
 
   const title = connected
     ? "Vocês já podem conversar"
@@ -325,10 +343,10 @@ function Solicitacao() {
         initial={{ y: 48, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="absolute inset-x-0 bottom-0 z-20 flex max-h-[76%] flex-col overflow-visible rounded-t-[32px] bg-white text-gray-950 shadow-2xl"
+        className="absolute inset-x-0 bottom-0 z-20 flex max-h-[78%] flex-col overflow-hidden rounded-t-[32px] bg-white text-gray-950 shadow-2xl"
       >
-        <div className="relative shrink-0 px-5 pb-3 pt-10 text-center">
-          <div className="absolute left-1/2 top-0 h-16 w-16 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-[3px] border-white bg-gray-100 shadow-lg">
+        <div className="relative shrink-0 px-5 pb-3 pt-20 text-center">
+          <div className="absolute left-1/2 top-3 h-16 w-16 -translate-x-1/2 overflow-hidden rounded-full border-[3px] border-white bg-gray-100 shadow-lg">
             {profile.photo_url ? (
               <img src={profile.photo_url} alt={profile.name} className="h-full w-full object-cover" />
             ) : (
@@ -351,14 +369,39 @@ function Solicitacao() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
-          {!connected && !sent && (
-            <div className="rounded-2xl bg-primary/[0.08] px-4 py-3 text-left text-sm leading-relaxed text-primary">
-              <span className="mr-2 text-xl font-bold" aria-hidden>
-                “
-              </span>
-              {invitationText}
-            </div>
-          )}
+          {!connected && !sent &&
+            (receive ? (
+              <div className="rounded-2xl bg-primary/[0.08] px-4 py-3 text-left text-sm leading-relaxed text-primary">
+                <span className="mr-2 text-xl font-bold" aria-hidden>
+                  “
+                </span>
+                {invitationMessage || "Olá! Gostaria de começar uma conversa com você. 💜"}
+              </div>
+            ) : (
+              <div>
+                <label
+                  htmlFor="conversation-invitation"
+                  className="mb-2 block text-left text-xs font-semibold text-gray-600"
+                >
+                  Sua mensagem
+                </label>
+                <textarea
+                  id="conversation-invitation"
+                  value={invitationMessage}
+                  onChange={(event) => setInvitationMessage(event.target.value.slice(0, 240))}
+                  maxLength={240}
+                  rows={4}
+                  aria-describedby="conversation-invitation-count"
+                  className="w-full resize-none rounded-2xl border border-primary/20 bg-primary/[0.06] px-4 py-3 text-sm leading-relaxed text-gray-800 outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                />
+                <p
+                  id="conversation-invitation-count"
+                  className="mt-1.5 text-right text-[11px] text-gray-400"
+                >
+                  {invitationMessage.length}/240
+                </p>
+              </div>
+            ))}
 
           {sent && (
             <div className="grid place-items-center rounded-2xl bg-primary/[0.08] px-4 py-5 text-center">

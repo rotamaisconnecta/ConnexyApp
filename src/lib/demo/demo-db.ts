@@ -26,6 +26,7 @@ export interface DemoConnection {
 export interface DemoRequest {
   id: string;
   fromUserId: string;
+  message: string;
   status: "pending" | "accepted" | "declined";
   createdAt: number;
 }
@@ -50,7 +51,12 @@ function read(): DemoDB {
     const parsed = JSON.parse(raw) as Partial<DemoDB>;
     return {
       connections: Array.isArray(parsed.connections) ? parsed.connections : [],
-      requests: Array.isArray(parsed.requests) ? parsed.requests : [],
+      requests: Array.isArray(parsed.requests)
+        ? parsed.requests.map((request) => ({
+            ...request,
+            message: typeof request.message === "string" ? request.message : "",
+          }))
+        : [],
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
     };
   } catch {
@@ -116,13 +122,22 @@ export function connectUser(userId: string): void {
 
 /* ─── Requests ────────────────────────────────────────────── */
 
-export function sendRequest(fromUserId: string): DemoRequest {
+export function sendRequest(fromUserId: string, message = ""): DemoRequest {
   const db = read();
   const existing = db.requests.find((r) => r.fromUserId === fromUserId && r.status === "pending");
-  if (existing) return existing;
+  const normalizedMessage = message.trim();
+  if (existing) {
+    if (normalizedMessage && existing.message !== normalizedMessage) {
+      existing.message = normalizedMessage;
+      write(db);
+      emitChange();
+    }
+    return existing;
+  }
   const request: DemoRequest = {
     id: `demo-req-${Date.now()}`,
     fromUserId,
+    message: normalizedMessage,
     status: "pending",
     createdAt: Date.now(),
   };
@@ -134,6 +149,12 @@ export function sendRequest(fromUserId: string): DemoRequest {
 
 export function hasPendingRequest(fromUserId: string): DemoRequest | null {
   return read().requests.find((r) => r.fromUserId === fromUserId && r.status === "pending") ?? null;
+}
+
+export function getPendingRequests(): DemoRequest[] {
+  return read()
+    .requests.filter((request) => request.status === "pending")
+    .sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export function declineRequest(fromUserId: string): void {

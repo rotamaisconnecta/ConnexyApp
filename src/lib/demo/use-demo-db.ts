@@ -3,11 +3,13 @@ import {
   getMessages,
   getConversationLastMessage,
   getConnectionsCount,
+  getPendingRequests,
   isConnected,
   resetDemoData,
   sendLocalMessage,
   subscribeDemoDB,
   type DemoMessage,
+  type DemoRequest,
 } from "./demo-db";
 
 function useDemoVersion(): number {
@@ -34,6 +36,14 @@ export function useDemoIsConnected(userId: string): boolean {
   const [connected, setConnected] = useState(isConnected(userId));
   useEffect(() => setConnected(isConnected(userId)), [version, userId]);
   return connected;
+}
+
+/** Reactive list of pending local conversation requests. */
+export function useDemoPendingRequests(): DemoRequest[] {
+  const version = useDemoVersion();
+  const [requests, setRequests] = useState<DemoRequest[]>(getPendingRequests);
+  useEffect(() => setRequests(getPendingRequests()), [version]);
+  return requests;
 }
 
 /** Reactive message list for one demo conversation. */

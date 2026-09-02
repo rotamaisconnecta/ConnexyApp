@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { PromoPopup } from "@/components/promo-popup";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({
@@ -61,6 +63,8 @@ function Home() {
   const configured = isPublicSupabaseConfigured();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const pendingRequests = useDemoPendingRequests();
+  const pendingRequestCount = isDemoMode() ? pendingRequests.length : 0;
 
   useEffect(() => {
     if (!configured || !user) return;
@@ -124,6 +128,11 @@ function Home() {
             aria-label="Notificações"
           >
             <Bell className="h-[18px] w-[18px]" strokeWidth={1.9} />
+            {pendingRequestCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+                {pendingRequestCount > 9 ? "9+" : pendingRequestCount}
+              </span>
+            )}
           </Link>
         </div>
       </header>

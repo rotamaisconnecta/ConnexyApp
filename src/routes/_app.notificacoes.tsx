@@ -1,8 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
-import { notifications } from "@/lib/mock-data";
+import { notifications, people } from "@/lib/mock-data";
 import { useState } from "react";
+import { MessageCircle } from "lucide-react";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
 
 const tabs = ["Todas", "Social", "Viagens", "Promoções"] as const;
 
@@ -22,7 +25,23 @@ function iconFor(type: (typeof notifications)[number]["type"]) {
 }
 
 function Notifs() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof tabs)[number]>("Todas");
+  const pendingRequests = useDemoPendingRequests();
+  const requestNotifications = isDemoMode()
+    ? pendingRequests.map((request) => ({
+        request,
+        person: people.find((person) => person.id === request.fromUserId),
+      }))
+    : [];
+  const showRequests = tab === "Todas" || tab === "Social";
+  const visibleNotifications = notifications.filter((notification) => {
+    if (tab === "Todas") return true;
+    if (tab === "Social") return notification.type === "social" || notification.type === "chat";
+    if (tab === "Promoções") return notification.type === "promo";
+    return notification.type === "event";
+  });
+
   return (
     <div className="flex-1">
       <StatusBar />
@@ -47,7 +66,48 @@ function Notifs() {
       </div>
 
       <ul className="mt-4 px-5 space-y-2 pb-4">
-        {notifications.map((n) => {
+        {showRequests &&
+          requestNotifications.map(({ request, person }) => (
+            <li key={request.id}>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate({
+                    to: "/solicitacao/$id",
+                    params: { id: request.fromUserId },
+                    search: { mode: "receive" },
+                  })
+                }
+                className="flex w-full items-start gap-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-3 text-left transition active:scale-[0.99]"
+              >
+                {person?.photo ? (
+                  <img
+                    src={person.photo}
+                    alt=""
+                    className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-white"
+                  />
+                ) : (
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                    <MessageCircle className="h-5 w-5" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    {person?.name ?? "Alguém"} quer conversar com você
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                  </span>
+                  <span className="mt-0.5 block line-clamp-2 text-xs text-muted-foreground">
+                    {request.message || "Toque para ver e responder à solicitação."}
+                  </span>
+                  <span className="mt-1 block text-[11px] font-semibold text-primary">
+                    Ver solicitação
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+
+        {visibleNotifications.map((n) => {
           const ic = iconFor(n.type);
           return (
             <li
