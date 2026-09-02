@@ -56,7 +56,7 @@ export function ConversationInviteButton({
     : status === "loading"
       ? "Carregando..."
       : variant === "profile"
-        ? "Convidar para conversar"
+        ? "Quero conversar"
         : "Conversar";
 
   const handleClick = useCallback(async () => {

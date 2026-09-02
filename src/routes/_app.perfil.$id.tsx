@@ -1,37 +1,45 @@
-import { createFileRoute, Link, useNavigate, useRouter, notFound } from "@tanstack/react-router";
-import { StatusBar } from "@/components/phone-frame";
-import { PresenceDot } from "@/components/presence-dot";
-import { BackButton } from "@/components/navigation/back-button";
-import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import {
-  findPerson,
-  findPlace,
+  CalendarDays,
+  Camera,
+  Check,
+  ChevronRight,
+  Coffee,
+  Dumbbell,
+  Heart,
+  Loader2,
+  LockKeyhole,
+  MapPin,
+  MoreHorizontal,
+  Music2,
+  Share2,
+  Sparkles,
+  UserPlus,
+  UsersRound,
+} from "lucide-react";
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
+import { BackButton } from "@/components/navigation/back-button";
+import { StatusBar } from "@/components/phone-frame";
+import { useAuth } from "@/hooks/use-auth";
+import { hasPendingRequest, sendRequest as sendDemoRequest } from "@/lib/demo/demo-db";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { useDemoIsConnected } from "@/lib/demo/use-demo-db";
+import { enginePersonById } from "@/lib/engine/engine-detail";
+import {
   commonGround,
   currentUser,
+  findPerson,
+  findPlace,
+  people,
   type Moment,
   type Person,
 } from "@/lib/mock-data";
-import { enginePersonById } from "@/lib/engine/engine-detail";
-import { personProximityLabel, personProximityRadius } from "@/lib/proximity";
-import {
-  MoreVertical,
-  MapPin,
-  Music,
-  BookOpen,
-  Film,
-  Heart,
-  Sparkles,
-  Users,
-  Handshake,
-  CalendarCheck,
-  UserRound,
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { z } from "zod";
 import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
-import { useAuth } from "@/hooks/use-auth";
 import { ConnectionsService } from "@/services/connections.service";
 import type { ProfileRow } from "@/types/database/tables";
 
@@ -45,7 +53,7 @@ export const Route = createFileRoute("/_app/perfil/$id")({
       { title: `Perfil de ${params.id} — Connexy` },
       {
         name: "description",
-        content: "Conheça a bio, momentos e locais favoritos antes de iniciar a conversa.",
+        content: "Conheça interesses, lugares e atividades compartilhadas deste perfil.",
       },
     ],
   }),
@@ -54,11 +62,10 @@ export const Route = createFileRoute("/_app/perfil/$id")({
   loader: async ({ params }) => {
     const person = findPerson(params.id) ?? enginePersonById(params.id);
     if (person) return person;
-
     if (!isPublicSupabaseConfigured()) throw notFound();
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(params.id)) throw notFound();
-
     const loaderSupabase = import.meta.env.SSR
       ? await import("@/lib/supabase/server.server").then(({ createServerSupabaseClient }) =>
           createServerSupabaseClient(),
@@ -80,43 +87,39 @@ export const Route = createFileRoute("/_app/perfil/$id")({
       .order("created_at", { ascending: false });
     if (postsError) throw new Error("Não foi possível carregar as publicações deste perfil.");
 
-    const r = profileRow as ProfileRow;
-    const moments: Moment[] = (postsRows ?? []).map((p: Record<string, unknown>) => {
-      const mediaKind = p.media_kind === "image" || p.media_kind === "video" ? p.media_kind : null;
-      return {
-        id: p.id as string,
-        text: (p.text as string) || "",
-        mediaUrl: typeof p.media_url === "string" ? p.media_url : undefined,
-        mediaKind,
-        createdAgo: p.created_at
-          ? new Date(p.created_at as string).toLocaleDateString("pt-BR")
-          : "",
-        likes: 0,
-      };
-    });
+    const row = profileRow as ProfileRow;
+    const moments: Moment[] = (postsRows ?? []).map((post: Record<string, unknown>) => ({
+      id: post.id as string,
+      text: (post.text as string) || "",
+      mediaUrl: typeof post.media_url === "string" ? post.media_url : undefined,
+      mediaKind:
+        post.media_kind === "image" || post.media_kind === "video" ? post.media_kind : null,
+      createdAgo: post.created_at
+        ? new Date(post.created_at as string).toLocaleDateString("pt-BR")
+        : "",
+      likes: 0,
+    }));
 
     return {
-      id: r.id,
-      name: r.name ?? "Usuario",
-      handle: r.handle ?? undefined,
-      age: r.age ?? 25,
-      photo: r.photo_url ?? "",
-      headline: r.headline ?? undefined,
-      bio: r.bio ?? undefined,
+      id: row.id,
+      name: row.name ?? "Usuário",
+      handle: row.handle ?? undefined,
+      age: row.age ?? 25,
+      photo: row.photo_url ?? "",
+      headline: row.headline ?? undefined,
+      bio: row.bio ?? undefined,
       distanceMeters: 0,
       online: false,
-      lastSeen: undefined,
-      favoritePlaceIds: undefined,
-      interests: (r.interests as string[]) ?? [],
-      vibeTags: (r.vibe_tags as string[]) ?? [],
-      looksFor: (r.looks_for as string[]) ?? [],
-      mood: r.mood_emoji ? { emoji: r.mood_emoji, text: r.mood_text ?? "" } : undefined,
+      interests: (row.interests as string[]) ?? [],
+      vibeTags: (row.vibe_tags as string[]) ?? [],
+      looksFor: (row.looks_for as string[]) ?? [],
+      mood: row.mood_emoji ? { emoji: row.mood_emoji, text: row.mood_text ?? "" } : undefined,
       nowPlaying:
-        r.now_playing_kind && r.now_playing_title
+        row.now_playing_kind && row.now_playing_title
           ? {
-              kind: r.now_playing_kind as "music" | "reading" | "watching",
-              title: r.now_playing_title,
-              subtitle: r.now_playing_subtitle ?? undefined,
+              kind: row.now_playing_kind as "music" | "reading" | "watching",
+              title: row.now_playing_title,
+              subtitle: row.now_playing_subtitle ?? undefined,
             }
           : undefined,
       moments,
@@ -125,8 +128,21 @@ export const Route = createFileRoute("/_app/perfil/$id")({
   },
   errorComponent: ProfileLoadError,
   notFoundComponent: () => <div className="p-6 text-sm">Perfil não encontrado.</div>,
-  component: Perfil,
+  component: ViewedProfile,
 });
+
+const coverImages = [
+  "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=1200",
+  "https://images.unsplash.com/photo-1516306580123-e6e52b1b7b5f?w=1200",
+  "https://images.unsplash.com/photo-1518639192441-8fce0a366e2e?w=1200",
+];
+
+const fallbackPublicationImages = [
+  "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=640",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=640",
+  "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=640",
+  "https://images.unsplash.com/photo-1511081692775-05d0f180a065?w=640",
+];
 
 function ProfileLoadError() {
   const router = useRouter();
@@ -144,474 +160,448 @@ function ProfileLoadError() {
   );
 }
 
-function Perfil() {
-  const p = Route.useLoaderData() as Person;
-  const { from } = Route.useSearch();
+function ViewedProfile() {
+  const person = Route.useLoaderData() as Person;
   const { user } = useAuth();
-  const nav = useNavigate();
-  const cg = commonGround(p);
-  const label = personProximityLabel(p.distanceMeters);
-  const radius = personProximityRadius(p.distanceMeters);
-  const isOwnProfile = user?.id === p.id;
-  const [avatarFailed, setAvatarFailed] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"loading" | "connected" | "available">(
-    "loading",
+  const isOwnProfile = user?.id === person.id || person.id === currentUser.id;
+  const common = commonGround(person);
+  const favoritePlaces = useMemo(
+    () => (person.favoritePlaceIds ?? []).map(findPlace).filter(Boolean),
+    [person.favoritePlaceIds],
   );
+  const displayPlaces = useMemo(
+    () =>
+      [
+        ...favoritePlaces,
+        findPlace("cafe-central"),
+        findPlace("sunset-parque"),
+        findPlace("vinil-store"),
+      ]
+        .filter(
+          (place, index, list) =>
+            place && list.findIndex((item) => item?.id === place.id) === index,
+        )
+        .slice(0, 4),
+    [favoritePlaces],
+  );
+  const sharedFriends = people
+    .filter((candidate) => candidate.id !== person.id && candidate.id !== currentUser.id)
+    .slice(0, 6);
+  const firstName = person.name.split(" ")[0];
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [publicationTab, setPublicationTab] = useState<"Tudo" | "Fotos" | "Momentos">("Tudo");
 
-  const avatarInitials = getProfileInitials(p.name, p.handle);
-  const showAvatarFallback = !p.photo || avatarFailed;
+  const publicationImages = useMemo(() => {
+    const momentImages = (person.moments ?? [])
+      .map((moment) => moment.mediaUrl ?? moment.photo)
+      .filter((source): source is string => Boolean(source));
+    const placeImages = displayPlaces.map((place) => place?.cover).filter(Boolean) as string[];
+    return [...new Set([...momentImages, ...placeImages, ...fallbackPublicationImages])].slice(0, 8);
+  }, [displayPlaces, person.moments]);
+  const visiblePublicationImages =
+    publicationTab === "Tudo"
+      ? publicationImages
+      : publicationTab === "Fotos"
+        ? publicationImages.filter((_, index) => index % 2 === 0)
+        : publicationImages.filter((_, index) => index % 2 === 1);
 
-  const favPlaces = (p.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
-  const commonPlaces = cg.sharedPlaces.map(findPlace).filter(Boolean);
+  const cover = coverImages[person.name.length % coverImages.length];
+  const sharedInterestCount = common.sharedInterests.length;
+  const stats = {
+    connections: person.stats?.connections ?? 128,
+    publications: Math.max(person.moments?.length ?? 0, 24),
+    places: Math.max(favoritePlaces.length, 35),
+  };
 
-  useEffect(() => {
-    if (!isPublicSupabaseConfigured() || isOwnProfile || p.id === currentUser.id) {
-      setConnectionStatus("available");
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const conversationId = await ConnectionsService.getDirectConversation(p.id);
-        if (!cancelled) setConnectionStatus(conversationId ? "connected" : "available");
-      } catch {
-        if (!cancelled) setConnectionStatus("available");
-      }
-    })();
-    return () => {
-      cancelled = true;
+  async function shareProfile() {
+    const shareData = {
+      title: `Perfil de ${person.name} no Connexy`,
+      text: `Conheça ${person.name} no Connexy.`,
+      url: window.location.href,
     };
-  }, [p.id, isOwnProfile]);
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link do perfil copiado.");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error("Não foi possível compartilhar o perfil.");
+    }
+  }
 
   return (
-    <div className="flex-1 flex flex-col pb-8">
+    <main className="relative min-h-full overflow-hidden bg-background pb-6">
+      <div className="pointer-events-none absolute -left-12 top-56 h-36 w-36 rounded-full bg-primary/[0.05]" />
+      <div className="pointer-events-none absolute -right-14 top-72 h-28 w-28 rounded-full bg-amber-300/[0.08]" />
       <StatusBar />
-      <div className="flex items-center justify-between px-4 pt-1 pb-2">
+
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/20 bg-background/85 px-4 backdrop-blur-2xl">
         <BackButton
-          fallbackTo="/connecta"
-          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+          fallbackTo="/pessoas"
+          className="grid h-10 w-10 place-items-center rounded-full transition active:scale-95"
           ariaLabel="Voltar"
         />
-        <button
-          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
-          aria-label="Mais opções"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-      </div>
+        <h1 className="font-display text-xl font-bold tracking-tight">Perfil</h1>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={shareProfile}
+            aria-label="Compartilhar perfil"
+            className="grid h-10 w-10 place-items-center rounded-full transition active:scale-95"
+          >
+            <Share2 className="h-5 w-5" strokeWidth={1.9} />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              toast("Opções do perfil", {
+                description: "Denunciar e bloquear estarão disponíveis aqui.",
+              })
+            }
+            aria-label="Mais opções"
+            className="grid h-10 w-10 place-items-center rounded-full transition active:scale-95"
+          >
+            <MoreHorizontal className="h-5 w-5" strokeWidth={2.2} />
+          </button>
+        </div>
+      </header>
 
-      {/* Vibe Hero */}
       <motion.section
-        initial={{ y: 12, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="mx-4 rounded-3xl overflow-hidden shadow-elegant border border-border"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative"
       >
-        <div className="relative p-5 pt-4 bg-gradient-brand text-white">
-          <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-          <div className="relative flex items-start gap-4">
-            <div className="relative">
-              {showAvatarFallback ? (
-                <div
-                  className="flex h-24 w-24 items-center justify-center rounded-full bg-white/20 text-white ring-4 ring-white/30"
-                  aria-label={`Avatar de ${p.name}`}
-                >
-                  {avatarInitials ? (
-                    <span className="text-2xl font-bold">{avatarInitials}</span>
-                  ) : (
-                    <UserRound className="h-9 w-9" aria-hidden />
-                  )}
-                </div>
-              ) : (
-                <img
-                  src={p.photo}
-                  alt={`Foto de ${p.name}`}
-                  onError={() => setAvatarFailed(true)}
-                  className="h-24 w-24 rounded-full object-cover ring-4 ring-white/30"
-                />
-              )}
-              <PresenceDot online={p.online} size={16} className="absolute -bottom-1 -right-1" />
-            </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <h1 className="font-display text-2xl font-bold leading-tight">
-                {p.name}, {p.age}
-              </h1>
-              {p.handle && <div className="text-xs opacity-90">@{p.handle}</div>}
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-2.5 py-1 text-[11px] font-semibold">
-                <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                {p.online ? "online" : `visto ${p.lastSeen ?? "há pouco"}`}
-                <span className="opacity-70">·</span>
-                <span>
-                  {label}
-                  {radius ? ` · ${radius}` : ""}
-                </span>
-              </div>
-              {p.headline && <p className="mt-2 text-sm leading-snug opacity-95">{p.headline}</p>}
-            </div>
-          </div>
+        <svg
+          viewBox="0 0 420 194"
+          preserveAspectRatio="none"
+          className="block h-[194px] w-full"
+          role="img"
+          aria-label={`Paisagem de capa de ${person.name}`}
+        >
+          <defs>
+            <clipPath id="viewed-profile-cover">
+              <path d="M0 14C54 0 112 9 174 14C252 20 333 5 420 16V148C382 162 346 149 301 159C250 171 211 166 160 181C96 200 35 177 0 146V14Z" />
+            </clipPath>
+            <linearGradient id="viewed-profile-cover-shade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0.62" stopColor="#000" stopOpacity="0" />
+              <stop offset="1" stopColor="#000" stopOpacity="0.13" />
+            </linearGradient>
+          </defs>
+          <image
+            href={cover}
+            width="420"
+            height="194"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath="url(#viewed-profile-cover)"
+          />
+          <path
+            d="M0 14C54 0 112 9 174 14C252 20 333 5 420 16V148C382 162 346 149 301 159C250 171 211 166 160 181C96 200 35 177 0 146V14Z"
+            fill="url(#viewed-profile-cover-shade)"
+          />
+        </svg>
 
-          <div className="relative mt-4 grid grid-cols-2 gap-2">
-            {p.mood && (
-              <div className="rounded-2xl bg-white/15 backdrop-blur p-2.5">
-                <div className="text-[10px] uppercase tracking-wide opacity-80">Humor de hoje</div>
-                <div className="text-sm font-semibold mt-0.5">
-                  {p.mood.emoji} {p.mood.text}
-                </div>
+        <div className="pointer-events-none absolute inset-x-0 top-[152px] h-[360px] overflow-hidden" aria-hidden>
+          <span className="absolute -left-7 top-12 h-20 w-20 rounded-full bg-primary/[0.045]" />
+          <span className="absolute left-5 top-32 h-14 w-14 rounded-full bg-primary/[0.055]" />
+          <span className="absolute -right-8 top-20 h-24 w-24 rounded-full bg-amber-300/[0.075]" />
+          <span className="absolute right-7 top-40 h-14 w-14 rounded-full bg-primary/[0.045]" />
+        </div>
+
+        <div className="relative -mt-[78px] px-5 text-center">
+          <div className="mx-auto h-[136px] w-[136px]">
+            {!person.photo || avatarFailed ? (
+              <div className="grid h-full w-full place-items-center rounded-full border-4 border-background bg-secondary text-primary shadow-xl">
+                <span className="text-3xl font-bold">{getProfileInitials(person.name, person.handle)}</span>
               </div>
-            )}
-            {p.nowPlaying && (
-              <div className="rounded-2xl bg-white/15 backdrop-blur p-2.5">
-                <div className="text-[10px] uppercase tracking-wide opacity-80 flex items-center gap-1">
-                  <NowPlayingIcon kind={p.nowPlaying.kind} /> Curtindo agora
-                </div>
-                <div className="text-sm font-semibold mt-0.5 truncate">{p.nowPlaying.title}</div>
-                {p.nowPlaying.subtitle && (
-                  <div className="text-[11px] opacity-80 truncate">{p.nowPlaying.subtitle}</div>
-                )}
-              </div>
+            ) : (
+              <img
+                src={person.photo}
+                alt={`Foto de ${person.name}`}
+                onError={() => setAvatarFailed(true)}
+                className="h-full w-full rounded-full border-4 border-background object-cover shadow-xl"
+              />
             )}
           </div>
+          <h2 className="mt-3 font-display text-[30px] font-bold leading-none tracking-[-0.035em]">
+            {person.name}
+          </h2>
+          {person.handle && <p className="mt-1 text-sm text-muted-foreground">@{person.handle}</p>}
+          <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+            {profileCity(person)}
+            <MapPin className="h-4 w-4 text-primary" strokeWidth={2.2} />
+          </p>
+          <p className="mx-auto mt-2 max-w-[320px] text-sm leading-relaxed text-muted-foreground">
+            {person.bio ?? person.headline ?? "Boas conversas, novos lugares e experiências ao redor."}
+          </p>
         </div>
       </motion.section>
 
-      {/* Terreno em comum */}
-      {cg.sharedInterests.length + cg.sharedVibe.length + cg.sharedPlaces.length > 0 && (
-        <motion.section
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.05 }}
-          className="mx-4 mt-3 rounded-3xl border border-primary/20 bg-accent/60 p-4"
-        >
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="font-display font-bold text-sm text-primary">Terreno em comum</h2>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Vocês compartilham{" "}
-            {[
-              cg.sharedInterests.length &&
-                `${cg.sharedInterests.length} interesse${cg.sharedInterests.length > 1 ? "s" : ""}`,
-              cg.sharedVibe.length &&
-                `${cg.sharedVibe.length} vibe${cg.sharedVibe.length > 1 ? "s" : ""}`,
-              cg.sharedPlaces.length &&
-                `${cg.sharedPlaces.length} lugar${cg.sharedPlaces.length > 1 ? "es" : ""} favorito${cg.sharedPlaces.length > 1 ? "s" : ""}`,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-            .
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {cg.sharedInterests.map((t) => (
+      {!isOwnProfile && (
+        <section className="mt-5 grid grid-cols-2 gap-3 px-4">
+          <ConversationInviteButton
+            personId={person.id}
+            personName={person.name}
+            variant="profile"
+            className="h-[52px] rounded-full text-[15px]"
+          />
+          <ProfileConnectButton person={person} />
+        </section>
+      )}
+
+      <section className="mx-4 mt-5 grid grid-cols-3 rounded-2xl border border-border/70 bg-surface/70 py-3 text-center shadow-soft backdrop-blur-xl">
+        <ProfileStat value={stats.connections} label="Conexões" />
+        <ProfileStat value={stats.publications} label="Publicações" divider />
+        <ProfileStat value={stats.places} label="Lugares" />
+      </section>
+
+      {person.interests.length > 0 && (
+        <section className="mt-4 overflow-x-auto px-4 no-scrollbar">
+          <div className="flex min-w-max gap-2">
+            {person.interests.slice(0, 5).map((interest) => (
               <span
-                key={`i-${t}`}
-                className="rounded-full bg-primary text-white text-[11px] font-semibold px-2.5 py-1"
+                key={interest}
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.055] px-4 text-xs font-semibold text-primary"
               >
-                {t}
+                <InterestIcon interest={interest} />
+                {interest}
               </span>
             ))}
-            {cg.sharedVibe.map((t) => (
-              <span
-                key={`v-${t}`}
-                className="rounded-full bg-surface text-primary border border-primary/30 text-[11px] font-semibold px-2.5 py-1"
-              >
-                {t}
-              </span>
-            ))}
-            {commonPlaces.map(
-              (pl) =>
-                pl && (
-                  <span
-                    key={`p-${pl.id}`}
-                    className="rounded-full bg-surface text-foreground border border-border text-[11px] font-semibold px-2.5 py-1 inline-flex items-center gap-1"
-                  >
-                    <MapPin className="h-3 w-3 text-primary" /> {pl.name}
-                  </span>
-                ),
-            )}
           </div>
-        </motion.section>
-      )}
-
-      {/* Sobre */}
-      {(p.bio || (p.looksFor && p.looksFor.length > 0)) && (
-        <section className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft">
-          <h2 className="font-display font-bold text-sm">Sobre</h2>
-          {p.bio && <p className="mt-1 text-sm text-muted-foreground italic">"{p.bio}"</p>}
-          {p.looksFor && p.looksFor.length > 0 && (
-            <>
-              <div className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Aqui buscando
-              </div>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {p.looksFor.map((l) => (
-                  <span
-                    key={l}
-                    className="rounded-full bg-secondary text-foreground text-[11px] font-semibold px-2.5 py-1"
-                  >
-                    {l}
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
         </section>
       )}
 
-      {/* Interesses + Vibe tags */}
-      {(p.interests.length > 0 || (p.vibeTags && p.vibeTags.length > 0)) && (
-        <section className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft">
-          {p.interests.length > 0 && (
-            <>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Interesses
-              </div>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {p.interests.map((t) => (
-                  <span
-                    key={t}
-                    className={`rounded-full text-[11px] font-semibold px-2.5 py-1 ${cg.sharedInterests.includes(t) ? "bg-primary text-white" : "bg-accent text-primary"}`}
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
-          {p.vibeTags && p.vibeTags.length > 0 && (
-            <>
-              <div className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Vibe
-              </div>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {p.vibeTags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full bg-surface text-foreground border border-border text-[11px] font-semibold px-2.5 py-1"
-                  >
-                    ✦ {t}
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
-      )}
+      <div className="mx-5 mt-4 flex items-center gap-2 text-xs text-foreground">
+        <UsersRound className="h-4 w-4 text-primary" />
+        <span>
+          Vocês têm{" "}
+          <strong className="font-semibold text-primary">
+            {sharedInterestCount} {sharedInterestCount === 1 ? "interesse" : "interesses"} em comum
+          </strong>
+        </span>
+      </div>
 
-      {/* Momentos */}
-      {p.moments && p.moments.length > 0 && (
-        <section className="mx-4 mt-3">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-display font-bold text-sm">Momentos de {p.name.split(" ")[0]}</h2>
-            <span className="text-[11px] text-muted-foreground">{p.moments.length} posts</span>
-          </div>
-          <ul className="space-y-2.5">
-            {p.moments.map((m) => (
-              <MomentItem key={m.id} m={m} />
-            ))}
-          </ul>
-        </section>
-      )}
+      <ProfileSection title="Amigos em comum" action="12 amigos em comum">
+        <div className="flex gap-4 overflow-x-auto pb-1 no-scrollbar">
+          {sharedFriends.map((friend) => (
+            <Link
+              key={friend.id}
+              to="/perfil/$id"
+              params={{ id: friend.id }}
+              className="w-[54px] shrink-0 text-center"
+            >
+              <img src={friend.photo} alt="" className="h-[54px] w-[54px] rounded-full object-cover" />
+              <span className="mt-1.5 block truncate text-[11px] text-foreground">{friend.name}</span>
+            </Link>
+          ))}
+        </div>
+      </ProfileSection>
 
-      {/* Locais favoritos */}
-      {favPlaces.length > 0 && (
-        <section className="mt-4">
-          <div className="px-4 flex items-center justify-between mb-2">
-            <h2 className="font-display font-bold text-sm">Locais favoritos</h2>
-            <span className="text-[11px] text-muted-foreground">{favPlaces.length}</span>
-          </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {favPlaces.map(
-              (pl) =>
-                pl && (
+      {displayPlaces.length > 0 && (
+        <ProfileSection title="Lugares que curtiu">
+          <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+            {displayPlaces.map(
+              (place) =>
+                place && (
                   <Link
-                    key={pl.id}
+                    key={place.id}
                     to="/local/$id"
-                    params={{ id: pl.id }}
-                    className="shrink-0 w-40 rounded-2xl bg-surface border border-border overflow-hidden shadow-soft"
+                    params={{ id: place.id }}
+                    className="w-[148px] shrink-0"
                   >
-                    <img src={pl.cover} alt={pl.name} className="h-20 w-full object-cover" />
-                    <div className="p-2">
-                      <div className="text-[10px] uppercase font-semibold text-primary">
-                        {pl.category}
-                      </div>
-                      <div className="font-semibold text-xs truncate">{pl.name}</div>
+                    <div className="relative">
+                      <img src={place.cover} alt="" className="h-[76px] w-full rounded-[50%] object-cover" />
+                      <span className="absolute bottom-1 right-1 grid h-7 w-7 place-items-center rounded-full bg-background text-[#ff604b] shadow-md">
+                        <Heart className="h-3.5 w-3.5 fill-current" />
+                      </span>
                     </div>
+                    <span className="mt-1.5 block truncate text-center text-[11px] text-muted-foreground">
+                      {place.name}
+                    </span>
                   </Link>
                 ),
             )}
           </div>
-        </section>
+        </ProfileSection>
       )}
 
-      {/* Stats */}
-      {p.stats && (
-        <section className="mx-4 mt-4 rounded-3xl border border-border bg-surface p-3 flex items-center justify-around text-center">
-          <Stat icon={Users} value={p.stats.connections} label="conexões" />
-          <div className="h-8 w-px bg-border" />
-          <Stat icon={Handshake} value={p.stats.meetups} label="encontros" />
-          <div className="h-8 w-px bg-border" />
-          <Stat icon={CalendarCheck} value={p.stats.joinedAt} label="desde" />
-        </section>
-      )}
+      <ProfileSection
+        title="Atividade compartilhada"
+        action={
+          <span className="inline-flex items-center gap-1">
+            <LockKeyhole className="h-3.5 w-3.5" /> Compartilhado por {firstName}
+          </span>
+        }
+      >
+        <div className="space-y-3">
+          <ActivityItem icon={CalendarDays} text="Confirmou presença em um evento próximo" />
+          <ActivityItem icon={Heart} text={`Curtiu ${displayPlaces[0]?.name ?? "um lugar da região"}`} />
+          <ActivityItem icon={MapPin} text={`Fez check-in no ${displayPlaces[1]?.name ?? "bairro"}`} />
+        </div>
+      </ProfileSection>
 
-      {/* Convite para conversa */}
-      {!isOwnProfile && p.id !== currentUser.id && (
-        <section className="mx-4 mt-4 pb-4">
-          {from === "solicitacao" ? (
-            <div className="flex gap-2">
-              <Link
-                to="/solicitacao/$id"
-                params={{ id: p.id }}
-                className="flex-1 h-12 rounded-2xl bg-secondary text-foreground font-semibold flex items-center justify-center"
+      <section className="mt-6 px-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="font-display text-lg font-bold">Publicações</h3>
+          <div className="flex items-center gap-1">
+            {(["Tudo", "Fotos", "Momentos"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setPublicationTab(tab)}
+                className={`rounded-full px-3 py-1.5 text-[11px] transition ${
+                  publicationTab === tab
+                    ? "bg-primary/[0.09] font-semibold text-primary"
+                    : "text-muted-foreground"
+                }`}
               >
-                Voltar
-              </Link>
-              {connectionStatus === "connected" ? (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const conversationId = await ConnectionsService.getDirectConversation(p.id);
-                      nav({
-                        to: "/chat/$conversationId",
-                        params: { conversationId: conversationId ?? p.id },
-                      });
-                    } catch {
-                      nav({
-                        to: "/chat/$conversationId",
-                        params: { conversationId: p.id },
-                      });
-                    }
-                  }}
-                  className="flex-1 h-12 rounded-2xl bg-primary/10 text-primary font-semibold flex items-center justify-center"
-                >
-                  Conversar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await ConnectionsService.sendRequest(p.id);
-                      nav({
-                        to: "/chat/$conversationId",
-                        params: { conversationId: p.id },
-                      });
-                    } catch (err) {
-                      const toast = await import("sonner").then((m) => m.toast);
-                      toast.error(err instanceof Error ? err.message : "Erro ao enviar convite");
-                    }
-                  }}
-                  className="flex-1 h-12 rounded-2xl bg-gradient-brand text-white font-semibold shadow-elegant"
-                >
-                  Enviar convite
-                </button>
-              )}
-            </div>
-          ) : (
-            <ConversationInviteButton personId={p.id} personName={p.name} variant="profile" />
-          )}
-        </section>
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-4 gap-1.5 overflow-hidden rounded-2xl">
+          {visiblePublicationImages.map((source, index) => (
+            <button
+              key={`${source}-${index}`}
+              type="button"
+              onClick={() =>
+                toast("Publicação aberta", { description: `Conteúdo compartilhado por ${firstName}.` })
+              }
+              className="aspect-square overflow-hidden bg-secondary"
+              aria-label={`Abrir publicação ${index + 1}`}
+            >
+              <img src={source} alt="" className="h-full w-full object-cover transition-transform duration-300 hover:scale-105" />
+            </button>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ProfileConnectButton({ person }: { person: Person }) {
+  const demo = isDemoMode();
+  const demoConnected = useDemoIsConnected(person.id);
+  const [status, setStatus] = useState<"loading" | "available" | "pending" | "connected">(
+    demo ? (demoConnected ? "connected" : hasPendingRequest(person.id) ? "pending" : "available") : "loading",
+  );
+
+  useEffect(() => {
+    if (demo) {
+      setStatus(demoConnected ? "connected" : hasPendingRequest(person.id) ? "pending" : "available");
+      return;
+    }
+    if (!isPublicSupabaseConfigured()) {
+      setStatus("available");
+      return;
+    }
+    let cancelled = false;
+    void ConnectionsService.getDirectConversation(person.id)
+      .then((conversationId) => {
+        if (!cancelled) setStatus(conversationId ? "connected" : "available");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("available");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [demo, demoConnected, person.id]);
+
+  async function connect() {
+    if (status !== "available") return;
+    setStatus("loading");
+    try {
+      if (demo) sendDemoRequest(person.id);
+      else await ConnectionsService.sendRequest(person.id);
+      setStatus("pending");
+      toast.success(`Solicitação de conexão enviada para ${person.name}.`);
+    } catch (error) {
+      setStatus("available");
+      toast.error(error instanceof Error ? error.message : "Não foi possível enviar a conexão.");
+    }
+  }
+
+  const label =
+    status === "connected"
+      ? "Conectado"
+      : status === "pending"
+        ? "Solicitação enviada"
+        : status === "loading"
+          ? "Enviando..."
+          : "Conectar";
+
+  return (
+    <button
+      type="button"
+      onClick={connect}
+      disabled={status !== "available"}
+      className="inline-flex h-[52px] items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/[0.045] px-3 text-[15px] font-semibold text-primary transition active:scale-[0.98] disabled:opacity-70"
+    >
+      {status === "loading" ? (
+        <Loader2 className="h-5 w-5 animate-spin" />
+      ) : status === "connected" || status === "pending" ? (
+        <Check className="h-5 w-5" />
+      ) : (
+        <UserPlus className="h-5 w-5" />
       )}
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
+
+function ProfileStat({ value, label, divider = false }: { value: number; label: string; divider?: boolean }) {
+  return (
+    <div className={divider ? "border-x border-border/70" : ""}>
+      <p className="font-display text-lg font-semibold leading-tight">{value}</p>
+      <p className="mt-0.5 text-[11px] text-muted-foreground">{label}</p>
     </div>
   );
 }
 
-function NowPlayingIcon({ kind }: { kind: "music" | "reading" | "watching" }) {
-  if (kind === "music") return <Music className="h-3 w-3" />;
-  if (kind === "reading") return <BookOpen className="h-3 w-3" />;
-  return <Film className="h-3 w-3" />;
+function ProfileSection({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="mt-6 px-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="font-display text-lg font-bold tracking-tight">{title}</h3>
+        {action && <div className="shrink-0 text-[11px] text-muted-foreground">{action}</div>}
+      </div>
+      {children}
+    </section>
+  );
 }
 
-function MomentItem({ m }: { m: Moment }) {
-  const [liked, setLiked] = useState(false);
-  const [mediaFailed, setMediaFailed] = useState(false);
-  const place = m.placeId ? findPlace(m.placeId) : undefined;
-  const likes = m.likes + (liked ? 1 : 0);
-  const mediaUrl = m.mediaUrl ?? m.photo;
-  const mediaKind = m.mediaKind ?? (m.photo ? "image" : null);
+function ActivityItem({ icon: Icon, text }: { icon: ComponentType<{ className?: string }>; text: string }) {
   return (
-    <li className="rounded-2xl border border-border bg-surface overflow-hidden shadow-soft">
-      {mediaKind === "image" && mediaUrl && !mediaFailed && (
-        <img
-          src={mediaUrl}
-          alt="Imagem da publicação"
-          onError={() => setMediaFailed(true)}
-          className="w-full h-40 object-cover"
-        />
-      )}
-      {mediaKind === "image" && mediaFailed && (
-        <div className="flex h-40 items-center justify-center bg-secondary px-4 text-sm text-muted-foreground">
-          Imagem indisponível
-        </div>
-      )}
-      {mediaKind === "video" && mediaUrl && !mediaFailed && (
-        <video
-          src={mediaUrl}
-          controls
-          preload="metadata"
-          onError={() => setMediaFailed(true)}
-          className="w-full h-40 bg-black object-contain"
-        >
-          Vídeo indisponível
-        </video>
-      )}
-      {mediaKind === "video" && (!mediaUrl || mediaFailed) && (
-        <div className="flex h-40 items-center justify-center bg-secondary px-4 text-sm text-muted-foreground">
-          Vídeo indisponível
-        </div>
-      )}
-      <div className="p-3">
-        <p className="text-sm text-foreground leading-snug">{m.text}</p>
-        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-2">
-            {place && (
-              <Link
-                to="/local/$id"
-                params={{ id: place.id }}
-                className="inline-flex items-center gap-1 text-primary font-semibold"
-              >
-                <MapPin className="h-3 w-3" /> {place.name}
-              </Link>
-            )}
-            <span>· {m.createdAgo}</span>
-          </div>
-          <button
-            onClick={() => setLiked((v) => !v)}
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${liked ? "bg-pink/10 text-pink" : "bg-secondary text-muted-foreground"}`}
-            aria-label="Curtir momento"
-          >
-            <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`} /> {likes}
-          </button>
-        </div>
-      </div>
-    </li>
+    <div className="flex items-center gap-3 text-sm">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-white">
+        <Icon className="h-3.5 w-3.5" />
+      </span>
+      <span className="min-w-0 flex-1 truncate">{text}</span>
+      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+    </div>
   );
+}
+
+function InterestIcon({ interest }: { interest: string }) {
+  const normalized = interest.toLowerCase();
+  if (normalized.includes("música")) return <Music2 className="h-4 w-4" />;
+  if (normalized.includes("café") || normalized.includes("gastronomia")) return <Coffee className="h-4 w-4" />;
+  if (normalized.includes("esporte") || normalized.includes("corrida")) return <Dumbbell className="h-4 w-4" />;
+  if (normalized.includes("fotografia") || normalized.includes("arte")) return <Camera className="h-4 w-4" />;
+  if (normalized.includes("evento")) return <CalendarDays className="h-4 w-4" />;
+  return <Sparkles className="h-4 w-4" />;
+}
+
+function profileCity(person: Person): string {
+  return person.id === "rafael" ? "Rio de Janeiro" : "Na sua região";
 }
 
 function getProfileInitials(name?: string, handle?: string): string {
   const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length > 1) {
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  }
+  if (parts.length > 1) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (handle ?? "").trim().charAt(0).toUpperCase();
-}
-
-function Stat({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  value: number | string;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-col items-center">
-      <Icon className="h-4 w-4 text-primary" />
-      <div className="text-sm font-bold mt-0.5">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
-    </div>
-  );
+  return (handle ?? "").trim().charAt(0).toUpperCase() || "?";
 }
