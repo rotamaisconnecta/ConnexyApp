@@ -12,6 +12,7 @@ import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { PromoPopup } from "@/components/promo-popup";
 import { isDemoMode } from "@/lib/demo/demo-config";
 import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
+import { useDemoOwnProfile } from "@/lib/demo/demo-own-profile";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({
@@ -65,6 +66,7 @@ function Home() {
   const [avatarFailed, setAvatarFailed] = useState(false);
   const pendingRequests = useDemoPendingRequests();
   const pendingRequestCount = isDemoMode() ? pendingRequests.length : 0;
+  const demoProfile = useDemoOwnProfile();
 
   useEffect(() => {
     if (!configured || !user) return;
@@ -82,13 +84,14 @@ function Home() {
   }, [configured, user]);
 
   const displayName = (() => {
+    if (isDemoMode()) return demoProfile.name;
     if (profile?.name?.trim()) return profile.name.trim();
     if (user?.user_metadata?.name?.trim()) return user.user_metadata.name.trim();
     return "Olá";
   })();
 
   const firstName = displayName.split(" ")[0];
-  const avatarUrl = profile?.photo_url ?? null;
+  const avatarUrl = isDemoMode() ? demoProfile.photo : profile?.photo_url ?? null;
   const initials = getInitials(displayName);
 
   useEffect(() => setAvatarFailed(false), [avatarUrl]);
