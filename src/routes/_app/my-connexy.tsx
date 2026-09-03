@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Store,
@@ -551,7 +551,6 @@ function PanelAction({
 /* ─── Main Page ──────────────────────────────────────── */
 
 function MyConnexyPage() {
-  const navigate = useNavigate();
   const [activeWizard, setActiveWizard] = useState<WizardType>(null);
 
   function handleWizardComplete() {
@@ -638,19 +637,6 @@ function MyConnexyPage() {
                 gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
                 wizard: "oferta" as WizardType,
               },
-              {
-                label: "Nova Publicação",
-                emoji: "📝",
-                gradient: "linear-gradient(135deg, #6C3BFF, #4B21D6)",
-                wizard: "publicacao" as WizardType,
-              },
-              {
-                label: "Começar Corrida",
-                emoji: "🚗",
-                gradient: "linear-gradient(135deg, #22C55E, #16A34A)",
-                wizard: null,
-                route: "/driver",
-              },
             ].map((action, i) => (
               <motion.button
                 key={action.label}
@@ -659,9 +645,7 @@ function MyConnexyPage() {
                 initial="hidden"
                 animate="visible"
                 whileTap={{ scale: 0.97 }}
-                onClick={() =>
-                  action.route ? navigate({ to: action.route as never }) : openWizard(action.wizard)
-                }
+                onClick={() => openWizard(action.wizard)}
                 className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
                 style={{ background: action.gradient }}
               >
