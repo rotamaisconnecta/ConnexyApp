@@ -1,7 +1,22 @@
 import { useState } from "react";
-import { Bookmark, Check, Copy, Phone, Share2, Star, type LucideIcon } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  Bookmark,
+  CarFront,
+  Check,
+  Copy,
+  MapPin,
+  Phone,
+  Send,
+  Share2,
+  Star,
+  UsersRound,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { people } from "@/lib/mock-data";
 
 type LocalReview = {
   id: string;
@@ -22,6 +37,15 @@ type RedeemedPromotion = {
 const SAVED_KEY = "connexy:demo:saved-details";
 const REVIEWS_KEY_PREFIX = "connexy:demo:recent-reviews:";
 const PROMOTIONS_KEY = "connexy:demo:redeemed-promotions";
+const OUTING_INVITES_KEY = "connexy:demo:outing-invites";
+
+type OutingTarget = {
+  id: string;
+  title: string;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -51,12 +75,15 @@ export function DetailActionBar({
   targetId,
   title,
   phone,
+  outing,
 }: {
   targetId: string;
   title: string;
   phone?: string;
+  outing?: OutingTarget;
 }) {
   const [saved, setSaved] = useState(() => savedDetailIds().includes(targetId));
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const toggleSaved = () => {
     const current = savedDetailIds();
@@ -95,15 +122,164 @@ export function DetailActionBar({
   };
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <ActionButton icon={Phone} label="Ligar" onClick={call} />
-      <ActionButton
-        icon={Bookmark}
-        label={saved ? "Salvo" : "Salvar"}
-        active={saved}
-        onClick={toggleSaved}
-      />
-      <ActionButton icon={Share2} label="Compartilhar" onClick={() => void share()} />
+    <>
+      <div className="grid grid-cols-4 gap-2">
+        <ActionButton icon={Phone} label="Ligar" onClick={call} />
+        <ActionButton
+          icon={Bookmark}
+          label={saved ? "Salvo" : "Salvar"}
+          active={saved}
+          onClick={toggleSaved}
+        />
+        <ActionButton icon={Share2} label="Compartilhar" onClick={() => void share()} />
+        {outing && (
+          <ActionButton icon={UsersRound} label="Ir juntos" onClick={() => setInviteOpen(true)} />
+        )}
+      </div>
+      {outing && (
+        <InviteTogetherSheet
+          target={outing}
+          open={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function InviteTogetherSheet({
+  target,
+  open,
+  onClose,
+}: {
+  target: OutingTarget;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const navigate = useNavigate();
+  const [personId, setPersonId] = useState(people[0]?.id ?? "");
+  const [message, setMessage] = useState(`Vamos juntos para ${target.title}?`);
+  const [accepted, setAccepted] = useState(false);
+  const person = people.find((item) => item.id === personId) ?? people[0];
+
+  if (!open || !person) return null;
+
+  const sendInvite = () => {
+    const current = readJson<Array<Record<string, unknown>>>(OUTING_INVITES_KEY, []);
+    writeJson(OUTING_INVITES_KEY, [
+      {
+        id: `outing-${Date.now()}`,
+        targetId: target.id,
+        personId: person.id,
+        message: message.trim(),
+        status: "pending",
+        createdAt: Date.now(),
+      },
+      ...current,
+    ]);
+    toast.success(`Convite enviado para ${person.name.split(" ")[0]}.`);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-end bg-black/35 p-3 backdrop-blur-[1px] sm:items-center sm:justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Convidar para ir junto"
+    >
+      <div className="w-full max-w-md rounded-[28px] bg-background p-5 shadow-elevated">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-lg font-bold">Convidar para ir junto</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Convide alguém para {target.title}.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-9 w-9 place-items-center rounded-full bg-secondary"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {!accepted ? (
+          <>
+            <label className="mt-5 block text-xs font-semibold">Quem você quer convidar?</label>
+            <select
+              value={personId}
+              onChange={(event) => setPersonId(event.target.value)}
+              className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {people.slice(0, 7).map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              rows={3}
+              maxLength={240}
+              className="mt-3 w-full resize-none rounded-xl bg-secondary/70 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <button
+              type="button"
+              onClick={sendInvite}
+              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+            >
+              <Send className="h-4 w-4" /> Enviar convite
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccepted(true)}
+              className="mt-3 w-full text-center text-[11px] font-semibold text-primary"
+            >
+              Simular aceite no modo demonstração
+            </button>
+          </>
+        ) : (
+          <div className="mt-5 rounded-2xl bg-primary/10 p-4">
+            <div className="flex items-center gap-2 text-sm font-bold text-primary">
+              <Check className="h-4 w-4" /> {person.name.split(" ")[0]} aceitou o convite
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              O Connexy sugere buscar {person.name.split(" ")[0]} e seguir juntos para{" "}
+              {target.title}.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-background text-primary">
+                <MapPin className="h-4 w-4" />
+              </span>
+              <span className="text-xs">
+                <strong>Rota sugerida</strong>
+                <br />
+                Sua localização → {person.name.split(" ")[0]} → {target.title}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: "/ride/request",
+                  search: {
+                    destinationId: target.id,
+                    destinationName: target.title,
+                    destinationAddress: target.address ?? null,
+                    destinationLat: target.latitude ?? null,
+                    destinationLng: target.longitude ?? null,
+                    source: "invite",
+                  },
+                })
+              }
+              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+            >
+              <CarFront className="h-4 w-4" /> Pedir corrida pelo Connexy
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -277,12 +453,12 @@ export function RecentReviewSection({
                 type="button"
                 onClick={() => setRating(value)}
                 aria-label={`${value} estrelas`}
-                className="grid h-8 w-8 place-items-center rounded-full transition hover:bg-amber-50"
+                className="grid h-8 w-8 place-items-center rounded-full transition hover:bg-yellow-50"
               >
                 <Star
                   className={cn(
                     "h-4 w-4",
-                    value <= rating ? "fill-amber text-amber" : "text-border",
+                    value <= rating ? "fill-yellow-400 text-yellow-400" : "text-border",
                   )}
                 />
               </button>
@@ -311,7 +487,7 @@ export function RecentReviewSection({
           <article key={review.id} className="rounded-2xl border border-border p-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs font-semibold">{review.author}</span>
-              <span className="flex items-center gap-0.5 text-amber">
+              <span className="flex items-center gap-0.5 text-yellow-400">
                 {Array.from({ length: review.rating }, (_, index) => (
                   <Star key={index} className="h-3 w-3 fill-current" />
                 ))}

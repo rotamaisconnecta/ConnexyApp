@@ -276,6 +276,13 @@ function EventDetailPage() {
           targetId={event.id}
           title={event.title}
           phone={hostBusiness?.phone ?? "+551140000000"}
+          outing={{
+            id: event.id,
+            title: event.title,
+            address: event.location ?? null,
+            latitude: hostBusiness?.location.lat ?? null,
+            longitude: hostBusiness?.location.lng ?? null,
+          }}
         />
 
         <RecentReviewSection

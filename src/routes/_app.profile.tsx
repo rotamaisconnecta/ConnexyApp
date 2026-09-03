@@ -1,56 +1,65 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { StatusBar } from "@/components/phone-frame";
-import { Hero } from "@/components/profile/atoms/hero";
 import { ConfirmDialog } from "@/components/system/confirm-dialog";
 import { signOut } from "@/lib/auth/sign-out";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
 import { exitDemoSession } from "@/lib/demo/demo-auth";
-import { useDemoConnectionsCount } from "@/lib/demo/use-demo-db";
 import { toast } from "sonner";
-
-import { currentUser, findPlace } from "@/lib/mock-data";
 import {
-  MapPin,
-  Star,
-  Settings,
+  Bell,
   ChevronRight,
-  Users,
-  Handshake,
-  CalendarCheck,
-  Shield,
-  MoreVertical,
+  CircleHelp,
+  LockKeyhole,
   LogOut,
-  Loader2,
-  Heart,
-  BookOpen,
+  MoreVertical,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRound,
+  WalletCards,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { sectionFade } from "@/components/profile/animations";
-import ModeSwitcher from "@/components/roles/ModeSwitcher";
-import { ConnexyInviteCard } from "@/components/share/connexy-invite-card";
-import { useAuth } from "@/hooks/use-auth";
-import { useConnections } from "@/hooks/use-connections";
 
 export const Route = createFileRoute("/_app/profile")({
-  head: () => ({
-    meta: [{ title: "Configurações — Connexy" }],
-  }),
+  head: () => ({ meta: [{ title: "Configurações — Connexy" }] }),
   component: ProfilePage,
 });
 
+const SETTINGS = [
+  {
+    icon: UserRound,
+    title: "Conta e perfil",
+    description: "Nome, foto e informações públicas",
+    to: "/gerenciar",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Privacidade",
+    description: "Quem pode ver sua atividade",
+    to: "/privacidade",
+  },
+  {
+    icon: Bell,
+    title: "Notificações",
+    description: "Convites, conversas e novidades",
+    to: "/notificacoes",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Segurança",
+    description: "Acesso e proteção da conta",
+    to: "/privacidade",
+  },
+  {
+    icon: WalletCards,
+    title: "Pagamentos e corridas",
+    description: "Preferências de mobilidade",
+    to: "/privacidade",
+  },
+] as const;
+
 function ProfilePage() {
   const nav = useNavigate();
-  const { user } = useAuth();
-  const {
-    count: connectionsCount,
-    isLoading: connectionsLoading,
-    error: connectionsError,
-  } = useConnections(user?.id ?? null);
-  const configured = isPublicSupabaseConfigured();
-  const demoConnections = useDemoConnectionsCount();
-  const favPlaces = (currentUser.favoritePlaceIds ?? []).map(findPlace).filter(Boolean);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -59,390 +68,117 @@ function ProfilePage() {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      if (isDemoMode()) {
-        exitDemoSession();
-      } else if (isPublicSupabaseConfigured()) {
-        await signOut();
-      }
+      if (isDemoMode()) exitDemoSession();
+      else if (isPublicSupabaseConfigured()) await signOut();
       toast.success("Você saiu da sua conta.");
       nav({ to: "/auth", replace: true });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível sair da conta.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível sair da conta.");
     } finally {
       setSigningOut(false);
     }
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 pb-8">
       <StatusBar />
-
-      <header className="pl-5 pr-16 pt-1 pb-3 flex items-center justify-between">
+      <header className="flex items-center justify-between px-5 pb-5 pt-1">
         <div>
-          <h1 className="font-display text-lg font-bold">Configurações</h1>
-          <p className="text-[11px] text-muted-foreground">Conta, privacidade e preferências</p>
+          <h1 className="font-display text-xl font-bold">Configurações</h1>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            Controle sua conta e suas preferências
+          </p>
         </div>
         <div className="relative">
           <button
             type="button"
-            aria-label="Opções do perfil"
+            aria-label="Mais opções"
             onClick={() => setMenuOpen((open) => !open)}
-            className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-muted-foreground hover:bg-accent transition-colors"
+            className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-muted-foreground transition active:scale-95"
           >
             <MoreVertical className="h-4 w-4" />
           </button>
           {menuOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-2xl border border-border bg-surface p-1.5 shadow-elevated">
-                <Link
-                  to="/gerenciar"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors"
-                >
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                  Editar perfil
-                </Link>
-              </div>
+              <button
+                type="button"
+                aria-label="Fechar opções"
+                onClick={() => setMenuOpen(false)}
+                className="fixed inset-0 z-40 cursor-default"
+              />
+              <Link
+                to="/my-connexy"
+                onClick={() => setMenuOpen(false)}
+                className="absolute right-0 top-full z-50 mt-2 flex w-52 items-center gap-2.5 rounded-2xl border border-border bg-surface px-3 py-3 text-sm font-semibold shadow-elevated"
+              >
+                <SlidersHorizontal className="h-4 w-4 text-primary" /> Meu Connexy
+              </Link>
             </>
           )}
         </div>
       </header>
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-
-      <div className="px-4">
-        <Hero
-          photo={currentUser.photo}
-          name={currentUser.name}
-          handle={`@${currentUser.handle}`}
-          subtitle={currentUser.city}
-          online
-          photoVariant="pessoa"
-          gradientBg
-        />
-      </div>
-
-      <ModeSwitcher />
-
-      {/* ── Bio ──────────────────────────────────────────── */}
-
-      {currentUser.bio && (
-        <motion.p
-          variants={sectionFade(1.5)}
-          initial="hidden"
-          animate="visible"
-          className="mx-4 mt-2 text-sm text-muted-foreground text-center leading-relaxed"
-        >
-          {currentUser.bio}
-        </motion.p>
-      )}
-
-      {/* ── Favorite Places ───────────────────────────────── */}
-
-      {favPlaces.length > 0 && (
-        <motion.section
-          variants={sectionFade(2)}
-          initial="hidden"
-          animate="visible"
-          className="mt-4"
-        >
-          <div className="px-4 flex items-center justify-between mb-2">
-            <h2 className="font-display font-bold text-sm">Locais favoritos</h2>
-            <span className="text-[11px] text-muted-foreground">{favPlaces.length}</span>
-          </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-1">
-            {favPlaces.map(
-              (pl) =>
-                pl && (
-                  <Link
-                    key={pl.id}
-                    to="/local/$id"
-                    params={{ id: pl.id }}
-                    className="shrink-0 w-40 rounded-2xl bg-surface border border-border overflow-hidden shadow-soft"
-                  >
-                    <img src={pl.cover} alt={pl.name} className="h-20 w-full object-cover" />
-                    <div className="p-2">
-                      <div className="text-[10px] uppercase font-semibold text-primary">
-                        {pl.category}
-                      </div>
-                      <div className="font-semibold text-xs truncate">{pl.name}</div>
-                      <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
-                        <MapPin className="h-2.5 w-2.5" />
-                        {pl.distanceMeters < 1000
-                          ? `${pl.distanceMeters}m`
-                          : `${(pl.distanceMeters / 1000).toFixed(1)}km`}
-                      </div>
-                    </div>
-                  </Link>
-                ),
-            )}
-          </div>
-        </motion.section>
-      )}
-
-      {/* ── Conexões ──────────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(2.5)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
-              <Users className="h-4 w-4" />
-            </span>
-            <div>
-              <div className="text-sm font-bold">
-                {configured
-                  ? connectionsLoading
-                    ? "—"
-                    : connectionsError
-                      ? "0"
-                      : connectionsCount
-                  : isDemoMode()
-                    ? demoConnections
-                    : currentUser.connections}
-              </div>
-              <div className="text-[11px] text-muted-foreground">Conexões</div>
-            </div>
-          </div>
-          <Link to="/connecta" className="text-[11px] font-semibold text-primary hover:underline">
-            Ver todas
-          </Link>
-        </div>
-      </motion.section>
-
-      {/* ── Encontros ─────────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(3)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-      >
-        <div className="flex items-center gap-2">
-          <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
-            <Handshake className="h-4 w-4" />
-          </span>
-          <div>
-            <div className="text-sm font-bold">{currentUser.trips}</div>
-            <div className="text-[11px] text-muted-foreground">Encontros</div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ── Membro desde ──────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(3.5)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-      >
-        <div className="flex items-center gap-2">
-          <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
-            <CalendarCheck className="h-4 w-4" />
-          </span>
-          <div>
-            <div className="text-sm font-bold">Membro desde</div>
-            <div className="text-[11px] text-muted-foreground">
-              {/* real date would come from Supabase profiles.created_at */}
-              Connexy
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ── Momentos ──────────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(4)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-      >
-        <div className="flex items-center gap-2">
-          <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
-            <BookOpen className="h-4 w-4" />
-          </span>
-          <div>
-            <div className="text-sm font-bold">Momentos</div>
-            <div className="text-[11px] text-muted-foreground">
-              {/* moments would come from bio_posts when connected to Supabase */}
-              Seus momentos aparecerão aqui
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ── Postagens ─────────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(4.5)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="h-9 w-9 grid place-items-center rounded-xl bg-primary/10 text-primary">
-              <Heart className="h-4 w-4" />
-            </span>
-            <div>
-              <div className="text-sm font-bold">Postagens</div>
-              <div className="text-[11px] text-muted-foreground">
-                {/* post count would come from bio_posts when connected to Supabase */}0 publicações
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ── Interests ─────────────────────────────────────── */}
-
-      {currentUser.interests.length > 0 && (
-        <motion.section
-          variants={sectionFade(5)}
-          initial="hidden"
-          animate="visible"
-          className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-        >
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Interesses
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {currentUser.interests.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-accent text-primary text-[11px] font-semibold px-2.5 py-1"
-              >
-                {t}
+      <main className="space-y-5 px-4">
+        <section className="overflow-hidden rounded-3xl border border-border bg-surface shadow-soft">
+          {SETTINGS.map(({ icon: Icon, title, description, to }, index) => (
+            <Link
+              key={title}
+              to={to}
+              className={`flex items-center gap-3 px-4 py-4 transition-colors hover:bg-accent/40 ${index > 0 ? "border-t border-border" : ""}`}
+            >
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                <Icon className="h-4.5 w-4.5" />
               </span>
-            ))}
-          </div>
-        </motion.section>
-      )}
-
-      {/* ── Vibe Tags ─────────────────────────────────────── */}
-
-      {currentUser.vibeTags && currentUser.vibeTags.length > 0 && (
-        <motion.section
-          variants={sectionFade(5.5)}
-          initial="hidden"
-          animate="visible"
-          className="mx-4 mt-3 rounded-3xl border border-border bg-surface p-4 shadow-soft"
-        >
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Vibe
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {currentUser.vibeTags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-surface text-foreground border border-border text-[11px] font-semibold px-2.5 py-1"
-              >
-                ✦ {t}
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">{title}</span>
+                <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                  {description}
+                </span>
               </span>
-            ))}
-          </div>
-        </motion.section>
-      )}
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          ))}
+        </section>
 
-      {/* ── Quick Links ───────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(6)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-4 rounded-2xl bg-surface border border-border divide-y divide-border"
-      >
-        <Link to="/gerenciar" className="flex items-center gap-3 px-4 py-3">
-          <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-primary">
-            <Settings className="h-4 w-4" />
-          </span>
-          <div className="flex-1">
-            <div className="text-sm font-semibold">Gerenciar minha bio</div>
-            <div className="text-[11px] text-muted-foreground">
-              Edite bio, posts, humor e interesses
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
-        <Link to="/privacidade" className="flex items-center gap-3 px-4 py-3">
-          <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-primary">
-            <CalendarCheck className="h-4 w-4" />
-          </span>
-          <div className="flex-1">
-            <div className="text-sm font-semibold">Minhas viagens</div>
-            <div className="text-[11px] text-muted-foreground">Histórico e avaliações</div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
-      </motion.section>
-
-      {/* ── Meu Connexy ────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(6.3)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-4"
-      >
         <Link
           to="/my-connexy"
-          className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-surface shadow-soft hover:shadow-elevated transition-shadow"
+          className="flex items-center gap-3 rounded-3xl bg-gradient-brand p-4 text-white shadow-elegant transition active:scale-[0.99]"
         >
-          <span className="h-11 w-11 grid place-items-center rounded-xl bg-primary/10 text-primary">
-            <Shield className="h-5 w-5" />
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/16">
+            <SlidersHorizontal className="h-5 w-5" />
           </span>
-          <div className="flex-1">
-            <div className="text-sm font-bold">Meu Connexy</div>
-            <div className="text-[11px] text-muted-foreground">
-              Seu centro de gerenciamento completo
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <span className="flex-1">
+            <span className="block text-sm font-bold">Meu Connexy</span>
+            <span className="mt-0.5 block text-[11px] text-white/80">
+              Estatísticas, atividade e criações
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4" />
         </Link>
-      </motion.section>
 
-      {/* ── Convidar ──────────────────────────────────────── */}
+        <section className="rounded-3xl border border-border bg-surface p-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-secondary text-primary">
+              <CircleHelp className="h-4.5 w-4.5" />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold">Ajuda e suporte</span>
+              <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                Dúvidas, segurança e atendimento
+              </span>
+            </span>
+          </div>
+        </section>
 
-      <motion.section
-        variants={sectionFade(6.5)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-4"
-      >
-        <ConnexyInviteCard compact />
-      </motion.section>
-
-      {/* ── Sair ──────────────────────────────────────────── */}
-
-      <motion.section
-        variants={sectionFade(7)}
-        initial="hidden"
-        animate="visible"
-        className="mx-4 mt-6 mb-4"
-      >
         <button
           type="button"
           onClick={() => setConfirmOpen(true)}
           disabled={signingOut}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3.5 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3.5 text-sm font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-60"
         >
-          {signingOut ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <LogOut className="h-4 w-4" />
-          )}
-          Sair da conta
+          <LogOut className="h-4 w-4" /> {signingOut ? "Saindo..." : "Sair da conta"}
         </button>
-      </motion.section>
-
-      <div className="h-4" />
+      </main>
 
       <ConfirmDialog
         isOpen={confirmOpen}

@@ -128,6 +128,13 @@ function BusinessDetailPage() {
             targetId={business.id}
             title={business.name}
             phone={business.phone ?? "+551140000000"}
+            outing={{
+              id: business.id,
+              title: business.name,
+              address: business.address,
+              latitude: business.location.lat,
+              longitude: business.location.lng,
+            }}
           />
         </div>
 

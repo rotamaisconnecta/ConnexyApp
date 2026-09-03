@@ -86,7 +86,18 @@ function LocalDetail() {
         )}
 
         <div className="mt-5">
-          <DetailActionBar targetId={p.id} title={p.name} phone="+551140000000" />
+          <DetailActionBar
+            targetId={p.id}
+            title={p.name}
+            phone="+551140000000"
+            outing={{
+              id: p.id,
+              title: p.name,
+              address: p.address,
+              latitude: p.lat,
+              longitude: p.lng,
+            }}
+          />
         </div>
 
         <div className="mt-5 rounded-2xl bg-gradient-brand p-4 text-white shadow-elegant">

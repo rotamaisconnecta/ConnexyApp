@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Store,
   Calendar,
   MapPin,
   Tag,
   Car,
-  Plus,
   ChevronRight,
   Eye,
   Heart,
@@ -27,8 +26,6 @@ import {
 } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { Colors, Radius, Shadows } from "@/theme";
-import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
-import { getStoredRoles } from "@/lib/roles/roles-storage";
 import { currentUser } from "@/lib/mock-data";
 import WizardBase from "@/components/my-connexy/wizard-base";
 import type { WizardStep } from "@/components/my-connexy/wizard-base";
@@ -39,18 +36,6 @@ export const Route = createFileRoute("/_app/my-connexy")({
 });
 
 /* ─── Types ──────────────────────────────────────────── */
-
-interface ResumoItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  emoji: string;
-  count: number;
-  color: string;
-  bgLight: string;
-  route: string;
-  role: UserRole;
-}
 
 interface StatItem {
   id: string;
@@ -72,64 +57,6 @@ interface ActivityItem {
 type WizardType = "negocio" | "evento" | "local" | "oferta" | "publicacao" | null;
 
 /* ─── Data ───────────────────────────────────────────── */
-
-const RESUMO_ITEMS: ResumoItem[] = [
-  {
-    id: "negocios",
-    label: "Negócios",
-    icon: Store,
-    emoji: "🏢",
-    count: 1,
-    color: "#F59E0B",
-    bgLight: "bg-amber-50 dark:bg-amber-950/20",
-    route: "/create/place-business",
-    role: UserRole.BUSINESS,
-  },
-  {
-    id: "eventos",
-    label: "Eventos",
-    icon: Calendar,
-    emoji: "📅",
-    count: 0,
-    color: "#EC4899",
-    bgLight: "bg-pink-50 dark:bg-pink-950/20",
-    route: "/create/event",
-    role: UserRole.EVENT_CREATOR,
-  },
-  {
-    id: "locais",
-    label: "Locais",
-    icon: MapPin,
-    emoji: "📍",
-    count: 0,
-    color: "#3B82F6",
-    bgLight: "bg-blue-50 dark:bg-blue-950/20",
-    route: "/create/place",
-    role: UserRole.PLACE_OWNER,
-  },
-  {
-    id: "ofertas",
-    label: "Promoções",
-    icon: Tag,
-    emoji: "🏷️",
-    count: 0,
-    color: "#8B5CF6",
-    bgLight: "bg-purple-50 dark:bg-purple-950/20",
-    route: "/create/offer",
-    role: UserRole.BUSINESS,
-  },
-  {
-    id: "mobilidade",
-    label: "Mobilidade",
-    icon: Car,
-    emoji: "🚗",
-    count: 0,
-    color: "#22C55E",
-    bgLight: "bg-green-50 dark:bg-green-950/20",
-    route: "/driver",
-    role: UserRole.DRIVER,
-  },
-];
 
 const STATS: StatItem[] = [
   { id: "views", label: "Visualizações", icon: Eye, value: "2.4k", change: "+12%", positive: true },
@@ -628,31 +555,11 @@ function PanelAction({
 
 function MyConnexyPage() {
   const navigate = useNavigate();
-  const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
-  const [activePanel, setActivePanel] = useState<string | null>(null);
   const [activeWizard, setActiveWizard] = useState<WizardType>(null);
-
-  useEffect(() => {
-    function handleChange() {
-      setRolesState(getStoredRoles());
-    }
-    window.addEventListener("roleChanged", handleChange);
-    return () => window.removeEventListener("roleChanged", handleChange);
-  }, []);
-
-  const hasRole = useCallback(
-    (role: UserRole) => rolesState.roles.includes(role),
-    [rolesState.roles],
-  );
-  const activeRoles = rolesState.roles.filter((r) => r !== UserRole.USER);
 
   function handleWizardComplete() {
     setActiveWizard(null);
     window.dispatchEvent(new Event("roleChanged"));
-  }
-
-  function openPanel(id: string) {
-    setActivePanel(id);
   }
 
   function openWizard(type: WizardType) {
@@ -702,125 +609,6 @@ function MyConnexyPage() {
             </div>
           </div>
         </motion.div>
-
-        {/* Resumo */}
-        <section className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Resumo
-            </h2>
-            {activeRoles.length > 0 && (
-              <span className="text-[10px] text-muted-foreground">
-                {activeRoles.length} ativo{activeRoles.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {RESUMO_ITEMS.map((item, i) => {
-              const active = hasRole(item.role);
-              return (
-                <motion.button
-                  key={item.id}
-                  custom={i}
-                  variants={animatedItem}
-                  initial="hidden"
-                  animate="visible"
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() =>
-                    active ? openPanel(item.id) : navigate({ to: "/profile/roles" as never })
-                  }
-                  className={`relative overflow-hidden rounded-2xl p-4 text-left border transition-all ${
-                    active
-                      ? "border-border bg-surface shadow-soft"
-                      : `${item.bgLight} border-transparent`
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className="w-10 h-10 rounded-xl grid place-items-center text-lg"
-                      style={{ background: `${item.color}15` }}
-                    >
-                      {item.emoji}
-                    </span>
-                    {active ? (
-                      <span className="text-xs font-bold" style={{ color: item.color }}>
-                        {item.count}
-                      </span>
-                    ) : (
-                      <Plus size={14} className="text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="text-sm font-semibold">{item.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {active ? "Toque para gerenciar" : "Criar agora"}
-                  </div>
-                  {active && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 h-0.5"
-                      style={{ background: item.color, opacity: 0.3 }}
-                    />
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Estatísticas */}
-        <section className="mb-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Estatísticas
-          </h2>
-          <div className="grid grid-cols-3 gap-2.5">
-            {STATS.map((stat, i) => (
-              <motion.div
-                key={stat.id}
-                custom={i}
-                variants={animatedItem}
-                initial="hidden"
-                animate="visible"
-                className="rounded-2xl bg-surface border border-border p-3 shadow-soft"
-              >
-                <stat.icon size={14} className="text-primary mb-1.5" />
-                <div className="text-sm font-bold">{stat.value}</div>
-                <div className="flex items-center gap-1">
-                  <span
-                    className={`text-[10px] font-semibold ${stat.positive ? "text-success" : "text-danger"}`}
-                  >
-                    {stat.change}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground">{stat.label}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Atividades Recentes */}
-        <section className="mb-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Atividade recente
-          </h2>
-          <div className="space-y-2">
-            {ACTIVITIES.map((act, i) => (
-              <motion.div
-                key={act.id}
-                custom={i}
-                variants={animatedItem}
-                initial="hidden"
-                animate="visible"
-                className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border shadow-soft"
-              >
-                <span className="text-lg">{act.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold truncate">{act.text}</div>
-                  <div className="text-[10px] text-muted-foreground">{act.time}</div>
-                </div>
-                <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-              </motion.div>
-            ))}
-          </div>
-        </section>
 
         {/* Ações Rápidas */}
         <section className="mb-6">
@@ -887,14 +675,61 @@ function MyConnexyPage() {
           </div>
         </section>
 
-        {/* Management Panel Overlays */}
-        <AnimatePresence>
-          {activePanel === "negocios" && <PanelNegocios onClose={() => setActivePanel(null)} />}
-          {activePanel === "eventos" && <PanelEventos onClose={() => setActivePanel(null)} />}
-          {activePanel === "locais" && <PanelLocais onClose={() => setActivePanel(null)} />}
-          {activePanel === "ofertas" && <PanelPromocoes onClose={() => setActivePanel(null)} />}
-          {activePanel === "mobilidade" && <PanelMobilidade onClose={() => setActivePanel(null)} />}
-        </AnimatePresence>
+        {/* Estatísticas */}
+        <section className="mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Estatísticas
+          </h2>
+          <div className="grid grid-cols-3 gap-2.5">
+            {STATS.map((stat, i) => (
+              <motion.div
+                key={stat.id}
+                custom={i}
+                variants={animatedItem}
+                initial="hidden"
+                animate="visible"
+                className="rounded-2xl bg-surface border border-border p-3 shadow-soft"
+              >
+                <stat.icon size={14} className="text-primary mb-1.5" />
+                <div className="text-sm font-bold">{stat.value}</div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`text-[10px] font-semibold ${stat.positive ? "text-success" : "text-danger"}`}
+                  >
+                    {stat.change}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground">{stat.label}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Atividades Recentes */}
+        <section className="mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Atividade recente
+          </h2>
+          <div className="space-y-2">
+            {ACTIVITIES.map((act, i) => (
+              <motion.div
+                key={act.id}
+                custom={i}
+                variants={animatedItem}
+                initial="hidden"
+                animate="visible"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border shadow-soft"
+              >
+                <span className="text-lg">{act.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate">{act.text}</div>
+                  <div className="text-[10px] text-muted-foreground">{act.time}</div>
+                </div>
+                <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+              </motion.div>
+            ))}
+          </div>
+        </section>
 
         {/* Wizard Overlays */}
         <WizardBase
