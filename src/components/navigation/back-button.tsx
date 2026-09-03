@@ -14,6 +14,7 @@ export type FallbackRoute =
   | "/locais"
   | "/marketplace"
   | "/perfil"
+  | "/pessoas"
   | "/profile"
   | "/reels"
   | "/ride"

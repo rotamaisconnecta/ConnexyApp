@@ -1,5 +1,12 @@
 import { useEffect } from "react";
-import { createFileRoute, Outlet, useMatch, useNavigate, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useMatch,
+  useNavigate,
+  useRouterState,
+  redirect,
+} from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,7 +46,14 @@ function AppLayout() {
       shouldThrow: false,
     }),
   );
-  const immersiveRouteOpen = conversationOpen || requestOpen;
+  const profileEditorOpen = useRouterState({
+    select: (state) => {
+      if (state.location.pathname !== "/perfil") return false;
+      const search = state.location.search as { edit?: unknown };
+      return search.edit === true || search.edit === "true";
+    },
+  });
+  const immersiveRouteOpen = conversationOpen || requestOpen || profileEditorOpen;
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });

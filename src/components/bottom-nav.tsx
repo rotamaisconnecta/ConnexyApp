@@ -8,14 +8,14 @@ interface BottomNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
-  route: "/home" | "/discover" | "/pessoas" | "/profile";
+  route: "/home" | "/discover" | "/pessoas" | "/perfil";
 }
 
 const NAV_ITEMS: BottomNavItem[] = [
   { id: "home", label: "Home", icon: Home, route: "/home" },
   { id: "map", label: "Mapa", icon: Map, route: "/discover" },
   { id: "people", label: "Pessoas", icon: UsersRound, route: "/pessoas" },
-  { id: "profile", label: "Perfil", icon: User, route: "/profile" },
+  { id: "profile", label: "Perfil", icon: User, route: "/perfil" },
 ];
 
 function isActive(pathname: string, route: string): boolean {
