@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { DriverHeader } from "@/components/driver/driver-header";
-import { DriverPremiumDashboard } from "@/components/driver/driver-premium-dashboard";
+import { DriverCommandCenter } from "@/components/driver/driver-command-center";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
-import { SmartFeed } from "@/components/feed/SmartFeed";
 import { currentUser } from "@/lib/mock-data";
 import type { DriverEarnings, RideRequest } from "@/lib/driver/driver-types";
 
@@ -49,41 +47,16 @@ function DriverPage() {
   return (
     <div className="flex-1 pb-20">
       <StatusBar />
-
-      <div className="px-4 pt-1">
-        <DriverHeader
-          driverName={currentUser.name}
-          rating={4.9}
-          isOnline={isOnline}
-          onToggleOnline={() => {
-            setIsOnline(!isOnline);
-            if (!isOnline) setShowRideRequest(true);
-          }}
-        />
-      </div>
-
-      <div className="px-4 space-y-4">
-        <DriverPremiumDashboard
-          earnings={MOCK_EARNINGS}
-          isOnline={isOnline}
-          onToggleOnline={() => {
-            setIsOnline(!isOnline);
-            if (!isOnline) setShowRideRequest(true);
-          }}
-          acceptanceRate={92}
-          onlineMinutes={isOnline ? 45 : 0}
-          cancelledTrips={3}
-        />
-
-        <SmartFeed />
-
-        <Link
-          to="/driver/history"
-          className="block rounded-2xl border border-border bg-surface p-4 shadow-soft text-center text-sm font-semibold text-primary"
-        >
-          Ver Historico de Corridas
-        </Link>
-      </div>
+      <DriverCommandCenter
+        driverName={currentUser.name}
+        rating={4.93}
+        earnings={MOCK_EARNINGS}
+        isOnline={isOnline}
+        onToggleOnline={() => {
+          setIsOnline(!isOnline);
+          if (!isOnline) setShowRideRequest(true);
+        }}
+      />
 
       <DriverRideBottomSheet
         isOpen={showRideRequest}
