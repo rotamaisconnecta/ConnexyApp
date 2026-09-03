@@ -6,6 +6,7 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
 import { ConnexyPulse } from "@/components/home/ConnexyPulse";
+import { HomeActionHub } from "@/components/home/HomeActionHub";
 import { useAuth } from "@/hooks/use-auth";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
@@ -91,7 +92,7 @@ function Home() {
   })();
 
   const firstName = displayName.split(" ")[0];
-  const avatarUrl = isDemoMode() ? demoProfile.photo : profile?.photo_url ?? null;
+  const avatarUrl = isDemoMode() ? demoProfile.photo : (profile?.photo_url ?? null);
   const initials = getInitials(displayName);
 
   useEffect(() => setAvatarFailed(false), [avatarUrl]);
@@ -151,6 +152,8 @@ function Home() {
           </p>
         </div>
       </section>
+
+      <HomeActionHub />
 
       <ConnexyPulse />
 
