@@ -153,9 +153,9 @@ function Home() {
         </div>
       </section>
 
-      <HomeActionHub />
-
       <ConnexyPulse />
+
+      <HomeActionHub />
 
       <div className="mt-8">
         <HomePremiumFeed />

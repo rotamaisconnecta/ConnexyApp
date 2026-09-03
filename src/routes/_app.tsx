@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   createFileRoute,
   Outlet,
@@ -33,6 +33,8 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   const conversationOpen = Boolean(
     useMatch({
@@ -59,6 +61,10 @@ function AppLayout() {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
 
+  useEffect(() => {
+    scrollAreaRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname]);
+
   if (loading || !user) {
     return (
       <PhoneFrame>
@@ -76,6 +82,7 @@ function AppLayout() {
           <PresenceProvider userId={user.id}>
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
               <div
+                ref={scrollAreaRef}
                 className={`relative min-h-0 flex-1 overflow-y-auto no-scrollbar ${
                   immersiveRouteOpen ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]"
                 }`}

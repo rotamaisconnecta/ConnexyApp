@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ArrowUpRight, Sparkles, X } from "lucide-react";
@@ -6,45 +6,64 @@ import { useAuth } from "@/hooks/use-auth";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 
 const PROMO_ID = "cafe-central-20off";
-const DAILY_IMPRESSION_LIMIT = 3;
+type PromoPeriod = "morning" | "afternoon" | "night";
 
 interface DailyPromoUsage {
   date: string;
-  impressions: number;
+  shownPeriods: PromoPeriod[];
 }
 
 function getUsageKey(userId: string | null): string {
   return `connexy:promotion-usage:${userId ?? "anon"}:${PROMO_ID}`;
 }
 
-function localDateKey(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
+function brasiliaDateAndPeriod(): { date: string; period: PromoPeriod | null } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const hour = Number(get("hour"));
+  const date = `${get("year")}-${get("month")}-${get("day")}`;
+
+  if (hour >= 6 && hour < 12) return { date, period: "morning" };
+  if (hour >= 12 && hour < 18) return { date, period: "afternoon" };
+  if (hour >= 18 && hour < 24) return { date, period: "night" };
+  return { date, period: null };
 }
 
-function readUsage(userId: string | null): DailyPromoUsage {
-  const empty = { date: localDateKey(), impressions: 0 };
+function readUsage(userId: string | null, date: string): DailyPromoUsage {
+  const empty = { date, shownPeriods: [] as PromoPeriod[] };
   if (typeof window === "undefined") return empty;
   try {
     const raw = localStorage.getItem(getUsageKey(userId));
     if (!raw) return empty;
     const parsed = JSON.parse(raw) as Partial<DailyPromoUsage>;
-    if (parsed.date !== empty.date || typeof parsed.impressions !== "number") return empty;
-    return { date: empty.date, impressions: Math.max(0, parsed.impressions) };
+    if (parsed.date !== empty.date || !Array.isArray(parsed.shownPeriods)) return empty;
+    return {
+      date: empty.date,
+      shownPeriods: parsed.shownPeriods.filter(
+        (period): period is PromoPeriod =>
+          period === "morning" || period === "afternoon" || period === "night",
+      ),
+    };
   } catch {
     return empty;
   }
 }
 
-function registerImpression(userId: string | null): boolean {
-  const usage = readUsage(userId);
-  if (usage.impressions >= DAILY_IMPRESSION_LIMIT) return false;
+function registerImpression(userId: string | null, date: string, period: PromoPeriod): boolean {
+  const usage = readUsage(userId, date);
+  if (usage.shownPeriods.includes(period)) return false;
   try {
     localStorage.setItem(
       getUsageKey(userId),
-      JSON.stringify({ ...usage, impressions: usage.impressions + 1 }),
+      JSON.stringify({ ...usage, shownPeriods: [...usage.shownPeriods, period] }),
     );
   } catch {
     // Storage unavailable: the promotion may be shown again on a future visit.
@@ -56,24 +75,29 @@ export function PromoPopup() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
-  const shownThisMount = useRef(false);
   const [open, setOpen] = useState(false);
+  const [timeTick, setTimeTick] = useState(0);
 
   const userId = configured && user ? user.id : null;
 
   useEffect(() => {
-    if (typeof window === "undefined" || shownThisMount.current) return;
+    const timer = window.setInterval(() => setTimeTick((current) => current + 1), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || open) return;
     if (!pathname.startsWith("/home")) return;
-    if (readUsage(userId).impressions >= DAILY_IMPRESSION_LIMIT) return;
+    const { date, period } = brasiliaDateAndPeriod();
+    if (!period || readUsage(userId, date).shownPeriods.includes(period)) return;
 
     const timer = window.setTimeout(() => {
-      if (!registerImpression(userId)) return;
-      shownThisMount.current = true;
+      if (!registerImpression(userId, date, period)) return;
       setOpen(true);
     }, 2200);
 
     return () => window.clearTimeout(timer);
-  }, [pathname, userId]);
+  }, [open, pathname, timeTick, userId]);
 
   return (
     <AnimatePresence>
@@ -141,7 +165,7 @@ export function PromoPopup() {
               </div>
 
               <p className="mt-4 text-center text-[10px] text-gray-500">
-                Sugestões patrocinadas aparecem no máximo 3 vezes por dia.
+                Uma sugestão pela manhã, outra à tarde e outra à noite — horário de Brasília.
               </p>
             </div>
           </motion.div>
