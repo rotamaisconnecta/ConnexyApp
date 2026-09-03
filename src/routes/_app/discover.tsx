@@ -4,7 +4,7 @@ import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { Users, Calendar, Building2, Car, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser, places, drivers } from "@/lib/mock-data";
+import { currentUser, places, drivers, people as mockPeople } from "@/lib/mock-data";
 import { usePresence } from "@/providers/presence/presence-provider";
 import { formatPersonDistance } from "@/lib/proximity";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
@@ -12,7 +12,7 @@ import { useDiscovery } from "@/hooks/api/use-discovery";
 import type { NearbyProfile } from "@/types/phase-13b";
 
 const searchSchema = z.object({
-  filter: z.enum(["places"]).optional(),
+  filter: z.enum(["places", "people"]).optional(),
 });
 
 export const Route = createFileRoute("/_app/discover")({
@@ -59,6 +59,9 @@ function DiscoverPage() {
     if (search.filter === "places") {
       setActiveFilter("locais");
       setSelectedItem(null);
+    } else if (search.filter === "people") {
+      setActiveFilter("pessoas");
+      setSelectedItem(null);
     }
   }, [search.filter]);
 
@@ -78,14 +81,20 @@ function DiscoverPage() {
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
       const profilesToUse = isPublicSupabaseConfigured()
-        ? nearbyProfiles.slice(0, 6).map((p: NearbyProfile) => ({
+        ? nearbyProfiles.slice(0, 7).map((p: NearbyProfile) => ({
             id: p.id,
             name: p.name,
             distanceMeters: (p.distance_km ?? 0) * 1000,
             photo: p.photo_url ?? undefined,
-            interests: p.common_interests,
+            interests: p.common_interests ?? [],
           }))
-        : [];
+        : mockPeople.slice(0, 7).map((person) => ({
+            id: person.id,
+            name: person.name,
+            distanceMeters: person.distanceMeters,
+            photo: person.photo,
+            interests: person.interests,
+          }));
 
       profilesToUse.forEach((p) => {
         items.push({

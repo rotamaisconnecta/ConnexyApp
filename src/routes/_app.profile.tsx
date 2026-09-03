@@ -35,7 +35,7 @@ import { useConnections } from "@/hooks/use-connections";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
-    meta: [{ title: "Meu Perfil — Connexy" }],
+    meta: [{ title: "Configurações — Connexy" }],
   }),
   component: ProfilePage,
 });
@@ -78,7 +78,10 @@ function ProfilePage() {
       <StatusBar />
 
       <header className="pl-5 pr-16 pt-1 pb-3 flex items-center justify-between">
-        <h1 className="font-display font-bold text-lg">Meu Perfil</h1>
+        <div>
+          <h1 className="font-display text-lg font-bold">Configurações</h1>
+          <p className="text-[11px] text-muted-foreground">Conta, privacidade e preferências</p>
+        </div>
         <div className="relative">
           <button
             type="button"

@@ -1,15 +1,24 @@
-import { ChevronRight, Coffee, MapPin, Star, UsersRound } from "lucide-react";
+import { useRef } from "react";
+import { ChevronLeft, ChevronRight, Coffee, MapPin, Star, UsersRound } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { commonGround, compatibilityScore, people, type Person } from "@/lib/mock-data";
 import { formatPersonDistance } from "@/lib/proximity";
 
-const FEATURED_IDS = ["luana", "pedro-henrique", "marina"];
+const FEATURED_IDS = [
+  "luana",
+  "pedro-henrique",
+  "marina",
+  "beatriz",
+  "juliana",
+  "ana-clara",
+  "joao-pedro",
+];
 
 function featuredPeople(): Person[] {
   const selected = FEATURED_IDS.map((id) => people.find((person) => person.id === id)).filter(
     (person): person is Person => Boolean(person),
   );
-  return selected.length === FEATURED_IDS.length ? selected : people.slice(0, 3);
+  return selected.length === FEATURED_IDS.length ? selected : people.slice(0, 7);
 }
 
 function MapArtwork() {
@@ -22,7 +31,12 @@ function MapArtwork() {
     >
       <rect width="600" height="320" fill="#f3f1ec" />
       <path d="M535 -20C515 66 541 116 512 170C484 220 504 275 463 340H630V-20Z" fill="#c8d7d8" />
-      <path d="M522 -20C506 63 528 113 500 166C476 212 494 267 452 340" fill="none" stroke="#aec4c5" strokeWidth="4" />
+      <path
+        d="M522 -20C506 63 528 113 500 166C476 212 494 267 452 340"
+        fill="none"
+        stroke="#aec4c5"
+        strokeWidth="4"
+      />
       <g fill="#e3e8dc" opacity="0.82">
         <path d="M30 24h82v42H30zM126 18h58v66h-58zM205 34h95v42h-95zM326 18h92v58h-92z" />
         <path d="M19 96h71v54H19zM110 102h104v41H110zM233 93h68v66h-68zM326 98h96v49h-96z" />
@@ -68,35 +82,49 @@ function AvatarMarker({ person, className }: { person: Person; className: string
 function PersonCard({ person }: { person: Person }) {
   const compatibility = compatibilityScore(person);
   const common = commonGround(person);
-  const commonLabels = [...common.sharedInterests, ...common.sharedVibe, ...common.sharedPlaces];
+  const commonLabels = [...common.sharedInterests, ...common.sharedVibe];
   const commonCount = commonLabels.length;
 
   return (
     <Link
       to="/perfil/$id"
       params={{ id: person.id }}
-      className="group relative aspect-[0.68] min-w-0 overflow-hidden rounded-[18px] bg-muted shadow-soft transition-transform active:scale-[0.98]"
+      className="group w-[156px] shrink-0 snap-start overflow-hidden rounded-[20px] border border-border/60 bg-surface shadow-soft transition-transform active:scale-[0.98]"
       aria-label={`Ver perfil de ${person.name}`}
     >
-      <img
-        src={person.photo}
-        alt={person.name}
-        loading="lazy"
-        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
-      <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold text-primary shadow-soft backdrop-blur">
-        {compatibility}%
-      </span>
-      <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-        <p className="truncate text-[9px] font-medium text-white/90">
+      <div className="relative h-[116px] overflow-hidden bg-muted">
+        <img
+          src={person.photo}
+          alt={person.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+        <span className="absolute right-2 top-2 rounded-full bg-white/92 px-2 py-1 text-[9px] font-bold text-primary shadow-soft backdrop-blur">
+          {compatibility}% compatível
+        </span>
+        <p className="absolute bottom-2 left-2 rounded-full bg-black/35 px-2 py-1 text-[9px] font-medium text-white backdrop-blur">
           {formatPersonDistance(person.distanceMeters)}
         </p>
-        <div className="mt-0.5 truncate font-display text-[15px] font-bold leading-tight">
-          {person.name.split(" ")[0]}
+      </div>
+      <div className="p-2.5">
+        <div className="truncate font-display text-[15px] font-bold leading-tight">
+          {person.name.split(" ")[0]}, {person.age}
         </div>
-        <p className="mt-1 truncate rounded-full bg-primary/90 px-2 py-0.5 text-[9px] font-medium backdrop-blur">
-          {commonCount > 0 ? `${commonCount} em comum · ${commonLabels[0]}` : "0 em comum"}
+        <div className="mt-2 flex min-h-5 gap-1 overflow-hidden">
+          {person.interests.slice(0, 2).map((interest) => (
+            <span
+              key={interest}
+              className="shrink-0 rounded-full bg-secondary px-2 py-1 text-[8px] font-semibold text-foreground"
+            >
+              {interest}
+            </span>
+          ))}
+        </div>
+        <p className="mt-2 line-clamp-2 min-h-7 text-[9px] font-medium leading-[1.35] text-primary">
+          {commonCount > 0
+            ? `${commonCount} em comum · ${commonLabels.slice(0, 2).join(" · ")}`
+            : `Qualidade: ${person.vibeTags?.[0] ?? "boa companhia"}`}
         </p>
       </div>
     </Link>
@@ -105,6 +133,11 @@ function PersonCard({ person }: { person: Person }) {
 
 export function ConnexyPulse() {
   const featured = featuredPeople();
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollPeople = (direction: -1 | 1) => {
+    carouselRef.current?.scrollBy({ left: direction * 336, behavior: "smooth" });
+  };
 
   return (
     <section className="mt-6 overflow-hidden border-y border-border/30 bg-surface/40">
@@ -140,7 +173,8 @@ export function ConnexyPulse() {
         </span>
 
         <Link
-          to="/pessoas"
+          to="/discover"
+          search={{ filter: "people" }}
           className="absolute bottom-4 left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-gradient-brand px-5 text-xs font-semibold text-white shadow-floating transition-transform active:scale-[0.98]"
         >
           <UsersRound className="h-4 w-4" /> Ver pessoas perto de mim
@@ -151,18 +185,34 @@ export function ConnexyPulse() {
         <div className="mb-3 flex items-center justify-between">
           <div>
             <h3 className="font-display text-base font-bold">Perto de você</h3>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">Pessoas disponíveis ao seu redor</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Pessoas disponíveis ao seu redor
+            </p>
           </div>
-          <Link
-            to="/pessoas"
-            aria-label="Ver todas as pessoas próximas"
-            className="grid h-9 w-9 place-items-center rounded-full bg-secondary/70 text-foreground"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => scrollPeople(-1)}
+              aria-label="Ver pessoas anteriores"
+              className="grid h-9 w-9 place-items-center rounded-full bg-secondary/70 text-foreground transition active:scale-95"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollPeople(1)}
+              aria-label="Ver mais pessoas"
+              className="grid h-9 w-9 place-items-center rounded-full bg-secondary/70 text-foreground transition active:scale-95"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5">
+        <div
+          ref={carouselRef}
+          className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 no-scrollbar"
+        >
           {featured.map((person) => (
             <PersonCard key={person.id} person={person} />
           ))}

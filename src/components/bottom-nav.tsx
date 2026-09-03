@@ -1,4 +1,4 @@
-import { Home, Map, Plus, User, UsersRound } from "lucide-react";
+import { Home, Map, MessagesSquare, Plus, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -8,14 +8,14 @@ interface BottomNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
-  route: "/home" | "/discover" | "/pessoas" | "/perfil";
+  route: "/home" | "/discover" | "/chat" | "/profile";
 }
 
 const NAV_ITEMS: BottomNavItem[] = [
   { id: "home", label: "Home", icon: Home, route: "/home" },
   { id: "map", label: "Mapa", icon: Map, route: "/discover" },
-  { id: "people", label: "Pessoas", icon: UsersRound, route: "/pessoas" },
-  { id: "profile", label: "Perfil", icon: User, route: "/perfil" },
+  { id: "conversations", label: "Conversas", icon: MessagesSquare, route: "/chat" },
+  { id: "settings", label: "Configurações", icon: Settings, route: "/profile" },
 ];
 
 function isActive(pathname: string, route: string): boolean {

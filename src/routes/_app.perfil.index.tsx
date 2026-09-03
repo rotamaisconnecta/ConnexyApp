@@ -22,10 +22,11 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
+import { MediaViewer } from "@/components/system/media-viewer";
 import {
   saveDemoOwnProfile,
   useDemoOwnProfile,
@@ -33,6 +34,7 @@ import {
   type ProfileVisibility,
 } from "@/lib/demo/demo-own-profile";
 import { currentUser, findPlace, people } from "@/lib/mock-data";
+import { REPOST_MEDIA_SESSION_KEY } from "@/lib/types/post";
 
 const searchSchema = z.object({
   edit: z.boolean().optional(),
@@ -63,6 +65,57 @@ const publicationImages = [
   "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=640",
   "https://images.unsplash.com/photo-1511081692775-05d0f180a065?w=640",
 ];
+
+const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const SAVED_PROFILE_MEDIA_KEY = "connexy:demo:saved-profile-media";
+
+function getSavedProfileMedia(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(SAVED_PROFILE_MEDIA_KEY) ?? "[]");
+    return new Set(Array.isArray(saved) ? saved.filter((item) => typeof item === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function readImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error("Falha ao ler a imagem."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(source: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Falha ao processar a imagem."));
+    image.src = source;
+  });
+}
+
+async function optimizeProfileImage(file: File, kind: "photo" | "cover"): Promise<string> {
+  const source = await readImageFile(file);
+  const image = await loadImage(source);
+  const bounds = kind === "cover" ? { width: 1600, height: 900 } : { width: 900, height: 900 };
+  const scale = Math.min(1, bounds.width / image.naturalWidth, bounds.height / image.naturalHeight);
+
+  if (scale === 1 && file.size <= 1.5 * 1024 * 1024) return source;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas indisponível.");
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.86);
+}
 
 type UpdateProfile = <K extends keyof DemoOwnProfile>(key: K, value: DemoOwnProfile[K]) => void;
 type PublicationTab = "Tudo" | "Fotos" | "Momentos";
@@ -135,7 +188,10 @@ function OwnProfile() {
 }
 
 function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void }) {
+  const navigate = useNavigate();
   const [publicationTab, setPublicationTab] = useState<PublicationTab>("Tudo");
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
+  const [savedMedia, setSavedMedia] = useState<Set<string>>(getSavedProfileMedia);
   const places = [
     ...(currentUser.favoritePlaceIds ?? []).map(findPlace),
     findPlace("cafe-central"),
@@ -159,6 +215,42 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
       : publicationTab === "Fotos"
         ? gallery.filter((_, index) => index % 2 === 0)
         : gallery.filter((_, index) => index % 2 === 1);
+  const selectedMedia =
+    selectedMediaIndex == null ? null : (visibleGallery[selectedMediaIndex] ?? null);
+
+  const changePublicationTab = (tab: PublicationTab) => {
+    setPublicationTab(tab);
+    setSelectedMediaIndex(null);
+  };
+
+  const repostMedia = (source: string) => {
+    try {
+      window.sessionStorage.setItem(REPOST_MEDIA_SESSION_KEY, source);
+      setSelectedMediaIndex(null);
+      navigate({ to: "/create-post" });
+    } catch {
+      toast.error("Não foi possível preparar a republicação.");
+    }
+  };
+
+  const toggleSavedMedia = (source: string) => {
+    setSavedMedia((current) => {
+      const next = new Set(current);
+      if (next.has(source)) {
+        next.delete(source);
+        toast("Imagem removida dos itens salvos.");
+      } else {
+        next.add(source);
+        toast.success("Imagem salva.");
+      }
+      try {
+        window.localStorage.setItem(SAVED_PROFILE_MEDIA_KEY, JSON.stringify([...next]));
+      } catch {
+        toast.error("Não foi possível atualizar os itens salvos.");
+      }
+      return next;
+    });
+  };
 
   async function shareProfile() {
     const data = {
@@ -298,6 +390,43 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
         </div>
       </Section>
 
+      <Section title="Publicações">
+        <div className="-mt-9 mb-3 ml-auto flex w-fit items-center gap-1 rounded-full bg-secondary/70 p-1">
+          {(["Tudo", "Fotos", "Momentos"] as PublicationTab[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => changePublicationTab(tab)}
+              className={`rounded-full px-3 py-1.5 text-[10px] font-semibold transition ${
+                publicationTab === tab
+                  ? "bg-background text-primary shadow-soft"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          {visibleGallery.slice(0, 8).map((source, index) => (
+            <button
+              key={`${source}-${index}`}
+              type="button"
+              onClick={() => setSelectedMediaIndex(index)}
+              aria-label={`Ampliar publicação ${index + 1}`}
+              className="group relative aspect-square overflow-hidden rounded-xl bg-muted transition active:scale-[0.97]"
+            >
+              <img
+                src={source}
+                alt={`Publicação ${index + 1}`}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <span className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+            </button>
+          ))}
+        </div>
+      </Section>
+
       <Section title="Lugares que curtiu">
         <div className="flex gap-3 overflow-x-auto no-scrollbar">
           {places.map(
@@ -358,34 +487,30 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
         </div>
       </Section>
 
-      <Section title="Publicações">
-        <div className="-mt-9 mb-3 ml-auto flex w-fit items-center gap-1 rounded-full bg-secondary/70 p-1">
-          {(["Tudo", "Fotos", "Momentos"] as PublicationTab[]).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setPublicationTab(tab)}
-              className={`rounded-full px-3 py-1.5 text-[10px] font-semibold transition ${
-                publicationTab === tab
-                  ? "bg-background text-primary shadow-soft"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {visibleGallery.slice(0, 8).map((source, index) => (
-            <img
-              key={`${source}-${index}`}
-              src={source}
-              alt={`Publicação ${index + 1}`}
-              className="aspect-square w-full rounded-xl object-cover"
-            />
-          ))}
-        </div>
-      </Section>
+      {selectedMedia && selectedMediaIndex != null && (
+        <MediaViewer
+          isOpen
+          onClose={() => setSelectedMediaIndex(null)}
+          src={selectedMedia}
+          alt={`Publicação ${selectedMediaIndex + 1}`}
+          title="Publicação"
+          position={selectedMediaIndex + 1}
+          total={visibleGallery.length}
+          onPrevious={() =>
+            setSelectedMediaIndex((current) =>
+              current == null ? 0 : (current - 1 + visibleGallery.length) % visibleGallery.length,
+            )
+          }
+          onNext={() =>
+            setSelectedMediaIndex((current) =>
+              current == null ? 0 : (current + 1) % visibleGallery.length,
+            )
+          }
+          onRepost={() => repostMedia(selectedMedia)}
+          isFavorite={savedMedia.has(selectedMedia)}
+          onToggleFavorite={() => toggleSavedMedia(selectedMedia)}
+        />
+      )}
     </main>
   );
 }
@@ -405,6 +530,9 @@ function Editor({
 }) {
   const [customInterest, setCustomInterest] = useState("");
   const [openAddress, setOpenAddress] = useState<AddressKey | null>(null);
+  const [processingImage, setProcessingImage] = useState<"photo" | "cover" | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const updateAddress = (key: AddressKey, value: string) => {
     update("privateAddresses", { ...draft.privateAddresses, [key]: value });
@@ -433,21 +561,27 @@ function Editor({
     setCustomInterest("");
   };
 
-  const pickImage = (key: "photo" | "cover", file?: File) => {
+  const pickImage = async (key: "photo" | "cover", file?: File) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Escolha um arquivo de imagem.");
+    if (!PROFILE_IMAGE_TYPES.has(file.type)) {
+      toast.error("Escolha uma imagem JPG, PNG ou WebP.");
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error("Escolha uma imagem de até 4 MB.");
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Escolha uma imagem de até 8 MB.");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => update(key, String(reader.result));
-    reader.onerror = () => toast.error("Não foi possível carregar a imagem.");
-    reader.readAsDataURL(file);
+    setProcessingImage(key);
+    try {
+      const optimized = await optimizeProfileImage(file, key);
+      update(key, optimized);
+      toast.success(key === "cover" ? "Nova capa selecionada." : "Nova foto selecionada.");
+    } catch {
+      toast.error("Não foi possível carregar a imagem.");
+    } finally {
+      setProcessingImage(null);
+    }
   };
 
   return (
@@ -470,16 +604,28 @@ function Editor({
 
       <section className="relative z-10">
         <OrganicCover src={draft.cover} alt="Imagem de capa atual" editor>
-          <label className="absolute bottom-7 right-5 grid h-10 w-10 cursor-pointer place-items-center rounded-full border-4 border-background bg-gradient-brand text-white shadow-lg transition active:scale-95">
+          <button
+            type="button"
+            onClick={() => coverInputRef.current?.click()}
+            disabled={processingImage !== null}
+            className="absolute bottom-7 right-5 z-20 inline-flex h-10 items-center gap-1.5 rounded-full border-4 border-background bg-gradient-brand px-3 text-white shadow-lg transition active:scale-95 disabled:opacity-60"
+          >
             <Camera className="h-4 w-4" />
-            <span className="sr-only">Alterar imagem de capa</span>
-            <input
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={(event) => pickImage("cover", event.target.files?.[0])}
-            />
-          </label>
+            <span className="text-[11px] font-semibold">
+              {processingImage === "cover" ? "Carregando..." : "Trocar capa"}
+            </span>
+          </button>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              void pickImage("cover", file);
+            }}
+          />
         </OrganicCover>
         <div className="relative -mt-[78px] h-[118px]">
           <div className="absolute left-1/2 h-[112px] w-[112px] -translate-x-1/2">
@@ -488,16 +634,26 @@ function Editor({
               alt={`Foto de ${draft.name}`}
               className="h-full w-full rounded-full border-4 border-background object-cover shadow-xl"
             />
-            <label className="absolute bottom-0 right-0 grid h-9 w-9 cursor-pointer place-items-center rounded-full border-[3px] border-background bg-gradient-brand text-white shadow-lg transition active:scale-95">
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={processingImage !== null}
+              aria-label="Alterar foto do perfil"
+              className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full border-[3px] border-background bg-gradient-brand text-white shadow-lg transition active:scale-95 disabled:opacity-60"
+            >
               <Camera className="h-4 w-4" />
-              <span className="sr-only">Alterar foto do perfil</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(event) => pickImage("photo", event.target.files?.[0])}
-              />
-            </label>
+            </button>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = "";
+                void pickImage("photo", file);
+              }}
+            />
           </div>
         </div>
       </section>
