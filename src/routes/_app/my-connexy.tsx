@@ -15,7 +15,6 @@ import {
   Users,
   Star,
   Clock,
-  Image,
   BarChart3,
   Settings,
   Trash2,
@@ -29,6 +28,7 @@ import { Colors, Radius, Shadows } from "@/theme";
 import { currentUser } from "@/lib/mock-data";
 import WizardBase from "@/components/my-connexy/wizard-base";
 import type { WizardStep } from "@/components/my-connexy/wizard-base";
+import { UploadMedia } from "@/components/upload";
 
 export const Route = createFileRoute("/_app/my-connexy")({
   head: () => ({ meta: [{ title: "Meu Connexy — Central" }] }),
@@ -301,16 +301,13 @@ function CategoryPicker({ categories }: { categories: string[] }) {
 
 function PhotoUploader() {
   return (
-    <div
-      className="flex flex-col items-center justify-center gap-2 py-8 rounded-2xl border-2 border-dashed cursor-pointer hover:border-primary/50 transition-colors"
-      style={{ borderColor: Colors.border, background: Colors.surface }}
-    >
-      <div className="w-12 h-12 rounded-full bg-primary/10 grid place-items-center">
-        <Image size={20} className="text-primary" />
-      </div>
-      <p className="text-sm text-muted-foreground">Toque para adicionar fotos</p>
-      <p className="text-[10px] text-muted-foreground">PNG, JPG até 10MB</p>
-    </div>
+    <UploadMedia
+      mode="photo"
+      multiple
+      maxFiles={5}
+      label="Adicione até 5 fotos"
+      className="rounded-2xl border border-border bg-surface p-3"
+    />
   );
 }
 
@@ -576,11 +573,11 @@ function MyConnexyPage() {
   };
 
   return (
-    <div className="flex-1 pb-24">
+    <div className="flex-1 min-h-0">
       <StatusBar />
 
       {/* ─── Scrollable content ─── */}
-      <div className="overflow-y-auto h-full px-4">
+      <div className="h-full overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+7rem)]">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
