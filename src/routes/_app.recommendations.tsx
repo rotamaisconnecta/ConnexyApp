@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PremiumCardView } from "@/components/feed/cards/premium-card";
 import {
   buildRecommendationCards,
@@ -16,34 +16,60 @@ export const Route = createFileRoute("/_app/recommendations")({
   component: RecommendationsPage,
 });
 
-const ALL: PremiumCardKind[] = [
-  "restaurant",
-  "promotion",
-  "business",
-  "place",
-  "sponsored-event",
-  "hotel",
-  "gym",
-  "cinema",
-  "bar",
-  "store",
-  "cafe",
-  "service",
-];
+function brasiliaMinutes(): number {
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? 0);
+  return hour * 60 + minute;
+}
 
-const FILTERS: Array<{ kind?: PremiumCardKind; label: string }> = [
-  { label: "Todos" },
-  ...ALL.map((kind) => ({ kind, label: KIND_LABELS[kind] })),
-];
+function filtersForMinute(minuteOfDay: number): { title: string; kinds: PremiumCardKind[] } {
+  if (minuteOfDay >= 7 * 60 && minuteOfDay <= 11 * 60) {
+    return { title: "Sugestões para a manhã", kinds: ["cafe", "gym", "promotion"] };
+  }
+  if (minuteOfDay > 11 * 60 && minuteOfDay <= 17 * 60) {
+    return {
+      title: "Sugestões para a tarde",
+      kinds: ["business", "bar", "store", "service", "promotion"],
+    };
+  }
+  return {
+    title: "Sugestões para a noite",
+    kinds: [
+      "business",
+      "bar",
+      "store",
+      "service",
+      "gym",
+      "cinema",
+      "sponsored-event",
+      "place",
+      "promotion",
+    ],
+  };
+}
 
 function RecommendationsPage() {
   const cards = buildRecommendationCards();
-  const [active, setActive] = useState<string>("Todos");
+  const [minuteOfDay, setMinuteOfDay] = useState(brasiliaMinutes);
+  const recommendationWindow = filtersForMinute(minuteOfDay);
+  const [active, setActive] = useState<PremiumCardKind>(recommendationWindow.kinds[0]);
 
-  const filtered = useMemo(
-    () => (active === "Todos" ? cards : cards.filter((card) => KIND_LABELS[card.kind] === active)),
-    [cards, active],
-  );
+  useEffect(() => {
+    const timer = window.setInterval(() => setMinuteOfDay(brasiliaMinutes()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!recommendationWindow.kinds.includes(active)) setActive(recommendationWindow.kinds[0]);
+  }, [active, recommendationWindow.kinds]);
+
+  const filtered = useMemo(() => cards.filter((card) => card.kind === active), [cards, active]);
 
   return (
     <div className="flex-1">
@@ -58,7 +84,9 @@ function RecommendationsPage() {
         </BackButton>
         <div className="min-w-0">
           <h1 className="font-display text-xl font-bold">💡 Recomendações</h1>
-          <p className="text-[11px] text-muted-foreground">Feed inteligente curado para você</p>
+          <p className="text-[11px] text-muted-foreground">
+            {recommendationWindow.title} · horário de Brasília
+          </p>
         </div>
       </header>
 
@@ -71,19 +99,19 @@ function RecommendationsPage() {
         </div>
 
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
-          {FILTERS.map((filter) => (
+          {recommendationWindow.kinds.map((kind) => (
             <button
-              key={filter.label}
+              key={kind}
               type="button"
-              onClick={() => setActive(filter.label)}
+              onClick={() => setActive(kind)}
               className={cn(
                 "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all",
-                active === filter.label
+                active === kind
                   ? "border-transparent bg-gradient-brand text-white shadow-soft"
                   : "border-border bg-surface text-muted-foreground",
               )}
             >
-              {filter.label}
+              {KIND_LABELS[kind]}
             </button>
           ))}
         </div>

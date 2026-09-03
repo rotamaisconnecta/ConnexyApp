@@ -3,7 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { places } from "@/lib/mock-data";
 import { enginePlaceById } from "@/lib/engine/engine-detail";
-import { proximityLabel } from "@/lib/proximity";
+import { formatDistance } from "@/lib/proximity";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
 import {
@@ -67,7 +67,7 @@ function LocalDetail() {
             avaliações)
           </span>
           <span>·</span>
-          <span>{proximityLabel(p.distanceMeters)}</span>
+          <span>{formatDistance(p.distanceMeters)}</span>
           <span>·</span>
           <span>{p.hours}</span>
         </div>
@@ -149,7 +149,7 @@ function LocalDetail() {
           className="flex items-center justify-center gap-2 w-full rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition-all hover:shadow-xl active:scale-[0.98]"
         >
           <CarFront className="h-4 w-4" />
-          Pedir corrida
+          Pedir corrida pelo Connexy
           <span className="text-xs opacity-80">Pelo Connexy</span>
         </Link>
         {p.lat != null && p.lng != null ? (

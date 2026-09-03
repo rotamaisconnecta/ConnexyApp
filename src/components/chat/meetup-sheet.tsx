@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { MapCanvas } from "@/components/map-canvas";
 import { places } from "@/lib/mock-data";
-import { proximityLabel, proximityRadius } from "@/lib/proximity";
+import { formatDistance } from "@/lib/proximity";
 import { MapPin, X, Send, Navigation } from "lucide-react";
 import {
   AlertDialog,
@@ -105,7 +105,7 @@ export function MeetupSheet({
                       <div className="font-semibold text-sm truncate">{pl.name}</div>
                       <div className="text-[11px] text-muted-foreground truncate">
                         <MapPin className="inline h-3 w-3 mr-0.5" />{" "}
-                        {proximityLabel(pl.distanceMeters)} · {proximityRadius(pl.distanceMeters)}
+                        {formatDistance(pl.distanceMeters)}
                       </div>
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -116,7 +116,7 @@ export function MeetupSheet({
                             pick: {
                               placeName: pl.name,
                               cover: pl.cover,
-                              proximity: `${proximityLabel(pl.distanceMeters)} · ${proximityRadius(pl.distanceMeters)}`,
+                              proximity: formatDistance(pl.distanceMeters),
                             },
                           })
                         }

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { MapCanvas } from "@/components/map-canvas";
 import { StatusBar } from "@/components/phone-frame";
 import { drivers, places } from "@/lib/mock-data";
-import { proximityLabel } from "@/lib/proximity";
+import { formatDistance } from "@/lib/proximity";
 import { MessageCircle, Shield, Users } from "lucide-react";
 import { useState } from "react";
 
@@ -86,7 +86,7 @@ function RideActive() {
             <div className="flex-1 p-2.5">
               <div className="font-semibold text-sm">{places[0].name}</div>
               <div className="text-[11px] text-muted-foreground">
-                {proximityLabel(places[0].distanceMeters)} · ⭐ {places[0].rating}
+                {formatDistance(places[0].distanceMeters)} · ⭐ {places[0].rating}
               </div>
               <div className="text-[11px] text-primary font-semibold mt-0.5">
                 20% OFF · ver no mapa

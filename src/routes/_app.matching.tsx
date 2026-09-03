@@ -3,7 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { Star, MoreHorizontal } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
 import { drivers } from "@/lib/mock-data";
-import { proximityLabel } from "@/lib/proximity";
+import { formatDistance } from "@/lib/proximity";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_app/matching")({
@@ -45,7 +45,7 @@ function Matching() {
                 </span>
               </div>
               <div className="text-[11px] text-muted-foreground">
-                {d.eta} · {proximityLabel(d.distanceMeters)}
+                {d.eta} · {formatDistance(d.distanceMeters)}
               </div>
               <div className="text-[11px] text-muted-foreground truncate">{d.car}</div>
             </div>

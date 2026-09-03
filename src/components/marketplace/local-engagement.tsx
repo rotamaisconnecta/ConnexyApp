@@ -269,6 +269,10 @@ function InviteTogetherSheet({
                     destinationAddress: target.address ?? null,
                     destinationLat: target.latitude ?? null,
                     destinationLng: target.longitude ?? null,
+                    pickupName: person.name,
+                    pickupAddress: `Localização de ${person.name.split(" ")[0]}`,
+                    pickupLat: -23.557,
+                    pickupLng: -46.648,
                     source: "invite",
                   },
                 })

@@ -195,7 +195,7 @@ function BusinessDetailPage() {
           }}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition active:scale-[0.98]"
         >
-          <CarFront className="h-4 w-4" /> Pedir corrida{" "}
+          <CarFront className="h-4 w-4" /> Pedir corrida pelo Connexy
           <span className="text-xs opacity-80">pelo Connexy</span>
         </Link>
         <button

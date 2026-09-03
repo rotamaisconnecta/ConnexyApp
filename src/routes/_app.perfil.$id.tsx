@@ -3,19 +3,16 @@ import { motion } from "framer-motion";
 import {
   CalendarDays,
   Camera,
-  Check,
   ChevronRight,
   Coffee,
   Dumbbell,
   Heart,
-  Loader2,
   LockKeyhole,
   MapPin,
   MoreHorizontal,
   Music2,
   Share2,
   Sparkles,
-  UserPlus,
   UsersRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
@@ -24,10 +21,6 @@ import { z } from "zod";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import { BackButton } from "@/components/navigation/back-button";
 import { StatusBar } from "@/components/phone-frame";
-import { useAuth } from "@/hooks/use-auth";
-import { hasPendingRequest, sendRequest as sendDemoRequest } from "@/lib/demo/demo-db";
-import { isDemoMode } from "@/lib/demo/demo-config";
-import { useDemoIsConnected } from "@/lib/demo/use-demo-db";
 import { enginePersonById } from "@/lib/engine/engine-detail";
 import {
   commonGround,
@@ -40,7 +33,6 @@ import {
 } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
-import { ConnectionsService } from "@/services/connections.service";
 import type { ProfileRow } from "@/types/database/tables";
 
 const searchSchema = z.object({
@@ -162,8 +154,7 @@ function ProfileLoadError() {
 
 function ViewedProfile() {
   const person = Route.useLoaderData() as Person;
-  const { user } = useAuth();
-  const isOwnProfile = user?.id === person.id || person.id === currentUser.id;
+  const isOwnProfile = person.id === currentUser.id;
   const common = commonGround(person);
   const favoritePlaces = useMemo(
     () => (person.favoritePlaceIds ?? []).map(findPlace).filter(Boolean),
@@ -196,7 +187,10 @@ function ViewedProfile() {
       .map((moment) => moment.mediaUrl ?? moment.photo)
       .filter((source): source is string => Boolean(source));
     const placeImages = displayPlaces.map((place) => place?.cover).filter(Boolean) as string[];
-    return [...new Set([...momentImages, ...placeImages, ...fallbackPublicationImages])].slice(0, 8);
+    return [...new Set([...momentImages, ...placeImages, ...fallbackPublicationImages])].slice(
+      0,
+      8,
+    );
   }, [displayPlaces, person.moments]);
   const visiblePublicationImages =
     publicationTab === "Tudo"
@@ -302,7 +296,10 @@ function ViewedProfile() {
           />
         </svg>
 
-        <div className="pointer-events-none absolute inset-x-0 top-[152px] h-[360px] overflow-hidden" aria-hidden>
+        <div
+          className="pointer-events-none absolute inset-x-0 top-[152px] h-[360px] overflow-hidden"
+          aria-hidden
+        >
           <span className="absolute -left-7 top-12 h-20 w-20 rounded-full bg-primary/[0.045]" />
           <span className="absolute left-5 top-32 h-14 w-14 rounded-full bg-primary/[0.055]" />
           <span className="absolute -right-8 top-20 h-24 w-24 rounded-full bg-amber-300/[0.075]" />
@@ -313,7 +310,9 @@ function ViewedProfile() {
           <div className="mx-auto h-[136px] w-[136px]">
             {!person.photo || avatarFailed ? (
               <div className="grid h-full w-full place-items-center rounded-full border-4 border-background bg-secondary text-primary shadow-xl">
-                <span className="text-3xl font-bold">{getProfileInitials(person.name, person.handle)}</span>
+                <span className="text-3xl font-bold">
+                  {getProfileInitials(person.name, person.handle)}
+                </span>
               </div>
             ) : (
               <img
@@ -333,20 +332,21 @@ function ViewedProfile() {
             <MapPin className="h-4 w-4 text-primary" strokeWidth={2.2} />
           </p>
           <p className="mx-auto mt-2 max-w-[320px] text-sm leading-relaxed text-muted-foreground">
-            {person.bio ?? person.headline ?? "Boas conversas, novos lugares e experiências ao redor."}
+            {person.bio ??
+              person.headline ??
+              "Boas conversas, novos lugares e experiências ao redor."}
           </p>
         </div>
       </motion.section>
 
       {!isOwnProfile && (
-        <section className="mt-5 grid grid-cols-2 gap-3 px-4">
+        <section className="mx-auto mt-5 w-full max-w-[230px] px-4">
           <ConversationInviteButton
             personId={person.id}
             personName={person.name}
             variant="profile"
-            className="h-[52px] rounded-full text-[15px]"
+            className="h-11 w-full rounded-full text-[14px]"
           />
-          <ProfileConnectButton person={person} />
         </section>
       )}
 
@@ -391,8 +391,14 @@ function ViewedProfile() {
               params={{ id: friend.id }}
               className="w-[54px] shrink-0 text-center"
             >
-              <img src={friend.photo} alt="" className="h-[54px] w-[54px] rounded-full object-cover" />
-              <span className="mt-1.5 block truncate text-[11px] text-foreground">{friend.name}</span>
+              <img
+                src={friend.photo}
+                alt=""
+                className="h-[54px] w-[54px] rounded-full object-cover"
+              />
+              <span className="mt-1.5 block truncate text-[11px] text-foreground">
+                {friend.name}
+              </span>
             </Link>
           ))}
         </div>
@@ -411,7 +417,11 @@ function ViewedProfile() {
                     className="w-[148px] shrink-0"
                   >
                     <div className="relative">
-                      <img src={place.cover} alt="" className="h-[76px] w-full rounded-[50%] object-cover" />
+                      <img
+                        src={place.cover}
+                        alt=""
+                        className="h-[76px] w-full rounded-[50%] object-cover"
+                      />
                       <span className="absolute bottom-1 right-1 grid h-7 w-7 place-items-center rounded-full bg-background text-[#ff604b] shadow-md">
                         <Heart className="h-3.5 w-3.5 fill-current" />
                       </span>
@@ -436,8 +446,14 @@ function ViewedProfile() {
       >
         <div className="space-y-3">
           <ActivityItem icon={CalendarDays} text="Confirmou presença em um evento próximo" />
-          <ActivityItem icon={Heart} text={`Curtiu ${displayPlaces[0]?.name ?? "um lugar da região"}`} />
-          <ActivityItem icon={MapPin} text={`Fez check-in no ${displayPlaces[1]?.name ?? "bairro"}`} />
+          <ActivityItem
+            icon={Heart}
+            text={`Curtiu ${displayPlaces[0]?.name ?? "um lugar da região"}`}
+          />
+          <ActivityItem
+            icon={MapPin}
+            text={`Fez check-in no ${displayPlaces[1]?.name ?? "bairro"}`}
+          />
         </div>
       </ProfileSection>
 
@@ -467,12 +483,18 @@ function ViewedProfile() {
               key={`${source}-${index}`}
               type="button"
               onClick={() =>
-                toast("Publicação aberta", { description: `Conteúdo compartilhado por ${firstName}.` })
+                toast("Publicação aberta", {
+                  description: `Conteúdo compartilhado por ${firstName}.`,
+                })
               }
               className="aspect-square overflow-hidden bg-secondary"
               aria-label={`Abrir publicação ${index + 1}`}
             >
-              <img src={source} alt="" className="h-full w-full object-cover transition-transform duration-300 hover:scale-105" />
+              <img
+                src={source}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+              />
             </button>
           ))}
         </div>
@@ -481,78 +503,15 @@ function ViewedProfile() {
   );
 }
 
-function ProfileConnectButton({ person }: { person: Person }) {
-  const demo = isDemoMode();
-  const demoConnected = useDemoIsConnected(person.id);
-  const [status, setStatus] = useState<"loading" | "available" | "pending" | "connected">(
-    demo ? (demoConnected ? "connected" : hasPendingRequest(person.id) ? "pending" : "available") : "loading",
-  );
-
-  useEffect(() => {
-    if (demo) {
-      setStatus(demoConnected ? "connected" : hasPendingRequest(person.id) ? "pending" : "available");
-      return;
-    }
-    if (!isPublicSupabaseConfigured()) {
-      setStatus("available");
-      return;
-    }
-    let cancelled = false;
-    void ConnectionsService.getDirectConversation(person.id)
-      .then((conversationId) => {
-        if (!cancelled) setStatus(conversationId ? "connected" : "available");
-      })
-      .catch(() => {
-        if (!cancelled) setStatus("available");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [demo, demoConnected, person.id]);
-
-  async function connect() {
-    if (status !== "available") return;
-    setStatus("loading");
-    try {
-      if (demo) sendDemoRequest(person.id);
-      else await ConnectionsService.sendRequest(person.id);
-      setStatus("pending");
-      toast.success(`Solicitação de conexão enviada para ${person.name}.`);
-    } catch (error) {
-      setStatus("available");
-      toast.error(error instanceof Error ? error.message : "Não foi possível enviar a conexão.");
-    }
-  }
-
-  const label =
-    status === "connected"
-      ? "Conectado"
-      : status === "pending"
-        ? "Solicitação enviada"
-        : status === "loading"
-          ? "Enviando..."
-          : "Conectar";
-
-  return (
-    <button
-      type="button"
-      onClick={connect}
-      disabled={status !== "available"}
-      className="inline-flex h-[52px] items-center justify-center gap-2 rounded-full border border-primary/20 bg-primary/[0.045] px-3 text-[15px] font-semibold text-primary transition active:scale-[0.98] disabled:opacity-70"
-    >
-      {status === "loading" ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
-      ) : status === "connected" || status === "pending" ? (
-        <Check className="h-5 w-5" />
-      ) : (
-        <UserPlus className="h-5 w-5" />
-      )}
-      <span className="truncate">{label}</span>
-    </button>
-  );
-}
-
-function ProfileStat({ value, label, divider = false }: { value: number; label: string; divider?: boolean }) {
+function ProfileStat({
+  value,
+  label,
+  divider = false,
+}: {
+  value: number;
+  label: string;
+  divider?: boolean;
+}) {
   return (
     <div className={divider ? "border-x border-border/70" : ""}>
       <p className="font-display text-lg font-semibold leading-tight">{value}</p>
@@ -561,7 +520,15 @@ function ProfileStat({ value, label, divider = false }: { value: number; label: 
   );
 }
 
-function ProfileSection({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+function ProfileSection({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="mt-6 px-4">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -573,7 +540,13 @@ function ProfileSection({ title, action, children }: { title: string; action?: R
   );
 }
 
-function ActivityItem({ icon: Icon, text }: { icon: ComponentType<{ className?: string }>; text: string }) {
+function ActivityItem({
+  icon: Icon,
+  text,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  text: string;
+}) {
   return (
     <div className="flex items-center gap-3 text-sm">
       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-white">
@@ -588,9 +561,12 @@ function ActivityItem({ icon: Icon, text }: { icon: ComponentType<{ className?: 
 function InterestIcon({ interest }: { interest: string }) {
   const normalized = interest.toLowerCase();
   if (normalized.includes("música")) return <Music2 className="h-4 w-4" />;
-  if (normalized.includes("café") || normalized.includes("gastronomia")) return <Coffee className="h-4 w-4" />;
-  if (normalized.includes("esporte") || normalized.includes("corrida")) return <Dumbbell className="h-4 w-4" />;
-  if (normalized.includes("fotografia") || normalized.includes("arte")) return <Camera className="h-4 w-4" />;
+  if (normalized.includes("café") || normalized.includes("gastronomia"))
+    return <Coffee className="h-4 w-4" />;
+  if (normalized.includes("esporte") || normalized.includes("corrida"))
+    return <Dumbbell className="h-4 w-4" />;
+  if (normalized.includes("fotografia") || normalized.includes("arte"))
+    return <Camera className="h-4 w-4" />;
   if (normalized.includes("evento")) return <CalendarDays className="h-4 w-4" />;
   return <Sparkles className="h-4 w-4" />;
 }

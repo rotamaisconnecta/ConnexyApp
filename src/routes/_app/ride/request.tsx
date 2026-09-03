@@ -1,22 +1,26 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { StatusBar } from "@/components/phone-frame";
-import { RideSummary } from "@/components/mobility/ride-summary";
-import { PriceEstimateDisplay } from "@/components/mobility/price-estimate";
-import { RoutePreview } from "@/components/mobility/route-preview";
-import { PaymentSelector } from "@/components/mobility/payment-selector";
-import { CouponSelector } from "@/components/mobility/coupon-selector";
-import { RideTypeSelector } from "@/components/mobility/ride-type-selector";
-import { estimateAllCategories } from "@/lib/mobility/ride-pricing";
-import { BackButton } from "@/components/navigation/back-button";
-import { useState } from "react";
-import type {
-  VehicleCategoryValue,
-  PaymentMethodValue,
-  PriceEstimate,
-} from "@/lib/mobility/ride-types";
-import { VehicleCategory, PaymentMethod } from "@/lib/mobility/ride-types";
-import { applyCoupon } from "@/lib/mobility/ride-pricing";
+import { useMemo, useState } from "react";
 import { z } from "zod";
+import { StatusBar } from "@/components/phone-frame";
+import { BackButton } from "@/components/navigation/back-button";
+import { RideRequestForm } from "@/components/mobility/ride-request-form";
+import { StopManager } from "@/components/mobility/stop-manager";
+import { RoutePreview } from "@/components/mobility/route-preview";
+import { RideTypeSelector } from "@/components/mobility/ride-type-selector";
+import { PriceEstimateDisplay } from "@/components/mobility/price-estimate";
+import { estimateAllCategories } from "@/lib/mobility/ride-pricing";
+import {
+  VehicleCategory,
+  type GeoLocation,
+  type VehicleCategoryValue,
+} from "@/lib/mobility/ride-types";
+import {
+  createStop,
+  estimateRouteDistance,
+  estimateRouteDuration,
+  type RouteStop,
+} from "@/lib/mobility/route-utils";
+import { toast } from "sonner";
 
 const rideSearchSchema = z.object({
   destinationId: z.string().optional().nullable(),
@@ -24,129 +28,143 @@ const rideSearchSchema = z.object({
   destinationAddress: z.string().optional().nullable(),
   destinationLat: z.number().optional().nullable(),
   destinationLng: z.number().optional().nullable(),
+  pickupName: z.string().optional().nullable(),
+  pickupAddress: z.string().optional().nullable(),
+  pickupLat: z.number().optional().nullable(),
+  pickupLng: z.number().optional().nullable(),
   source: z.string().optional().nullable(),
 });
 
 export const Route = createFileRoute("/_app/ride/request")({
-  head: () => ({ meta: [{ title: "Confirmar viagem — RotaMais" }] }),
+  head: () => ({ meta: [{ title: "Solicitar viagem — Connexy" }] }),
   validateSearch: rideSearchSchema,
   component: RideRequestConfirmPage,
 });
 
-const MOCK_COUPONS = [
-  {
-    id: "1",
-    code: "ROTA20",
-    label: "ROTA20",
-    description: "20% OFF na primeira viagem",
-    discountPercent: 20,
-    maxDiscount: 30,
-    validUntil: new Date("2026-12-31"),
-    active: true,
-  },
-  {
-    id: "2",
-    code: "AMIZADE10",
-    label: "AMIZADE10",
-    description: "10% OFF para amigos",
-    discountPercent: 10,
-    maxDiscount: 15,
-    validUntil: new Date("2026-12-31"),
-    active: true,
-  },
-];
-
 function RideRequestConfirmPage() {
   const nav = useNavigate();
   const search = Route.useSearch();
+  const [origin, setOrigin] = useState<GeoLocation>({
+    lat: -23.55,
+    lng: -46.64,
+    label: "Minha localização",
+  });
+  const [destination, setDestination] = useState<GeoLocation>(() => ({
+    lat: search.destinationLat ?? -23.58,
+    lng: search.destinationLng ?? -46.65,
+    label: search.destinationAddress || search.destinationName || "Para onde você vai?",
+  }));
+  const [stops, setStops] = useState<RouteStop[]>(() =>
+    search.pickupName
+      ? [
+          createStop(
+            {
+              lat: search.pickupLat ?? -23.557,
+              lng: search.pickupLng ?? -46.648,
+              label: search.pickupAddress || search.pickupName,
+            },
+            search.pickupAddress || search.pickupName,
+            1,
+          ),
+        ]
+      : [],
+  );
   const [category, setCategory] = useState<VehicleCategoryValue>(VehicleCategory.ECONOMICO);
-  const [payment, setPayment] = useState<PaymentMethodValue>(PaymentMethod.CREDIT);
-  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [requesting, setRequesting] = useState(false);
 
-  const destName = search.destinationName ?? "Shopping Ibirapuera";
-  const destLat = search.destinationLat ?? -23.58;
-  const destLng = search.destinationLng ?? -46.65;
-  const destAddress = search.destinationAddress ?? "";
+  const distanceMeters = useMemo(() => {
+    const direct = estimateRouteDistance(origin, destination);
+    return Math.max(1400, Math.round(direct + stops.length * 900));
+  }, [destination, origin, stops.length]);
+  const durationMinutes = useMemo(
+    () => estimateRouteDuration(distanceMeters) + stops.length * 3,
+    [distanceMeters, stops.length],
+  );
+  const estimates = useMemo(
+    () => estimateAllCategories(distanceMeters, durationMinutes),
+    [distanceMeters, durationMinutes],
+  );
+  const estimate = estimates.find((item) => item.category === category) ?? estimates[0];
 
-  const distanceMeters = 3500;
-  const durationMinutes = 12;
-  const allEstimates = estimateAllCategories(distanceMeters, durationMinutes);
-  const currentEstimate = allEstimates.find((e) => e.category === category) ?? allEstimates[0];
+  const addStop = () => {
+    const label = `Parada ${stops.length + 1}`;
+    setStops((current) => [
+      ...current,
+      createStop({ lat: -23.56, lng: -46.64, label }, label, current.length + 1),
+    ]);
+  };
 
-  const discountPercent = couponCode
-    ? (MOCK_COUPONS.find((c) => c.code === couponCode)?.discountPercent ?? 0)
-    : 0;
-  const maxDiscount = couponCode
-    ? (MOCK_COUPONS.find((c) => c.code === couponCode)?.maxDiscount ?? 0)
-    : 0;
-  const adjustedEstimate: PriceEstimate = {
-    ...currentEstimate,
-    finalPrice: applyCoupon(currentEstimate.finalPrice, discountPercent, maxDiscount),
-    discount:
-      currentEstimate.finalPrice -
-      applyCoupon(currentEstimate.finalPrice, discountPercent, maxDiscount),
+  const updateStop = (id: string, label: string) => {
+    setStops((current) =>
+      current.map((stop) =>
+        stop.id === id ? { ...stop, label, location: { ...stop.location, label } } : stop,
+      ),
+    );
+  };
+
+  const requestDriver = () => {
+    if (!destination.label.trim() || destination.label === "Para onde você vai?") {
+      toast.error("Informe o destino antes de solicitar a viagem.");
+      return;
+    }
+    setRequesting(true);
+    window.setTimeout(() => {
+      toast.success("Procurando o motorista mais próximo para sua rota.");
+      nav({ to: "/ride/matching" });
+    }, 450);
   };
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex min-h-full flex-1 flex-col">
       <StatusBar />
-      <div className="flex items-center gap-3 px-5 pt-1 pb-3">
+      <header className="flex items-center gap-3 px-5 pb-3 pt-1">
         <BackButton
           fallbackTo="/ride"
-          className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
+          className="grid h-9 w-9 place-items-center rounded-full bg-secondary"
         />
         <div>
-          <h1 className="font-display font-bold text-base">Confirmar viagem</h1>
-          <p className="text-[11px] text-muted-foreground">Revise os detalhes</p>
+          <h1 className="font-display text-base font-bold">Solicitar viagem</h1>
+          <p className="text-[11px] text-muted-foreground">Defina a rota e chame um motorista</p>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 px-5 pb-4 space-y-4 overflow-y-auto no-scrollbar">
-        {search.destinationName && (
-          <div className="rounded-2xl border border-border bg-surface p-3">
-            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Destino</p>
-            <p className="text-sm font-bold mt-0.5">{destName}</p>
-            {destAddress && <p className="text-xs text-muted-foreground mt-0.5">{destAddress}</p>}
-          </div>
-        )}
-
+      <main className="flex-1 space-y-4 overflow-y-auto px-5 pb-28 no-scrollbar">
+        <RideRequestForm
+          origin={origin}
+          destination={destination}
+          stops={stops}
+          onOriginChange={(location) => location && setOrigin(location)}
+          onDestinationChange={(location) => location && setDestination(location)}
+          onAddStop={(location, label) =>
+            setStops((current) => [...current, createStop(location, label, current.length + 1)])
+          }
+          onRemoveStop={(id) => setStops((current) => current.filter((stop) => stop.id !== id))}
+          onUpdateStop={updateStop}
+        />
+        <StopManager
+          stops={stops}
+          onAddStop={addStop}
+          onRemoveStop={(id) => setStops((current) => current.filter((stop) => stop.id !== id))}
+        />
         <RoutePreview
-          origin={{ lat: -23.55, lng: -46.64, label: "Minha localização" }}
-          destination={{ lat: destLat, lng: destLng, label: destName }}
+          origin={origin}
+          destination={destination}
+          stops={stops}
           distanceMeters={distanceMeters}
           durationMinutes={durationMinutes}
         />
+        <RideTypeSelector selected={category} onSelect={setCategory} estimates={estimates} />
+        <PriceEstimateDisplay estimate={estimate} />
+      </main>
 
-        <RideTypeSelector selected={category} onSelect={setCategory} estimates={allEstimates} />
-
-        <RideSummary
-          request={{
-            id: "temp",
-            origin: { lat: -23.55, lng: -46.64, label: "Minha localização" },
-            destination: { lat: destLat, lng: destLng, label: destName },
-            stops: [],
-            category,
-            distanceMeters,
-            durationMinutes,
-            scheduledAt: null,
-            couponCode,
-            paymentMethod: payment,
-            createdAt: new Date(),
-          }}
-          estimate={adjustedEstimate}
-        />
-
-        <CouponSelector coupons={MOCK_COUPONS} selectedCode={couponCode} onSelect={setCouponCode} />
-
-        <PaymentSelector selected={payment} onSelect={setPayment} />
-      </div>
-
-      <div className="px-5 pb-4">
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-3 backdrop-blur">
         <button
-          onClick={() => nav({ to: "/ride/matching" })}
-          className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant"
+          type="button"
+          onClick={requestDriver}
+          disabled={requesting}
+          className="h-12 w-full rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant disabled:opacity-70"
         >
-          Solicitar viagem
+          {requesting ? "Procurando motorista..." : "Solicitar viagem"}
         </button>
       </div>
     </div>
