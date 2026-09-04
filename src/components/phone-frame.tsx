@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 export function PhoneFrame({
   children,
@@ -7,6 +7,12 @@ export function PhoneFrame({
   children: ReactNode;
   className?: string;
 }) {
+  useEffect(() => {
+    // Aplicativos instalados e navegadores compatíveis permanecem em retrato.
+    // Em navegadores que não permitem bloqueio, o layout vertical continua preservado.
+    void screen.orientation?.lock?.("portrait").catch(() => undefined);
+  }, []);
+
   return (
     <div
       className="min-h-screen min-h-[100dvh] w-full bg-background md:flex md:items-center md:justify-center md:px-4 md:py-10"
@@ -16,7 +22,7 @@ export function PhoneFrame({
       }}
     >
       <div
-        className={`relative h-[100dvh] w-full overflow-hidden bg-background md:h-[min(860px,calc(100dvh-5rem))] md:max-w-[420px] md:rounded-[2.5rem] md:border md:border-border/70 md:shadow-phone ${className}`}
+        className={`relative h-[100dvh] min-h-0 w-full overflow-hidden bg-background md:h-[min(860px,calc(100dvh-5rem))] md:max-w-[420px] md:rounded-[2.5rem] md:border md:border-border/70 md:shadow-phone ${className}`}
       >
         <div className="absolute left-1/2 top-2 z-40 hidden h-6 w-28 -translate-x-1/2 rounded-full bg-foreground/90 md:block" />
         <div className="relative flex h-full min-h-0 flex-col">{children}</div>
