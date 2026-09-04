@@ -91,7 +91,11 @@ function Splash() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <img src={splashImage} alt="Connexy" className="h-full w-full object-contain" />
+            <img
+              src={splashImage}
+              alt="Connexy"
+              className="h-auto max-h-[82dvh] w-auto max-w-[86vw] object-contain md:max-h-[680px] md:max-w-[360px]"
+            />
           </motion.div>
         )}
       </AnimatePresence>

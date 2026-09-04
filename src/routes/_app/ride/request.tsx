@@ -73,9 +73,13 @@ function RideRequestConfirmPage() {
   const [requesting, setRequesting] = useState(false);
 
   const distanceMeters = useMemo(() => {
-    const direct = estimateRouteDistance(origin, destination);
-    return Math.max(1400, Math.round(direct + stops.length * 900));
-  }, [destination, origin, stops.length]);
+    const points = [origin, ...stops.map((stop) => stop.location), destination];
+    const total = points.slice(1).reduce(
+      (sum, point, index) => sum + estimateRouteDistance(points[index], point),
+      0,
+    );
+    return Math.max(400, Math.round(total));
+  }, [destination, origin, stops]);
   const durationMinutes = useMemo(
     () => estimateRouteDuration(distanceMeters) + stops.length * 3,
     [distanceMeters, stops.length],

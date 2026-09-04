@@ -271,8 +271,10 @@ function InviteTogetherSheet({
                     destinationLng: target.longitude ?? null,
                     pickupName: person.name,
                     pickupAddress: `Localização de ${person.name.split(" ")[0]}`,
-                    pickupLat: -23.557,
-                    pickupLng: -46.648,
+                    // Posição simulada derivada do perfil próximo. Na integração de produção,
+                    // estes valores serão substituídos pela localização autorizada da pessoa.
+                    pickupLat: -23.55 + person.distanceMeters / 111_000,
+                    pickupLng: -46.64 + person.distanceMeters / 180_000,
                     source: "invite",
                   },
                 })

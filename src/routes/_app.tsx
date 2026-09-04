@@ -16,6 +16,7 @@ import { PresenceProvider } from "@/providers/presence/presence-context";
 import { requireAuth } from "@/lib/auth/route-guard";
 import { profileCompletionForGuard } from "@/lib/profile/profile-status";
 import { Loader2 } from "lucide-react";
+import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -89,6 +90,7 @@ function AppLayout() {
               >
                 <Outlet />
               </div>
+              {!immersiveRouteOpen && <ConnexyAiAssistant />}
               {!immersiveRouteOpen && <BottomNav />}
             </div>
           </PresenceProvider>
