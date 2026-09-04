@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
@@ -144,11 +144,19 @@ export function DriverCommandCenter({
   }
 
   return (
-    <div className="relative overflow-hidden pb-3">
+    <div
+      className="relative overflow-hidden pb-3"
+      style={
+        {
+          "--primary": "oklch(0.72 0.16 78)",
+          "--ring": "oklch(0.82 0.17 84)",
+        } as CSSProperties
+      }
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_76%_4%,color-mix(in_oklab,var(--primary)_18%,transparent),transparent_55%)]" />
 
       <header className="relative flex items-center gap-3 px-5 pb-4 pt-1">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[1rem_1rem_1rem_.4rem] bg-gradient-brand text-sm font-bold text-white shadow-soft">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[1rem_1rem_1rem_.4rem] bg-[#FFC107] text-sm font-bold text-black shadow-soft">
           {driverName.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
@@ -186,7 +194,7 @@ export function DriverCommandCenter({
       <main className="relative space-y-4 px-4">
         <motion.section
           {...panelMotion}
-          className="grid grid-cols-[auto_1fr] gap-3 rounded-[1.45rem] bg-gradient-brand p-4 text-white shadow-elegant"
+          className="grid grid-cols-[auto_1fr] gap-3 rounded-[1.45rem] bg-[#17131D] p-4 text-white shadow-elegant"
         >
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/15">
             <Sparkles className="h-4 w-4" />
@@ -421,7 +429,7 @@ export function DriverCommandCenter({
             <button
               type="button"
               onClick={() => toast.success(`Rota para ${selectedZone.name} iniciada`)}
-              className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-brand text-sm font-bold text-white shadow-elegant active:scale-[.98]"
+              className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFC107] text-sm font-bold text-black shadow-[0_12px_28px_rgba(255,193,7,.22)] active:scale-[.98]"
             >
               <Navigation className="h-4 w-4" /> Ir para esta região
             </button>
@@ -545,7 +553,7 @@ export function DriverCommandCenter({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="mt-4 h-12 w-full rounded-2xl bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+            className="mt-4 h-12 w-full rounded-2xl bg-[#FFC107] text-sm font-bold text-black shadow-[0_12px_28px_rgba(255,193,7,.22)]"
           >
             {documentSent ? "Enviar outro arquivo" : "Escolher arquivo"}
           </button>
@@ -653,7 +661,7 @@ function QualityRow({ label, value, status }: { label: string; value: number; st
     <div className="grid grid-cols-[92px_1fr_54px] items-center gap-2 text-[10px]">
       <span className="text-muted-foreground">{label}</span>
       <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-        <i className="block h-full rounded-full bg-gradient-brand" style={{ width: `${value}%` }} />
+        <i className="block h-full rounded-full bg-[#FFC107]" style={{ width: `${value}%` }} />
       </div>
       <strong className="text-right">{status}</strong>
     </div>

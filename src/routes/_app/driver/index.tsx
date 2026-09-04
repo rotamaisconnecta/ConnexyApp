@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { DriverCommandCenter } from "@/components/driver/driver-command-center";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
 import { currentUser } from "@/lib/mock-data";
 import type { DriverEarnings, RideRequest } from "@/lib/driver/driver-types";
+import { isDriverApproved } from "@/lib/driver/driver-application-storage";
 
 export const Route = createFileRoute("/_app/driver/")({
   head: () => ({ meta: [{ title: "Motorista — Connexy" }] }),
@@ -41,8 +42,16 @@ const MOCK_RIDE_REQUEST: RideRequest = {
 };
 
 function DriverPage() {
+  const navigate = useNavigate();
+  const approved = isDriverApproved();
   const [isOnline, setIsOnline] = useState(false);
   const [showRideRequest, setShowRideRequest] = useState(false);
+
+  useEffect(() => {
+    if (!approved) navigate({ to: "/driver/cadastro", replace: true });
+  }, [approved, navigate]);
+
+  if (!approved) return null;
 
   return (
     <div className="flex-1 pb-20">

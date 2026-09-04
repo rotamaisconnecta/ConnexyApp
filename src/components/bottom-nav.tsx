@@ -1,14 +1,24 @@
-import { Home, Map, MessagesSquare, User, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, Map, MessagesSquare, User, Plus, WalletCards, History, Car } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getActiveMode } from "@/lib/roles/roles-storage";
+import { UserRole } from "@/lib/roles/roles-types";
 
 interface BottomNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
-  route: "/home" | "/discover" | "/chat" | "/profile";
+  route:
+    | "/home"
+    | "/discover"
+    | "/chat"
+    | "/profile"
+    | "/driver"
+    | "/driver/finance"
+    | "/driver/history";
 }
 
 const NAV_ITEMS: BottomNavItem[] = [
@@ -18,17 +28,34 @@ const NAV_ITEMS: BottomNavItem[] = [
   { id: "profile", label: "Perfil", icon: User, route: "/profile" },
 ];
 
+const DRIVER_NAV_ITEMS: BottomNavItem[] = [
+  { id: "driver-home", label: "Painel", icon: Home, route: "/driver" },
+  { id: "driver-finance", label: "Ganhos", icon: WalletCards, route: "/driver/finance" },
+  { id: "driver-history", label: "Corridas", icon: History, route: "/driver/history" },
+  { id: "driver-profile", label: "Perfil", icon: User, route: "/profile" },
+];
+
 function isActive(pathname: string, route: string): boolean {
   if (pathname === route) return true;
+  if (route === "/driver") return false;
   return pathname.startsWith(route + "/");
 }
 
 export default function BottomNav() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [activeMode, setActiveModeState] = useState(getActiveMode);
+  const isDriverMode = activeMode === UserRole.DRIVER;
 
-  const leftItems = NAV_ITEMS.slice(0, 2);
-  const rightItems = NAV_ITEMS.slice(2);
+  useEffect(() => {
+    const handleRoleChange = () => setActiveModeState(getActiveMode());
+    window.addEventListener("roleChanged", handleRoleChange);
+    return () => window.removeEventListener("roleChanged", handleRoleChange);
+  }, []);
+
+  const items = isDriverMode ? DRIVER_NAV_ITEMS : NAV_ITEMS;
+  const leftItems = items.slice(0, 2);
+  const rightItems = items.slice(2);
 
   const renderItem = (item: BottomNavItem) => {
     const active = isActive(pathname, item.route);
@@ -42,7 +69,11 @@ export default function BottomNav() {
         aria-current={active ? "page" : undefined}
         className={cn(
           "relative flex flex-col items-center justify-center gap-1 transition-colors outline-none",
-          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+          active
+            ? isDriverMode
+              ? "text-amber-600"
+              : "text-primary"
+            : "text-muted-foreground hover:text-foreground",
         )}
       >
         <span className="relative grid place-items-center">
@@ -50,7 +81,10 @@ export default function BottomNav() {
           {active && (
             <motion.span
               layoutId={`bottom-nav-dot-${item.id}`}
-              className="absolute -bottom-1.5 h-1 w-1 rounded-full bg-primary"
+              className={cn(
+                "absolute -bottom-1.5 h-1 w-1 rounded-full",
+                isDriverMode ? "bg-[#FFC107]" : "bg-primary",
+              )}
             />
           )}
         </span>
@@ -71,14 +105,19 @@ export default function BottomNav() {
         <div className="grid place-items-center">
           <button
             type="button"
-            onClick={() => navigate({ to: "/create" })}
-            aria-label="Criar publicação"
+            onClick={() => navigate({ to: isDriverMode ? "/driver" : "/create" })}
+            aria-label={isDriverMode ? "Abrir painel do motorista" : "Criar publicação"}
             className={cn(
-              "relative -mt-6 grid h-14 w-14 place-items-center rounded-full bg-gradient-brand text-white shadow-floating transition-transform active:scale-95",
-              isActive(pathname, "/create") && "ring-4 ring-primary/20",
+              "relative -mt-6 grid h-14 w-14 place-items-center rounded-full shadow-floating transition-transform active:scale-95",
+              isDriverMode ? "bg-[#FFC107] text-black" : "bg-gradient-brand text-white",
+              !isDriverMode && isActive(pathname, "/create") && "ring-4 ring-primary/20",
             )}
           >
-            <Plus size={26} strokeWidth={2.4} />
+            {isDriverMode ? (
+              <Car size={25} strokeWidth={2.3} />
+            ) : (
+              <Plus size={26} strokeWidth={2.4} />
+            )}
           </button>
         </div>
 

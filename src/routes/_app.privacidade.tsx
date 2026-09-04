@@ -1,8 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
-import { Shield, Bell, CreditCard, Globe, HelpCircle, ChevronRight, EyeOff } from "lucide-react";
+import {
+  Shield,
+  Bell,
+  CreditCard,
+  Globe,
+  HelpCircle,
+  ChevronRight,
+  EyeOff,
+  Car,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import { getDriverApplication } from "@/lib/driver/driver-application-storage";
 
 const KEY = "rmc:invisible";
 
@@ -14,10 +24,14 @@ export const Route = createFileRoute("/_app/privacidade")({
 function Privacy() {
   const [invisible, setInvisible] = useState(false);
   const [visibility, setVisibility] = useState<"todos" | "conexoes" | "ninguem">("todos");
+  const [driverStatus, setDriverStatus] = useState(() => getDriverApplication().status);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     setInvisible(localStorage.getItem(KEY) === "1");
+    const handleDriverChange = () => setDriverStatus(getDriverApplication().status);
+    window.addEventListener("driverApplicationChanged", handleDriverChange);
+    return () => window.removeEventListener("driverApplicationChanged", handleDriverChange);
   }, []);
 
   const toggle = () => {
@@ -38,6 +52,28 @@ function Privacy() {
         />
         <h1 className="font-display font-bold text-lg">Preferências</h1>
       </header>
+
+      <Link
+        to="/driver/cadastro"
+        className="mx-5 mb-5 flex items-center gap-4 rounded-[1.6rem] border border-amber-200/70 bg-[linear-gradient(135deg,#fff9dd,#ffffff)] p-4 shadow-soft"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#FFC107] text-black shadow-sm">
+          <Car className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold">Torne-se um motorista</span>
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">
+            {driverStatus === "pending"
+              ? "Cadastro em análise pela equipe técnica"
+              : driverStatus === "approved"
+                ? "Cadastro aprovado — modo disponível"
+                : driverStatus === "rejected"
+                  ? "Revise as informações solicitadas"
+                  : "Cadastre-se e dirija com o Connexy"}
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-amber-700" />
+      </Link>
 
       <section className="mx-5 rounded-2xl bg-surface border border-border p-4">
         <div className="flex items-start gap-3">
