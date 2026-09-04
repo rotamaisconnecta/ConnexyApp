@@ -27,15 +27,18 @@ export function LocalSponsoredFeed() {
         ? { lat: geolocation.latitude, lng: geolocation.longitude }
         : { lat: -23.55, lng: -46.64 };
 
-    return SPONSORED_ADS.map((ad) => ({
+    const ranked = SPONSORED_ADS.map((ad) => ({
       ...ad,
       liveDistanceMeters: calculateDistanceMeters(userLocation, {
         lat: ad.latitude,
         lng: ad.longitude,
       }),
     }))
-      .filter((ad) => ad.liveDistanceMeters <= 2_000)
       .sort((a, b) => a.liveDistanceMeters - b.liveDistanceMeters);
+    const withinRadius = ranked.filter((ad) => ad.liveDistanceMeters <= 2_000);
+
+    // A experiência não fica vazia: fora do raio, mostramos os patrocinados mais próximos.
+    return withinRadius.length > 0 ? withinRadius : ranked.slice(0, 3);
   }, [geolocation.latitude, geolocation.longitude]);
 
   function handleClick(adId: string, action: string, title: string) {
@@ -116,11 +119,6 @@ export function LocalSponsoredFeed() {
             </div>
           </article>
         ))}
-        {nearbyAds.length === 0 && (
-          <div className="w-[272px] shrink-0 rounded-2xl border border-dashed border-border bg-surface p-5 text-sm text-muted-foreground">
-            Nenhuma descoberta patrocinada neste raio agora. Ao se movimentar, novas opções podem aparecer.
-          </div>
-        )}
       </SwipeCarousel>
     </motion.div>
   );
