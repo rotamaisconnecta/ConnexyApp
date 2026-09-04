@@ -145,6 +145,7 @@ function RideRequestConfirmPage() {
           stops={stops}
           onAddStop={addStop}
           onRemoveStop={(id) => setStops((current) => current.filter((stop) => stop.id !== id))}
+          onUpdateStop={updateStop}
         />
         <RoutePreview
           origin={origin}
