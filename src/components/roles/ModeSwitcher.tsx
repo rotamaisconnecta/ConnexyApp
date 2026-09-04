@@ -7,24 +7,39 @@ import { toast } from "sonner";
 import { Colors, Shadows } from "@/theme";
 import { getStoredRoles, setActiveMode } from "@/lib/roles/roles-storage";
 import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
+import { getDriverApplication } from "@/lib/driver/driver-application-storage";
 
 export default function ModeSwitcher() {
   const navigate = useNavigate();
   const [rolesState, setRolesState] = useState(getStoredRoles);
+  const [driverStatus, setDriverStatus] = useState(() => getDriverApplication().status);
   const hasDriverRole = rolesState.roles.includes(UserRole.DRIVER);
+  const canDrive = hasDriverRole && driverStatus === "approved";
   const activeMode = rolesState.activeMode;
 
   useEffect(() => {
     function handleRoleChanged() {
       setRolesState(getStoredRoles());
+      setDriverStatus(getDriverApplication().status);
     }
 
     window.addEventListener("roleChanged", handleRoleChanged);
-    return () => window.removeEventListener("roleChanged", handleRoleChanged);
+    window.addEventListener("driverApplicationChanged", handleRoleChanged);
+    return () => {
+      window.removeEventListener("roleChanged", handleRoleChanged);
+      window.removeEventListener("driverApplicationChanged", handleRoleChanged);
+    };
   }, []);
 
+  useEffect(() => {
+    if (activeMode !== UserRole.DRIVER || canDrive) return;
+    setActiveMode(UserRole.USER);
+    setRolesState(getStoredRoles());
+    window.dispatchEvent(new Event("roleChanged"));
+  }, [activeMode, canDrive]);
+
   function handleSelect(mode: RoleMode) {
-    if (mode === UserRole.DRIVER && !hasDriverRole) {
+    if (mode === UserRole.DRIVER && !canDrive) {
       navigate({ to: "/driver/cadastro" });
       return;
     }
@@ -46,28 +61,32 @@ export default function ModeSwitcher() {
     });
 
     window.setTimeout(() => {
-      navigate({ to: "/home" });
+      navigate({ to: isDriverMode ? "/driver" : "/home" });
     }, 300);
   }
 
-  if (!hasDriverRole) {
+  if (!canDrive) {
     return (
       <div className="mx-4 mt-3 rounded-[24px] border border-border bg-surface p-2 shadow-soft">
         <button
           type="button"
           onClick={() => navigate({ to: "/driver/cadastro" })}
-          className="flex w-full items-center justify-between rounded-full bg-primary/10 px-4 py-3 text-left"
+          className="flex w-full items-center justify-between rounded-full bg-amber-50 px-4 py-3 text-left"
         >
           <span className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-white">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#FFC107] text-black">
               <Car className="h-4 w-4" />
             </span>
             <span>
               <span className="block text-sm font-semibold text-foreground">
-                Tornar-me Motorista
+                {driverStatus === "pending" ? "Cadastro em análise" : "Tornar-me Motorista"}
               </span>
               <span className="block text-[11px] text-muted-foreground">
-                Ative o modo motorista e receba solicitações
+                {driverStatus === "pending"
+                  ? "Aguardando aprovação da equipe técnica"
+                  : driverStatus === "rejected"
+                    ? "Revise seu cadastro para continuar"
+                    : "Cadastre-se para receber solicitações"}
               </span>
             </span>
           </span>

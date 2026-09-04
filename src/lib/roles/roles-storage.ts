@@ -20,8 +20,9 @@ const DEFAULT_STATE: UserRolesState = {
 };
 
 export function getStoredRoles(): UserRolesState {
+  if (typeof window === "undefined") return DEFAULT_STATE;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       saveRoles(DEFAULT_STATE);
       return DEFAULT_STATE;
@@ -34,7 +35,8 @@ export function getStoredRoles(): UserRolesState {
 }
 
 export function saveRoles(state: UserRolesState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 export function getRoles(): UserRole[] {
@@ -79,7 +81,8 @@ export function hasRole(role: UserRole): boolean {
 }
 
 export function clearRoles() {
-  localStorage.removeItem(STORAGE_KEY);
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STORAGE_KEY);
 }
 
 export function toggleRole(role: UserRole) {
