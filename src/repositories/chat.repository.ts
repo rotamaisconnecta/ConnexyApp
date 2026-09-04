@@ -53,4 +53,13 @@ export const ChatRepository = {
     if (error) throw new SupabaseError(error.message, error.code);
     return data as string | null;
   },
+
+  async getParticipants(conversationId: string): Promise<{ user_id: string }[]> {
+    const { data, error } = await supabase
+      .from("conversation_participants")
+      .select("user_id")
+      .eq("conversation_id", conversationId);
+    if (error) throw new SupabaseError(error.message, error.code);
+    return (data ?? []) as { user_id: string }[];
+  },
 };

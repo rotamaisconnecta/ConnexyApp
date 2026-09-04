@@ -1,25 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { DriverCommandCenter } from "@/components/driver/driver-command-center";
+import { DriverOperationsDashboard } from "@/components/driver/driver-operations-dashboard";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
 import { currentUser } from "@/lib/mock-data";
-import type { DriverEarnings, RideRequest } from "@/lib/driver/driver-types";
-import { isDriverApproved } from "@/lib/driver/driver-application-storage";
+import type { RideRequest } from "@/lib/driver/driver-types";
 
 export const Route = createFileRoute("/_app/driver/")({
   head: () => ({ meta: [{ title: "Motorista — Connexy" }] }),
   component: DriverPage,
 });
-
-const MOCK_EARNINGS: DriverEarnings = {
-  today: 156.8,
-  week: 892.4,
-  month: 3456.7,
-  totalTrips: 234,
-  averagePerTrip: 14.8,
-  commission: 20,
-};
 
 const MOCK_RIDE_REQUEST: RideRequest = {
   id: "r1",
@@ -43,29 +33,25 @@ const MOCK_RIDE_REQUEST: RideRequest = {
 
 function DriverPage() {
   const navigate = useNavigate();
-  const approved = isDriverApproved();
   const [isOnline, setIsOnline] = useState(false);
   const [showRideRequest, setShowRideRequest] = useState(false);
 
-  useEffect(() => {
-    if (!approved) navigate({ to: "/driver/cadastro", replace: true });
-  }, [approved, navigate]);
-
-  if (!approved) return null;
-
   return (
-    <div className="flex-1 pb-20">
+    <div className="flex-1">
       <StatusBar />
-      <DriverCommandCenter
-        driverName={currentUser.name}
-        rating={4.93}
-        earnings={MOCK_EARNINGS}
-        isOnline={isOnline}
-        onToggleOnline={() => {
-          setIsOnline(!isOnline);
-          if (!isOnline) setShowRideRequest(true);
-        }}
-      />
+      <div className="px-4 pt-1">
+        <DriverOperationsDashboard
+          driverName={currentUser.name}
+          driverPhoto={currentUser.photo}
+          isOnline={isOnline}
+          onToggleOnline={() => {
+            setIsOnline(!isOnline);
+            if (!isOnline) setShowRideRequest(true);
+          }}
+          onOpenMap={() => navigate({ to: "/discover" })}
+          onOpenDocuments={() => navigate({ to: "/driver/profile" })}
+        />
+      </div>
 
       <DriverRideBottomSheet
         isOpen={showRideRequest}

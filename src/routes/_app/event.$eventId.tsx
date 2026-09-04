@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { NotFoundState } from "@/components/navigation/not-found";
@@ -6,8 +6,10 @@ import { BusinessCard } from "@/components/marketplace/business-card";
 import { EventList } from "@/components/marketplace/event-list";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
-import { Calendar, Share2, Users } from "lucide-react";
+import { DetailActionBar, RecentReviewSection } from "@/components/marketplace/local-engagement";
+import { Calendar, CarFront, MapPinned, Share2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { Business, BusinessEvent } from "@/lib/marketplace/business-types";
 import { EventStatus } from "@/lib/marketplace/business-types";
 import {
@@ -121,7 +123,23 @@ function EventDetailPage() {
 
   const capacityPercent = getEventCapacityPercent(event.attendeesCount, event.capacity ?? 0);
 
-  function handleShare() {}
+  async function handleShare() {
+    const data = {
+      title: `${event.title} no Connexy`,
+      text: `Veja o evento ${event.title} no Connexy.`,
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) await navigator.share(data);
+      else {
+        await navigator.clipboard.writeText(data.url);
+        toast.success("Link copiado para compartilhar.");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error("Não foi possível compartilhar agora.");
+    }
+  }
 
   function handleAttend() {
     setIsAttending(!isAttending);
@@ -133,6 +151,17 @@ function EventDetailPage() {
 
   function handleSelectEvent(id: string) {
     nav({ to: "/event/$eventId", params: { eventId: id } });
+  }
+
+  function openMaps() {
+    const destination = hostBusiness
+      ? `${hostBusiness.location.lat},${hostBusiness.location.lng}`
+      : event.location || event.title;
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   return (
@@ -243,6 +272,27 @@ function EventDetailPage() {
 
         <PresentList targetId={event.id} title="Presentes no evento" />
 
+        <DetailActionBar
+          targetId={event.id}
+          title={event.title}
+          phone={hostBusiness?.phone ?? "+551140000000"}
+          outing={{
+            id: event.id,
+            title: event.title,
+            address: event.location ?? null,
+            latitude: hostBusiness?.location.lat ?? null,
+            longitude: hostBusiness?.location.lng ?? null,
+          }}
+        />
+
+        <RecentReviewSection
+          targetId={event.id}
+          initialReviews={[
+            { author: "Juliana C.", rating: 5, text: "Organização ótima e clima muito bom." },
+            { author: "Rafael P.", rating: 4, text: "Uma experiência que vale repetir." },
+          ]}
+        />
+
         {hostBusiness && (
           <div className="space-y-2">
             <h3 className="font-semibold text-sm">Organizador</h3>
@@ -253,6 +303,30 @@ function EventDetailPage() {
         {relatedEvents.length > 0 && (
           <EventList events={relatedEvents} title="Outros eventos" onSelect={handleSelectEvent} />
         )}
+      </div>
+
+      <div className="space-y-2 px-5 pb-4">
+        <Link
+          to="/ride/request"
+          search={{
+            destinationName: event.title,
+            destinationAddress: event.location ?? null,
+            destinationLat: hostBusiness?.location.lat ?? null,
+            destinationLng: hostBusiness?.location.lng ?? null,
+            source: "event",
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition active:scale-[0.98]"
+        >
+          <CarFront className="h-4 w-4" /> Pedir corrida pelo Connexy
+          <span className="text-xs opacity-80">pelo Connexy</span>
+        </Link>
+        <button
+          type="button"
+          onClick={openMaps}
+          className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-border py-3.5 text-sm font-semibold transition hover:bg-secondary active:scale-[0.98]"
+        >
+          <MapPinned className="h-4 w-4 text-primary" /> Abrir no Google Maps
+        </button>
       </div>
     </div>
   );

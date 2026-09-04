@@ -55,11 +55,20 @@ export function RoutePreview({
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-success" />
             {origin.label}
           </span>
+          {stops.map((stop) => (
+            <span key={stop.id} className="flex items-center gap-2">
+              <span>→</span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                {stop.label}
+              </span>
+            </span>
+          ))}
           <span>→</span>
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-sm bg-primary" />

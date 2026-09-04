@@ -7,10 +7,17 @@ interface StopManagerProps {
   stops: RouteStop[];
   onAddStop?: () => void;
   onRemoveStop?: (stopId: string) => void;
+  onUpdateStop?: (stopId: string, label: string) => void;
   maxStops?: number;
 }
 
-export function StopManager({ stops, onAddStop, onRemoveStop, maxStops = 3 }: StopManagerProps) {
+export function StopManager({
+  stops,
+  onAddStop,
+  onRemoveStop,
+  onUpdateStop,
+  maxStops = 3,
+}: StopManagerProps) {
   const canAdd = stops.length < maxStops;
 
   return (
@@ -30,7 +37,14 @@ export function StopManager({ stops, onAddStop, onRemoveStop, maxStops = 3 }: St
           <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-amber-500 text-sm">●</span>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate">{stop.label}</div>
+            <input
+              value={stop.label}
+              onChange={(event) => onUpdateStop?.(stop.id, event.target.value)}
+              readOnly={!onUpdateStop}
+              aria-label={`Endereço da ${stop.label}`}
+              className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground"
+              placeholder="Informe o endereço da parada"
+            />
           </div>
           {onRemoveStop && (
             <button

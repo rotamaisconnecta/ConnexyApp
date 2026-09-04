@@ -1,44 +1,190 @@
-import { useMemo, useState, type MouseEventHandler } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-import { Archive, Bell, BellOff, MessagesSquare, Pin, Search, X } from "lucide-react";
+import { Loader2, MessagesSquare, Search, SlidersHorizontal, X } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { ConversationRow } from "./conversation-row";
 import { ContinueCard } from "./continue-card";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { ChatService } from "@/services/chat.service";
+import { UserRepository } from "@/repositories/user.repository";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { subscribeDemoDB, isConnected, getConversationLastMessage } from "@/lib/demo/demo-db";
+import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
+import { people } from "@/lib/mock-data";
 import {
   MOCK_CONVERSATIONS,
   NextGesture,
   searchMockConversations,
   sortMockConversations,
+  ThreadIcon,
+  LastMessageType,
+  type MockConversation,
 } from "@/lib/chat/mock-conversations";
-import type { MockConversation } from "@/lib/chat/mock-conversations";
+import type { ConversationRow as ConversationRowDB } from "@/types/database/tables";
 
 const listContainer = {
   hidden: { opacity: 1 },
   visible: { opacity: 1, transition: { staggerChildren: 0.035 } },
 };
 
+interface RealConversation {
+  id: string;
+  participant: { id: string; name: string; photo: string | null };
+  lastMessage: string;
+  updatedAt: Date;
+  isMuted: boolean;
+  isPinned: boolean;
+}
+
 export function ConversationsScreen() {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
   const initial = reducedMotion ? false : "hidden";
+  const { user } = useAuth();
+  const configured = isPublicSupabaseConfigured();
 
-  const [conversations, setConversations] = useState<MockConversation[]>(() =>
+  const [realConversations, setRealConversations] = useState<RealConversation[]>([]);
+  const [realLoading, setRealLoading] = useState(false);
+  const [realError, setRealError] = useState<string | null>(null);
+
+  const [mockConversations, setMockConversations] = useState<MockConversation[]>(() =>
     MOCK_CONVERSATIONS.map((c) => ({ ...c, updatedAt: new Date(c.updatedAt.getTime()) })),
   );
   const [query, setQuery] = useState("");
-  const [menuTarget, setMenuTarget] = useState<MockConversation | null>(null);
+  const [activeTab, setActiveTab] = useState<"active" | "requests">("active");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [onlyOnline, setOnlyOnline] = useState(false);
+  const [onlyNearby, setOnlyNearby] = useState(false);
+  const pendingRequests = useDemoPendingRequests();
 
-  const sorted = useMemo(() => sortMockConversations(conversations), [conversations]);
-  const filtered = useMemo(() => searchMockConversations(sorted, query), [sorted, query]);
+  // In demo mode, merge locally-created connections into the conversation list.
+  const demo = isDemoMode();
+  useEffect(() => {
+    if (!demo) return;
+    const sync = () => {
+      const created: MockConversation[] = people
+        .filter((p) => isConnected(p.id))
+        .map((p) => {
+          const last = getConversationLastMessage(p.id);
+          return {
+            id: p.id,
+            participant: { id: p.id, name: p.name, photo: p.photo },
+            initials: p.name.slice(0, 2).toUpperCase(),
+            isOnline: p.online,
+            proximityMeters: p.distanceMeters,
+            currentThread: "Conexão local",
+            threadIcon: ThreadIcon.COFFEE,
+            lastMessage: last?.text ?? "Vocês estão conectados",
+            lastMessageType: LastMessageType.TEXT,
+            updatedAt: new Date(last?.at ?? Date.now()),
+            unreadCount: last && last.from === "them" ? 1 : 0,
+            isMuted: false,
+            isPinned: false,
+            sharedInterest: p.interests[0],
+          };
+        });
+      const existingIds = new Set(mockConversations.map((c) => c.id));
+      const addNew = created.filter((c) => !existingIds.has(c.id));
+      if (addNew.length > 0) {
+        setMockConversations((prev) => [...addNew, ...prev]);
+      }
+    };
+    sync();
+    return subscribeDemoDB(sync);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo]);
+
+  // Load real conversations when Supabase is configured
+  useEffect(() => {
+    if (!configured || !user?.id) return;
+    let active = true;
+    (async () => {
+      setRealLoading(true);
+      setRealError(null);
+      try {
+        const rows: ConversationRowDB[] = await ChatService.getConversations(user.id);
+        const mapped: RealConversation[] = [];
+        for (const row of rows) {
+          const r = row as Record<string, unknown>;
+          const participants = r.participants as
+            { user_id: string; profile?: { name?: string; photo_url?: string } }[] | undefined;
+          const other = participants?.find((p) => p.user_id !== user.id);
+          const name = other?.profile?.name ?? "Conversa";
+          const photo = other?.profile?.photo_url ?? null;
+          mapped.push({
+            id: r.id as string,
+            participant: { id: other?.user_id ?? "", name, photo },
+            lastMessage: "",
+            updatedAt: new Date(r.updated_at as string),
+            isMuted: false,
+            isPinned: false,
+          });
+        }
+        if (active) setRealConversations(mapped);
+      } catch (err) {
+        if (active) setRealError(err instanceof Error ? err.message : "Erro ao carregar conversas");
+      } finally {
+        if (active) setRealLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [configured, user?.id]);
+
+  const conversations = configured ? realConversations : mockConversations;
+  const sorted = useMemo(() => {
+    if (configured) return realConversations;
+    return sortMockConversations(mockConversations);
+  }, [configured, realConversations, mockConversations]);
+
+  const filtered = useMemo(() => {
+    if (configured) {
+      const items = sorted.filter((conversation) => {
+        const person = people.find((item) => item.id === conversation.participant.id);
+        if (onlyOnline && person && !person.online) return false;
+        if (onlyNearby && person && person.distanceMeters > 2000) return false;
+        return true;
+      });
+      if (!query.trim()) return items;
+      const q = query.toLowerCase();
+      return items.filter((c) => c.participant.name.toLowerCase().includes(q));
+    }
+    return searchMockConversations(sorted as MockConversation[], query).filter((conversation) => {
+      const person = people.find((item) => item.id === conversation.participant.id);
+      if (onlyOnline && person && !person.online) return false;
+      return !(onlyNearby && person && person.distanceMeters > 2000);
+    });
+  }, [configured, sorted, query, onlyOnline, onlyNearby]);
+
   const continueItems = useMemo(
-    () => (query.trim() ? [] : sorted.filter((c) => c.nextGesture).slice(0, 2)),
-    [sorted, query],
+    () =>
+      query.trim()
+        ? []
+        : configured
+          ? []
+          : (sorted as MockConversation[]).filter((c) => c.nextGesture).slice(0, 2),
+    [sorted, query, configured],
   );
 
   const hasQuery = query.trim().length > 0;
+  const filtersActive = onlyOnline || onlyNearby;
+  const filteredRequests = useMemo(
+    () =>
+      pendingRequests.filter((request) => {
+        const person = people.find((item) => item.id === request.fromUserId);
+        if (!person) return false;
+        if (onlyOnline && !person.online) return false;
+        if (onlyNearby && person.distanceMeters > 2000) return false;
+        const searchable = `${person.name} ${request.message}`.toLowerCase();
+        return !query.trim() || searchable.includes(query.trim().toLowerCase());
+      }),
+    [pendingRequests, query, onlyOnline, onlyNearby],
+  );
 
   function openConversation(id: string) {
     navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
@@ -46,42 +192,13 @@ export function ConversationsScreen() {
 
   function handleGesture(conversation: MockConversation) {
     if (conversation.nextGesture === NextGesture.CONFIRM) {
-      setConversations((prev) =>
+      setMockConversations((prev) =>
         prev.map((c) => (c.id === conversation.id ? { ...c, nextGesture: undefined } : c)),
       );
       toast.success("Horário confirmado");
       return;
     }
     openConversation(conversation.id);
-  }
-
-  function toggleMuted(conversation: MockConversation) {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === conversation.id ? { ...c, isMuted: !c.isMuted } : c)),
-    );
-    toast.success(conversation.isMuted ? "Notificações ativadas" : "Conversa silenciada");
-  }
-
-  function togglePinned(conversation: MockConversation) {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === conversation.id ? { ...c, isPinned: !c.isPinned } : c)),
-    );
-    toast.success(conversation.isPinned ? "Conversa desafixada" : "Conversa fixada");
-  }
-
-  function archive(conversation: MockConversation) {
-    setMenuTarget(null);
-    setConversations((prev) => prev.filter((c) => c.id !== conversation.id));
-    toast.success("Conversa arquivada", {
-      action: {
-        label: "Desfazer",
-        onClick: () =>
-          setConversations((prev) => [
-            ...prev,
-            { ...conversation, updatedAt: new Date(conversation.updatedAt.getTime()) },
-          ]),
-      },
-    });
   }
 
   return (
@@ -94,13 +211,53 @@ export function ConversationsScreen() {
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="px-5 pt-1"
       >
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="font-display text-[32px] font-bold leading-tight tracking-tight">
+            <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
               Conversas
             </h1>
-            <p className="mt-0.5 text-[13px] text-muted-foreground">Conexões que continuam</p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">Conexões que continuam</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setFilterOpen((open) => !open)}
+            aria-label="Filtrar pessoas"
+            className={`grid h-10 w-10 place-items-center rounded-full border transition active:scale-95 ${
+              filtersActive
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-surface text-muted-foreground"
+            }`}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 border-b border-border">
+          <button
+            type="button"
+            onClick={() => setActiveTab("active")}
+            className={`relative pb-3 text-[13px] font-semibold transition ${activeTab === "active" ? "text-primary" : "text-muted-foreground"}`}
+          >
+            Ativas
+            {activeTab === "active" && (
+              <span className="absolute inset-x-5 -bottom-px h-0.5 rounded-full bg-primary" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("requests")}
+            className={`relative flex items-center justify-center gap-1.5 pb-3 text-[13px] font-semibold transition ${activeTab === "requests" ? "text-primary" : "text-muted-foreground"}`}
+          >
+            Solicitações
+            {pendingRequests.length > 0 && (
+              <span className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] text-primary-foreground">
+                {pendingRequests.length}
+              </span>
+            )}
+            {activeTab === "requests" && (
+              <span className="absolute inset-x-5 -bottom-px h-0.5 rounded-full bg-primary" />
+            )}
+          </button>
         </div>
 
         <div className="relative mt-4">
@@ -124,9 +281,72 @@ export function ConversationsScreen() {
             </button>
           )}
         </div>
+
+        {filterOpen && (
+          <div className="mt-3 rounded-2xl border border-border bg-surface p-3 shadow-soft">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold">Filtrar pessoas</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setOnlyOnline(false);
+                  setOnlyNearby(false);
+                }}
+                className="text-[11px] font-semibold text-primary"
+              >
+                Limpar
+              </button>
+            </div>
+            <label className="mt-3 flex items-center justify-between text-sm">
+              <span>Disponíveis agora</span>
+              <input
+                type="checkbox"
+                checked={onlyOnline}
+                onChange={(event) => setOnlyOnline(event.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+            </label>
+            <label className="mt-3 flex items-center justify-between text-sm">
+              <span>Perto de você</span>
+              <input
+                type="checkbox"
+                checked={onlyNearby}
+                onChange={(event) => setOnlyNearby(event.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+            </label>
+          </div>
+        )}
       </motion.header>
 
-      {conversations.length === 0 ? (
+      {/* Loading state (real only) */}
+      {configured && realLoading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </div>
+      )}
+
+      {/* Error state (real only) */}
+      {configured && realError && !realLoading && (
+        <div className="px-8 py-16 text-center">
+          <p className="text-sm text-muted-foreground">{realError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setRealError(null);
+              setRealLoading(true);
+              // Trigger re-fetch by updating state
+              setRealConversations([]);
+            }}
+            className="mt-3 text-sm text-primary font-semibold"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!realLoading && !realError && activeTab === "active" && conversations.length === 0 && (
         <div className="px-8 pt-24 text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-brand shadow-elegant">
             <MessagesSquare className="h-7 w-7 text-white" strokeWidth={2.1} />
@@ -145,17 +365,28 @@ export function ConversationsScreen() {
             Encontrar pessoas
           </button>
         </div>
-      ) : hasQuery && filtered.length === 0 ? (
-        <div className="px-8 pt-24 text-center">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-secondary">
-            <Search className="h-6 w-6 text-muted-foreground" />
+      )}
+
+      {/* Search empty */}
+      {!realLoading &&
+        !realError &&
+        activeTab === "active" &&
+        (hasQuery || filtersActive) &&
+        filtered.length === 0 &&
+        conversations.length > 0 && (
+          <div className="px-8 pt-24 text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-secondary">
+              <Search className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="mt-5 font-display text-lg font-bold">Nenhuma conversa encontrada</h3>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Tente buscar por uma pessoa, interesse ou assunto.
+            </p>
           </div>
-          <h3 className="mt-5 font-display text-lg font-bold">Nenhuma conversa encontrada</h3>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Tente buscar por uma pessoa, interesse ou assunto.
-          </p>
-        </div>
-      ) : (
+        )}
+
+      {/* Conversation list */}
+      {!realLoading && !realError && activeTab === "active" && filtered.length > 0 && (
         <>
           {continueItems.length > 0 && (
             <motion.section
@@ -194,98 +425,119 @@ export function ConversationsScreen() {
               animate="visible"
               className="mt-1"
             >
-              {filtered.map((conversation) => (
-                <ConversationRow
-                  key={conversation.id}
-                  conversation={conversation}
-                  onGesture={handleGesture}
-                  onMenu={setMenuTarget}
-                />
-              ))}
+              {configured
+                ? (filtered as RealConversation[]).map((conversation) => (
+                    <RealConversationRow
+                      key={conversation.id}
+                      conversation={conversation}
+                      onOpen={openConversation}
+                    />
+                  ))
+                : (filtered as MockConversation[]).map((conversation) => (
+                    <ConversationRow
+                      key={conversation.id}
+                      conversation={conversation}
+                      onGesture={handleGesture}
+                      onMenu={() => undefined}
+                    />
+                  ))}
             </motion.div>
           </section>
         </>
       )}
 
-      <AnimatePresence>
-        {menuTarget && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
-          >
-            <button
-              type="button"
-              aria-label="Fechar opções"
-              onClick={() => setMenuTarget(null)}
-              className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
-            />
-            <motion.div
-              initial={{ y: 24, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 24, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute inset-x-0 bottom-0 mx-auto max-w-[420px] rounded-t-3xl border-t border-border bg-surface p-3 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] shadow-elegant"
-            >
-              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border" />
-              <p className="px-2 pb-2 text-sm font-semibold text-muted-foreground">
-                {menuTarget.participant.name}
+      {!realLoading && !realError && activeTab === "requests" && (
+        <section className="mt-5 px-5">
+          {filteredRequests.length > 0 ? (
+            <div className="space-y-2.5">
+              {filteredRequests.map((request) => {
+                const person = people.find((item) => item.id === request.fromUserId);
+                if (!person) return null;
+                return (
+                  <button
+                    key={request.id}
+                    type="button"
+                    onClick={() =>
+                      navigate({
+                        to: "/solicitacao/$id",
+                        params: { id: person.id },
+                        search: { mode: "receive" },
+                      })
+                    }
+                    className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left shadow-soft transition active:scale-[0.99]"
+                  >
+                    <span className="relative shrink-0">
+                      <img
+                        src={person.photo}
+                        alt=""
+                        className="h-12 w-12 rounded-full object-cover"
+                      />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-primary" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">{person.name}</span>
+                      <span className="mt-0.5 line-clamp-2 block text-[11px] text-muted-foreground">
+                        {request.message || "Quer iniciar uma conversa com você."}
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary">
+                      Ver
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-border px-6 py-12 text-center">
+              <MessagesSquare className="mx-auto h-6 w-6 text-primary" />
+              <h2 className="mt-3 font-display text-base font-bold">Nenhuma solicitação agora</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Novos convites para conversar aparecerão aqui.
               </p>
-              <SheetAction
-                icon={menuTarget.isMuted ? Bell : BellOff}
-                label={menuTarget.isMuted ? "Ativar notificações" : "Silenciar"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleMuted(menuTarget);
-                  setMenuTarget(null);
-                }}
-              />
-              <SheetAction
-                icon={Pin}
-                label={menuTarget.isPinned ? "Desafixar" : "Fixar"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  togglePinned(menuTarget);
-                  setMenuTarget(null);
-                }}
-              />
-              <SheetAction
-                icon={Archive}
-                label="Arquivar"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  archive(menuTarget);
-                }}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
 
-function SheetAction({
-  icon: Icon,
-  label,
-  onClick,
+function RealConversationRow({
+  conversation,
+  onOpen,
 }: {
-  icon: typeof Pin;
-  label: string;
-  onClick: MouseEventHandler<HTMLButtonElement>;
+  conversation: RealConversation;
+  onOpen: (id: string) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] transition-colors",
-        "hover:bg-accent active:bg-accent",
-      )}
+      onClick={() => onOpen(conversation.id)}
+      className="flex w-full items-center gap-3 px-5 py-3 hover:bg-accent/50 transition-colors text-left"
     >
-      <Icon className="h-[18px] w-[18px] text-foreground/80" strokeWidth={2.1} />
-      {label}
+      <div className="relative shrink-0">
+        {conversation.participant.photo ? (
+          <img
+            src={conversation.participant.photo}
+            alt=""
+            className="h-11 w-11 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
+            {conversation.participant.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="truncate text-sm font-semibold text-foreground">
+          {conversation.participant.name}
+        </p>
+        {conversation.lastMessage && (
+          <p className="truncate text-xs text-muted-foreground mt-0.5">
+            {conversation.lastMessage}
+          </p>
+        )}
+      </div>
     </button>
   );
 }

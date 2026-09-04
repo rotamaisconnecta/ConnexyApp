@@ -1,167 +1,87 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Ban, Bell, BellOff, User, Video } from "lucide-react";
+import { Ban, Bell, BellOff, Loader2, User, Video } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBar } from "@/components/phone-frame";
 import { ChatHeader } from "./chat-header";
 import { ChatSearch } from "./chat-search";
 import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
-import { TypingIndicator } from "./typing-indicator";
-import { findPerson, currentUser } from "@/lib/mock-data";
-import { MOCK_CONVERSATIONS } from "@/lib/chat/mock-conversations";
-import type {
-  AttachmentAction,
-  ChatMessage,
-  ConversationParticipant,
-  QuickReaction,
-  TypingIndicator as TypingType,
-} from "@/lib/chat/chat-types";
-import { MessageKind, MessageStatus } from "@/lib/chat/chat-types";
-import { createTypingIndicator } from "@/lib/chat/typing-utils";
-import { advanceStatus } from "@/lib/chat/message-status";
-import { formatChatProximity } from "@/lib/chat/proximity";
-import { cn } from "@/lib/utils";
-
-const MINUTE = 60 * 1000;
-const HOUR = 60 * MINUTE;
-
-const DEFAULT_PARTICIPANT: ConversationParticipant = {
-  id: "juliana",
-  name: "Juliana Santos",
-  photo: "/avatars/juliana-santos.jpg",
-  online: true,
-};
-
-const DEFAULT_DISTANCE_METERS = 800;
+import { useAuth } from "@/hooks/use-auth";
+import { useChat } from "@/hooks/api/use-chat";
+import { ChatRepository } from "@/repositories/chat.repository";
+import { UserRepository } from "@/repositories/user.repository";
+import { usePresenceContext } from "@/providers/presence/presence-context";
+import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { people } from "@/lib/mock-data";
+import type { ChatMessage, ConversationParticipant, QuickReaction } from "@/lib/chat/chat-types";
+import type { ProfileRow } from "@/types/database/tables";
 
 interface ConnexyChatScreenProps {
   conversationId?: string;
 }
 
-function buildMockMessages(participantId: string): ChatMessage[] {
-  const now = Date.now();
-
-  return [
-    {
-      id: `${participantId}-1`,
-      conversationId: participantId,
-      from: "them",
-      kind: MessageKind.TEXT,
-      text: "Oi! Vi que a gente tem interesses em comum 😊",
-      at: new Date(now - 3 * HOUR),
-      status: MessageStatus.READ,
-    },
-    {
-      id: `${participantId}-2`,
-      conversationId: participantId,
-      from: "me",
-      kind: MessageKind.TEXT,
-      text: "Oi! Sim, adoro café e fotografia!",
-      at: new Date(now - 3 * HOUR + 5 * MINUTE),
-      status: MessageStatus.READ,
-    },
-    {
-      id: `${participantId}-3`,
-      conversationId: participantId,
-      from: "them",
-      kind: MessageKind.LOCATION,
-      label: "Café Central",
-      proximity: formatChatProximity(1600),
-      cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
-      at: new Date(now - 2 * HOUR),
-      status: MessageStatus.READ,
-    },
-    {
-      id: `${participantId}-4`,
-      conversationId: participantId,
-      from: "me",
-      kind: MessageKind.AUDIO,
-      durationSec: 12,
-      at: new Date(now - 90 * MINUTE),
-      status: MessageStatus.READ,
-    },
-    {
-      id: `${participantId}-5`,
-      conversationId: participantId,
-      from: "them",
-      kind: MessageKind.TEXT,
-      text: "Que vibe boa esse lugar ☕",
-      at: new Date(now - 80 * MINUTE),
-      status: MessageStatus.READ,
-      reaction: "❤️",
-    },
-    {
-      id: `${participantId}-6`,
-      conversationId: participantId,
-      from: "them",
-      kind: MessageKind.EVENT,
-      title: "Sunset no Parque",
-      cover: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400",
-      dateText: "Sáb · 16:00",
-      location: "Parque Ibirapuera",
-      at: new Date(now - 1 * HOUR),
-      status: MessageStatus.READ,
-    },
-    {
-      id: `${participantId}-7`,
-      conversationId: participantId,
-      from: "me",
-      kind: MessageKind.TEXT,
-      text: "Top! Bora marcar um café? 😄",
-      at: new Date(now - 45 * MINUTE),
-      status: MessageStatus.READ,
-    },
-    {
-      id: `${participantId}-8`,
-      conversationId: participantId,
-      from: "them",
-      kind: MessageKind.TEXT,
-      text: "Bora! Quando você pode?",
-      at: new Date(now - 30 * MINUTE),
-      status: MessageStatus.READ,
-    },
-  ];
-}
-
 export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { isOnline } = usePresenceContext();
 
-  const person = useMemo(() => findPerson(conversationId ?? ""), [conversationId]);
+  const [participant, setParticipant] = useState<ConversationParticipant | null>(null);
+  const [participantLoading, setParticipantLoading] = useState(true);
 
-  const conversation = useMemo(
-    () => MOCK_CONVERSATIONS.find((item) => item.id === conversationId),
-    [conversationId],
-  );
+  const { messages, isLoading, error, hasMore, sendMessage, loadMore, retry, subscriptionStatus } =
+    useChat({
+      conversationId: conversationId ?? null,
+      currentUserId: user?.id ?? null,
+    });
 
-  const participant: ConversationParticipant = useMemo(() => {
-    if (person) {
-      return {
-        id: person.id,
-        name: person.name,
-        photo: person.photo,
-        online: person.online,
-        lastSeen: person.lastSeen,
-      };
+  // Resolve the other participant from conversation_participants
+  useEffect(() => {
+    if (isDemoMode() && conversationId && user?.id) {
+      const mock = people.find((p) => p.id === conversationId);
+      setParticipant({
+        id: conversationId,
+        name: mock?.name ?? "Conversa",
+        photo: mock?.photo ?? "",
+        online: mock?.online ?? false,
+      });
+      setParticipantLoading(false);
+      return;
     }
-    if (conversation) {
-      return {
-        id: conversation.participant.id,
-        name: conversation.participant.name,
-        photo: conversation.participant.photo ?? "",
-        online: conversation.isOnline,
-      };
+    if (!conversationId || !user?.id || !isPublicSupabaseConfigured()) {
+      setParticipantLoading(false);
+      return;
     }
-    return DEFAULT_PARTICIPANT;
-  }, [person, conversation]);
+    let active = true;
+    (async () => {
+      try {
+        const participants = await ChatRepository.getParticipants(conversationId);
+        const otherId = participants.find((p) => p.user_id !== user.id)?.user_id;
+        if (!otherId || !active) {
+          setParticipant({ id: "", name: "Conversa", photo: "", online: false });
+          return;
+        }
+        const profile: ProfileRow = await UserRepository.getById(otherId);
+        if (!active) return;
+        setParticipant({
+          id: profile.id,
+          name: profile.name ?? "Usuario",
+          photo: profile.photo_url ?? "",
+          online: isOnline(profile.id),
+        });
+      } catch {
+        if (active) setParticipant({ id: "", name: "Conversa", photo: "", online: false });
+      } finally {
+        if (active) setParticipantLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [conversationId, user?.id, isOnline]);
 
-  const distanceMeters =
-    person?.distanceMeters ?? conversation?.proximityMeters ?? DEFAULT_DISTANCE_METERS;
-  const proximity = formatChatProximity(distanceMeters);
-
-  const [messages, setMessages] = useState<ChatMessage[]>(() => buildMockMessages(participant.id));
-  const [typing, setTyping] = useState<TypingType | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -178,104 +98,14 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     if (!didMountRef.current) return;
     const el = scrollRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages]);
 
   const handleBack = useCallback(() => {
     router.navigate({ to: "/chat" });
   }, [router]);
 
-  const push = useCallback(
-    (draft: ChatMessage) => {
-      setMessages((prev) => [...prev, draft]);
-
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === draft.id ? { ...m, status: advanceStatus(draft.status) } : m)),
-        );
-      }, 600);
-
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((m) => {
-            if (m.id !== draft.id) return m;
-            return { ...m, status: advanceStatus(advanceStatus(draft.status)) };
-          }),
-        );
-      }, 1200);
-
-      const otherTyping = createTypingIndicator(participant.id, participant.id);
-      setTimeout(() => setTyping(otherTyping), 1500);
-
-      setTimeout(() => {
-        setTyping(null);
-        const reply: ChatMessage = {
-          id: `${participant.id}-reply-${Date.now()}`,
-          conversationId: participant.id,
-          from: "them",
-          kind: MessageKind.TEXT,
-          text: "Show! Combinado então 🎉",
-          at: new Date(),
-          status: MessageStatus.READ,
-        };
-        setMessages((prev) => [...prev, reply]);
-      }, 3200);
-    },
-    [participant.id],
-  );
-
   function handleSendText(text: string) {
-    const draft: ChatMessage = {
-      id: `${participant.id}-msg-${Date.now()}`,
-      conversationId: participant.id,
-      from: "me",
-      kind: MessageKind.TEXT,
-      text,
-      at: new Date(),
-      status: MessageStatus.SENDING,
-    };
-    push(draft);
-  }
-
-  function handleSendVoice(durationSec: number) {
-    const draft: ChatMessage = {
-      id: `${participant.id}-audio-${Date.now()}`,
-      conversationId: participant.id,
-      from: "me",
-      kind: MessageKind.AUDIO,
-      durationSec,
-      at: new Date(),
-      status: MessageStatus.SENDING,
-    };
-    push(draft);
-  }
-
-  function handleOpenAttachment(kind: AttachmentAction) {
-    if (kind === MessageKind.LOCATION) {
-      const draft: ChatMessage = {
-        id: `${participant.id}-loc-${Date.now()}`,
-        conversationId: participant.id,
-        from: "me",
-        kind: MessageKind.LOCATION,
-        label: "Café Central",
-        proximity: formatChatProximity(1600),
-        cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400",
-        at: new Date(),
-        status: MessageStatus.SENDING,
-      };
-      push(draft);
-      return;
-    }
-    toast.info("Anexo disponível em breve");
-  }
-
-  function handleReaction(messageId: string, reaction: QuickReaction) {
-    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reaction } : m)));
-  }
-
-  function handleRetry(messageId: string) {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, status: MessageStatus.SENDING } : m)),
-    );
+    void sendMessage(text);
   }
 
   function handleSearchResultClick(messageId: string) {
@@ -286,34 +116,40 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   const toggleMuted = useCallback(() => setMuted((value) => !value), []);
 
-  const isOwnProfile = participant.id === currentUser.id;
-  const hasValidProfileId = Boolean(participant.id && participant.id.length > 0);
+  const isOwnProfile = participant?.id === user?.id;
+  const hasValidProfileId = Boolean(participant?.id && participant.id.length > 0);
+
+  if (participantLoading) {
+    return (
+      <main className="relative flex-1 flex flex-col h-full min-h-0">
+        <StatusBar />
+        <div className="flex-1 grid place-items-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      </main>
+    );
+  }
+
+  const fallbackParticipant: ConversationParticipant = {
+    id: "",
+    name: "Conversa",
+    photo: "",
+    online: false,
+  };
+
+  const activeParticipant = participant ?? fallbackParticipant;
 
   return (
     <main className="relative flex-1 flex flex-col h-full min-h-0 pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]">
       <StatusBar />
 
       <ChatHeader
-        participant={participant}
-        proximity={proximity}
+        participant={activeParticipant}
         onBack={handleBack}
         onVideoCall={() => toast.info("Videocall em breve")}
         onSearch={() => setShowSearch((value) => !value)}
         onMenu={() => setMenuOpen(true)}
       />
-
-      {conversation && (
-        <div className="flex items-center gap-2 border-b border-border/50 bg-surface/40 px-4 py-1.5">
-          <span className="min-w-0 truncate text-[11px] font-medium text-primary/80">
-            Fio · {conversation.currentThread}
-          </span>
-          {conversation.sharedInterest && (
-            <span className="shrink-0 text-[11px] text-muted-foreground">
-              Interesse: {conversation.sharedInterest}
-            </span>
-          )}
-        </div>
-      )}
 
       {showSearch && (
         <ChatSearch
@@ -324,21 +160,49 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
       )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar min-h-0">
-        <MessageList
-          messages={messages}
-          participantPhoto={participant.photo}
-          onReaction={handleReaction}
-          onRetry={handleRetry}
-        />
-
-        {typing && <TypingIndicator name={participant.name} photo={participant.photo} />}
+        {isLoading && messages.length === 0 ? (
+          <div className="flex-1 grid place-items-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        ) : error && messages.length === 0 ? (
+          <div className="px-8 py-16 text-center">
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <button
+              type="button"
+              onClick={() => void retry()}
+              className="mt-3 text-sm text-primary font-semibold"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="px-8 py-16 text-center">
+            <p className="text-sm text-muted-foreground">
+              Nenhuma mensagem ainda. Digite a primeira!
+            </p>
+          </div>
+        ) : (
+          <>
+            {hasMore && (
+              <div className="text-center py-2">
+                <button
+                  type="button"
+                  onClick={() => void loadMore()}
+                  className="text-xs text-primary font-medium"
+                >
+                  Carregar mais
+                </button>
+              </div>
+            )}
+            <MessageList messages={messages} participantPhoto={activeParticipant.photo} />
+          </>
+        )}
       </div>
 
       <MessageInput
         placeholder="Digite uma mensagem"
         onSendText={handleSendText}
-        onSendVoice={handleSendVoice}
-        onOpenAttachment={handleOpenAttachment}
+        disabled={isLoading || !conversationId}
       />
 
       {menuOpen && (
@@ -362,7 +226,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
           >
             <MenuItem
               icon={User}
-              label={isOwnProfile ? "Meu perfil" : `Ver perfil de ${participant.name}`}
+              label={isOwnProfile ? "Meu perfil" : `Ver perfil de ${activeParticipant.name}`}
               disabled={isOwnProfile || !hasValidProfileId}
               onClick={() => {
                 setMenuOpen(false);
@@ -371,7 +235,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
                 } else if (hasValidProfileId) {
                   router.navigate({
                     to: "/perfil/$id",
-                    params: { id: participant.id },
+                    params: { id: activeParticipant.id },
                   });
                 }
               }}
@@ -400,7 +264,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
               destructive
               onClick={() => {
                 setMenuOpen(false);
-                toast.info("Usuário bloqueado (simulação)");
+                toast.info("Bloqueio disponível em breve");
               }}
             />
           </motion.div>
@@ -430,15 +294,15 @@ function MenuItem({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={cn(
-        "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
-        disabled && "opacity-40 cursor-not-allowed",
-        destructive
-          ? "text-destructive hover:bg-destructive/10"
-          : active
-            ? "text-primary hover:bg-accent"
-            : "text-foreground hover:bg-accent",
-      )}
+      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+        disabled
+          ? "opacity-40 cursor-not-allowed"
+          : destructive
+            ? "text-destructive hover:bg-destructive/10"
+            : active
+              ? "text-primary hover:bg-accent"
+              : "text-foreground hover:bg-accent"
+      }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{label}</span>

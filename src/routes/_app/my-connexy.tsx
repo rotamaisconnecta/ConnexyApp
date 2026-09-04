@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import {
   Store,
   Calendar,
   MapPin,
   Tag,
   Car,
-  Plus,
   ChevronRight,
   Eye,
   Heart,
@@ -16,7 +15,6 @@ import {
   Users,
   Star,
   Clock,
-  Image,
   BarChart3,
   Settings,
   Trash2,
@@ -27,11 +25,10 @@ import {
 } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { Colors, Radius, Shadows } from "@/theme";
-import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
-import { getStoredRoles } from "@/lib/roles/roles-storage";
 import { currentUser } from "@/lib/mock-data";
 import WizardBase from "@/components/my-connexy/wizard-base";
 import type { WizardStep } from "@/components/my-connexy/wizard-base";
+import { UploadMedia } from "@/components/upload";
 
 export const Route = createFileRoute("/_app/my-connexy")({
   head: () => ({ meta: [{ title: "Meu Connexy — Central" }] }),
@@ -39,18 +36,6 @@ export const Route = createFileRoute("/_app/my-connexy")({
 });
 
 /* ─── Types ──────────────────────────────────────────── */
-
-interface ResumoItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  emoji: string;
-  count: number;
-  color: string;
-  bgLight: string;
-  route: string;
-  role: UserRole;
-}
 
 interface StatItem {
   id: string;
@@ -72,64 +57,6 @@ interface ActivityItem {
 type WizardType = "negocio" | "evento" | "local" | "oferta" | "publicacao" | null;
 
 /* ─── Data ───────────────────────────────────────────── */
-
-const RESUMO_ITEMS: ResumoItem[] = [
-  {
-    id: "negocios",
-    label: "Negócios",
-    icon: Store,
-    emoji: "🏢",
-    count: 1,
-    color: "#F59E0B",
-    bgLight: "bg-amber-50 dark:bg-amber-950/20",
-    route: "/create/place-business",
-    role: UserRole.BUSINESS,
-  },
-  {
-    id: "eventos",
-    label: "Eventos",
-    icon: Calendar,
-    emoji: "📅",
-    count: 0,
-    color: "#EC4899",
-    bgLight: "bg-pink-50 dark:bg-pink-950/20",
-    route: "/create/event",
-    role: UserRole.EVENT_CREATOR,
-  },
-  {
-    id: "locais",
-    label: "Locais",
-    icon: MapPin,
-    emoji: "📍",
-    count: 0,
-    color: "#3B82F6",
-    bgLight: "bg-blue-50 dark:bg-blue-950/20",
-    route: "/create/place",
-    role: UserRole.PLACE_OWNER,
-  },
-  {
-    id: "ofertas",
-    label: "Promoções",
-    icon: Tag,
-    emoji: "🏷️",
-    count: 0,
-    color: "#8B5CF6",
-    bgLight: "bg-purple-50 dark:bg-purple-950/20",
-    route: "/create/offer",
-    role: UserRole.BUSINESS,
-  },
-  {
-    id: "mobilidade",
-    label: "Mobilidade",
-    icon: Car,
-    emoji: "🚗",
-    count: 0,
-    color: "#22C55E",
-    bgLight: "bg-green-50 dark:bg-green-950/20",
-    route: "/driver",
-    role: UserRole.DRIVER,
-  },
-];
 
 const STATS: StatItem[] = [
   { id: "views", label: "Visualizações", icon: Eye, value: "2.4k", change: "+12%", positive: true },
@@ -374,16 +301,13 @@ function CategoryPicker({ categories }: { categories: string[] }) {
 
 function PhotoUploader() {
   return (
-    <div
-      className="flex flex-col items-center justify-center gap-2 py-8 rounded-2xl border-2 border-dashed cursor-pointer hover:border-primary/50 transition-colors"
-      style={{ borderColor: Colors.border, background: Colors.surface }}
-    >
-      <div className="w-12 h-12 rounded-full bg-primary/10 grid place-items-center">
-        <Image size={20} className="text-primary" />
-      </div>
-      <p className="text-sm text-muted-foreground">Toque para adicionar fotos</p>
-      <p className="text-[10px] text-muted-foreground">PNG, JPG até 10MB</p>
-    </div>
+    <UploadMedia
+      mode="photo"
+      multiple
+      maxFiles={5}
+      label="Adicione até 5 fotos"
+      className="rounded-2xl border border-border bg-surface p-3"
+    />
   );
 }
 
@@ -627,32 +551,11 @@ function PanelAction({
 /* ─── Main Page ──────────────────────────────────────── */
 
 function MyConnexyPage() {
-  const navigate = useNavigate();
-  const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
-  const [activePanel, setActivePanel] = useState<string | null>(null);
   const [activeWizard, setActiveWizard] = useState<WizardType>(null);
-
-  useEffect(() => {
-    function handleChange() {
-      setRolesState(getStoredRoles());
-    }
-    window.addEventListener("roleChanged", handleChange);
-    return () => window.removeEventListener("roleChanged", handleChange);
-  }, []);
-
-  const hasRole = useCallback(
-    (role: UserRole) => rolesState.roles.includes(role),
-    [rolesState.roles],
-  );
-  const activeRoles = rolesState.roles.filter((r) => r !== UserRole.USER);
 
   function handleWizardComplete() {
     setActiveWizard(null);
     window.dispatchEvent(new Event("roleChanged"));
-  }
-
-  function openPanel(id: string) {
-    setActivePanel(id);
   }
 
   function openWizard(type: WizardType) {
@@ -669,11 +572,11 @@ function MyConnexyPage() {
   };
 
   return (
-    <div className="flex-1 pb-24">
+    <div className="flex-1 min-h-0">
       <StatusBar />
 
       {/* ─── Scrollable content ─── */}
-      <div className="overflow-y-auto h-full px-4">
+      <div className="h-full overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+7rem)]">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
@@ -703,66 +606,53 @@ function MyConnexyPage() {
           </div>
         </motion.div>
 
-        {/* Resumo */}
+        {/* Ações Rápidas */}
         <section className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Resumo
-            </h2>
-            {activeRoles.length > 0 && (
-              <span className="text-[10px] text-muted-foreground">
-                {activeRoles.length} ativo{activeRoles.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Ações rápidas
+          </h2>
           <div className="grid grid-cols-2 gap-3">
-            {RESUMO_ITEMS.map((item, i) => {
-              const active = hasRole(item.role);
-              return (
-                <motion.button
-                  key={item.id}
-                  custom={i}
-                  variants={animatedItem}
-                  initial="hidden"
-                  animate="visible"
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() =>
-                    active ? openPanel(item.id) : navigate({ to: "/profile/roles" as never })
-                  }
-                  className={`relative overflow-hidden rounded-2xl p-4 text-left border transition-all ${
-                    active
-                      ? "border-border bg-surface shadow-soft"
-                      : `${item.bgLight} border-transparent`
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className="w-10 h-10 rounded-xl grid place-items-center text-lg"
-                      style={{ background: `${item.color}15` }}
-                    >
-                      {item.emoji}
-                    </span>
-                    {active ? (
-                      <span className="text-xs font-bold" style={{ color: item.color }}>
-                        {item.count}
-                      </span>
-                    ) : (
-                      <Plus size={14} className="text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="text-sm font-semibold">{item.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {active ? "Toque para gerenciar" : "Criar agora"}
-                  </div>
-                  {active && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 h-0.5"
-                      style={{ background: item.color, opacity: 0.3 }}
-                    />
-                  )}
-                </motion.button>
-              );
-            })}
+            {[
+              {
+                label: "Criar Negócio",
+                emoji: "🏢",
+                gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
+                wizard: "negocio" as WizardType,
+              },
+              {
+                label: "Criar Evento",
+                emoji: "📅",
+                gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
+                wizard: "evento" as WizardType,
+              },
+              {
+                label: "Criar Local",
+                emoji: "📍",
+                gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
+                wizard: "local" as WizardType,
+              },
+              {
+                label: "Nova Oferta",
+                emoji: "🏷️",
+                gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+                wizard: "oferta" as WizardType,
+              },
+            ].map((action, i) => (
+              <motion.button
+                key={action.label}
+                custom={i}
+                variants={animatedItem}
+                initial="hidden"
+                animate="visible"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => openWizard(action.wizard)}
+                className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
+                style={{ background: action.gradient }}
+              >
+                <span className="text-2xl">{action.emoji}</span>
+                <span className="text-sm font-bold">{action.label}</span>
+              </motion.button>
+            ))}
           </div>
         </section>
 
@@ -821,80 +711,6 @@ function MyConnexyPage() {
             ))}
           </div>
         </section>
-
-        {/* Ações Rápidas */}
-        <section className="mb-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Ações rápidas
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                label: "Criar Negócio",
-                emoji: "🏢",
-                gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
-                wizard: "negocio" as WizardType,
-              },
-              {
-                label: "Criar Evento",
-                emoji: "📅",
-                gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
-                wizard: "evento" as WizardType,
-              },
-              {
-                label: "Criar Local",
-                emoji: "📍",
-                gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
-                wizard: "local" as WizardType,
-              },
-              {
-                label: "Nova Oferta",
-                emoji: "🏷️",
-                gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
-                wizard: "oferta" as WizardType,
-              },
-              {
-                label: "Nova Publicação",
-                emoji: "📝",
-                gradient: "linear-gradient(135deg, #6C3BFF, #4B21D6)",
-                wizard: "publicacao" as WizardType,
-              },
-              {
-                label: "Começar Corrida",
-                emoji: "🚗",
-                gradient: "linear-gradient(135deg, #22C55E, #16A34A)",
-                wizard: null,
-                route: "/driver",
-              },
-            ].map((action, i) => (
-              <motion.button
-                key={action.label}
-                custom={i}
-                variants={animatedItem}
-                initial="hidden"
-                animate="visible"
-                whileTap={{ scale: 0.97 }}
-                onClick={() =>
-                  action.route ? navigate({ to: action.route as never }) : openWizard(action.wizard)
-                }
-                className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
-                style={{ background: action.gradient }}
-              >
-                <span className="text-2xl">{action.emoji}</span>
-                <span className="text-sm font-bold">{action.label}</span>
-              </motion.button>
-            ))}
-          </div>
-        </section>
-
-        {/* Management Panel Overlays */}
-        <AnimatePresence>
-          {activePanel === "negocios" && <PanelNegocios onClose={() => setActivePanel(null)} />}
-          {activePanel === "eventos" && <PanelEventos onClose={() => setActivePanel(null)} />}
-          {activePanel === "locais" && <PanelLocais onClose={() => setActivePanel(null)} />}
-          {activePanel === "ofertas" && <PanelPromocoes onClose={() => setActivePanel(null)} />}
-          {activePanel === "mobilidade" && <PanelMobilidade onClose={() => setActivePanel(null)} />}
-        </AnimatePresence>
 
         {/* Wizard Overlays */}
         <WizardBase

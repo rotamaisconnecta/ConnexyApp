@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { RideRequestForm } from "@/components/mobility/ride-request-form";
 import { StopManager } from "@/components/mobility/stop-manager";
@@ -18,6 +19,14 @@ import { type RouteStop, createStop } from "@/lib/mobility/route-utils";
 
 export const Route = createFileRoute("/_app/ride")({
   head: () => ({ meta: [{ title: "Solicitar viagem — RotaMais" }] }),
+  validateSearch: z.object({
+    destinationId: z.string().optional().nullable(),
+    destinationName: z.string().optional().nullable(),
+    destinationAddress: z.string().optional().nullable(),
+    destinationLat: z.number().optional().nullable(),
+    destinationLng: z.number().optional().nullable(),
+    source: z.string().optional().nullable(),
+  }),
   component: RideRequestPage,
 });
 
@@ -44,8 +53,18 @@ const MOCK_DESTINATIONS: FavoriteDestination[] = [
 
 function RideRequestPage() {
   const nav = useNavigate();
+  const search = Route.useSearch();
   const [origin] = useState<GeoLocation>({ lat: -23.55, lng: -46.64, label: "Minha localização" });
-  const [destination, setDestination] = useState<GeoLocation | null>(null);
+  const [destination, setDestination] = useState<GeoLocation | null>(() => {
+    const label = search.destinationAddress || search.destinationName;
+    return label
+      ? {
+          lat: search.destinationLat ?? -23.58,
+          lng: search.destinationLng ?? -46.65,
+          label,
+        }
+      : null;
+  });
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [scheduled, setScheduled] = useState<Date | null>(null);
 
@@ -57,6 +76,14 @@ function RideRequestPage() {
 
   function handleRemoveStop(id: string) {
     setStops(stops.filter((s) => s.id !== id));
+  }
+
+  function handleUpdateStop(id: string, label: string) {
+    setStops((current) =>
+      current.map((stop) =>
+        stop.id === id ? { ...stop, label, location: { ...stop.location, label } } : stop,
+      ),
+    );
   }
 
   function handleSelectFavorite(fav: FavoriteDestination) {
@@ -90,9 +117,15 @@ function RideRequestPage() {
             setStops([...stops, newStop]);
           }}
           onRemoveStop={handleRemoveStop}
+          onUpdateStop={handleUpdateStop}
         />
 
-        <StopManager stops={stops} onAddStop={handleAddStop} onRemoveStop={handleRemoveStop} />
+        <StopManager
+          stops={stops}
+          onAddStop={handleAddStop}
+          onRemoveStop={handleRemoveStop}
+          onUpdateStop={handleUpdateStop}
+        />
 
         <FavoriteDestinationList favorites={MOCK_DESTINATIONS} onSelect={handleSelectFavorite} />
 
@@ -100,7 +133,19 @@ function RideRequestPage() {
 
         {destination && (
           <button
-            onClick={() => nav({ to: "/ride/request" })}
+            onClick={() =>
+              nav({
+                to: "/ride/request",
+                search: {
+                  destinationId: search.destinationId,
+                  destinationName: destination.label,
+                  destinationAddress: destination.label,
+                  destinationLat: destination.lat,
+                  destinationLng: destination.lng,
+                  source: search.source || "ride",
+                },
+              })
+            }
             className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant"
           >
             Confirmar destino

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Navigation, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ interface RideRequestFormProps {
   onDestinationChange: (location: GeoLocation | null) => void;
   onAddStop: (location: GeoLocation, label: string) => void;
   onRemoveStop: (stopId: string) => void;
+  onUpdateStop?: (stopId: string, label: string) => void;
   suggestions?: { id: string; name: string; address: string; distance: string; icon: string }[];
   onSelectSuggestion?: (suggestion: { id: string; name: string; address: string }) => void;
 }
@@ -25,11 +26,15 @@ export function RideRequestForm({
   onDestinationChange,
   onAddStop,
   onRemoveStop,
+  onUpdateStop,
   suggestions = [],
   onSelectSuggestion,
 }: RideRequestFormProps) {
   const [originText, setOriginText] = useState(origin?.label ?? "Minha localização");
   const [destinationText, setDestinationText] = useState(destination?.label ?? "");
+
+  useEffect(() => setOriginText(origin?.label ?? "Minha localização"), [origin?.label]);
+  useEffect(() => setDestinationText(destination?.label ?? ""), [destination?.label]);
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-3 space-y-3">
@@ -37,7 +42,11 @@ export function RideRequestForm({
         <span className="h-2.5 w-2.5 rounded-full bg-success ring-4 ring-success/20 shrink-0" />
         <input
           value={originText}
-          onChange={(e) => setOriginText(e.target.value)}
+          onChange={(e) => {
+            const label = e.target.value;
+            setOriginText(label);
+            onOriginChange(origin ? { ...origin, label } : { lat: -23.55, lng: -46.64, label });
+          }}
           className="flex-1 bg-transparent outline-none text-sm font-medium"
           placeholder="Origem"
         />
@@ -54,7 +63,7 @@ export function RideRequestForm({
           <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
           <input
             value={stop.label}
-            readOnly
+            onChange={(event) => onUpdateStop?.(stop.id, event.target.value)}
             className="flex-1 bg-transparent outline-none text-sm"
           />
           <button
@@ -73,7 +82,13 @@ export function RideRequestForm({
         <span className="h-2.5 w-2.5 rounded-sm bg-primary shrink-0" />
         <input
           value={destinationText}
-          onChange={(e) => setDestinationText(e.target.value)}
+          onChange={(e) => {
+            const label = e.target.value;
+            setDestinationText(label);
+            onDestinationChange(
+              destination ? { ...destination, label } : { lat: -23.58, lng: -46.65, label },
+            );
+          }}
           placeholder="Para onde você vai?"
           className="flex-1 bg-transparent outline-none text-sm"
         />

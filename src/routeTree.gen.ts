@@ -49,6 +49,7 @@ import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
+import { Route as _devDemoRouteImport } from './routes/__dev/demo'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
@@ -291,6 +292,11 @@ const AppAvaliarRoute = AppAvaliarRouteImport.update({
   path: '/avaliar',
   getParentRoute: () => AppRoute,
 } as any)
+const _devDemoRoute = _devDemoRouteImport.update({
+  id: '/__dev/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -517,6 +523,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/demo': typeof _devDemoRoute
   '/avaliar': typeof AppAvaliarRoute
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
@@ -600,6 +607,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/demo': typeof _devDemoRoute
   '/avaliar': typeof AppAvaliarRoute
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
@@ -685,6 +693,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/__dev/demo': typeof _devDemoRoute
   '/_app/avaliar': typeof AppAvaliarRoute
   '/_app/chat': typeof AppChatRouteWithChildren
   '/_app/connecta': typeof AppConnectaRoute
@@ -770,6 +779,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/demo'
     | '/avaliar'
     | '/chat'
     | '/connecta'
@@ -853,6 +863,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/demo'
     | '/avaliar'
     | '/chat'
     | '/connecta'
@@ -937,6 +948,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/__dev/demo'
     | '/_app/avaliar'
     | '/_app/chat'
     | '/_app/connecta'
@@ -1022,6 +1034,7 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  _devDemoRoute: typeof _devDemoRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -1308,6 +1321,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/avaliar'
       preLoaderRoute: typeof AppAvaliarRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/__dev/demo': {
+      id: '/__dev/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof _devDemoRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
@@ -1820,6 +1840,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  _devDemoRoute: _devDemoRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,

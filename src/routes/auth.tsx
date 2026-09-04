@@ -6,10 +6,12 @@ import { prepareReturnTo } from "@/lib/auth/return-to-prepare";
 import { sanitizeReturnTo } from "@/lib/auth/return-to";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { getProfileStatusClient } from "@/lib/profile/profile-status";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { enterDemoSession } from "@/lib/demo/demo-auth";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/lib/branding/brand-config";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock, FlaskConical } from "lucide-react";
 
 const authSearchSchema = z.object({
   returnTo: z.string().optional(),
@@ -83,6 +85,13 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // In demo mode, any submit enters the local demo session. No Supabase call.
+    if (isDemoMode()) {
+      enterDemoSession();
+      toast.success(mode === "signup" ? "Conta demo criada!" : "Bem-vindo ao modo demo!");
+      nav({ to: "/home", replace: true });
+      return;
+    }
     // Invalidate the session lookup started when /auth mounted before the
     // authentication request yields. Only this submit may navigate afterward.
     const operation = beginAuthOperation();
@@ -117,6 +126,12 @@ function AuthPage() {
   }
 
   async function google() {
+    if (isDemoMode()) {
+      enterDemoSession();
+      toast.success("Entrando no modo demo!");
+      nav({ to: "/home", replace: true });
+      return;
+    }
     const operation = beginAuthOperation();
     setLoading(true);
     if (!configured) {
@@ -158,6 +173,16 @@ function AuthPage() {
                 : "Conecte-se com quem está por perto."}
             </p>
           </div>
+
+          {isDemoMode() && (
+            <div className="mb-5 flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3">
+              <FlaskConical className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-xs text-primary">
+                <span className="font-semibold">Modo demonstração local</span> — sem Supabase. Use
+                qualquer e-mail/senha para testar.
+              </p>
+            </div>
+          )}
 
           <button
             onClick={google}

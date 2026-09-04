@@ -1,5 +1,5 @@
 import { type PostDraft, POST_CATEGORY_META, POST_PRIVACY_META } from "@/lib/types/post";
-import { MapPin, Lock, Globe, Users, Heart } from "lucide-react";
+import { MapPin, Lock, Globe, Users, Heart, Repeat2 } from "lucide-react";
 import { type PostPrivacyValue, PostPrivacy } from "@/lib/types/post";
 
 interface PostPreviewProps {
@@ -47,6 +47,18 @@ export function PostPreview({ draft, authorName, authorPhoto, authorHandle }: Po
       </div>
 
       {/* Media */}
+      {draft.repostSource && (
+        <div className="mt-3">
+          <div className="flex items-center gap-1.5 border-y border-border/60 bg-secondary/45 px-4 py-2 text-[11px] font-semibold text-primary">
+            <Repeat2 className="h-3.5 w-3.5" /> Republicação
+          </div>
+          <img
+            src={draft.repostSource}
+            alt="Imagem republicada"
+            className="max-h-72 w-full object-cover"
+          />
+        </div>
+      )}
       {draft.media.length > 0 && (
         <div className="mt-3">
           {draft.media.length === 1 ? (

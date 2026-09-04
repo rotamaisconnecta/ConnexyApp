@@ -17,6 +17,7 @@ interface BusinessDetailsProps {
   onFavorite?: () => void;
   onSave?: () => void;
   onDirections?: () => void;
+  onPromotionSelect?: (promotionId: string) => void;
 }
 
 export function BusinessDetails({
@@ -25,6 +26,7 @@ export function BusinessDetails({
   onFavorite,
   onSave,
   onDirections,
+  onPromotionSelect,
 }: BusinessDetailsProps) {
   return (
     <div className="space-y-5">
@@ -81,7 +83,9 @@ export function BusinessDetails({
         </div>
       )}
 
-      {business.promotions.length > 0 && <OfferCarousel promotions={business.promotions} />}
+      {business.promotions.length > 0 && (
+        <OfferCarousel promotions={business.promotions} onSelect={onPromotionSelect} />
+      )}
 
       {business.couponCount > 0 && (
         <CouponList coupons={[]} title={`Cupons disponíveis (${business.couponCount})`} />

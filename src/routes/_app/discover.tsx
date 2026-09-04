@@ -2,9 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
-import { Users, Calendar, Building2, Car, MapPin, Map as MapIcon } from "lucide-react";
+import { Users, Calendar, Building2, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser, places, drivers } from "@/lib/mock-data";
+import { currentUser, places, people as mockPeople } from "@/lib/mock-data";
 import { usePresence } from "@/providers/presence/presence-provider";
 import { formatPersonDistance } from "@/lib/proximity";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
@@ -12,7 +12,7 @@ import { useDiscovery } from "@/hooks/api/use-discovery";
 import type { NearbyProfile } from "@/types/phase-13b";
 
 const searchSchema = z.object({
-  filter: z.enum(["places"]).optional(),
+  filter: z.enum(["places", "people"]).optional(),
 });
 
 export const Route = createFileRoute("/_app/discover")({
@@ -21,14 +21,13 @@ export const Route = createFileRoute("/_app/discover")({
   component: DiscoverPage,
 });
 
-type MapFilter = "todos" | "pessoas" | "eventos" | "negocios" | "motoristas" | "locais";
+type MapFilter = "todos" | "pessoas" | "eventos" | "negocios" | "locais";
 
 const FILTERS: { id: MapFilter; label: string; icon: typeof Users; color: string }[] = [
   { id: "todos", label: "Todos", icon: MapIcon, color: "text-primary bg-primary/10" },
   { id: "pessoas", label: "Pessoas", icon: Users, color: "text-blue-500 bg-blue-100" },
   { id: "eventos", label: "Eventos", icon: Calendar, color: "text-pink-500 bg-pink-100" },
   { id: "negocios", label: "Negócios", icon: Building2, color: "text-amber-500 bg-amber-100" },
-  { id: "motoristas", label: "Motoristas", icon: Car, color: "text-green-500 bg-green-100" },
   { id: "locais", label: "Locais", icon: MapPin, color: "text-purple-500 bg-purple-100" },
 ];
 
@@ -59,6 +58,9 @@ function DiscoverPage() {
     if (search.filter === "places") {
       setActiveFilter("locais");
       setSelectedItem(null);
+    } else if (search.filter === "people") {
+      setActiveFilter("pessoas");
+      setSelectedItem(null);
     }
   }, [search.filter]);
 
@@ -78,14 +80,20 @@ function DiscoverPage() {
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
       const profilesToUse = isPublicSupabaseConfigured()
-        ? nearbyProfiles.slice(0, 6).map((p: NearbyProfile) => ({
+        ? nearbyProfiles.slice(0, 7).map((p: NearbyProfile) => ({
             id: p.id,
             name: p.name,
             distanceMeters: (p.distance_km ?? 0) * 1000,
             photo: p.photo_url ?? undefined,
-            interests: p.common_interests,
+            interests: p.common_interests ?? [],
           }))
-        : [];
+        : mockPeople.slice(0, 7).map((person) => ({
+            id: person.id,
+            name: person.name,
+            distanceMeters: person.distanceMeters,
+            photo: person.photo,
+            interests: person.interests,
+          }));
 
       profilesToUse.forEach((p) => {
         items.push({
@@ -136,25 +144,6 @@ function DiscoverPage() {
             update && update.checkinCount > 0
               ? `${p.category} • ${update.checkinCount} presentes${update.anonymousCount > 0 ? ` • 🙈 ${update.anonymousCount} anônimos` : ""}`
               : p.category,
-        });
-      });
-    }
-
-    if (activeFilter === "todos" || activeFilter === "motoristas") {
-      drivers.forEach((d) => {
-        items.push({
-          id: d.id,
-          name: d.name,
-          type: "motoristas",
-          distanceMeters: d.distanceMeters,
-          distanceLabel:
-            d.distanceMeters < 1000
-              ? `${d.distanceMeters}m`
-              : `${(d.distanceMeters / 1000).toFixed(1)}km`,
-          photo: d.photo,
-          icon: "🚗",
-          color: "bg-green-100 border-green-200",
-          subtitle: d.car,
         });
       });
     }

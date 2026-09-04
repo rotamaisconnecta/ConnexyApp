@@ -95,6 +95,7 @@ export interface PostMention {
 export interface PostDraft {
   text: string;
   media: PostMedia[];
+  repostSource: string | null;
   category: PostCategoryValue | null;
   location: PostLocation | null;
   interests: PostInterest[];
@@ -108,6 +109,7 @@ export interface PostDraft {
 export const INITIAL_DRAFT: PostDraft = {
   text: "",
   media: [],
+  repostSource: null,
   category: null,
   location: null,
   interests: [],
@@ -120,10 +122,12 @@ export const INITIAL_DRAFT: PostDraft = {
 
 export function isPostValid(draft: PostDraft): boolean {
   const hasText = draft.text.trim().length > 0;
-  const hasMedia = draft.media.length > 0;
+  const hasMedia = draft.media.length > 0 || Boolean(draft.repostSource);
   const hasCategory = draft.category !== null;
   return (hasText || hasMedia) && hasCategory;
 }
+
+export const REPOST_MEDIA_SESSION_KEY = "connexy:demo:repost-media";
 
 export const TEXT_MAX_LENGTH = 5000;
 export const MAX_MEDIA_FILES = 10;

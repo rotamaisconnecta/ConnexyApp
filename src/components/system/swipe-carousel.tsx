@@ -29,16 +29,16 @@ export function SwipeCarousel({
   const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
-    const el = innerRef.current;
-    if (!el) return;
+    const element = innerRef.current;
+    if (!element) return;
     const measure = () => {
-      const next = el.scrollWidth > el.clientWidth + 1;
-      setOverflows((prev) => (prev === next ? prev : next));
+      const next = element.scrollWidth > element.clientWidth + 1;
+      setOverflows((previous) => (previous === next ? previous : next));
     };
     measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -51,20 +51,20 @@ export function SwipeCarousel({
 
   useEffect(() => {
     if (!showHint) return;
-    const el = innerRef.current;
-    if (!el) return;
+    const element = innerRef.current;
+    if (!element) return;
     const onUserScroll = () => {
-      if (el.scrollLeft <= 0) return;
+      if (element.scrollLeft <= 0) return;
       seenRef.current = true;
       try {
         localStorage.setItem(CAROUSEL_SWIPE_HINT_KEY, "1");
       } catch {
-        // storage may be unavailable; hint simply stays until next swipe
+        // Storage may be unavailable; the hint simply returns next time.
       }
       setShowHint(false);
     };
-    el.addEventListener("scroll", onUserScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onUserScroll);
+    element.addEventListener("scroll", onUserScroll, { passive: true });
+    return () => element.removeEventListener("scroll", onUserScroll);
   }, [showHint]);
 
   const reduced = prefersReducedMotion();
@@ -80,7 +80,10 @@ export function SwipeCarousel({
         role="region"
         aria-label={ariaLabel}
         onScroll={onScroll}
-        className={cn("flex overflow-x-auto snap-x snap-proximity no-scrollbar", className)}
+        className={cn(
+          "flex touch-pan-x overflow-x-auto overscroll-x-contain no-scrollbar",
+          className,
+        )}
       >
         {children}
       </div>

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { MapCanvas } from "@/components/map-canvas";
 import { places } from "@/lib/mock-data";
-import { proximityLabel } from "@/lib/proximity";
+import { formatDistance } from "@/lib/proximity";
 import { Search, Star } from "lucide-react";
 import { useState } from "react";
 
@@ -80,7 +80,7 @@ function Locais() {
                     <span className="flex items-center gap-0.5">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.rating}
                     </span>
-                    <span>· {proximityLabel(p.distanceMeters)}</span>
+                    <span>· {formatDistance(p.distanceMeters)}</span>
                     <span>· {p.hours}</span>
                   </div>
                   {p.promo && (

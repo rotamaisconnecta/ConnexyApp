@@ -56,7 +56,7 @@ export default function WizardBase({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center"
         >
           <motion.div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
           <motion.div
@@ -64,7 +64,7 @@ export default function WizardBase({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="relative w-full sm:max-w-lg max-h-[90vh] overflow-hidden"
+            className="relative w-full sm:max-w-lg max-h-[calc(100dvh-env(safe-area-inset-bottom,0px)-0.75rem)] overflow-hidden"
             style={{
               borderRadius: `${Radius.lg} ${Radius.lg} 0 0`,
               backgroundColor: Colors.background,
@@ -107,7 +107,7 @@ export default function WizardBase({
             </div>
 
             {/* Steps */}
-            <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "55vh" }}>
+            <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "55dvh" }}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
@@ -128,7 +128,10 @@ export default function WizardBase({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t" style={{ borderColor: Colors.border }}>
+            <div
+              className="px-6 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] border-t"
+              style={{ borderColor: Colors.border }}
+            >
               <button
                 onClick={handleNext}
                 className="w-full flex items-center justify-center gap-2 py-3 text-white font-semibold text-sm"

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 export function PhoneFrame({
   children,
@@ -7,21 +7,25 @@ export function PhoneFrame({
   children: ReactNode;
   className?: string;
 }) {
+  useEffect(() => {
+    // Aplicativos instalados e navegadores compatíveis permanecem em retrato.
+    // Em navegadores que não permitem bloqueio, o layout vertical continua preservado.
+    void screen.orientation?.lock?.("portrait").catch(() => undefined);
+  }, []);
+
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center px-4 py-6 md:py-10"
+      className="min-h-screen min-h-[100dvh] w-full bg-background md:flex md:items-center md:justify-center md:px-4 md:py-10"
       style={{
         background:
-          "radial-gradient(1200px 600px at 50% -10%, color-mix(in oklab, var(--primary) 25%, transparent), transparent), var(--background)",
+          "radial-gradient(900px 520px at 50% -12%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 68%), var(--background)",
       }}
     >
       <div
-        className={`relative w-full max-w-[420px] min-h-[860px] md:min-h-[820px] bg-surface rounded-[2.5rem] shadow-phone overflow-hidden border border-border ${className}`}
+        className={`relative h-[100dvh] min-h-0 w-full overflow-hidden bg-background md:h-[min(860px,calc(100dvh-5rem))] md:max-w-[420px] md:rounded-[2.5rem] md:border md:border-border/70 md:shadow-phone ${className}`}
       >
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 h-6 w-32 bg-foreground/90 rounded-b-2xl z-40 hidden md:block" />
-        <div className="relative h-full min-h-[860px] md:min-h-[820px] flex flex-col">
-          {children}
-        </div>
+        <div className="absolute left-1/2 top-2 z-40 hidden h-6 w-28 -translate-x-1/2 rounded-full bg-foreground/90 md:block" />
+        <div className="relative flex h-full min-h-0 flex-col">{children}</div>
       </div>
     </div>
   );
@@ -29,15 +33,18 @@ export function PhoneFrame({
 
 export function StatusBar({ dark = false }: { dark?: boolean }) {
   return (
-    <div
-      className={`px-6 pt-4 pb-1 flex items-center justify-between text-xs font-semibold ${dark ? "text-white" : "text-foreground"}`}
-    >
-      <span>9:41</span>
-      <div className="flex items-center gap-1">
-        <span>●●●●</span>
-        <span>5G</span>
-        <span>▮▮▮</span>
+    <>
+      <div className="h-[env(safe-area-inset-top,0px)] md:hidden" aria-hidden />
+      <div
+        className={`hidden items-center justify-between px-6 pb-1 pt-4 text-xs font-semibold md:flex ${dark ? "text-white" : "text-foreground"}`}
+      >
+        <span>9:41</span>
+        <div className="flex items-center gap-1" aria-hidden>
+          <span>●●●●</span>
+          <span>5G</span>
+          <span>▮▮▮</span>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

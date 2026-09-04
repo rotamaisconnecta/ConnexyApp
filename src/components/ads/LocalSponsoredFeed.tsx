@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { MapPin } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { SwipeCarousel } from "@/components/system/swipe-carousel";
-import { formatProtectedProximity } from "@/lib/proximity";
+import { useGeolocation } from "@/hooks/use-geolocation";
+import { calculateDistanceMeters, formatDistance } from "@/lib/marketplace/distance-utils";
 import {
   SPONSORED_ADS,
   sponsoredActionMessage,
@@ -13,6 +15,31 @@ import { resolveSponsoredRoute } from "@/lib/navigation/detail-routes";
 
 export function LocalSponsoredFeed() {
   const nav = useNavigate();
+  const geolocation = useGeolocation();
+
+  useEffect(() => {
+    geolocation.request();
+  }, [geolocation.request]);
+
+  const nearbyAds = useMemo(() => {
+    const userLocation =
+      geolocation.latitude !== null && geolocation.longitude !== null
+        ? { lat: geolocation.latitude, lng: geolocation.longitude }
+        : { lat: -23.55, lng: -46.64 };
+
+    const ranked = SPONSORED_ADS.map((ad) => ({
+      ...ad,
+      liveDistanceMeters: calculateDistanceMeters(userLocation, {
+        lat: ad.latitude,
+        lng: ad.longitude,
+      }),
+    }))
+      .sort((a, b) => a.liveDistanceMeters - b.liveDistanceMeters);
+    const withinRadius = ranked.filter((ad) => ad.liveDistanceMeters <= 2_000);
+
+    // A experiência não fica vazia: fora do raio, mostramos os patrocinados mais próximos.
+    return withinRadius.length > 0 ? withinRadius : ranked.slice(0, 3);
+  }, [geolocation.latitude, geolocation.longitude]);
 
   function handleClick(adId: string, action: string, title: string) {
     const ad = SPONSORED_ADS.find((a) => a.id === adId);
@@ -38,7 +65,7 @@ export function LocalSponsoredFeed() {
           <h3 className="font-display text-base font-bold truncate">Descobertas locais</h3>
         </div>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          Ofertas e experiências perto de você
+          Patrocinados em até 2 km da sua localização
         </p>
       </div>
 
@@ -47,7 +74,7 @@ export function LocalSponsoredFeed() {
         hintLabel="Deslize para ver mais ofertas"
         className="gap-4"
       >
-        {SPONSORED_ADS.map((ad) => (
+        {nearbyAds.map((ad) => (
           <article
             key={ad.id}
             className="w-[272px] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
@@ -70,7 +97,7 @@ export function LocalSponsoredFeed() {
               </span>
               <span className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
                 <MapPin className="h-3 w-3" />
-                {formatProtectedProximity(ad.distanceMeters)}
+                {formatDistance(ad.liveDistanceMeters)}
               </span>
             </div>
 

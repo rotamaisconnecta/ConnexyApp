@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Repeat2, X } from "lucide-react";
 import { sectionFade } from "@/components/profile/animations";
 import { MediaUploader } from "@/components/post/media-uploader";
 import { PostTextEditor } from "@/components/post/post-text-editor";
@@ -20,6 +21,8 @@ import {
   type PostInterest,
   type PostMention,
   INITIAL_DRAFT,
+  PostCategory,
+  REPOST_MEDIA_SESSION_KEY,
 } from "@/lib/types/post";
 
 const AVAILABLE_INTERESTS = [
@@ -48,8 +51,29 @@ export function CreatePostForm({
   authorHandle,
   onPublish,
 }: CreatePostFormProps) {
-  const [draft, setDraft] = useState<PostDraft>(INITIAL_DRAFT);
+  const [draft, setDraft] = useState<PostDraft>(() => ({
+    ...INITIAL_DRAFT,
+    media: [],
+    interests: [],
+    hashtags: [],
+    mentions: [],
+  }));
   const [publishing, setPublishing] = useState(false);
+
+  useEffect(() => {
+    try {
+      const repostSource = window.sessionStorage.getItem(REPOST_MEDIA_SESSION_KEY);
+      if (!repostSource) return;
+      window.sessionStorage.removeItem(REPOST_MEDIA_SESSION_KEY);
+      setDraft((previous) => ({
+        ...previous,
+        repostSource,
+        category: PostCategory.PHOTO,
+      }));
+    } catch {
+      // O formulário segue funcionando normalmente sem armazenamento de sessão.
+    }
+  }, []);
 
   const update = useCallback(<K extends keyof PostDraft>(key: K, value: PostDraft[K]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -83,6 +107,28 @@ export function CreatePostForm({
     <div className="space-y-5 pb-6">
       <motion.div variants={sectionFade(0)} initial="hidden" animate="visible">
         <SectionTitle>Mídia</SectionTitle>
+        {draft.repostSource && (
+          <div className="mb-3 overflow-hidden rounded-2xl border border-primary/20 bg-primary/[0.04]">
+            <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold text-primary">
+              <span className="flex items-center gap-1.5">
+                <Repeat2 className="h-3.5 w-3.5" /> Republicação selecionada
+              </span>
+              <button
+                type="button"
+                onClick={() => update("repostSource", null)}
+                aria-label="Remover republicação"
+                className="grid h-7 w-7 place-items-center rounded-full bg-background text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <img
+              src={draft.repostSource}
+              alt="Imagem que será republicada"
+              className="max-h-60 w-full object-cover"
+            />
+          </div>
+        )}
         <MediaUploader media={draft.media} onChange={(m: PostMedia[]) => update("media", m)} />
       </motion.div>
 

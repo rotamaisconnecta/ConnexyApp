@@ -115,15 +115,48 @@
 }
 
 @layer base {
+  html {
+    min-height: 100%;
+    min-height: 100dvh;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   * {
     border-color: var(--color-border);
   }
   html,
   body {
+    min-width: 320px;
+    min-height: 100%;
+    min-height: 100dvh;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+  #root {
+    min-height: 100dvh;
+  }
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+  input,
+  select,
+  textarea {
+    min-width: 0;
   }
   h1,
   h2,
@@ -131,6 +164,30 @@
   h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
+  }
+}
+
+/* Base única para qualquer rota: respeita teclado, notch e navegação fixa. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+@media (min-width: 768px) {
+  html,
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+}
+
+/* O Connexy é uma experiência exclusivamente vertical. */
+@media (orientation: landscape) and (max-height: 700px) {
+  body {
+    background: var(--color-background);
   }
 }
 
