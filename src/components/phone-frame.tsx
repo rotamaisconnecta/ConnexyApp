@@ -8,9 +8,14 @@ export function PhoneFrame({
   className?: string;
 }) {
   useEffect(() => {
+    const orientation = screen.orientation as
+      | (ScreenOrientation & {
+          lock?: (orientation: string) => Promise<void>;
+        })
+      | null;
     // Aplicativos instalados e navegadores compatíveis permanecem em retrato.
     // Em navegadores que não permitem bloqueio, o layout vertical continua preservado.
-    void screen.orientation?.lock?.("portrait").catch(() => undefined);
+    void orientation?.lock?.("portrait").catch(() => undefined);
   }, []);
 
   return (

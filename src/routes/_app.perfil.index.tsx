@@ -34,7 +34,12 @@ import {
   type ProfileVisibility,
 } from "@/lib/demo/demo-own-profile";
 import { currentUser, findPlace, people } from "@/lib/mock-data";
-import { REPOST_MEDIA_SESSION_KEY } from "@/lib/types/post";
+import {
+  POST_CATEGORY_META,
+  REPOST_MEDIA_SESSION_KEY,
+  type PostCategoryValue,
+} from "@/lib/types/post";
+import { useDemoPosts, type DemoPost } from "@/lib/demo/demo-posts";
 
 const searchSchema = z.object({
   edit: z.boolean().optional(),
@@ -192,6 +197,7 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
   const [publicationTab, setPublicationTab] = useState<PublicationTab>("Tudo");
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
   const [savedMedia, setSavedMedia] = useState<Set<string>>(getSavedProfileMedia);
+  const demoPosts = useDemoPosts();
   const places = [
     ...(currentUser.favoritePlaceIds ?? []).map(findPlace),
     findPlace("cafe-central"),
@@ -218,6 +224,14 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
   const selectedMedia =
     selectedMediaIndex == null ? null : (visibleGallery[selectedMediaIndex] ?? null);
 
+  const visibleDemoPosts = useMemo(() => {
+    if (publicationTab === "Fotos")
+      return demoPosts.filter((post) => post.media.some((media) => media.type === "image"));
+    if (publicationTab === "Momentos")
+      return demoPosts.filter((post) => post.category === "MOMENT");
+    return demoPosts;
+  }, [publicationTab, demoPosts]);
+
   const changePublicationTab = (tab: PublicationTab) => {
     setPublicationTab(tab);
     setSelectedMediaIndex(null);
@@ -227,7 +241,7 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
     try {
       window.sessionStorage.setItem(REPOST_MEDIA_SESSION_KEY, source);
       setSelectedMediaIndex(null);
-      navigate({ to: "/create-post" });
+      navigate({ to: "/create-post", search: { from: "bio" } });
     } catch {
       toast.error("Não foi possível preparar a republicação.");
     }
@@ -338,6 +352,7 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
       <div className="relative z-10 mt-5 flex justify-center px-4">
         <Link
           to="/create-post"
+          search={{ from: "bio" }}
           className="flex h-11 w-[min(76%,280px)] items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-semibold text-white shadow-soft transition active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
@@ -407,6 +422,13 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
             </button>
           ))}
         </div>
+        {visibleDemoPosts.length > 0 && (
+          <div className="mb-1.5 grid grid-cols-4 gap-1.5">
+            {visibleDemoPosts.map((post) => (
+              <DemoPostTile key={post.id} post={post} />
+            ))}
+          </div>
+        )}
         <div className="grid grid-cols-4 gap-1.5">
           {visibleGallery.slice(0, 8).map((source, index) => (
             <button
@@ -916,6 +938,53 @@ function Stat({
     <div className={divider ? "border-x border-border" : ""}>
       <p className="font-display text-base font-bold">{value}</p>
       <p className="text-[10px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function DemoPostTile({ post }: { post: DemoPost }) {
+  const media = post.media[0];
+  if (media?.type === "image") {
+    return (
+      <div
+        aria-label={`Publicação de ${post.authorName}`}
+        className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+      >
+        <img
+          src={media.preview}
+          alt={post.text || `Publicação de ${post.authorName}`}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  if (media?.type === "video") {
+    return (
+      <div
+        aria-label={`Publicação em vídeo de ${post.authorName}`}
+        className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+      >
+        <video src={media.preview} muted playsInline className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+
+  const categoryMeta = post.category
+    ? POST_CATEGORY_META[post.category as PostCategoryValue]
+    : null;
+
+  return (
+    <div
+      aria-label={`Publicação: ${post.text}`}
+      className="relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-gradient-brand/85 p-2 text-white"
+    >
+      <div className="min-w-0">
+        <p className="text-center text-base leading-none">{categoryMeta?.emoji ?? "💬"}</p>
+        <p className="mt-1 line-clamp-2 text-center text-[9px] font-semibold leading-tight break-words">
+          {post.text || categoryMeta?.label || "Publicação"}
+        </p>
+      </div>
     </div>
   );
 }

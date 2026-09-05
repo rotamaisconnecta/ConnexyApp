@@ -64,18 +64,21 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       const trimmed = text.trim();
       if (!trimmed) return;
       const local = sendLocalMessage(conversationId, "me", trimmed);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: local.id,
-          conversationId: local.conversationId,
-          from: "me",
-          kind: MessageKind.TEXT,
-          text: local.text,
-          at: new Date(local.at),
-          status: "sent" as const,
-        },
-      ]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === local.id)) return prev;
+        return [
+          ...prev,
+          {
+            id: local.id,
+            conversationId: local.conversationId,
+            from: "me",
+            kind: MessageKind.TEXT,
+            text: local.text,
+            at: new Date(local.at),
+            status: "sent" as const,
+          },
+        ];
+      });
     },
     [demo, conversationId],
   );
@@ -203,16 +206,19 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
           trimmed,
         )) as Record<string, unknown>;
         const sentId = sent.id as string;
-        setMessages((prev) =>
-          prev.map((m) => {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === sentId)) {
+            return prev.filter((m) => m.id !== tempId);
+          }
+          return prev.map((m) => {
             if (m.id !== tempId) return m;
             return {
               ...m,
               id: sentId,
               status: "sent" as const,
             } as ChatMessage;
-          }),
-        );
+          });
+        });
       } catch (err) {
         setMessages((prev) =>
           prev.map((m) => (m.id === tempId ? { ...m, status: "sending" as const } : m)),
