@@ -1,21 +1,21 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, useRef, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { Plus, X } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
 import { allInterests } from "@/lib/mock-data";
 import { useAuth } from "@/hooks/use-auth";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
-import { profileCompletionForGuard } from "@/lib/profile/profile-status";
+import { profileOnboardingForGuard } from "@/lib/profile/profile-status";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { clearDemoSignup } from "@/lib/demo/demo-auth";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/interesses")({
   beforeLoad: async () => {
-    const status = await profileCompletionForGuard();
-    if (status.authenticated && status.complete) {
-      throw redirect({ to: "/home", replace: true });
-    }
+    const decision = await profileOnboardingForGuard();
+    if (!decision.allowed) throw redirect({ to: decision.to, replace: true });
   },
   head: () => ({ meta: [{ title: "Interesses — Connexy" }] }),
   component: Interests,
@@ -25,6 +25,19 @@ function Interests() {
   const nav = useNavigate();
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
+
+  // SSR cannot read demo browser state, so the guard re-evaluates client-side
+  // after hydration to enforce the pending-signup rule on full page loads.
+  useEffect(() => {
+    let cancelled = false;
+    void profileOnboardingForGuard().then((decision) => {
+      if (cancelled || decision.allowed) return;
+      nav({ to: decision.to, replace: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [nav]);
   const [selected, setSelected] = useState<string[]>([
     "Viagens",
     "Socializar",
@@ -74,6 +87,7 @@ function Interests() {
         return;
       }
     }
+    if (isDemoMode()) clearDemoSignup();
     nav({ to: "/home" });
   }
 
