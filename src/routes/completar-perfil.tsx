@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AtSign,
   CalendarDays,
@@ -13,17 +13,15 @@ import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { useAuth } from "@/hooks/use-auth";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
-import { profileCompletionForGuard } from "@/lib/profile/profile-status";
+import { profileOnboardingForGuard } from "@/lib/profile/profile-status";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/completar-perfil")({
   beforeLoad: async () => {
-    const status = await profileCompletionForGuard();
-    if (status.authenticated && status.complete) {
-      throw redirect({ to: "/home", replace: true });
-    }
+    const decision = await profileOnboardingForGuard();
+    if (!decision.allowed) throw redirect({ to: decision.to, replace: true });
   },
   head: () => ({ meta: [{ title: "Complete seu perfil | Connexy" }] }),
   component: CompleteProfile,
@@ -103,6 +101,19 @@ function CompleteProfile() {
   const nav = useNavigate();
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
+
+  // SSR cannot read demo browser state, so the guard re-evaluates client-side
+  // after hydration to enforce the pending-signup rule on full page loads.
+  useEffect(() => {
+    let cancelled = false;
+    void profileOnboardingForGuard().then((decision) => {
+      if (cancelled || decision.allowed) return;
+      nav({ to: decision.to, replace: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [nav]);
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");

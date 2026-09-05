@@ -7,7 +7,7 @@ import { sanitizeReturnTo } from "@/lib/auth/return-to";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { getProfileStatusClient } from "@/lib/profile/profile-status";
 import { isDemoMode } from "@/lib/demo/demo-config";
-import { enterDemoSession } from "@/lib/demo/demo-auth";
+import { enterDemoSession, startDemoSignup, clearDemoSignup } from "@/lib/demo/demo-auth";
 import { StatusBar, PhoneFrame } from "@/components/phone-frame";
 import { Logo } from "@/lib/branding/brand-config";
 import { toast } from "sonner";
@@ -88,7 +88,18 @@ function AuthPage() {
     // In demo mode, any submit enters the local demo session. No Supabase call.
     if (isDemoMode()) {
       enterDemoSession();
-      toast.success(mode === "signup" ? "Conta demo criada!" : "Bem-vindo ao modo demo!");
+      if (mode === "signup") {
+        startDemoSignup();
+        toast.success("Conta demo criada! Complete seu perfil.");
+        nav({ to: "/completar-perfil", replace: true });
+        return;
+      }
+      // A new local sign-in means the simulated profile is complete again.
+      // Without this, a stale "signup pending" flag would trap the user in
+      // the onboarding screens on the next app open (splash → /home →
+      // "Complete seu perfil") with no way out.
+      clearDemoSignup();
+      toast.success("Bem-vindo ao modo demo!");
       nav({ to: "/home", replace: true });
       return;
     }
@@ -128,6 +139,7 @@ function AuthPage() {
   async function google() {
     if (isDemoMode()) {
       enterDemoSession();
+      clearDemoSignup();
       toast.success("Entrando no modo demo!");
       nav({ to: "/home", replace: true });
       return;
