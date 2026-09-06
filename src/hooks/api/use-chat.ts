@@ -1,15 +1,37 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { ChatService } from "@/services/chat.service";
-import { ChatRepository } from "@/repositories/chat.repository";
 import { dbRowsToChatMessages, dbRowToChatMessage } from "@/lib/chat/chat-adapter";
 import type { ChatMessage } from "@/lib/chat/chat-types";
 import { MessageKind } from "@/lib/chat/chat-types";
 import { supabase } from "@/lib/supabase/client";
-import { isDemoMode } from "@/lib/demo/demo-config";
 import { getMessages, sendLocalMessage } from "@/lib/demo/demo-db";
 
 const PAGE_SIZE = 50;
+
+export function localChatQueryKey(conversationId: string | null) {
+  return ["local-chat-messages", conversationId] as const;
+}
+
+function demoRowsToChatMessages(
+  conversationId: string,
+  rows: ReturnType<typeof getMessages>,
+): ChatMessage[] {
+  return rows.map((m) => ({
+    id: m.id,
+    conversationId: m.conversationId || conversationId,
+    from: m.from,
+    kind: MessageKind.TEXT,
+    text: m.text,
+    at: new Date(m.at),
+    status: "read" as const,
+  }));
+}
+
+function readLocalChatMessages(conversationId: string): ChatMessage[] {
+  return demoRowsToChatMessages(conversationId, getMessages(conversationId));
+}
 
 interface UseChatOptions {
   conversationId: string | null;
@@ -17,98 +39,81 @@ interface UseChatOptions {
 }
 
 export function useChat({ conversationId, currentUserId }: UseChatOptions) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const queryClient = useQueryClient();
+  const local = !isPublicSupabaseConfigured();
+  const queryKey = localChatQueryKey(conversationId);
+
+  const [remoteMessages, setRemoteMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<
     "connected" | "disconnected" | "connecting"
-  >("disconnected");
+  >(local ? "connected" : "disconnected");
   const pageRef = useRef(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const conversationIdRef = useRef(conversationId);
-  conversationIdRef.current = conversationId;
   const currentUserIdRef = useRef(currentUserId);
   currentUserIdRef.current = currentUserId;
 
-  // ── Demo mode: fully local messages, no Supabase/Realtime ──────────────
-  const demo = isDemoMode();
+  const localQuery = useQuery({
+    queryKey,
+    queryFn: () => (conversationId ? readLocalChatMessages(conversationId) : []),
+    enabled: local && Boolean(conversationId),
+    staleTime: Infinity,
+    initialData: () =>
+      local && conversationId ? readLocalChatMessages(conversationId) : undefined,
+  });
 
   useEffect(() => {
-    if (!demo || !conversationId) return;
+    if (!local || !conversationId) return;
+    const key = localChatQueryKey(conversationId);
     const sync = () => {
-      const rows = getMessages(conversationId);
-      const adapted: ChatMessage[] = rows.map((m) => ({
-        id: m.id,
-        conversationId: m.conversationId,
-        from: m.from,
-        kind: MessageKind.TEXT,
-        text: m.text,
-        at: new Date(m.at),
-        status: "read" as const,
-      }));
-      setMessages(adapted);
-      setHasMore(false);
-      setError(null);
-      setIsLoading(false);
+      queryClient.setQueryData(key, readLocalChatMessages(conversationId));
     };
     sync();
+    setHasMore(false);
+    setError(null);
+    setIsLoading(false);
     setSubscriptionStatus("connected");
     window.addEventListener("connexy:demo:db", sync);
     return () => window.removeEventListener("connexy:demo:db", sync);
-  }, [demo, conversationId]);
+  }, [local, conversationId, queryClient]);
 
   const demoSend = useCallback(
     (text: string) => {
-      if (!demo || !conversationId) return;
+      if (!local || !conversationId) return;
       const trimmed = text.trim();
       if (!trimmed) return;
-      const local = sendLocalMessage(conversationId, "me", trimmed);
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === local.id)) return prev;
-        return [
-          ...prev,
-          {
-            id: local.id,
-            conversationId: local.conversationId,
-            from: "me",
-            kind: MessageKind.TEXT,
-            text: local.text,
-            at: new Date(local.at),
-            status: "sent" as const,
-          },
-        ];
-      });
+      sendLocalMessage(conversationId, "me", trimmed);
+      queryClient.setQueryData(localChatQueryKey(conversationId), readLocalChatMessages(conversationId));
     },
-    [demo, conversationId],
+    [local, conversationId, queryClient],
   );
 
-  // Load initial messages
   const loadMessages = useCallback(async () => {
-    if (!conversationId || !currentUserId || !isPublicSupabaseConfigured()) return;
+    if (local || !conversationId || !currentUserId || !isPublicSupabaseConfigured()) return;
     setIsLoading(true);
     setError(null);
     pageRef.current = 0;
     try {
       const rows = await ChatService.getMessages(conversationId, 0);
       const adapted = dbRowsToChatMessages(rows as Record<string, unknown>[], currentUserId);
-      setMessages(adapted);
+      setRemoteMessages(adapted);
       setHasMore(rows.length >= PAGE_SIZE);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar mensagens");
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, currentUserId]);
+  }, [conversationId, currentUserId, local]);
 
   useEffect(() => {
-    if (demo) return;
+    if (local) return;
     void loadMessages();
-  }, [loadMessages, demo]);
+  }, [loadMessages, local]);
 
-  // Realtime subscription
   useEffect(() => {
-    if (demo) return;
+    if (local) return;
     if (!conversationId || !isPublicSupabaseConfigured()) {
       setSubscriptionStatus("disconnected");
       return;
@@ -132,12 +137,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
           const uid = currentUserIdRef.current;
           if (!uid) return;
           const newRow = payload.new as Record<string, unknown>;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newRow.id)) return prev;
-            const adapted = dbRowToChatMessage(newRow, uid);
-            if (!adapted) return prev;
-            return [...prev, adapted];
-          });
+          setRemoteMessages((prev) => mergeIncomingMessage(prev, newRow, uid));
         },
       )
       .on(
@@ -154,12 +154,12 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
           if (!uid) return;
           const updated = payload.new as Record<string, unknown>;
           if (updated.deleted_at) {
-            setMessages((prev) => prev.filter((m) => m.id !== updated.id));
+            setRemoteMessages((prev) => prev.filter((m) => m.id !== updated.id));
             return;
           }
           const adapted = dbRowToChatMessage(updated, uid);
           if (!adapted) return;
-          setMessages((prev) => prev.map((m) => (m.id === adapted.id ? adapted : m)));
+          setRemoteMessages((prev) => prev.map((m) => (m.id === adapted.id ? adapted : m)));
         },
       )
       .subscribe((status) => {
@@ -177,9 +177,8 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       channelRef.current = null;
       setSubscriptionStatus("disconnected");
     };
-  }, [conversationId, demo]);
+  }, [conversationId, local]);
 
-  // Send message
   const sendMessage = useCallback(
     async (text: string) => {
       if (!conversationId || !currentUserId) return;
@@ -197,7 +196,10 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
         status: "sending",
       };
 
-      setMessages((prev) => [...prev, optimistic]);
+      setRemoteMessages((prev) => {
+        if (hasSamePendingText(prev, trimmed)) return prev;
+        return [...prev, optimistic];
+      });
 
       try {
         const sent = (await ChatService.sendMessage(
@@ -205,22 +207,10 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
           currentUserId,
           trimmed,
         )) as Record<string, unknown>;
-        const sentId = sent.id as string;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === sentId)) {
-            return prev.filter((m) => m.id !== tempId);
-          }
-          return prev.map((m) => {
-            if (m.id !== tempId) return m;
-            return {
-              ...m,
-              id: sentId,
-              status: "sent" as const,
-            } as ChatMessage;
-          });
-        });
+        const sentId = String(sent.id ?? "");
+        setRemoteMessages((prev) => reconcileOptimisticMessage(prev, tempId, sentId, currentUserId, sent));
       } catch (err) {
-        setMessages((prev) =>
+        setRemoteMessages((prev) =>
           prev.map((m) => (m.id === tempId ? { ...m, status: "sending" as const } : m)),
         );
         setError(err instanceof Error ? err.message : "Erro ao enviar mensagem");
@@ -229,15 +219,17 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     [conversationId, currentUserId],
   );
 
-  // Load more (older messages)
   const loadMore = useCallback(async () => {
-    if (!conversationId || !currentUserId || isLoading || !hasMore) return;
+    if (local || !conversationId || !currentUserId || isLoading || !hasMore) return;
     setIsLoading(true);
     try {
       pageRef.current += 1;
       const rows = await ChatService.getMessages(conversationId, pageRef.current);
       const adapted = dbRowsToChatMessages(rows as Record<string, unknown>[], currentUserId);
-      setMessages((prev) => [...adapted, ...prev]);
+      setRemoteMessages((prev) => {
+        const existing = new Set(prev.map((m) => m.id));
+        return [...adapted.filter((m) => !existing.has(m.id)), ...prev];
+      });
       if (rows.length < PAGE_SIZE) setHasMore(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar mensagens");
@@ -245,11 +237,11 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, currentUserId, isLoading, hasMore]);
+  }, [conversationId, currentUserId, isLoading, hasMore, local]);
 
-  if (demo) {
+  if (local) {
     return {
-      messages,
+      messages: localQuery.data ?? [],
       isLoading: false,
       error: null,
       hasMore: false,
@@ -261,7 +253,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
   }
 
   return {
-    messages,
+    messages: remoteMessages,
     isLoading,
     error,
     hasMore,
@@ -270,4 +262,61 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     retry: loadMessages,
     subscriptionStatus,
   };
+}
+
+function hasSamePendingText(messages: ChatMessage[], text: string): boolean {
+  return messages.some(
+    (message) =>
+      message.from === "me" &&
+      message.kind === MessageKind.TEXT &&
+      message.text === text &&
+      (message.id.startsWith("temp-") || message.status === "sending"),
+  );
+}
+
+function mergeIncomingMessage(
+  prev: ChatMessage[],
+  newRow: Record<string, unknown>,
+  uid: string,
+): ChatMessage[] {
+  if (prev.some((m) => m.id === newRow.id)) return prev;
+  const adapted = dbRowToChatMessage(newRow, uid);
+  if (!adapted) return prev;
+  const optimisticIndex = prev.findIndex(
+    (m) =>
+      m.id.startsWith("temp-") &&
+      m.from === "me" &&
+      adapted.from === "me" &&
+      m.kind === MessageKind.TEXT &&
+      adapted.kind === MessageKind.TEXT &&
+      m.text === adapted.text,
+  );
+  if (optimisticIndex >= 0) {
+    const next = [...prev];
+    next[optimisticIndex] = adapted;
+    return next;
+  }
+  return [...prev, adapted];
+}
+
+function reconcileOptimisticMessage(
+  prev: ChatMessage[],
+  tempId: string,
+  sentId: string,
+  uid: string,
+  sent: Record<string, unknown>,
+): ChatMessage[] {
+  if (sentId && prev.some((m) => m.id === sentId)) {
+    return prev.filter((m) => m.id !== tempId);
+  }
+  const adapted = dbRowToChatMessage({ ...sent, sender_id: sent.sender_id ?? uid }, uid);
+  return prev.map((m) => {
+    if (m.id !== tempId) return m;
+    if (adapted) return { ...adapted, status: "sent" as const };
+    return {
+      ...m,
+      id: sentId || m.id,
+      status: "sent" as const,
+    };
+  });
 }

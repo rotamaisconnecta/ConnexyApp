@@ -5,7 +5,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { CreatePostForm } from "@/components/post/create-post-form";
 import { isPostValid, type PostDraft } from "@/lib/types/post";
 import { BackButton } from "@/components/navigation/back-button";
-import { isDemoMode } from "@/lib/demo/demo-config";
+import { currentUser } from "@/lib/mock-data";
 import { useDemoOwnProfile } from "@/lib/demo/demo-own-profile";
 import { saveDemoPost, type DemoPost, type DemoPostMedia } from "@/lib/demo/demo-posts";
 import { compressImage, readFileAsDataURL } from "@/lib/upload/upload-utils";
@@ -43,14 +43,10 @@ function CreatePostPage() {
   const nav = useNavigate();
   const { from } = Route.useSearch() as { from?: "bio" };
   const demoProfile = useDemoOwnProfile();
-  const backTo = from === "bio" ? ("/perfil" as const) : ("/home" as const);
+  const fromBio = from === "bio";
+  const backTo = fromBio ? ("/perfil" as const) : ("/home" as const);
 
   const handlePublish = async (draft: PostDraft) => {
-    if (!isDemoMode()) {
-      nav({ to: "/home" });
-      return;
-    }
-
     if (!isPostValid(draft)) {
       toast.error("Escreva um texto ou adicione mídia e escolha uma categoria.");
       return;
@@ -66,7 +62,7 @@ function CreatePostPage() {
 
     const post: DemoPost = {
       id: `demo-post-${Date.now()}`,
-      authorId: "lucas",
+      authorId: currentUser.id,
       authorName: demoProfile.name,
       authorPhoto: demoProfile.photo,
       authorHandle: demoProfile.handle,

@@ -66,32 +66,48 @@ export function ConversationsScreen() {
   useEffect(() => {
     if (!demo) return;
     const sync = () => {
-      const created: MockConversation[] = people
-        .filter((p) => isConnected(p.id))
-        .map((p) => {
-          const last = getConversationLastMessage(p.id);
+      setMockConversations((prev) => {
+        const byId = new Map(prev.map((conversation) => [conversation.id, conversation]));
+        for (const person of people.filter((item) => isConnected(item.id))) {
+          if (!byId.has(person.id)) {
+            const last = getConversationLastMessage(person.id);
+            byId.set(person.id, {
+              id: person.id,
+              participant: { id: person.id, name: person.name, photo: person.photo },
+              initials: person.name.slice(0, 2).toUpperCase(),
+              isOnline: person.online,
+              proximityMeters: person.distanceMeters,
+              currentThread: "Conexão local",
+              threadIcon: ThreadIcon.COFFEE,
+              lastMessage: last?.text ?? "Vocês estão conectados",
+              lastMessageType: LastMessageType.TEXT,
+              updatedAt: new Date(last?.at ?? Date.now()),
+              unreadCount: last && last.from === "them" ? 1 : 0,
+              isMuted: false,
+              isPinned: false,
+              sharedInterest: person.interests[0],
+            });
+          }
+        }
+        let changed = false;
+        const next = [...byId.values()].map((conversation) => {
+          const last = getConversationLastMessage(conversation.id);
+          if (!last) return conversation;
+          if (conversation.lastMessage === last.text && conversation.updatedAt.getTime() === last.at) {
+            return conversation;
+          }
+          changed = true;
           return {
-            id: p.id,
-            participant: { id: p.id, name: p.name, photo: p.photo },
-            initials: p.name.slice(0, 2).toUpperCase(),
-            isOnline: p.online,
-            proximityMeters: p.distanceMeters,
-            currentThread: "Conexão local",
-            threadIcon: ThreadIcon.COFFEE,
-            lastMessage: last?.text ?? "Vocês estão conectados",
+            ...conversation,
+            lastMessage: last.text,
             lastMessageType: LastMessageType.TEXT,
-            updatedAt: new Date(last?.at ?? Date.now()),
-            unreadCount: last && last.from === "them" ? 1 : 0,
-            isMuted: false,
-            isPinned: false,
-            sharedInterest: p.interests[0],
+            updatedAt: new Date(last.at),
+            unreadCount: last.from === "them" ? 1 : 0,
           };
         });
-      const existingIds = new Set(mockConversations.map((c) => c.id));
-      const addNew = created.filter((c) => !existingIds.has(c.id));
-      if (addNew.length > 0) {
-        setMockConversations((prev) => [...addNew, ...prev]);
-      }
+        const added = next.length !== prev.length;
+        return added || changed ? next : prev;
+      });
     };
     sync();
     return subscribeDemoDB(sync);
@@ -111,7 +127,8 @@ export function ConversationsScreen() {
         for (const row of rows) {
           const r = row as Record<string, unknown>;
           const participants = r.participants as
-            { user_id: string; profile?: { name?: string; photo_url?: string } }[] | undefined;
+            | { user_id: string; profile?: { name?: string; photo_url?: string } }[]
+            | undefined;
           const other = participants?.find((p) => p.user_id !== user.id);
           const name = other?.profile?.name ?? "Conversa";
           const photo = other?.profile?.photo_url ?? null;
@@ -202,14 +219,14 @@ export function ConversationsScreen() {
   }
 
   return (
-    <div className="flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)]">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <StatusBar />
 
       <motion.header
         initial={reducedMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="px-5 pt-1"
+        className="shrink-0 px-5 pt-1"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -319,185 +336,187 @@ export function ConversationsScreen() {
         )}
       </motion.header>
 
-      {/* Loading state (real only) */}
-      {configured && realLoading && (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* Error state (real only) */}
-      {configured && realError && !realLoading && (
-        <div className="px-8 py-16 text-center">
-          <p className="text-sm text-muted-foreground">{realError}</p>
-          <button
-            type="button"
-            onClick={() => {
-              setRealError(null);
-              setRealLoading(true);
-              // Trigger re-fetch by updating state
-              setRealConversations([]);
-            }}
-            className="mt-3 text-sm text-primary font-semibold"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!realLoading && !realError && activeTab === "active" && conversations.length === 0 && (
-        <div className="px-8 pt-24 text-center">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-brand shadow-elegant">
-            <MessagesSquare className="h-7 w-7 text-white" strokeWidth={2.1} />
-          </div>
-          <h3 className="mt-5 font-display text-lg font-bold">
-            Toda conexão começa com um primeiro oi.
-          </h3>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Quando você iniciar uma conversa, ela aparecerá aqui.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate({ to: "/connecta" })}
-            className="mt-6 h-11 rounded-2xl bg-gradient-brand px-6 font-semibold text-white shadow-elegant transition-transform active:scale-95"
-          >
-            Encontrar pessoas
-          </button>
-        </div>
-      )}
-
-      {/* Search empty */}
-      {!realLoading &&
-        !realError &&
-        activeTab === "active" &&
-        (hasQuery || filtersActive) &&
-        filtered.length === 0 &&
-        conversations.length > 0 && (
-          <div className="px-8 pt-24 text-center">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-secondary">
-              <Search className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="mt-5 font-display text-lg font-bold">Nenhuma conversa encontrada</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Tente buscar por uma pessoa, interesse ou assunto.
-            </p>
+      <div className="min-h-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] no-scrollbar">
+        {/* Loading state (real only) */}
+        {configured && realLoading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
         )}
 
-      {/* Conversation list */}
-      {!realLoading && !realError && activeTab === "active" && filtered.length > 0 && (
-        <>
-          {continueItems.length > 0 && (
-            <motion.section
-              initial={reducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.05, duration: 0.25 }}
-              className="mt-5"
+        {/* Error state (real only) */}
+        {configured && realError && !realLoading && (
+          <div className="px-8 py-16 text-center">
+            <p className="text-sm text-muted-foreground">{realError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setRealError(null);
+                setRealLoading(true);
+                // Trigger re-fetch by updating state
+                setRealConversations([]);
+              }}
+              className="mt-3 text-sm text-primary font-semibold"
             >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!realLoading && !realError && activeTab === "active" && conversations.length === 0 && (
+          <div className="px-8 pt-24 text-center">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-brand shadow-elegant">
+              <MessagesSquare className="h-7 w-7 text-white" strokeWidth={2.1} />
+            </div>
+            <h3 className="mt-5 font-display text-lg font-bold">
+              Toda conexão começa com um primeiro oi.
+            </h3>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Quando você iniciar uma conversa, ela aparecerá aqui.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/connecta" })}
+              className="mt-6 h-11 rounded-2xl bg-gradient-brand px-6 font-semibold text-white shadow-elegant transition-transform active:scale-95"
+            >
+              Encontrar pessoas
+            </button>
+          </div>
+        )}
+
+        {/* Search empty */}
+        {!realLoading &&
+          !realError &&
+          activeTab === "active" &&
+          (hasQuery || filtersActive) &&
+          filtered.length === 0 &&
+          conversations.length > 0 && (
+            <div className="px-8 pt-24 text-center">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-secondary">
+                <Search className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="mt-5 font-display text-lg font-bold">Nenhuma conversa encontrada</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Tente buscar por uma pessoa, interesse ou assunto.
+              </p>
+            </div>
+          )}
+
+        {/* Conversation list */}
+        {!realLoading && !realError && activeTab === "active" && filtered.length > 0 && (
+          <>
+            {continueItems.length > 0 && (
+              <motion.section
+                initial={reducedMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.05, duration: 0.25 }}
+                className="mt-5"
+              >
+                <h2 className="px-5 text-[13px] font-semibold text-muted-foreground">
+                  Continuar de onde parou
+                </h2>
+                <motion.div
+                  variants={listContainer}
+                  initial={initial}
+                  animate="visible"
+                  className="-mx-5 mt-2.5 flex gap-3 overflow-x-auto px-5 pb-1 no-scrollbar"
+                >
+                  {continueItems.map((conversation) => (
+                    <ContinueCard
+                      key={conversation.id}
+                      conversation={conversation}
+                      onGesture={handleGesture}
+                    />
+                  ))}
+                </motion.div>
+              </motion.section>
+            )}
+
+            <section className="mt-6">
               <h2 className="px-5 text-[13px] font-semibold text-muted-foreground">
-                Continuar de onde parou
+                Todas as conversas
               </h2>
               <motion.div
                 variants={listContainer}
                 initial={initial}
                 animate="visible"
-                className="-mx-5 mt-2.5 flex gap-3 overflow-x-auto px-5 pb-1 no-scrollbar"
+                className="mt-1"
               >
-                {continueItems.map((conversation) => (
-                  <ContinueCard
-                    key={conversation.id}
-                    conversation={conversation}
-                    onGesture={handleGesture}
-                  />
-                ))}
-              </motion.div>
-            </motion.section>
-          )}
-
-          <section className="mt-6">
-            <h2 className="px-5 text-[13px] font-semibold text-muted-foreground">
-              Todas as conversas
-            </h2>
-            <motion.div
-              variants={listContainer}
-              initial={initial}
-              animate="visible"
-              className="mt-1"
-            >
-              {configured
-                ? (filtered as RealConversation[]).map((conversation) => (
-                    <RealConversationRow
-                      key={conversation.id}
-                      conversation={conversation}
-                      onOpen={openConversation}
-                    />
-                  ))
-                : (filtered as MockConversation[]).map((conversation) => (
-                    <ConversationRow
-                      key={conversation.id}
-                      conversation={conversation}
-                      onGesture={handleGesture}
-                      onMenu={() => undefined}
-                    />
-                  ))}
-            </motion.div>
-          </section>
-        </>
-      )}
-
-      {!realLoading && !realError && activeTab === "requests" && (
-        <section className="mt-5 px-5">
-          {filteredRequests.length > 0 ? (
-            <div className="space-y-2.5">
-              {filteredRequests.map((request) => {
-                const person = people.find((item) => item.id === request.fromUserId);
-                if (!person) return null;
-                return (
-                  <button
-                    key={request.id}
-                    type="button"
-                    onClick={() =>
-                      navigate({
-                        to: "/solicitacao/$id",
-                        params: { id: person.id },
-                        search: { mode: "receive" },
-                      })
-                    }
-                    className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left shadow-soft transition active:scale-[0.99]"
-                  >
-                    <span className="relative shrink-0">
-                      <img
-                        src={person.photo}
-                        alt=""
-                        className="h-12 w-12 rounded-full object-cover"
+                {configured
+                  ? (filtered as RealConversation[]).map((conversation) => (
+                      <RealConversationRow
+                        key={conversation.id}
+                        conversation={conversation}
+                        onOpen={openConversation}
                       />
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-primary" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-bold">{person.name}</span>
-                      <span className="mt-0.5 line-clamp-2 block text-[11px] text-muted-foreground">
-                        {request.message || "Quer iniciar uma conversa com você."}
+                    ))
+                  : (filtered as MockConversation[]).map((conversation) => (
+                      <ConversationRow
+                        key={conversation.id}
+                        conversation={conversation}
+                        onGesture={handleGesture}
+                        onMenu={() => undefined}
+                      />
+                    ))}
+              </motion.div>
+            </section>
+          </>
+        )}
+
+        {!realLoading && !realError && activeTab === "requests" && (
+          <section className="mt-5 px-5">
+            {filteredRequests.length > 0 ? (
+              <div className="space-y-2.5">
+                {filteredRequests.map((request) => {
+                  const person = people.find((item) => item.id === request.fromUserId);
+                  if (!person) return null;
+                  return (
+                    <button
+                      key={request.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({
+                          to: "/solicitacao/$id",
+                          params: { id: person.id },
+                          search: { mode: "receive" },
+                        })
+                      }
+                      className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left shadow-soft transition active:scale-[0.99]"
+                    >
+                      <span className="relative shrink-0">
+                        <img
+                          src={person.photo}
+                          alt=""
+                          className="h-12 w-12 rounded-full object-cover"
+                        />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-primary" />
                       </span>
-                    </span>
-                    <span className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary">
-                      Ver
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-3xl border border-dashed border-border px-6 py-12 text-center">
-              <MessagesSquare className="mx-auto h-6 w-6 text-primary" />
-              <h2 className="mt-3 font-display text-base font-bold">Nenhuma solicitação agora</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Novos convites para conversar aparecerão aqui.
-              </p>
-            </div>
-          )}
-        </section>
-      )}
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold">{person.name}</span>
+                        <span className="mt-0.5 line-clamp-2 block text-[11px] text-muted-foreground">
+                          {request.message || "Quer iniciar uma conversa com você."}
+                        </span>
+                      </span>
+                      <span className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary">
+                        Ver
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-border px-6 py-12 text-center">
+                <MessagesSquare className="mx-auto h-6 w-6 text-primary" />
+                <h2 className="mt-3 font-display text-base font-bold">Nenhuma solicitação agora</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Novos convites para conversar aparecerão aqui.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

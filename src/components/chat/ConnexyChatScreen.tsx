@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Ban, Bell, BellOff, Loader2, User, Video } from "lucide-react";
+import { Ban, Bell, BellOff, ChevronDown, Loader2, User, Video } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBar } from "@/components/phone-frame";
 import { ChatHeader } from "./chat-header";
@@ -14,7 +14,6 @@ import { ChatRepository } from "@/repositories/chat.repository";
 import { UserRepository } from "@/repositories/user.repository";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
-import { isDemoMode } from "@/lib/demo/demo-config";
 import { people } from "@/lib/mock-data";
 import type { ChatMessage, ConversationParticipant, QuickReaction } from "@/lib/chat/chat-types";
 import type { ProfileRow } from "@/types/database/tables";
@@ -39,7 +38,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   // Resolve the other participant from conversation_participants
   useEffect(() => {
-    if (isDemoMode() && conversationId && user?.id) {
+    if (!isPublicSupabaseConfigured() && conversationId && user?.id) {
       const mock = people.find((p) => p.id === conversationId);
       setParticipant({
         id: conversationId,
@@ -86,19 +85,73 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const [menuOpen, setMenuOpen] = useState(false);
   const [muted, setMuted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const didMountRef = useRef(false);
+  const [stickToBottom, setStickToBottom] = useState(true);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const prevMessagesRef = useRef<ChatMessage[]>([]);
+  const anchorRef = useRef<number | null>(null);
 
   useEffect(() => {
+    prevMessagesRef.current = [];
+    setNewMessagesCount(0);
+    setStickToBottom(true);
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-    didMountRef.current = true;
+  }, [conversationId]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = distance < 96;
+    if (nearBottom) setNewMessagesCount(0);
+    setStickToBottom(nearBottom);
   }, []);
 
   useEffect(() => {
-    if (!didMountRef.current) return;
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (!el) return;
+    const prev = prevMessagesRef.current;
+    prevMessagesRef.current = messages;
+
+    if (anchorRef.current !== null) {
+      const fromBottom = anchorRef.current;
+      anchorRef.current = null;
+      requestAnimationFrame(() => {
+        const target = scrollRef.current;
+        if (target) target.scrollTop = target.scrollHeight - fromBottom;
+      });
+      return;
+    }
+
+    const previousLastId = prev.length > 0 ? prev[prev.length - 1].id : undefined;
+    const currentLast = messages[messages.length - 1];
+    if (currentLast && currentLast.id === previousLastId) return;
+
+    if (messages.length > prev.length) {
+      if (currentLast.from === "me") {
+        setStickToBottom(true);
+        setNewMessagesCount(0);
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+        return;
+      }
+      if (stickToBottom) {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+        return;
+      }
+      setNewMessagesCount((count) => count + 1);
+      return;
+    }
+
+    if (stickToBottom) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages, stickToBottom, conversationId]);
+
+  function handleLoadMore() {
+    const el = scrollRef.current;
+    anchorRef.current = el ? el.scrollHeight - el.scrollTop : 0;
+    void loadMore();
+  }
 
   const handleBack = useCallback(() => {
     router.navigate({ to: "/chat" });
@@ -140,7 +193,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const activeParticipant = participant ?? fallbackParticipant;
 
   return (
-    <main className="relative flex-1 flex flex-col h-full min-h-0 pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]">
+    <main className="relative flex h-full min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom,0px)]">
       <StatusBar />
 
       <ChatHeader
@@ -159,7 +212,11 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         />
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar min-h-0">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto no-scrollbar min-h-0"
+      >
         {isLoading && messages.length === 0 ? (
           <div className="flex-1 grid place-items-center py-12">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -187,7 +244,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
               <div className="text-center py-2">
                 <button
                   type="button"
-                  onClick={() => void loadMore()}
+                  onClick={handleLoadMore}
                   className="text-xs text-primary font-medium"
                 >
                   Carregar mais
@@ -198,6 +255,23 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
           </>
         )}
       </div>
+
+      {newMessagesCount > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            const el = scrollRef.current;
+            if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+            setStickToBottom(true);
+            setNewMessagesCount(0);
+          }}
+          aria-label="Ir para as novas mensagens"
+          className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+4rem)] left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-elevated"
+        >
+          <ChevronDown className="h-3.5 w-3.5" />
+          {newMessagesCount === 1 ? "Nova mensagem" : `${newMessagesCount} novas mensagens`}
+        </button>
+      )}
 
       <MessageInput
         placeholder="Digite uma mensagem"

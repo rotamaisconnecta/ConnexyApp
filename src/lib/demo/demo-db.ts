@@ -38,6 +38,7 @@ type DemoDB = {
 };
 
 const DB_KEY = demoStorageKey("db");
+const DUPLICATE_SEND_WINDOW_MS = 1000;
 
 function defaultDB(): DemoDB {
   return { connections: [], requests: [], messages: [] };
@@ -170,17 +171,37 @@ export function declineRequest(fromUserId: string): void {
 
 /* ─── Messages ────────────────────────────────────────────── */
 
+function collapseMessages(messages: DemoMessage[]): DemoMessage[] {
+  const byId = new Map<string, DemoMessage>();
+  for (const message of messages) byId.set(message.id, message);
+  const ordered = [...byId.values()].sort((a, b) => a.at - b.at);
+  const collapsed: DemoMessage[] = [];
+  for (const message of ordered) {
+    const previous = collapsed[collapsed.length - 1];
+    if (
+      previous &&
+      previous.from === message.from &&
+      previous.text === message.text &&
+      Math.abs(message.at - previous.at) < DUPLICATE_SEND_WINDOW_MS
+    ) {
+      continue;
+    }
+    collapsed.push(message);
+  }
+  return collapsed;
+}
+
 export function getMessages(conversationId: string): DemoMessage[] {
-  return read()
-    .messages.filter((m) => m.conversationId === conversationId)
-    .sort((a, b) => a.at - b.at);
+  return collapseMessages(
+    read()
+      .messages.filter((m) => m.conversationId === conversationId)
+      .sort((a, b) => a.at - b.at),
+  );
 }
 
 export function getConversationLastMessage(conversationId: string): DemoMessage | null {
-  const all = read()
-    .messages.filter((m) => m.conversationId === conversationId)
-    .sort((a, b) => b.at - a.at);
-  return all[0] ?? null;
+  const all = getMessages(conversationId);
+  return all[all.length - 1] ?? null;
 }
 
 export function sendLocalMessage(
@@ -189,12 +210,22 @@ export function sendLocalMessage(
   text: string,
 ): DemoMessage {
   const db = read();
+  const now = Date.now();
+  const duplicate = [...db.messages].reverse().find(
+    (message) =>
+      message.conversationId === conversationId &&
+      message.from === from &&
+      message.text === text &&
+      now - message.at < DUPLICATE_SEND_WINDOW_MS,
+  );
+  if (duplicate) return duplicate;
+
   const message: DemoMessage = {
-    id: `demo-msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `demo-msg-${now}-${Math.random().toString(36).slice(2, 7)}`,
     conversationId,
     from,
     text,
-    at: Date.now(),
+    at: now,
   };
   db.messages.push(message);
   write(db);

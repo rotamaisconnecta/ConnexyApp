@@ -53,7 +53,8 @@ export function getDemoPosts(): DemoPost[] {
 /** Persists a demo post. Throws when localStorage cannot store the media. */
 export function saveDemoPost(post: DemoPost): void {
   if (typeof window === "undefined") return;
-  const next = [post, ...read()];
+  const existing = read().filter((item) => item.id !== post.id);
+  const next = [post, ...existing];
   window.localStorage.setItem(POSTS_KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent(POSTS_EVENT));
 }

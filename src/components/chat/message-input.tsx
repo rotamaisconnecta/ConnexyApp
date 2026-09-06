@@ -26,14 +26,19 @@ export function MessageInput({
   const [showAttach, setShowAttach] = useState(false);
   const [recording, setRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const sendingRef = useRef(false);
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || sendingRef.current) return;
+    sendingRef.current = true;
     onSendText(trimmed);
     setText("");
     setShowEmoji(false);
     inputRef.current?.focus();
+    window.setTimeout(() => {
+      sendingRef.current = false;
+    }, 400);
   }, [text, onSendText]);
 
   const handleKeyDown = useCallback(
