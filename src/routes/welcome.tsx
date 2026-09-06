@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import welcomeReference from "@/assets/Branding/welcome-reference.png";
+import { PhoneFrame } from "@/components/phone-frame";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -16,10 +17,10 @@ export const Route = createFileRoute("/welcome")({
 
 function Welcome() {
   return (
-    <main className="min-h-screen bg-white">
-      <div className="relative mx-auto w-full max-w-[430px]">
+    <PhoneFrame>
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-white">
         <img
-          className="block h-auto w-full"
+          className="block max-h-full max-w-full object-contain"
           src={welcomeReference}
           alt="Connexy - Tudo acontece ao seu redor"
         />
@@ -34,6 +35,6 @@ function Welcome() {
           className="absolute left-[5.7%] top-[90.4%] h-[4.8%] w-[88.6%] focus:outline-none"
         />
       </div>
-    </main>
+    </PhoneFrame>
   );
 }

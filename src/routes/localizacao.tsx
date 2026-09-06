@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import locationPermissionReference from "@/assets/Branding/location-permission-reference.png";
+import { PhoneFrame } from "@/components/phone-frame";
 
 export const Route = createFileRoute("/localizacao")({
   head: () => ({ meta: [{ title: "Permitir localizacao | Connexy" }] }),
@@ -30,10 +31,10 @@ function LocationPermission() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="relative mx-auto w-full max-w-[430px]">
+    <PhoneFrame>
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-white">
         <img
-          className="block h-auto w-full"
+          className="block max-h-full max-w-full object-contain"
           src={locationPermissionReference}
           alt="Connexy solicita permissao para acessar sua localizacao"
         />
@@ -51,6 +52,6 @@ function LocationPermission() {
           className="absolute left-[7.6%] top-[92.3%] h-[5.1%] w-[84.8%] focus:outline-none"
         />
       </div>
-    </main>
+    </PhoneFrame>
   );
 }
