@@ -283,7 +283,19 @@ function DestinationPage() {
         {/* Confirm button */}
         <button
           disabled={!selectedPlace}
-          onClick={() => nav({ to: "/matching" })}
+          onClick={() => {
+            if (!selectedPlace) return;
+            nav({
+              to: "/ride/request",
+              search: {
+                destinationName: selectedPlace.name,
+                destinationAddress: selectedPlace.address,
+                destinationLat: -23.58,
+                destinationLng: -46.65,
+                source: "destino",
+              },
+            });
+          }}
           className="mt-5 w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
         >
           Confirmar destino

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { MapPin, Navigation, Search } from "lucide-react";
+import { MapPin, Navigation, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
 import { createStop, type RouteStop } from "@/lib/mobility/route-utils";
@@ -75,6 +74,22 @@ export function RideRequestForm({
           </button>
         </div>
       ))}
+
+      {onAddStop && stops.length < 3 && (
+        <button
+          type="button"
+          onClick={() =>
+            onAddStop(
+              { lat: -23.56, lng: -46.64, label: `Parada ${stops.length + 1}` },
+              `Parada ${stops.length + 1}`,
+            )
+          }
+          className="ml-5 flex items-center gap-1.5 text-xs font-medium text-primary"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Adicionar parada
+        </button>
+      )}
 
       <div className="border-t border-border" />
 

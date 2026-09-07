@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 import { Colors, Gradients } from "@/theme";
 
 type Pin = {
@@ -6,6 +7,7 @@ type Pin = {
   y: number;
   kind?: "user" | "driver" | "person" | "place" | "event" | "promo";
   label?: string;
+  labelPlacement?: "top" | "bottom";
 };
 
 const colorFor = (kind?: Pin["kind"]) => {
@@ -31,17 +33,25 @@ export function MapCanvas({
   height = 260,
   pins = [],
   route,
+  routePath,
+  routeColor,
+  stretch = false,
   className = "",
+  children,
 }: {
   height?: number;
   pins?: Pin[];
   route?: boolean;
+  routePath?: string;
+  routeColor?: string;
+  stretch?: boolean;
   className?: string;
+  children?: ReactNode;
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl ${className}`}
-      style={{ height, background: Gradients.soft }}
+      className={`relative overflow-hidden ${stretch ? "h-full w-full" : "rounded-2xl"} ${className}`}
+      style={{ ...(stretch ? {} : { height }), background: Gradients.soft }}
     >
       <svg viewBox="0 0 400 300" className="absolute inset-0 h-full w-full">
         {/* Blocks */}
@@ -79,8 +89,8 @@ export function MapCanvas({
         {/* Route */}
         {route && (
           <motion.path
-            d="M 60 260 Q 140 260 200 200 T 340 60"
-            stroke="var(--primary)"
+            d={routePath ?? "M 60 260 Q 140 260 200 200 T 340 60"}
+            stroke={routeColor ?? "var(--primary)"}
             strokeWidth="5"
             fill="none"
             strokeLinecap="round"
@@ -97,32 +107,61 @@ export function MapCanvas({
           initial={{ scale: 0, y: -8 }}
           animate={{ scale: 1, y: 0 }}
           transition={{ delay: i * 0.06, type: "spring", stiffness: 260 }}
-          className="absolute -translate-x-1/2 -translate-y-full"
+          className="absolute -translate-x-1/2"
           style={{ left: `${p.x}%`, top: `${p.y}%` }}
         >
-          <div className="flex flex-col items-center">
-            {p.label && (
-              <span className="mb-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold shadow-soft whitespace-nowrap">
-                {p.label}
-              </span>
+          <div
+            className={`flex flex-col items-center ${p.labelPlacement === "bottom" ? "" : "-translate-y-full"}`}
+          >
+            {p.labelPlacement === "bottom" ? (
+              <>
+                <span
+                  className="grid place-items-center h-7 w-7 rounded-full text-white text-[10px] font-bold shadow-elegant ring-2 ring-white"
+                  style={{ background: colorFor(p.kind) }}
+                >
+                  {p.kind === "user"
+                    ? "•"
+                    : p.kind === "driver"
+                      ? "🚗"
+                      : p.kind === "event"
+                        ? "★"
+                        : p.kind === "promo"
+                          ? "%"
+                          : "•"}
+                </span>
+                {p.label && (
+                  <span className="mt-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold shadow-soft whitespace-nowrap">
+                    {p.label}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                {p.label && (
+                  <span className="mb-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold shadow-soft whitespace-nowrap">
+                    {p.label}
+                  </span>
+                )}
+                <span
+                  className="grid place-items-center h-7 w-7 rounded-full text-white text-[10px] font-bold shadow-elegant ring-2 ring-white"
+                  style={{ background: colorFor(p.kind) }}
+                >
+                  {p.kind === "user"
+                    ? "•"
+                    : p.kind === "driver"
+                      ? "🚗"
+                      : p.kind === "event"
+                        ? "★"
+                        : p.kind === "promo"
+                          ? "%"
+                          : "•"}
+                </span>
+              </>
             )}
-            <span
-              className="grid place-items-center h-7 w-7 rounded-full text-white text-[10px] font-bold shadow-elegant ring-2 ring-white"
-              style={{ background: colorFor(p.kind) }}
-            >
-              {p.kind === "user"
-                ? "•"
-                : p.kind === "driver"
-                  ? "🚗"
-                  : p.kind === "event"
-                    ? "★"
-                    : p.kind === "promo"
-                      ? "%"
-                      : "•"}
-            </span>
           </div>
         </motion.div>
       ))}
+      {children}
     </div>
   );
 }

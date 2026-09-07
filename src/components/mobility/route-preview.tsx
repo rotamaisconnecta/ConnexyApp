@@ -14,6 +14,8 @@ interface RoutePreviewProps {
   showMap?: boolean;
 }
 
+const shortLabel = (label: string) => label.split(" — ")[0].trim() || label;
+
 export function RoutePreview({
   origin,
   destination,
@@ -23,14 +25,15 @@ export function RoutePreview({
   showMap = true,
 }: RoutePreviewProps) {
   const pins = [
-    { x: 15, y: 88, kind: "user" as const, label: "Você" },
+    { x: 10, y: 92, kind: "user" as const, label: "Você" },
     ...stops.map((s, i) => ({
-      x: 30 + i * 10,
-      y: 50 + i * 5,
+      x: 40 + i * 17,
+      y: 74 - i * 22,
       kind: "place" as const,
-      label: s.label,
+      label: shortLabel(s.label),
+      labelPlacement: (i % 2 === 0 ? "bottom" : "top") as "top" | "bottom",
     })),
-    { x: 85, y: 15, kind: "place" as const, label: destination.label },
+    { x: 90, y: 8, kind: "place" as const, label: shortLabel(destination.label) },
   ];
 
   return (

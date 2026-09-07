@@ -53,6 +53,33 @@ export function getTotalStops(stops: RouteStop[]): number {
   return stops.length;
 }
 
+/* ─── orderStopsForRoute ─────────────────────────────────── */
+/* Ordena as paradas pela melhor rota a partir da origem
+   (vizinho mais próximo). Mantém as paradas originais. */
+
+export function orderStopsForRoute(origin: GeoLocation, stops: RouteStop[]): RouteStop[] {
+  if (stops.length <= 1) return stops;
+  const remaining = [...stops];
+  const ordered: RouteStop[] = [];
+  let cursor = origin;
+  while (remaining.length > 0) {
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < remaining.length; index += 1) {
+      const distance = estimateRouteDistance(cursor, remaining[index].location);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    }
+    const sorted: RouteStop[] = remaining.splice(bestIndex, 1);
+    const next = sorted[0];
+    ordered.push(next);
+    cursor = next.location;
+  }
+  return ordered.map((stop, index) => ({ ...stop, order: index + 1 }));
+}
+
 /* ─── formatStopsText ────────────────────────────────────── */
 
 export function formatStopsText(stops: RouteStop[]): string {

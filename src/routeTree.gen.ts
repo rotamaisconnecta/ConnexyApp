@@ -52,6 +52,7 @@ import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
 import { Route as _devDemoRouteImport } from './routes/__dev/demo'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AppRideIndexRouteImport } from './routes/_app/ride.index'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app.perfil.index'
 import { Route as AppDriverIndexRouteImport } from './routes/_app/driver/index'
 import { Route as AppSolicitacaoIdRouteImport } from './routes/_app.solicitacao.$id'
@@ -309,6 +310,11 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppRideIndexRoute = AppRideIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRideRoute,
+} as any)
 const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
   id: '/perfil/',
   path: '/perfil/',
@@ -593,6 +599,7 @@ export interface FileRoutesByFullPath {
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
   '/driver/': typeof AppDriverIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
+  '/ride/': typeof AppRideIndexRoute
   '/driver/trip/$tripId': typeof AppDriverTripTripIdRoute
 }
 export interface FileRoutesByTo {
@@ -634,7 +641,6 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileRouteWithChildren
   '/recommendations': typeof AppRecommendationsRoute
   '/reels': typeof AppReelsRouteWithChildren
-  '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -677,6 +683,7 @@ export interface FileRoutesByTo {
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
   '/driver': typeof AppDriverIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
+  '/ride': typeof AppRideIndexRoute
   '/driver/trip/$tripId': typeof AppDriverTripTripIdRoute
 }
 export interface FileRoutesById {
@@ -763,6 +770,7 @@ export interface FileRoutesById {
   '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
   '/_app/driver/': typeof AppDriverIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
+  '/_app/ride/': typeof AppRideIndexRoute
   '/_app/driver/trip/$tripId': typeof AppDriverTripTripIdRoute
 }
 export interface FileRouteTypes {
@@ -849,6 +857,7 @@ export interface FileRouteTypes {
     | '/solicitacao/$id'
     | '/driver/'
     | '/perfil/'
+    | '/ride/'
     | '/driver/trip/$tripId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -890,7 +899,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recommendations'
     | '/reels'
-    | '/ride'
     | '/rota'
     | '/trending'
     | '/auth/callback'
@@ -933,6 +941,7 @@ export interface FileRouteTypes {
     | '/solicitacao/$id'
     | '/driver'
     | '/perfil'
+    | '/ride'
     | '/driver/trip/$tripId'
   id:
     | '__root__'
@@ -1018,6 +1027,7 @@ export interface FileRouteTypes {
     | '/_app/solicitacao/$id'
     | '/_app/driver/'
     | '/_app/perfil/'
+    | '/_app/ride/'
     | '/_app/driver/trip/$tripId'
   fileRoutesById: FileRoutesById
 }
@@ -1342,6 +1352,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/.mcp/list-tools'
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/ride/': {
+      id: '/_app/ride/'
+      path: '/'
+      fullPath: '/ride/'
+      preLoaderRoute: typeof AppRideIndexRouteImport
+      parentRoute: typeof AppRideRoute
     }
     '/_app/perfil/': {
       id: '/_app/perfil/'
@@ -1722,6 +1739,7 @@ interface AppRideRouteChildren {
   AppRideHistoryRoute: typeof AppRideHistoryRoute
   AppRideMatchingRoute: typeof AppRideMatchingRoute
   AppRideRequestRoute: typeof AppRideRequestRoute
+  AppRideIndexRoute: typeof AppRideIndexRoute
 }
 
 const AppRideRouteChildren: AppRideRouteChildren = {
@@ -1729,6 +1747,7 @@ const AppRideRouteChildren: AppRideRouteChildren = {
   AppRideHistoryRoute: AppRideHistoryRoute,
   AppRideMatchingRoute: AppRideMatchingRoute,
   AppRideRequestRoute: AppRideRequestRoute,
+  AppRideIndexRoute: AppRideIndexRoute,
 }
 
 const AppRideRouteWithChildren =

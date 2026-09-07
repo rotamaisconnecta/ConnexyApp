@@ -217,7 +217,7 @@ export function HomeActionHub() {
       </h2>
 
       <div className="mt-2 grid grid-cols-3 gap-2">
-        <Link to="/destino" aria-label="Ir para um destino" className="min-w-0">
+        <Link to="/ride/request" aria-label="Ir para um destino" className="min-w-0">
           <ActionCard
             label="Ir"
             image={ACTION_IMAGES.go}

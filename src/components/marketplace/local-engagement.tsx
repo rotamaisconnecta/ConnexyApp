@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { people } from "@/lib/mock-data";
+import { people, type Person } from "@/lib/mock-data";
+import { estimateRouteDistance } from "@/lib/mobility/route-utils";
 
 type LocalReview = {
   id: string;
@@ -46,6 +47,96 @@ type OutingTarget = {
   latitude?: number | null;
   longitude?: number | null;
 };
+
+const MAX_COMPANIONS = 3;
+
+type CompanionStop = {
+  id: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+};
+
+const DEMO_STREETS = [
+  "Rua Augusta, 1420",
+  "Alameda Santos, 980",
+  "Rua Oscar Freire, 512",
+  "Rua Haddock Lobo, 1377",
+  "Av. Paulista, 1578",
+  "Rua Vergueiro, 2434",
+  "Rua dos Pinheiros, 690",
+  "Rua Peixoto Gomide, 128",
+] as const;
+
+const DEMO_NEIGHBORHOODS = [
+  "Consolação",
+  "Bela Vista",
+  "Jardins",
+  "Pinheiros",
+  "Vila Mariana",
+  "Moema",
+] as const;
+
+const DEMO_ORIGIN = { lat: -23.55, lng: -46.64, label: "Minha localização" };
+
+function companionLocation(
+  personId: string,
+  distanceMeters: number,
+): { address: string; lat: number; lng: number } {
+  const street = DEMO_STREETS[personId.length % DEMO_STREETS.length];
+  const number = 100 + ((personId.charCodeAt(0) + personId.charCodeAt(personId.length - 1)) % 1800);
+  const neighborhood =
+    DEMO_NEIGHBORHOODS[(personId.charCodeAt(1) || 0) % DEMO_NEIGHBORHOODS.length];
+  const baseName = street.slice(0, street.lastIndexOf(",")).trim();
+  const angle = ((personId.length * 7) % 8) * (Math.PI / 4);
+  const lat = DEMO_ORIGIN.lat + (distanceMeters / 111_000) * Math.cos(angle);
+  const lng =
+    DEMO_ORIGIN.lng +
+    (distanceMeters / (111_000 * Math.cos((DEMO_ORIGIN.lat * Math.PI) / 180))) * Math.sin(angle);
+  return {
+    address: `${baseName}, ${number} — ${neighborhood}`,
+    lat,
+    lng,
+  };
+}
+
+function companionStopFor(person: Person): CompanionStop {
+  const fallback = companionLocation(person.id, person.distanceMeters);
+  return {
+    id: person.id,
+    name: person.name,
+    address: person.address ?? fallback.address,
+    lat: person.latitude ?? fallback.lat,
+    lng: person.longitude ?? fallback.lng,
+  };
+}
+
+function orderCompanionsByRoute(companions: CompanionStop[]): CompanionStop[] {
+  if (companions.length <= 1) return companions;
+  const remaining = [...companions];
+  const ordered: CompanionStop[] = [];
+  let cursor = DEMO_ORIGIN;
+  while (remaining.length > 0) {
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < remaining.length; index += 1) {
+      const distance = estimateRouteDistance(cursor, {
+        lat: remaining[index].lat,
+        lng: remaining[index].lng,
+        label: remaining[index].address,
+      });
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    }
+    const [next] = remaining.splice(bestIndex, 1);
+    ordered.push(next);
+    cursor = { lat: next.lat, lng: next.lng, label: next.address };
+  }
+  return ordered;
+}
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -157,28 +248,54 @@ function InviteTogetherSheet({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  const [personId, setPersonId] = useState(people[0]?.id ?? "");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [message, setMessage] = useState(`Vamos juntos para ${target.title}?`);
-  const [accepted, setAccepted] = useState(false);
-  const person = people.find((item) => item.id === personId) ?? people[0];
+  const [accepted, setAccepted] = useState<CompanionStop[]>([]);
+  const candidates = people.slice(0, 7);
 
-  if (!open || !person) return null;
+  if (!open) return null;
+
+  const togglePerson = (personId: string) => {
+    setSelectedIds((current) => {
+      if (current.includes(personId)) return current.filter((id) => id !== personId);
+      if (current.length >= MAX_COMPANIONS) {
+        toast.error("Você pode convidar até 3 pessoas para ir junto.");
+        return current;
+      }
+      return [...current, personId];
+    });
+  };
+
+  const buildCompanions = (): CompanionStop[] =>
+    people.filter((person) => selectedIds.includes(person.id)).map(companionStopFor);
 
   const sendInvite = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Escolha ao menos uma pessoa para convidar.");
+      return;
+    }
+    const companions = buildCompanions();
     const current = readJson<Array<Record<string, unknown>>>(OUTING_INVITES_KEY, []);
     writeJson(OUTING_INVITES_KEY, [
-      {
-        id: `outing-${Date.now()}`,
+      ...companions.map((companion) => ({
+        id: `outing-${Date.now()}-${companion.id}`,
         targetId: target.id,
-        personId: person.id,
+        personId: companion.id,
         message: message.trim(),
-        status: "pending",
+        status: "accepted",
         createdAt: Date.now(),
-      },
+      })),
       ...current,
     ]);
-    toast.success(`Convite enviado para ${person.name.split(" ")[0]}.`);
+    toast.success(
+      companions.length === 1
+        ? `Convite enviado para ${companions[0].name.split(" ")[0]}.`
+        : `${companions.length} convites enviados.`,
+    );
+    setAccepted(companions);
   };
+
+  const orderedRoute = accepted.length > 0 ? orderCompanionsByRoute(accepted) : [];
 
   return (
     <div
@@ -187,12 +304,12 @@ function InviteTogetherSheet({
       aria-modal="true"
       aria-label="Convidar para ir junto"
     >
-      <div className="w-full max-w-md rounded-[28px] bg-background p-5 shadow-elevated">
+      <div className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-[28px] bg-background p-5 shadow-elevated no-scrollbar">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-bold">Convidar para ir junto</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Convide alguém para {target.title}.
+              Convide até {MAX_COMPANIONS} amigos para {target.title} e divida a rota.
             </p>
           </div>
           <button
@@ -203,61 +320,117 @@ function InviteTogetherSheet({
             <X className="h-4 w-4" />
           </button>
         </div>
-        {!accepted ? (
+        {accepted.length === 0 ? (
           <>
-            <label className="mt-5 block text-xs font-semibold">Quem você quer convidar?</label>
-            <select
-              value={personId}
-              onChange={(event) => setPersonId(event.target.value)}
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              {people.slice(0, 7).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+            <label className="mt-5 block text-xs font-semibold">
+              Quem você quer convidar?{" "}
+              <span className="text-muted-foreground">
+                ({selectedIds.length}/{MAX_COMPANIONS})
+              </span>
+            </label>
+            <ul className="mt-2 space-y-2">
+              {candidates.map((person) => {
+                const location = companionStopFor(person);
+                const selected = selectedIds.includes(person.id);
+                const readsOnly = !selected && selectedIds.length >= MAX_COMPANIONS;
+                return (
+                  <li key={person.id}>
+                    <button
+                      type="button"
+                      onClick={() => togglePerson(person.id)}
+                      disabled={readsOnly}
+                      aria-pressed={selected}
+                      className={`flex w-full items-center gap-3 rounded-2xl border p-2.5 text-left transition disabled:opacity-50 ${
+                        selected ? "border-primary/50 bg-primary/5" : "border-border bg-surface"
+                      }`}
+                    >
+                      <img
+                        src={person.photo}
+                        alt=""
+                        className="h-11 w-11 rounded-full object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold">{person.name}</div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {location.address}
+                        </div>
+                      </div>
+                      <span
+                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${
+                          selected ? "border-primary bg-primary text-white" : "border-border"
+                        }`}
+                      >
+                        {selected && <Check className="h-3.5 w-3.5" />}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Ao aceitar o convite de ir junto, cada amigo também aceita{" "}
+                <strong className="text-foreground">compartilhar a localização</strong> — usada como
+                paradas para definir a melhor rota até o destino.
+              </p>
+            </div>
+
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              rows={3}
+              rows={2}
               maxLength={240}
               className="mt-3 w-full resize-none rounded-xl bg-secondary/70 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
             />
+
             <button
               type="button"
               onClick={sendInvite}
-              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+              disabled={selectedIds.length === 0}
+              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Send className="h-4 w-4" /> Enviar convite
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccepted(true)}
-              className="mt-3 w-full text-center text-[11px] font-semibold text-primary"
-            >
-              Simular aceite no modo demonstração
+              <Send className="h-4 w-4" /> Enviar convite{selectedIds.length > 1 ? "s" : ""}
             </button>
           </>
         ) : (
-          <div className="mt-5 rounded-2xl bg-primary/10 p-4">
-            <div className="flex items-center gap-2 text-sm font-bold text-primary">
-              <Check className="h-4 w-4" /> {person.name.split(" ")[0]} aceitou o convite
+          <div className="mt-5 space-y-3">
+            <div className="rounded-2xl bg-primary/10 p-4">
+              <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                <Check className="h-4 w-4" />
+                {accepted.map((companion) => companion.name.split(" ")[0]).join(", ")}{" "}
+                {accepted.length > 1 ? "aceitaram" : "aceitou"} o convite
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                Cada pessoa compartilhou a localização. O Connexy calculou a melhor rota com as
+                paradas planejadas até {target.title}.
+              </p>
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              O Connexy sugere buscar {person.name.split(" ")[0]} e seguir juntos para{" "}
-              {target.title}.
-            </p>
-            <div className="mt-4 flex gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-background text-primary">
-                <MapPin className="h-4 w-4" />
-              </span>
-              <span className="text-xs">
-                <strong>Rota sugerida</strong>
-                <br />
-                Sua localização → {person.name.split(" ")[0]} → {target.title}
-              </span>
+
+            <div className="rounded-2xl bg-secondary/60 p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Rota planejada
+              </p>
+              <ul className="mt-2 space-y-1.5 text-xs">
+                <li className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-success" />
+                  <span className="font-medium">Sua localização</span>
+                </li>
+                {orderedRoute.map((companion) => (
+                  <li key={companion.id} className="flex items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                    <span className="font-medium">{companion.name.split(" ")[0]}</span>
+                    <span className="truncate text-muted-foreground">— {companion.address}</span>
+                  </li>
+                ))}
+                <li className="flex items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-sm bg-primary" />
+                  <span className="font-medium">{target.title}</span>
+                </li>
+              </ul>
             </div>
+
             <button
               type="button"
               onClick={() =>
@@ -269,17 +442,12 @@ function InviteTogetherSheet({
                     destinationAddress: target.address ?? null,
                     destinationLat: target.latitude ?? null,
                     destinationLng: target.longitude ?? null,
-                    pickupName: person.name,
-                    pickupAddress: `Localização de ${person.name.split(" ")[0]}`,
-                    // Posição simulada derivada do perfil próximo. Na integração de produção,
-                    // estes valores serão substituídos pela localização autorizada da pessoa.
-                    pickupLat: -23.55 + person.distanceMeters / 111_000,
-                    pickupLng: -46.64 + person.distanceMeters / 180_000,
+                    companions: JSON.stringify(accepted),
                     source: "invite",
                   },
                 })
               }
-              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
             >
               <CarFront className="h-4 w-4" /> Pedir corrida pelo Connexy
             </button>

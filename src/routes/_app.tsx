@@ -56,7 +56,8 @@ function AppLayout() {
       return search.edit === true || search.edit === "true";
     },
   });
-  const immersiveRouteOpen = conversationOpen || requestOpen || profileEditorOpen;
+  const rideFlowOpen = /^\/ride(\/request|\/matching|\/active|\/)?$/.test(pathname);
+  const immersiveRouteOpen = conversationOpen || requestOpen || profileEditorOpen || rideFlowOpen;
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
