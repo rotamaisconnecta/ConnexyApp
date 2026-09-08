@@ -78,7 +78,7 @@ function CardArrow() {
 
 function ActionCard({ label, image, icon }: { label: string; image: string; icon?: ReactNode }) {
   return (
-    <div className="group relative h-[104px] min-w-0 overflow-hidden rounded-[14px] bg-gray-200 shadow-soft">
+    <div className="group relative aspect-[10/9] max-h-[104px] min-h-[86px] min-w-0 overflow-hidden rounded-[14px] bg-gray-200 shadow-soft">
       <img
         src={image}
         alt=""
@@ -87,7 +87,7 @@ function ActionCard({ label, image, icon }: { label: string; image: string; icon
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/5" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1.5 p-2 text-white">
-        <span className="flex min-w-0 items-center gap-1.5 text-[15px] font-medium leading-none">
+        <span className="flex min-w-0 items-center gap-1.5 text-[clamp(12px,3.6vw,15px)] font-medium leading-none">
           <span className="truncate">{label}</span>
           {icon}
         </span>
@@ -124,9 +124,14 @@ function HappeningCard({
   tone: "primary" | "amber";
 }) {
   return (
-    <div className="group flex h-[108px] items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-3 shadow-soft transition-colors hover:bg-accent/35">
+    <div className="group flex min-h-[100px] items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-3 shadow-soft transition-colors hover:bg-accent/35">
       <span className="relative shrink-0">
-        <img src={image} alt="" className="h-[68px] w-[68px] rounded-[15px] object-cover" />
+        <img
+          src={image}
+          alt=""
+          className="h-[clamp(56px,16vw,68px)] w-[clamp(56px,16vw,68px)] rounded-[15px] object-cover"
+        />
+
         <StatusBadge tone={tone === "primary" ? "bg-primary" : "bg-amber-400"}>{badge}</StatusBadge>
       </span>
       <span className="min-w-0 flex-1">
