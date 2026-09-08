@@ -20,6 +20,7 @@ interface MessageBubbleProps {
   onReaction?: (messageId: string, reaction: QuickReaction) => void;
   onRetry?: (messageId: string) => void;
   onOpenSharedContent?: (contentId: string, kind: "event" | "place") => void;
+  showSender?: boolean;
 }
 
 export function MessageBubble({
@@ -29,6 +30,7 @@ export function MessageBubble({
   onReaction,
   onRetry,
   onOpenSharedContent,
+  showSender = false,
 }: MessageBubbleProps) {
   const alignment = getMessageAlignment(message);
   const isMe = alignment === "right";
@@ -52,6 +54,16 @@ export function MessageBubble({
       {!isMe && grouped && <div className="w-6 shrink-0" />}
 
       <div className={cn("min-w-0 max-w-[75%] space-y-0.5", isMe && "items-end")}>
+        {showSender && (
+          <p
+            className={cn(
+              "px-1 text-[10px] font-semibold text-muted-foreground",
+              isMe && "text-right",
+            )}
+          >
+            {message.senderName ?? (isMe ? "Você" : "Participante")}
+          </p>
+        )}
         <div
           className={cn(
             "relative rounded-2xl px-3 py-2 text-sm",

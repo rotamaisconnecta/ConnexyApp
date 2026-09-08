@@ -26,6 +26,7 @@ interface NotificationCenterProps {
   loading?: boolean;
   onNotificationsChange?: (notifications: Notification[]) => void;
   onBack?: () => void;
+  onOpen?: (notification: Notification) => void;
 }
 
 export function NotificationCenter({
@@ -33,6 +34,7 @@ export function NotificationCenter({
   loading = false,
   onNotificationsChange,
   onBack,
+  onOpen,
 }: NotificationCenterProps) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [filter, setFilter] = useState<NotificationFilterState>(createDefaultFilter());
@@ -110,6 +112,7 @@ export function NotificationCenter({
                       notifications={[]}
                       onRead={handleRead}
                       onDismiss={handleDismiss}
+                      onOpen={onOpen}
                     />
                   ) : (
                     groups.map((g) => (
@@ -118,6 +121,7 @@ export function NotificationCenter({
                         group={g}
                         onRead={handleRead}
                         onDismiss={handleDismiss}
+                        onOpen={onOpen}
                       />
                     ))
                   )}
@@ -128,6 +132,7 @@ export function NotificationCenter({
                   notifications={filtered}
                   onRead={handleRead}
                   onDismiss={handleDismiss}
+                  onOpen={onOpen}
                 />
               )}
             </AnimatePresence>

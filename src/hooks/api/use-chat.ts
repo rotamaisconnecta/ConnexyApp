@@ -6,7 +6,13 @@ import { dbRowsToChatMessages, dbRowToChatMessage } from "@/lib/chat/chat-adapte
 import type { ChatMessage } from "@/lib/chat/chat-types";
 import { MessageKind } from "@/lib/chat/chat-types";
 import { supabase } from "@/lib/supabase/client";
-import { getMessages, sendLocalMessage, sendSharedContentMessage } from "@/lib/demo/demo-db";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import {
+  getMessages,
+  sendLocalMediaMessage,
+  sendLocalMessage,
+  sendSharedContentMessage,
+} from "@/lib/demo/demo-db";
 
 const PAGE_SIZE = 50;
 
@@ -17,13 +23,39 @@ export function localChatQueryKey(conversationId: string | null) {
 function demoRowsToChatMessages(
   conversationId: string,
   rows: ReturnType<typeof getMessages>,
+  currentUserId: string | null,
 ): ChatMessage[] {
   return rows.map((m) => {
+    if (m.kind === "image" && m.payload?.dataUrl) {
+      return {
+        id: m.id,
+        conversationId: m.conversationId || conversationId,
+        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
+        kind: MessageKind.IMAGE,
+        url: m.payload.dataUrl,
+        caption: m.payload.fileName,
+        at: new Date(m.at),
+        status: "read" as const,
+        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
+      } satisfies ChatMessage;
+    }
+    if (m.kind === "video" && m.payload?.dataUrl) {
+      return {
+        id: m.id,
+        conversationId: m.conversationId || conversationId,
+        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
+        kind: MessageKind.VIDEO,
+        url: m.payload.dataUrl,
+        at: new Date(m.at),
+        status: "read" as const,
+        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
+      } satisfies ChatMessage;
+    }
     if (m.kind === "event" && m.payload) {
       return {
         id: m.id,
         conversationId: m.conversationId || conversationId,
-        from: m.from,
+        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
         kind: MessageKind.EVENT,
         title: m.payload.title ?? m.text,
         cover: m.payload.cover,
@@ -34,6 +66,7 @@ function demoRowsToChatMessages(
         route: m.payload.route,
         at: new Date(m.at),
         status: "read" as const,
+        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
       } satisfies ChatMessage;
     }
 
@@ -41,7 +74,7 @@ function demoRowsToChatMessages(
       return {
         id: m.id,
         conversationId: m.conversationId || conversationId,
-        from: m.from,
+        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
         kind: MessageKind.LOCATION,
         label: m.payload.title ?? m.text,
         proximity: m.payload.proximity ?? "Local compartilhado",
@@ -53,23 +86,28 @@ function demoRowsToChatMessages(
         route: m.payload.route,
         at: new Date(m.at),
         status: "read" as const,
+        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
       } satisfies ChatMessage;
     }
 
     return {
       id: m.id,
       conversationId: m.conversationId || conversationId,
-      from: m.from,
+      from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
       kind: MessageKind.TEXT,
       text: m.text,
       at: new Date(m.at),
       status: "read" as const,
+      senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
     } satisfies ChatMessage;
   });
 }
 
-function readLocalChatMessages(conversationId: string): ChatMessage[] {
-  return demoRowsToChatMessages(conversationId, getMessages(conversationId));
+function readLocalChatMessages(
+  conversationId: string,
+  currentUserId: string | null,
+): ChatMessage[] {
+  return demoRowsToChatMessages(conversationId, getMessages(conversationId), currentUserId);
 }
 
 interface UseChatOptions {
@@ -96,18 +134,18 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
 
   const localQuery = useQuery({
     queryKey,
-    queryFn: () => (conversationId ? readLocalChatMessages(conversationId) : []),
+    queryFn: () => (conversationId ? readLocalChatMessages(conversationId, currentUserId) : []),
     enabled: local && Boolean(conversationId),
     staleTime: Infinity,
     initialData: () =>
-      local && conversationId ? readLocalChatMessages(conversationId) : undefined,
+      local && conversationId ? readLocalChatMessages(conversationId, currentUserId) : undefined,
   });
 
   useEffect(() => {
     if (!local || !conversationId) return;
     const key = localChatQueryKey(conversationId);
     const sync = () => {
-      queryClient.setQueryData(key, readLocalChatMessages(conversationId));
+      queryClient.setQueryData(key, readLocalChatMessages(conversationId, currentUserId));
     };
     sync();
     setHasMore(false);
@@ -116,20 +154,21 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     setSubscriptionStatus("connected");
     window.addEventListener("connexy:demo:db", sync);
     return () => window.removeEventListener("connexy:demo:db", sync);
-  }, [local, conversationId, queryClient]);
+  }, [local, conversationId, currentUserId, queryClient]);
 
   const demoSend = useCallback(
     (text: string) => {
       if (!local || !conversationId) return;
       const trimmed = text.trim();
       if (!trimmed) return;
-      sendLocalMessage(conversationId, "me", trimmed);
+      const identity = getDemoIdentity();
+      sendLocalMessage(conversationId, "me", trimmed, identity);
       queryClient.setQueryData(
         localChatQueryKey(conversationId),
-        readLocalChatMessages(conversationId),
+        readLocalChatMessages(conversationId, currentUserId),
       );
     },
-    [local, conversationId, queryClient],
+    [local, conversationId, currentUserId, queryClient],
   );
 
   const sendSharedContent = useCallback(
@@ -150,10 +189,22 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       sendSharedContentMessage(conversationId, "me", payload, text);
       queryClient.setQueryData(
         localChatQueryKey(conversationId),
-        readLocalChatMessages(conversationId),
+        readLocalChatMessages(conversationId, currentUserId),
       );
     },
-    [local, conversationId, queryClient],
+    [local, conversationId, currentUserId, queryClient],
+  );
+
+  const sendMedia = useCallback(
+    (kind: "image" | "video", dataUrl: string, mimeType: string, fileName: string) => {
+      if (!local || !conversationId) return;
+      sendLocalMediaMessage(conversationId, kind, dataUrl, mimeType, fileName, getDemoIdentity());
+      queryClient.setQueryData(
+        localChatQueryKey(conversationId),
+        readLocalChatMessages(conversationId, currentUserId),
+      );
+    },
+    [local, conversationId, currentUserId, queryClient],
   );
 
   const loadMessages = useCallback(async () => {
@@ -315,6 +366,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       hasMore: false,
       sendMessage: demoSend,
       sendSharedContent,
+      sendMedia,
       loadMore: () => Promise.resolve(),
       retry: demoSend,
       subscriptionStatus,
@@ -328,6 +380,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     hasMore,
     sendMessage,
     sendSharedContent,
+    sendMedia: () => undefined,
     loadMore,
     retry: loadMessages,
     subscriptionStatus,

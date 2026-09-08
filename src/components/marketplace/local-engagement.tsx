@@ -282,7 +282,7 @@ function InviteTogetherSheet({
         targetId: target.id,
         personId: companion.id,
         message: message.trim(),
-        status: "accepted",
+        status: "pending",
         createdAt: Date.now(),
       })),
       ...current,
@@ -399,14 +399,23 @@ function InviteTogetherSheet({
             <div className="rounded-2xl bg-primary/10 p-4">
               <div className="flex items-center gap-2 text-sm font-bold text-primary">
                 <Check className="h-4 w-4" />
-                {accepted.map((companion) => companion.name.split(" ")[0]).join(", ")}{" "}
-                {accepted.length > 1 ? "aceitaram" : "aceitou"} o convite
+                Convites enviados — aguardando respostas
               </div>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                Cada pessoa compartilhou a localização. O Connexy calculou a melhor rota com as
-                paradas planejadas até {target.title}.
+                Cada pessoa decide individualmente. A rota usará apenas os amigos que aceitarem.
               </p>
             </div>
+
+            <ul className="rounded-2xl border border-border bg-surface p-3 text-xs">
+              {accepted.map((companion) => (
+                <li key={companion.id} className="flex items-center justify-between py-1.5">
+                  <span className="font-medium">{companion.name}</span>
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                    Pendente
+                  </span>
+                </li>
+              ))}
+            </ul>
 
             <div className="rounded-2xl bg-secondary/60 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -433,6 +442,7 @@ function InviteTogetherSheet({
 
             <button
               type="button"
+              disabled
               onClick={() =>
                 navigate({
                   to: "/ride/request",
@@ -442,14 +452,14 @@ function InviteTogetherSheet({
                     destinationAddress: target.address ?? null,
                     destinationLat: target.latitude ?? null,
                     destinationLng: target.longitude ?? null,
-                    companions: JSON.stringify(accepted),
+                    companions: JSON.stringify([]),
                     source: "invite",
                   },
                 })
               }
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <CarFront className="h-4 w-4" /> Pedir corrida pelo Connexy
+              <CarFront className="h-4 w-4" /> Aguardando aceites
             </button>
           </div>
         )}

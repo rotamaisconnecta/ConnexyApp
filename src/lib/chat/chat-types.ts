@@ -47,6 +47,8 @@ export interface MessageBase {
   at: Date;
   status: MessageStatusValue;
   reaction?: QuickReaction;
+  /** Present for group messages when the sender is known. */
+  senderName?: string;
 }
 
 /* ─── Message Variants ───────────────────────────────────── */
@@ -193,10 +195,12 @@ export type AttachmentAction =
   | typeof MessageKind.AUDIO
   | typeof MessageKind.FILE
   | typeof MessageKind.LOCATION
+  | "camera"
   | "share-content";
 
 export const ATTACHMENT_OPTIONS: AttachmentOption[] = [
   { kind: MessageKind.IMAGE, label: "Foto", icon: "📷" },
+  { kind: "camera", label: "Câmera", icon: "📸" },
   { kind: MessageKind.VIDEO, label: "Vídeo", icon: "🎬" },
   { kind: MessageKind.AUDIO, label: "Áudio", icon: "🎤" },
   { kind: MessageKind.FILE, label: "Arquivo", icon: "📄" },

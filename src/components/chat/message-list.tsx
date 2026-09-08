@@ -11,6 +11,7 @@ interface MessageListProps {
   onReaction?: (messageId: string, reaction: QuickReaction) => void;
   onRetry?: (messageId: string) => void;
   onOpenSharedContent?: (contentId: string, kind: "event" | "place") => void;
+  isGroup?: boolean;
 }
 
 const bubbleContainer = {
@@ -37,6 +38,7 @@ export function MessageList({
   onReaction,
   onRetry,
   onOpenSharedContent,
+  isGroup = false,
 }: MessageListProps) {
   const dateGroups = groupMessagesByDate(messages);
 
@@ -63,6 +65,7 @@ export function MessageList({
                   onReaction={onReaction}
                   onRetry={onRetry}
                   onOpenSharedContent={onOpenSharedContent}
+                  showSender={isGroup && !grouped}
                 />
               </motion.div>
             );

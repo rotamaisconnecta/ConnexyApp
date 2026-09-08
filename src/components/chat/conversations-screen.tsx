@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-import { Loader2, MessagesSquare, Search, SlidersHorizontal, X } from "lucide-react";
+import { Check, Loader2, MessagesSquare, Search, SlidersHorizontal, Users, X } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { ConversationRow } from "./conversation-row";
 import { ContinueCard } from "./continue-card";
@@ -12,8 +12,10 @@ import { ChatService } from "@/services/chat.service";
 import { UserRepository } from "@/repositories/user.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
+import { getDemoIdentities, setDemoIdentity, useDemoIdentity } from "@/lib/demo/demo-identity";
 import { subscribeDemoDB, isConnected, getConversationLastMessage } from "@/lib/demo/demo-db";
-import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
+import { useDemoGroupInvites, useDemoGroups, useDemoPendingRequests } from "@/lib/demo/use-demo-db";
+import { respondToDemoGroupInvite } from "@/lib/demo/demo-db";
 import { people } from "@/lib/mock-data";
 import {
   MOCK_CONVERSATIONS,
@@ -45,6 +47,7 @@ export function ConversationsScreen() {
   const reducedMotion = useReducedMotion();
   const initial = reducedMotion ? false : "hidden";
   const { user } = useAuth();
+  const demoIdentity = useDemoIdentity();
   const configured = isPublicSupabaseConfigured();
 
   const [realConversations, setRealConversations] = useState<RealConversation[]>([]);
@@ -60,6 +63,8 @@ export function ConversationsScreen() {
   const [onlyOnline, setOnlyOnline] = useState(false);
   const [onlyNearby, setOnlyNearby] = useState(false);
   const pendingRequests = useDemoPendingRequests();
+  const demoGroups = useDemoGroups(user?.id ?? "");
+  const groupInvites = useDemoGroupInvites(user?.id ?? "");
 
   // In demo mode, merge locally-created connections into the conversation list.
   const demo = isDemoMode();
@@ -93,7 +98,10 @@ export function ConversationsScreen() {
         const next = [...byId.values()].map((conversation) => {
           const last = getConversationLastMessage(conversation.id);
           if (!last) return conversation;
-          if (conversation.lastMessage === last.text && conversation.updatedAt.getTime() === last.at) {
+          if (
+            conversation.lastMessage === last.text &&
+            conversation.updatedAt.getTime() === last.at
+          ) {
             return conversation;
           }
           changed = true;
@@ -111,7 +119,6 @@ export function ConversationsScreen() {
     };
     sync();
     return subscribeDemoDB(sync);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demo]);
 
   // Load real conversations when Supabase is configured
@@ -153,11 +160,37 @@ export function ConversationsScreen() {
     };
   }, [configured, user?.id]);
 
-  const conversations = configured ? realConversations : mockConversations;
+  const demoConversationItems = useMemo<MockConversation[]>(
+    () => [
+      ...mockConversations,
+      ...demoGroups.map((group) => {
+        const accepted = group.participants.filter(
+          (participant) => participant.status === "accepted",
+        );
+        const last = getConversationLastMessage(group.id);
+        return {
+          id: group.id,
+          participant: { id: group.id, name: group.name },
+          initials: group.name.slice(0, 2).toUpperCase(),
+          isOnline: true,
+          currentThread: `${accepted.length} participante${accepted.length === 1 ? "" : "s"}`,
+          threadIcon: ThreadIcon.EVENT,
+          lastMessage: last?.text ?? "Grupo criado — aguardando convites",
+          lastMessageType: LastMessageType.TEXT,
+          updatedAt: new Date(last?.at ?? group.createdAt),
+          unreadCount: 0,
+          isMuted: false,
+          isPinned: false,
+        };
+      }),
+    ],
+    [mockConversations, demoGroups],
+  );
+  const conversations = configured ? realConversations : demoConversationItems;
   const sorted = useMemo(() => {
     if (configured) return realConversations;
-    return sortMockConversations(mockConversations);
-  }, [configured, realConversations, mockConversations]);
+    return sortMockConversations(demoConversationItems);
+  }, [configured, realConversations, demoConversationItems]);
 
   const filtered = useMemo(() => {
     if (configured) {
@@ -249,6 +282,24 @@ export function ConversationsScreen() {
           </button>
         </div>
 
+        {isDemoMode() && (
+          <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-[11px] text-muted-foreground">
+            <span className="font-semibold text-primary">Simulação demo</span>
+            <select
+              value={demoIdentity.id}
+              onChange={(event) => setDemoIdentity(event.target.value)}
+              className="max-w-[65%] rounded-lg border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground outline-none"
+              aria-label="Alternar identidade demo"
+            >
+              {getDemoIdentities().map((identity) => (
+                <option key={identity.id} value={identity.id}>
+                  {identity.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <div className="mt-4 grid grid-cols-2 border-b border-border">
           <button
             type="button"
@@ -266,9 +317,9 @@ export function ConversationsScreen() {
             className={`relative flex items-center justify-center gap-1.5 pb-3 text-[13px] font-semibold transition ${activeTab === "requests" ? "text-primary" : "text-muted-foreground"}`}
           >
             Solicitações
-            {pendingRequests.length > 0 && (
+            {pendingRequests.length + groupInvites.length > 0 && (
               <span className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] text-primary-foreground">
-                {pendingRequests.length}
+                {pendingRequests.length + groupInvites.length}
               </span>
             )}
             {activeTab === "requests" && (
@@ -466,8 +517,63 @@ export function ConversationsScreen() {
 
         {!realLoading && !realError && activeTab === "requests" && (
           <section className="mt-5 px-5">
-            {filteredRequests.length > 0 ? (
+            {filteredRequests.length > 0 || groupInvites.length > 0 ? (
               <div className="space-y-2.5">
+                {groupInvites.map((group) => {
+                  const inviter = people.find((person) => person.id === group.creatorId);
+                  const participantNames = group.participants
+                    .filter((participant) => participant.userId !== user?.id)
+                    .map(
+                      (participant) =>
+                        people.find((person) => person.id === participant.userId)?.name,
+                    )
+                    .filter(Boolean)
+                    .join(", ");
+                  return (
+                    <article
+                      key={group.id}
+                      className="rounded-2xl border border-primary/20 bg-primary/5 p-3 shadow-soft"
+                    >
+                      <div className="flex gap-3">
+                        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary text-white">
+                          <Users className="h-5 w-5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold">Convite para {group.name}</p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {inviter?.name ?? "Uma conexão"} convidou você. Participantes:{" "}
+                            {participantNames || "você"}.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            respondToDemoGroupInvite(group.id, user?.id ?? "", false);
+                            toast.info("Convite recusado.");
+                          }}
+                          className="h-9 rounded-full border border-border bg-surface text-xs font-semibold"
+                        >
+                          Recusar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const result = respondToDemoGroupInvite(group.id, user?.id ?? "", true);
+                            if (!result) return;
+                            toast.success("Convite aceito.");
+                            openConversation(group.id);
+                          }}
+                          className="h-9 rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+                        >
+                          <Check className="mr-1 inline h-3.5 w-3.5" />
+                          Aceitar
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
                 {filteredRequests.map((request) => {
                   const person = people.find((item) => item.id === request.fromUserId);
                   if (!person) return null;

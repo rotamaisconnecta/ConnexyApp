@@ -37,18 +37,16 @@ function AppLayout() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  const conversationOpen = Boolean(
-    useMatch({
-      from: "/_app/chat/$conversationId",
-      shouldThrow: false,
-    }),
-  );
-  const requestOpen = Boolean(
-    useMatch({
-      from: "/_app/solicitacao/$id",
-      shouldThrow: false,
-    }),
-  );
+  const conversationMatch = useMatch({
+    from: "/_app/chat/$conversationId",
+    shouldThrow: false,
+  });
+  const requestMatch = useMatch({
+    from: "/_app/solicitacao/$id",
+    shouldThrow: false,
+  });
+  const conversationOpen = Boolean(conversationMatch);
+  const requestOpen = Boolean(requestMatch);
   const profileEditorOpen = useRouterState({
     select: (state) => {
       if (state.location.pathname !== "/perfil") return false;

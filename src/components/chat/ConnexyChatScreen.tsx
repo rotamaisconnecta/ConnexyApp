@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Ban, Bell, BellOff, ChevronDown, Loader2, User, Video } from "lucide-react";
+import { Ban, Bell, BellOff, ChevronDown, Loader2, User, Users, Video } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBar } from "@/components/phone-frame";
 import { ChatHeader } from "./chat-header";
@@ -15,6 +15,14 @@ import { UserRepository } from "@/repositories/user.repository";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { people } from "@/lib/mock-data";
+import {
+  createDemoGroup,
+  getDemoGroup,
+  leaveDemoGroup,
+  respondToDemoGroupInvite,
+  type DemoGroup,
+} from "@/lib/demo/demo-db";
+import { GroupInviteSheet } from "./group-invite-sheet";
 import type {
   AttachmentAction,
   ChatMessage,
@@ -33,6 +41,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const { isOnline } = usePresenceContext();
 
   const [participant, setParticipant] = useState<ConversationParticipant | null>(null);
+  const [group, setGroup] = useState<DemoGroup | null>(null);
   const [participantLoading, setParticipantLoading] = useState(true);
 
   const {
@@ -42,6 +51,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     hasMore,
     sendMessage,
     sendSharedContent,
+    sendMedia,
     loadMore,
     retry,
     subscriptionStatus,
@@ -50,9 +60,23 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     currentUserId: user?.id ?? null,
   });
 
+  useEffect(() => {
+    if (isPublicSupabaseConfigured() || !conversationId) {
+      setGroup(null);
+      return;
+    }
+    setGroup(getDemoGroup(conversationId));
+  }, [conversationId]);
+
   // Resolve the other participant from conversation_participants
   useEffect(() => {
     if (!isPublicSupabaseConfigured() && conversationId && user?.id) {
+      const demoGroup = getDemoGroup(conversationId);
+      if (demoGroup) {
+        setParticipant({ id: demoGroup.id, name: demoGroup.name, photo: "", online: true });
+        setParticipantLoading(false);
+        return;
+      }
       const mock = people.find((p) => p.id === conversationId);
       setParticipant({
         id: conversationId,
@@ -97,6 +121,14 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   const [showSearch, setShowSearch] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [groupInviteOpen, setGroupInviteOpen] = useState(false);
+  const [mediaDraft, setMediaDraft] = useState<{
+    kind: "image" | "video";
+    dataUrl: string;
+    mimeType: string;
+    fileName: string;
+  } | null>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const [muted, setMuted] = useState(false);
   const [shareDraft, setShareDraft] = useState<{
     id: string;
@@ -186,6 +218,35 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   }
 
   function handleOpenAttachment(kind: AttachmentAction) {
+    if (kind === "image" || kind === "video" || kind === "camera") {
+      if (kind === "camera" && !navigator.mediaDevices?.getUserMedia) {
+        toast.error("A câmera não é suportada neste navegador. Use a galeria.");
+        return;
+      }
+      if (kind === "camera") {
+        void navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then((stream) => {
+            stream.getTracks().forEach((track) => track.stop());
+            mediaInputRef.current?.setAttribute("capture", "environment");
+            mediaInputRef.current?.click();
+          })
+          .catch(() =>
+            toast.error(
+              "Permissão de câmera negada. Você pode tentar novamente ou usar a galeria.",
+            ),
+          );
+        return;
+      }
+      mediaInputRef.current?.removeAttribute("capture");
+      mediaInputRef.current?.setAttribute("accept", kind === "image" ? "image/*" : "video/*");
+      mediaInputRef.current?.click();
+      return;
+    }
+    if (kind === "audio") {
+      toast.info("Gravação de áudio ainda não está disponível neste modo demo.");
+      return;
+    }
     if (kind !== "share-content") return;
     const options = [
       {
@@ -219,6 +280,42 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     ];
     const draft = options[0];
     setShareDraft(draft);
+  }
+
+  function handleMediaFile(file: File | undefined) {
+    if (!file) return;
+    const kind = file.type.startsWith("video/")
+      ? "video"
+      : file.type.startsWith("image/")
+        ? "image"
+        : null;
+    if (!kind) {
+      toast.error("Escolha uma imagem ou vídeo válido.");
+      return;
+    }
+    // Base64 costs extra bytes; keep a conservative limit so demo storage remains reliable.
+    if (file.size > 1_500_000) {
+      toast.error("Este arquivo é grande para o modo demo. Escolha um arquivo de até 1,5 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => toast.error("Não foi possível ler este arquivo.");
+    reader.onload = () =>
+      setMediaDraft({
+        kind,
+        dataUrl: String(reader.result),
+        mimeType: file.type,
+        fileName: file.name,
+      });
+    reader.readAsDataURL(file);
+  }
+
+  function handleCreateGroup(ids: string[], name: string) {
+    if (!conversationId || !user?.id) return;
+    const created = createDemoGroup(conversationId, user.id, ids, name);
+    setGroupInviteOpen(false);
+    toast.success("Grupo criado. Os convites foram enviados.");
+    router.navigate({ to: "/chat/$conversationId", params: { conversationId: created.id } });
   }
 
   function handleShareDraftSend() {
@@ -274,6 +371,9 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   };
 
   const activeParticipant = participant ?? fallbackParticipant;
+  const pendingGroupInvite = group?.participants.find(
+    (item) => item.userId === user?.id && item.status === "pending",
+  );
 
   return (
     <main className="relative flex h-full min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom,0px)]">
@@ -281,6 +381,11 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
       <ChatHeader
         participant={activeParticipant}
+        subtitle={
+          group
+            ? `${group.participants.filter((item) => item.status === "accepted").length} participante${group.participants.filter((item) => item.status === "accepted").length === 1 ? "" : "s"}`
+            : undefined
+        }
         onBack={handleBack}
         onVideoCall={() => toast.info("Videocall em breve")}
         onSearch={() => setShowSearch((value) => !value)}
@@ -293,6 +398,40 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
           onResultClick={handleSearchResultClick}
           onClose={() => setShowSearch(false)}
         />
+      )}
+
+      {group && pendingGroupInvite && user?.id && (
+        <section className="border-b border-primary/15 bg-primary/5 px-4 py-3">
+          <p className="text-sm font-semibold">Convite para {group.name}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {people.find((person) => person.id === group.creatorId)?.name ?? "Uma conexão"} convidou
+            você. O grupo começa agora; nenhuma mensagem da conversa privada é compartilhada.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                respondToDemoGroupInvite(group.id, user.id, false);
+                toast.info("Convite recusado.");
+                router.navigate({ to: "/chat" });
+              }}
+              className="h-8 flex-1 rounded-full border border-border bg-surface text-xs font-semibold"
+            >
+              Recusar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                respondToDemoGroupInvite(group.id, user.id, true);
+                toast.success("Convite aceito.");
+                setGroup(getDemoGroup(group.id));
+              }}
+              className="h-8 flex-1 rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+            >
+              Aceitar
+            </button>
+          </div>
+        </section>
       )}
 
       <div
@@ -337,6 +476,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             <MessageList
               messages={messages}
               participantPhoto={activeParticipant.photo}
+              isGroup={Boolean(group)}
               onOpenSharedContent={handleOpenSharedContent}
             />
           </>
@@ -366,6 +506,70 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         onOpenAttachment={handleOpenAttachment}
         disabled={isLoading || !conversationId}
       />
+      <input
+        ref={mediaInputRef}
+        type="file"
+        className="hidden"
+        onChange={(event) => {
+          handleMediaFile(event.target.files?.[0]);
+          event.target.value = "";
+        }}
+      />
+
+      {mediaDraft && (
+        <div className="fixed inset-0 z-[70] flex items-end bg-black/35 p-3 backdrop-blur-[1px] sm:items-center sm:justify-center">
+          <div className="w-full max-w-md rounded-[28px] bg-surface p-4 shadow-elegant">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold">Prévia do anexo</h2>
+              <button
+                type="button"
+                onClick={() => setMediaDraft(null)}
+                className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+            </div>
+            {mediaDraft.kind === "image" ? (
+              <img
+                src={mediaDraft.dataUrl}
+                alt="Prévia"
+                className="mt-3 max-h-72 w-full rounded-2xl object-cover"
+              />
+            ) : (
+              <video
+                src={mediaDraft.dataUrl}
+                controls
+                className="mt-3 max-h-72 w-full rounded-2xl"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                sendMedia(
+                  mediaDraft.kind,
+                  mediaDraft.dataUrl,
+                  mediaDraft.mimeType,
+                  mediaDraft.fileName,
+                );
+                setMediaDraft(null);
+              }}
+              className="mt-4 h-11 w-full rounded-full bg-gradient-brand text-sm font-bold text-white"
+            >
+              Enviar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {groupInviteOpen && conversationId && user?.id && !group && (
+        <GroupInviteSheet
+          sourceConversationId={conversationId}
+          currentUserId={user.id}
+          sourceName={activeParticipant.name}
+          onClose={() => setGroupInviteOpen(false)}
+          onCreate={handleCreateGroup}
+        />
+      )}
 
       {shareDraft && (
         <div className="fixed inset-0 z-[70] flex items-end bg-black/30 p-3 backdrop-blur-[1px] sm:items-center sm:justify-center">
@@ -460,6 +664,46 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
                 }
               }}
             />
+            {!group && !isPublicSupabaseConfigured() && (
+              <MenuItem
+                icon={Users}
+                label="Convidar"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setGroupInviteOpen(true);
+                }}
+              />
+            )}
+            {group && (
+              <MenuItem
+                icon={Users}
+                label={`Participantes (${group.participants.filter((item) => item.status === "accepted").length})`}
+                onClick={() => {
+                  setMenuOpen(false);
+                  toast.info(
+                    group.participants
+                      .map(
+                        (item) =>
+                          `${people.find((person) => person.id === item.userId)?.name ?? "Você"}: ${item.status}`,
+                      )
+                      .join(" · "),
+                  );
+                }}
+              />
+            )}
+            {group && user?.id && (
+              <MenuItem
+                icon={Ban}
+                label="Sair do grupo"
+                destructive
+                onClick={() => {
+                  leaveDemoGroup(group.id, user.id);
+                  setMenuOpen(false);
+                  toast.success("Você saiu do grupo.");
+                  router.navigate({ to: "/chat" });
+                }}
+              />
+            )}
             <MenuItem
               icon={Video}
               label="Videocall"

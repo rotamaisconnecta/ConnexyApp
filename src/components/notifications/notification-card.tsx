@@ -49,6 +49,7 @@ interface NotificationCardProps {
   onRead?: (id: string) => void;
   onDismiss?: (id: string) => void;
   onLongPress?: (notification: Notification) => void;
+  onOpen?: (notification: Notification) => void;
 }
 
 export function NotificationCard({
@@ -56,6 +57,7 @@ export function NotificationCard({
   onRead,
   onDismiss,
   onLongPress,
+  onOpen,
 }: NotificationCardProps) {
   const Icon = ICON_MAP[notification.category];
   const color = getCategoryColor(notification.category);
@@ -68,7 +70,10 @@ export function NotificationCard({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 80, transition: { duration: 0.2 } }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => onRead?.(notification.id)}
+      onClick={() => {
+        onRead?.(notification.id);
+        onOpen?.(notification);
+      }}
       onDoubleClick={() => onDismiss?.(notification.id)}
       className={cn(
         "relative flex gap-3 rounded-2xl p-3 transition-colors",

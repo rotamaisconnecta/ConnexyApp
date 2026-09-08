@@ -12,6 +12,7 @@ interface ChatHeaderProps {
   onVideoCall?: () => void;
   onSearch?: () => void;
   onMenu?: () => void;
+  subtitle?: string;
 }
 
 function getInitials(name: string): string {
@@ -31,12 +32,15 @@ export function ChatHeader({
   onVideoCall,
   onSearch,
   onMenu,
+  subtitle,
 }: ChatHeaderProps) {
-  const status = participant.online
-    ? "Online agora"
-    : participant.lastSeen
-      ? `visto por último ${participant.lastSeen}`
-      : "Offline";
+  const status =
+    subtitle ??
+    (participant.online
+      ? "Online agora"
+      : participant.lastSeen
+        ? `visto por último ${participant.lastSeen}`
+        : "Offline");
 
   return (
     <header className="flex items-center gap-2 px-3 py-2.5 border-b border-border bg-surface/80 backdrop-blur-md">

@@ -9,6 +9,8 @@ import type {
 } from "@/lib/notifications/notification-types";
 import { NotificationCategory, NotificationPriority } from "@/lib/notifications/notification-types";
 import { usePresence } from "@/providers/presence/presence-provider";
+import { useAuth } from "@/hooks/use-auth";
+import { useDemoGroupInvites } from "@/lib/demo/use-demo-db";
 
 export const Route = createFileRoute("/_app/notifications")({
   head: () => ({ meta: [{ title: "Notificações — Connexy" }] }),
@@ -99,6 +101,8 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 function NotificationsPage() {
   const router = useRouter();
   const { notifications } = usePresence();
+  const { user } = useAuth();
+  const groupInvites = useDemoGroupInvites(user?.id ?? "");
 
   const presenceNotifications: Notification[] = notifications.map((n) => ({
     id: n.id,
@@ -114,7 +118,18 @@ function NotificationsPage() {
     metadata: n.metadata,
   }));
 
-  const merged = [...presenceNotifications, ...MOCK_NOTIFICATIONS];
+  const groupNotifications: Notification[] = groupInvites.map((group) => ({
+    id: `group-invite:${group.id}`,
+    category: NotificationCategory.MESSAGE,
+    priority: NotificationPriority.HIGH,
+    title: "Convite para grupo",
+    body: `Você foi convidado para ${group.name}.`,
+    actorName: "Convite de grupo",
+    isRead: false,
+    createdAt: new Date(group.createdAt).toISOString(),
+    metadata: { groupInviteId: group.id },
+  }));
+  const merged = [...groupNotifications, ...presenceNotifications, ...MOCK_NOTIFICATIONS];
 
   const handleBack = useCallback(() => {
     if (window.history.length > 1) {
@@ -127,7 +142,15 @@ function NotificationsPage() {
   return (
     <div className="flex-1 pb-20">
       <StatusBar />
-      <NotificationCenter notifications={merged} onBack={handleBack} />
+      <NotificationCenter
+        notifications={merged}
+        onBack={handleBack}
+        onOpen={(notification) => {
+          const groupId = notification.metadata?.groupInviteId;
+          if (typeof groupId === "string")
+            router.navigate({ to: "/chat/$conversationId", params: { conversationId: groupId } });
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import {
   getMessages,
   getConversationLastMessage,
   getConnectionsCount,
+  getDemoGroupsForUser,
+  getDemoGroupInvitesForUser,
   getPendingRequests,
   isConnected,
   resetDemoData,
@@ -10,6 +12,7 @@ import {
   subscribeDemoDB,
   type DemoMessage,
   type DemoRequest,
+  type DemoGroup,
 } from "./demo-db";
 
 function useDemoVersion(): number {
@@ -44,6 +47,20 @@ export function useDemoPendingRequests(): DemoRequest[] {
   const [requests, setRequests] = useState<DemoRequest[]>(getPendingRequests);
   useEffect(() => setRequests(getPendingRequests()), [version]);
   return requests;
+}
+
+export function useDemoGroups(userId: string): DemoGroup[] {
+  const version = useDemoVersion();
+  const [groups, setGroups] = useState<DemoGroup[]>(() => getDemoGroupsForUser(userId));
+  useEffect(() => setGroups(getDemoGroupsForUser(userId)), [version, userId]);
+  return groups;
+}
+
+export function useDemoGroupInvites(userId: string): DemoGroup[] {
+  const version = useDemoVersion();
+  const [groups, setGroups] = useState<DemoGroup[]>(() => getDemoGroupInvitesForUser(userId));
+  useEffect(() => setGroups(getDemoGroupInvitesForUser(userId)), [version, userId]);
+  return groups;
 }
 
 /** Reactive message list for one demo conversation. */

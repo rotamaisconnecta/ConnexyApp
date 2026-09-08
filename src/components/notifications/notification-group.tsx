@@ -14,9 +14,15 @@ interface NotificationGroupProps {
   group: NotificationGroup;
   onRead?: (id: string) => void;
   onDismiss?: (id: string) => void;
+  onOpen?: (notification: Notification) => void;
 }
 
-export function NotificationGroupCard({ group, onRead, onDismiss }: NotificationGroupProps) {
+export function NotificationGroupCard({
+  group,
+  onRead,
+  onDismiss,
+  onOpen,
+}: NotificationGroupProps) {
   return (
     <section className="flex flex-col gap-2">
       <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -24,7 +30,13 @@ export function NotificationGroupCard({ group, onRead, onDismiss }: Notification
       </h3>
       <div className="flex flex-col gap-1">
         {group.items.map((n) => (
-          <NotificationCard key={n.id} notification={n} onRead={onRead} onDismiss={onDismiss} />
+          <NotificationCard
+            key={n.id}
+            notification={n}
+            onRead={onRead}
+            onDismiss={onDismiss}
+            onOpen={onOpen}
+          />
         ))}
       </div>
     </section>
