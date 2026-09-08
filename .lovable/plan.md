@@ -1,32 +1,44 @@
-# Simular um Samsung Galaxy A13
+# App adaptável a qualquer aparelho (com simulação do Galaxy A13)
 
-Objetivo: no preview em telas grandes (computador/tablet), o app aparece dentro de um aparelho que imita fielmente o Galaxy A13. No celular real, continua ocupando a tela inteira, como hoje.
+Objetivo: o app se ajusta sozinho a qualquer tela — de celulares pequenos (largura de 320 pontos) a telas grandes — sem cortes, sem rolagem lateral e sem cards gigantes. No computador, o preview aparece dentro de um aparelho que imita o Samsung Galaxy A13.
 
-## O que muda
+Como se faz isso, em resumo: nada de tamanhos fixos em pixels. Tudo passa a usar medidas que crescem e encolhem com a tela (proporções, limites mínimo/máximo e faixas de tamanho de texto), mais regras para o texto encurtar em vez de estourar.
 
-1. **Moldura do aparelho** (`src/components/phone-frame.tsx`)
-   - Proporção de tela do A13: 20:9 (área útil equivalente a 360 x 800 pontos).
-   - Cantos menos arredondados que o modelo atual (o A13 tem laterais retas e raio menor), borda lateral fina simulando a carcaça plástica.
-   - Substituir a "ilha" retangular no topo pela gota central (Infinity-V) do A13.
-   - Sem barra de gestos flutuante; manter a área de segurança inferior.
+## 1. Moldura do aparelho (simulação A13)
 
-2. **Barra de status** (mesmo arquivo)
-   - Ajustar a barra simulada para o estilo Android: hora à esquerda, ícones de sinal/Wi-Fi/bateria à direita, altura compatível com a gota.
+- Proporção 20:9 (tela útil equivalente a 360 x 800 pontos), cantos menos arredondados e borda lateral fina, como o A13.
+- Trocar a "ilha" retangular do topo pela gota central (Infinity-V).
+- A moldura encolhe junto com a janela: se a janela for baixa, o aparelho é reduzido proporcionalmente em vez de cortar a tela.
+- Barra de status simulada em estilo Android: hora à esquerda, sinal/Wi-Fi/bateria à direita.
+- No celular real, continua ocupando a tela inteira, como hoje.
 
-3. **Adaptação de todas as telas**
-   - Fixar a largura útil em 360 pontos no modo simulado, para que qualquer tela seja renderizada exatamente na largura do A13 e nada seja projetado numa largura maior.
-   - Revisar as telas que hoje assumem 420 pontos de largura (cabeçalhos, carrosséis, grades de ícones da Home, teclado do chat, editor de perfil) e garantir que texto trunque e ícones não encolham, sem quebras ou cortes em 360 pontos.
-   - Verificar telas altas (chat, criar publicação, completar perfil, reels) na altura de 800 pontos, confirmando que a navegação inferior nunca cobre conteúdo.
+## 2. Regras gerais de adaptação (valem para todas as telas)
 
-4. **Preview do editor**
-   - Deixar o preview no modo celular para revisão.
+- Largura mínima de trabalho: 320 pontos. Nada pode transbordar nessa largura.
+- Cards e carrosséis passam a ter largura proporcional com limites (por exemplo "85% da tela, no máximo 320"), em vez de largura fixa.
+- Alturas de carrossel definidas por proporção da imagem, não por altura fixa em pixels.
+- Grades (ícones de ação da Home, galerias, listas de pessoas/locais) usam colunas automáticas: 2 colunas em telas estreitas, 3 ou mais quando há espaço.
+- Títulos e textos usam faixas de tamanho (mínimo e máximo) para ficarem legíveis em tela pequena e não gigantes em tela grande.
+- Linhas com texto + ícone/avatar/botão: texto pode encolher e truncar; ícones não encolhem.
+- Espaçamentos e cantos crescem por degraus conforme a largura, em vez de valores fixos.
+- Áreas seguras (notch, barra de gestos, teclado) respeitadas em todas as telas.
+
+## 3. Telas a revisar uma a uma
+
+Home, Pessoas, Eventos, Locais, Descobrir/Mapa, Reels, Feed, Chat (lista e conversa), Criar publicação e subtelas, Perfil próprio e público, Gerenciar, Notificações, Corrida/Rota e telas do motorista, Marketplace, Autenticação e onboarding (cadastro, completar perfil, interesses, localização).
+
+Para cada uma: conferir em 320, 360, 412 e 768+ pontos de largura, corrigir cortes, quebras de texto, botões fora de alcance e conteúdo escondido pela navegação inferior.
+
+## 4. Verificação
+
+- Capturas automatizadas de cada tela nas larguras 320, 360, 412 e 768, checando ausência de rolagem horizontal e de elementos cortados.
+- Checagem das telas altas (chat, criar publicação, reels) com teclado aberto.
 
 ## Detalhes técnicos
 
-- Ajuste concentrado em `PhoneFrame`/`StatusBar`; o container ganha `w-[360px] h-[800px]` (com escala para caber em janelas baixas) no lugar de `max-w-[420px] h-[min(860px,...)]`, mantendo `100dvh` no mobile real.
-- Revisão de responsividade nas rotas sob `src/routes/_app*` aplicando o padrão `grid-cols-[minmax(0,1fr)_auto]` + `min-w-0` + `shrink-0` + `truncate` onde houver linhas com texto e ícones fixos.
-- Nenhuma alteração em banco de dados, políticas, migrations ou regras de negócio — apenas apresentação.
-
-## Verificação
-
-- Playwright em 360x800 e em janela desktop: capturas de Home, Chat, Criar publicação, Perfil e Reels para confirmar ausência de cortes e de rolagem horizontal.
+- `src/components/phone-frame.tsx`: container com `aspect-[9/20]`, largura `min(360px, …)` e escala por `clamp`, substituindo `max-w-[420px]` e `h-[min(860px,…)]`; `StatusBar` redesenhada em estilo Android.
+- Substituir larguras/alturas fixas (`w-[280px]`, `h-[300px]`, `text-2xl` isolado) por `w-[min(85vw,320px)]`, `aspect-[4/5]` e `text-[clamp(...)]` ou pares `text-base sm:text-lg`.
+- Grades: `grid-cols-[repeat(auto-fit,minmax(4.5rem,1fr))]`.
+- Linhas mistas: `grid-cols-[minmax(0,1fr)_auto]` + `min-w-0` + `shrink-0` + `truncate`, promovendo para `flex` a partir de `sm:`.
+- Tokens de espaçamento/raio adicionados em `src/styles.css` quando repetidos.
+- Sem alterações em banco de dados, políticas, migrations ou regras de negócio — trabalho apenas de apresentação.
