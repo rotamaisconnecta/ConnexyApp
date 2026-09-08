@@ -77,7 +77,7 @@ export function LocalSponsoredFeed() {
         {nearbyAds.map((ad) => (
           <article
             key={ad.id}
-            className="w-[272px] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
+            className="w-[min(84%,272px)] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
           >
             <div className="relative h-28">
               {ad.cover ? (
