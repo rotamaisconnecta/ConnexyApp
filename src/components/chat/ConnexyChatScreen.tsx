@@ -15,7 +15,12 @@ import { UserRepository } from "@/repositories/user.repository";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { people } from "@/lib/mock-data";
-import type { ChatMessage, ConversationParticipant, QuickReaction } from "@/lib/chat/chat-types";
+import type {
+  AttachmentAction,
+  ChatMessage,
+  ConversationParticipant,
+  QuickReaction,
+} from "@/lib/chat/chat-types";
 import type { ProfileRow } from "@/types/database/tables";
 
 interface ConnexyChatScreenProps {
@@ -30,11 +35,20 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const [participant, setParticipant] = useState<ConversationParticipant | null>(null);
   const [participantLoading, setParticipantLoading] = useState(true);
 
-  const { messages, isLoading, error, hasMore, sendMessage, loadMore, retry, subscriptionStatus } =
-    useChat({
-      conversationId: conversationId ?? null,
-      currentUserId: user?.id ?? null,
-    });
+  const {
+    messages,
+    isLoading,
+    error,
+    hasMore,
+    sendMessage,
+    sendSharedContent,
+    loadMore,
+    retry,
+    subscriptionStatus,
+  } = useChat({
+    conversationId: conversationId ?? null,
+    currentUserId: user?.id ?? null,
+  });
 
   // Resolve the other participant from conversation_participants
   useEffect(() => {
@@ -84,6 +98,16 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const [showSearch, setShowSearch] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [shareDraft, setShareDraft] = useState<{
+    id: string;
+    kind: "event" | "place";
+    title: string;
+    cover?: string;
+    location?: string;
+    dateText?: string;
+    proximity?: string;
+    route: string;
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
@@ -159,6 +183,65 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   function handleSendText(text: string) {
     void sendMessage(text);
+  }
+
+  function handleOpenAttachment(kind: AttachmentAction) {
+    if (kind !== "share-content") return;
+    const options = [
+      {
+        id: "evt-1",
+        kind: "event" as const,
+        title: "Noite de Jazz",
+        cover: "https://picsum.photos/seed/jazz-night/800/500",
+        location: "Salão principal",
+        dateText: "Sáb • 20:00",
+        proximity: "Evento popular",
+        route: "/event/evt-1",
+      },
+      {
+        id: "cafe-central",
+        kind: "place" as const,
+        title: "Café Central",
+        cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200",
+        location: "Av. Paulista, 1500",
+        proximity: "420m de você",
+        route: "/local/cafe-central",
+      },
+      {
+        id: "vinil-store",
+        kind: "place" as const,
+        title: "Vinil Store",
+        cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200",
+        location: "Rua Augusta, 1544",
+        proximity: "1,2 km de você",
+        route: "/local/vinil-store",
+      },
+    ];
+    const draft = options[0];
+    setShareDraft(draft);
+  }
+
+  function handleShareDraftSend() {
+    if (!shareDraft) return;
+    sendSharedContent({
+      id: shareDraft.id,
+      title: shareDraft.title,
+      type: shareDraft.kind,
+      cover: shareDraft.cover,
+      location: shareDraft.location,
+      dateText: shareDraft.dateText,
+      proximity: shareDraft.proximity,
+      route: shareDraft.route,
+    });
+    setShareDraft(null);
+  }
+
+  function handleOpenSharedContent(contentId: string, kind: "event" | "place") {
+    if (kind === "event") {
+      router.navigate({ to: "/event/$eventId", params: { eventId: contentId } });
+      return;
+    }
+    router.navigate({ to: "/local/$id", params: { id: contentId } });
   }
 
   function handleSearchResultClick(messageId: string) {
@@ -251,7 +334,11 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
                 </button>
               </div>
             )}
-            <MessageList messages={messages} participantPhoto={activeParticipant.photo} />
+            <MessageList
+              messages={messages}
+              participantPhoto={activeParticipant.photo}
+              onOpenSharedContent={handleOpenSharedContent}
+            />
           </>
         )}
       </div>
@@ -276,8 +363,67 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
       <MessageInput
         placeholder="Digite uma mensagem"
         onSendText={handleSendText}
+        onOpenAttachment={handleOpenAttachment}
         disabled={isLoading || !conversationId}
       />
+
+      {shareDraft && (
+        <div className="fixed inset-0 z-[70] flex items-end bg-black/30 p-3 backdrop-blur-[1px] sm:items-center sm:justify-center">
+          <div className="w-full max-w-md overflow-hidden rounded-[28px] bg-surface shadow-elegant">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <p className="text-sm font-semibold">Enviar conteúdo</p>
+              <button
+                type="button"
+                onClick={() => setShareDraft(null)}
+                className="rounded-full bg-secondary px-2.5 py-1.5 text-xs font-medium"
+              >
+                Cancelar
+              </button>
+            </div>
+
+            <div className="p-4">
+              <div className="overflow-hidden rounded-2xl border border-border bg-secondary/30">
+                {shareDraft.cover && (
+                  <img
+                    src={shareDraft.cover}
+                    alt={shareDraft.title}
+                    className="h-36 w-full object-cover"
+                  />
+                )}
+                <div className="space-y-2 p-3">
+                  <p className="text-sm font-semibold">{shareDraft.title}</p>
+                  {shareDraft.dateText && (
+                    <p className="text-[11px] text-muted-foreground">{shareDraft.dateText}</p>
+                  )}
+                  {shareDraft.location && (
+                    <p className="text-[11px] text-muted-foreground">{shareDraft.location}</p>
+                  )}
+                  {shareDraft.proximity && (
+                    <p className="text-[11px] text-primary">{shareDraft.proximity}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShareDraft(null)}
+                  className="flex-1 rounded-full border border-border bg-surface px-3 py-2.5 text-sm font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShareDraftSend}
+                  className="flex-1 rounded-full bg-gradient-brand px-3 py-2.5 text-sm font-semibold text-white"
+                >
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {menuOpen && (
         <motion.div

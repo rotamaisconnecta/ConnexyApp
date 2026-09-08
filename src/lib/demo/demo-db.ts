@@ -15,6 +15,17 @@ export interface DemoMessage {
   from: "me" | "them";
   text: string;
   at: number;
+  kind?: "text" | "event" | "location";
+  payload?: {
+    id?: string;
+    title?: string;
+    cover?: string;
+    location?: string;
+    dateText?: string;
+    proximity?: string;
+    route?: string;
+    routeType?: "event" | "place";
+  };
 }
 
 export interface DemoConnection {
@@ -211,13 +222,15 @@ export function sendLocalMessage(
 ): DemoMessage {
   const db = read();
   const now = Date.now();
-  const duplicate = [...db.messages].reverse().find(
-    (message) =>
-      message.conversationId === conversationId &&
-      message.from === from &&
-      message.text === text &&
-      now - message.at < DUPLICATE_SEND_WINDOW_MS,
-  );
+  const duplicate = [...db.messages]
+    .reverse()
+    .find(
+      (message) =>
+        message.conversationId === conversationId &&
+        message.from === from &&
+        message.text === text &&
+        now - message.at < DUPLICATE_SEND_WINDOW_MS,
+    );
   if (duplicate) return duplicate;
 
   const message: DemoMessage = {
@@ -226,6 +239,61 @@ export function sendLocalMessage(
     from,
     text,
     at: now,
+  };
+  db.messages.push(message);
+  write(db);
+  emitChange();
+  return message;
+}
+
+export function sendSharedContentMessage(
+  conversationId: string,
+  from: "me" | "them",
+  payload: {
+    id: string;
+    title: string;
+    type: "event" | "place";
+    cover?: string;
+    location?: string;
+    dateText?: string;
+    proximity?: string;
+    route?: string;
+  },
+  text?: string,
+): DemoMessage {
+  const db = read();
+  const now = Date.now();
+  const kind: DemoMessage["kind"] = payload.type === "place" ? "location" : "event";
+  const signal = `${payload.type}:${payload.id}:${conversationId}:${from}`;
+  const duplicate = [...db.messages]
+    .reverse()
+    .find(
+      (message) =>
+        message.conversationId === conversationId &&
+        message.from === from &&
+        message.kind === kind &&
+        message.payload?.id === payload.id &&
+        now - message.at < DUPLICATE_SEND_WINDOW_MS,
+    );
+  if (duplicate) return duplicate;
+
+  const message: DemoMessage = {
+    id: `demo-shared-${signal}-${now}`,
+    conversationId,
+    from,
+    text: text?.trim() || payload.title,
+    at: now,
+    kind,
+    payload: {
+      id: payload.id,
+      title: payload.title,
+      cover: payload.cover,
+      location: payload.location,
+      dateText: payload.dateText,
+      proximity: payload.proximity,
+      route: payload.route,
+      routeType: payload.type,
+    },
   };
   db.messages.push(message);
   write(db);

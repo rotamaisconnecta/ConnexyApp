@@ -6,9 +6,10 @@ interface EventMessageProps {
   cover?: string;
   dateText?: string;
   location?: string;
+  onView?: () => void;
 }
 
-export function EventMessage({ title, cover, dateText, location }: EventMessageProps) {
+export function EventMessage({ title, cover, dateText, location, onView }: EventMessageProps) {
   return (
     <div className="min-w-0 w-full overflow-hidden rounded-2xl border border-border bg-surface">
       {cover ? (
@@ -38,7 +39,13 @@ export function EventMessage({ title, cover, dateText, location }: EventMessageP
         )}
         <button
           type="button"
-          onClick={() => toast.success(`Você será notificado sobre "${title}"`)}
+          onClick={() => {
+            if (onView) {
+              onView();
+              return;
+            }
+            toast.success(`Você será notificado sobre "${title}"`);
+          }}
           className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20 active:scale-95"
           aria-label={`Ver evento: ${title}`}
         >

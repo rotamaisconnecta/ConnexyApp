@@ -91,6 +91,9 @@ export interface LocationMessage extends MessageBase {
   lat?: number;
   lng?: number;
   cover?: string;
+  contentId?: string;
+  contentType?: "place" | "event";
+  route?: string;
 }
 
 export interface EventMessage extends MessageBase {
@@ -99,6 +102,9 @@ export interface EventMessage extends MessageBase {
   cover?: string;
   dateText?: string;
   location?: string;
+  contentId?: string;
+  contentType?: "event" | "place";
+  route?: string;
 }
 
 /* ─── Union ──────────────────────────────────────────────── */
@@ -186,7 +192,8 @@ export type AttachmentAction =
   | typeof MessageKind.VIDEO
   | typeof MessageKind.AUDIO
   | typeof MessageKind.FILE
-  | typeof MessageKind.LOCATION;
+  | typeof MessageKind.LOCATION
+  | "share-content";
 
 export const ATTACHMENT_OPTIONS: AttachmentOption[] = [
   { kind: MessageKind.IMAGE, label: "Foto", icon: "📷" },
@@ -194,4 +201,5 @@ export const ATTACHMENT_OPTIONS: AttachmentOption[] = [
   { kind: MessageKind.AUDIO, label: "Áudio", icon: "🎤" },
   { kind: MessageKind.FILE, label: "Arquivo", icon: "📄" },
   { kind: MessageKind.LOCATION, label: "Localização", icon: "📍" },
+  { kind: "share-content", label: "Evento ou local", icon: "🔗" },
 ];

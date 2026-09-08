@@ -10,6 +10,7 @@ interface MessageListProps {
   participantPhoto: string;
   onReaction?: (messageId: string, reaction: QuickReaction) => void;
   onRetry?: (messageId: string) => void;
+  onOpenSharedContent?: (contentId: string, kind: "event" | "place") => void;
 }
 
 const bubbleContainer = {
@@ -30,7 +31,13 @@ const bubbleEntry = {
   },
 };
 
-export function MessageList({ messages, participantPhoto, onReaction, onRetry }: MessageListProps) {
+export function MessageList({
+  messages,
+  participantPhoto,
+  onReaction,
+  onRetry,
+  onOpenSharedContent,
+}: MessageListProps) {
   const dateGroups = groupMessagesByDate(messages);
 
   return (
@@ -55,6 +62,7 @@ export function MessageList({ messages, participantPhoto, onReaction, onRetry }:
                   grouped={grouped}
                   onReaction={onReaction}
                   onRetry={onRetry}
+                  onOpenSharedContent={onOpenSharedContent}
                 />
               </motion.div>
             );

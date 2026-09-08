@@ -19,6 +19,7 @@ interface MessageBubbleProps {
   grouped: boolean;
   onReaction?: (messageId: string, reaction: QuickReaction) => void;
   onRetry?: (messageId: string) => void;
+  onOpenSharedContent?: (contentId: string, kind: "event" | "place") => void;
 }
 
 export function MessageBubble({
@@ -27,6 +28,7 @@ export function MessageBubble({
   grouped,
   onReaction,
   onRetry,
+  onOpenSharedContent,
 }: MessageBubbleProps) {
   const alignment = getMessageAlignment(message);
   const isMe = alignment === "right";
@@ -60,7 +62,7 @@ export function MessageBubble({
             message.kind === MessageKind.VIDEO && "p-0 border-0 bg-transparent",
           )}
         >
-          {renderContent(message)}
+          {renderContent(message, onOpenSharedContent)}
 
           {message.reaction && (
             <span className="absolute -bottom-2 right-2 text-sm bg-surface border border-border rounded-full px-1.5 py-0.5 shadow-soft">
@@ -90,7 +92,10 @@ export function MessageBubble({
   );
 }
 
-function renderContent(message: ChatMessage): React.ReactNode {
+function renderContent(
+  message: ChatMessage,
+  onOpenSharedContent?: (contentId: string, kind: "event" | "place") => void,
+): React.ReactNode {
   switch (message.kind) {
     case MessageKind.TEXT:
       return <p className="whitespace-pre-wrap break-words leading-relaxed">{message.text}</p>;
@@ -132,6 +137,11 @@ function renderContent(message: ChatMessage): React.ReactNode {
           label={message.label}
           proximity={message.proximity}
           cover={message.cover}
+          onView={() => {
+            if (message.contentId && onOpenSharedContent) {
+              onOpenSharedContent(message.contentId, message.contentType ?? "place");
+            }
+          }}
         />
       );
 
@@ -142,6 +152,11 @@ function renderContent(message: ChatMessage): React.ReactNode {
           cover={message.cover}
           dateText={message.dateText}
           location={message.location}
+          onView={() => {
+            if (message.contentId && onOpenSharedContent) {
+              onOpenSharedContent(message.contentId, message.contentType ?? "event");
+            }
+          }}
         />
       );
 

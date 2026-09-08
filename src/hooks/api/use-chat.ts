@@ -6,7 +6,7 @@ import { dbRowsToChatMessages, dbRowToChatMessage } from "@/lib/chat/chat-adapte
 import type { ChatMessage } from "@/lib/chat/chat-types";
 import { MessageKind } from "@/lib/chat/chat-types";
 import { supabase } from "@/lib/supabase/client";
-import { getMessages, sendLocalMessage } from "@/lib/demo/demo-db";
+import { getMessages, sendLocalMessage, sendSharedContentMessage } from "@/lib/demo/demo-db";
 
 const PAGE_SIZE = 50;
 
@@ -18,15 +18,54 @@ function demoRowsToChatMessages(
   conversationId: string,
   rows: ReturnType<typeof getMessages>,
 ): ChatMessage[] {
-  return rows.map((m) => ({
-    id: m.id,
-    conversationId: m.conversationId || conversationId,
-    from: m.from,
-    kind: MessageKind.TEXT,
-    text: m.text,
-    at: new Date(m.at),
-    status: "read" as const,
-  }));
+  return rows.map((m) => {
+    if (m.kind === "event" && m.payload) {
+      return {
+        id: m.id,
+        conversationId: m.conversationId || conversationId,
+        from: m.from,
+        kind: MessageKind.EVENT,
+        title: m.payload.title ?? m.text,
+        cover: m.payload.cover,
+        dateText: m.payload.dateText,
+        location: m.payload.location,
+        contentId: m.payload.id,
+        contentType: "event",
+        route: m.payload.route,
+        at: new Date(m.at),
+        status: "read" as const,
+      } satisfies ChatMessage;
+    }
+
+    if (m.kind === "location" && m.payload) {
+      return {
+        id: m.id,
+        conversationId: m.conversationId || conversationId,
+        from: m.from,
+        kind: MessageKind.LOCATION,
+        label: m.payload.title ?? m.text,
+        proximity: m.payload.proximity ?? "Local compartilhado",
+        cover: m.payload.cover,
+        lat: undefined,
+        lng: undefined,
+        contentId: m.payload.id,
+        contentType: "place",
+        route: m.payload.route,
+        at: new Date(m.at),
+        status: "read" as const,
+      } satisfies ChatMessage;
+    }
+
+    return {
+      id: m.id,
+      conversationId: m.conversationId || conversationId,
+      from: m.from,
+      kind: MessageKind.TEXT,
+      text: m.text,
+      at: new Date(m.at),
+      status: "read" as const,
+    } satisfies ChatMessage;
+  });
 }
 
 function readLocalChatMessages(conversationId: string): ChatMessage[] {
@@ -85,7 +124,34 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       const trimmed = text.trim();
       if (!trimmed) return;
       sendLocalMessage(conversationId, "me", trimmed);
-      queryClient.setQueryData(localChatQueryKey(conversationId), readLocalChatMessages(conversationId));
+      queryClient.setQueryData(
+        localChatQueryKey(conversationId),
+        readLocalChatMessages(conversationId),
+      );
+    },
+    [local, conversationId, queryClient],
+  );
+
+  const sendSharedContent = useCallback(
+    (
+      payload: {
+        id: string;
+        title: string;
+        type: "event" | "place";
+        cover?: string;
+        location?: string;
+        dateText?: string;
+        proximity?: string;
+        route?: string;
+      },
+      text?: string,
+    ) => {
+      if (!local || !conversationId) return;
+      sendSharedContentMessage(conversationId, "me", payload, text);
+      queryClient.setQueryData(
+        localChatQueryKey(conversationId),
+        readLocalChatMessages(conversationId),
+      );
     },
     [local, conversationId, queryClient],
   );
@@ -208,7 +274,9 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
           trimmed,
         )) as Record<string, unknown>;
         const sentId = String(sent.id ?? "");
-        setRemoteMessages((prev) => reconcileOptimisticMessage(prev, tempId, sentId, currentUserId, sent));
+        setRemoteMessages((prev) =>
+          reconcileOptimisticMessage(prev, tempId, sentId, currentUserId, sent),
+        );
       } catch (err) {
         setRemoteMessages((prev) =>
           prev.map((m) => (m.id === tempId ? { ...m, status: "sending" as const } : m)),
@@ -246,6 +314,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       error: null,
       hasMore: false,
       sendMessage: demoSend,
+      sendSharedContent,
       loadMore: () => Promise.resolve(),
       retry: demoSend,
       subscriptionStatus,
@@ -258,6 +327,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     error,
     hasMore,
     sendMessage,
+    sendSharedContent,
     loadMore,
     retry: loadMessages,
     subscriptionStatus,
