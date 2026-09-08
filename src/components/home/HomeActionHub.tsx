@@ -183,7 +183,7 @@ export function HomeActionHub() {
       params={{ id: conversationPerson.id }}
       search={{ mode: "receive" }}
       aria-label={`Ver pedido de conversa de ${conversationPerson.name}`}
-      className="w-[88%] shrink-0 snap-start"
+      className="w-[min(88%,340px)] shrink-0 snap-start"
     >
       <HappeningCard
         image={conversationPerson.photo}
@@ -199,7 +199,7 @@ export function HomeActionHub() {
       to="/perfil/$id"
       params={{ id: friendWithPost.id }}
       aria-label={`Ver nova publicação de ${friendWithPost.name}`}
-      className="w-[88%] shrink-0 snap-start"
+      className="w-[min(88%,340px)] shrink-0 snap-start"
     >
       <HappeningCard
         image={friendWithPost.moments?.[0]?.photo ?? friendWithPost.photo}
@@ -240,7 +240,7 @@ export function HomeActionHub() {
       <Link
         to="/recommendations"
         aria-label={`Ver ${suggestion.period.toLocaleLowerCase("pt-BR")}`}
-        className="group relative mt-3 block h-[112px] overflow-hidden rounded-[16px] bg-gray-900 shadow-soft"
+        className="group relative mt-3 block aspect-[16/6] max-h-[112px] min-h-[96px] overflow-hidden rounded-[16px] bg-gray-900 shadow-soft"
       >
         <img
           src={suggestion.image}
@@ -285,7 +285,7 @@ export function HomeActionHub() {
             to="/event/$eventId"
             params={{ eventId: "event-007" }}
             aria-label="Ver o evento Roda de Samba"
-            className="w-[88%] shrink-0 snap-start"
+            className="w-[min(88%,340px)] shrink-0 snap-start"
           >
             <HappeningCard
               image={ACTION_IMAGES.event}
@@ -303,7 +303,7 @@ export function HomeActionHub() {
             to="/local/$id"
             params={{ id: "cafe-central" }}
             aria-label="Ver novo negócio próximo"
-            className="w-[88%] shrink-0 snap-start"
+            className="w-[min(88%,340px)] shrink-0 snap-start"
           >
             <HappeningCard
               image={ACTION_IMAGES.business}
@@ -320,7 +320,7 @@ export function HomeActionHub() {
           <Link
             to="/marketplace"
             aria-label="Ver item à venda próximo"
-            className="w-[88%] shrink-0 snap-start"
+            className="w-[min(88%,340px)] shrink-0 snap-start"
           >
             <HappeningCard
               image={ACTION_IMAGES.marketplace}
