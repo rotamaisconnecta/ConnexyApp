@@ -93,7 +93,7 @@ export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
             exit="exit"
             role="dialog"
             aria-label="Criar publicação"
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[90vh] overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 z-50 max-h-[90dvh] overflow-hidden"
             style={{
               background: Colors.surface,
               borderRadius: "36px 36px 0 0",
@@ -121,7 +121,7 @@ export function CreateSheet({ isOpen, onClose, onSelect }: CreateSheetProps) {
                 </div>
               </div>
 
-              <div className="overflow-y-auto overscroll-contain scroll-smooth pb-10 px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="min-h-0 overflow-y-auto overscroll-contain scroll-smooth pb-10 px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <motion.div
                   variants={gridContainer}
                   initial="hidden"

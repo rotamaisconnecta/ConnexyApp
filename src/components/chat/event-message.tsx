@@ -10,7 +10,7 @@ interface EventMessageProps {
 
 export function EventMessage({ title, cover, dateText, location }: EventMessageProps) {
   return (
-    <div className="rounded-2xl overflow-hidden min-w-[220px] border border-border bg-surface">
+    <div className="min-w-0 w-full overflow-hidden rounded-2xl border border-border bg-surface">
       {cover ? (
         <div className="relative h-28">
           <img src={cover} alt="" className="w-full h-full object-cover" />

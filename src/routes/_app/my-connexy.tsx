@@ -594,10 +594,12 @@ function MyConnexyPage() {
                 Meu Connexy
               </h1>
               <p className="text-xs text-muted-foreground">Seu centro de gerenciamento.</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-muted-foreground">{currentUser.name}</span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                <span className="min-w-0 text-xs text-muted-foreground truncate">
+                  {currentUser.name}
+                </span>
                 <span className="text-muted-foreground">•</span>
-                <span className="text-xs text-muted-foreground">São Paulo</span>
+                <span className="min-w-0 text-xs text-muted-foreground truncate">São Paulo</span>
                 <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
                   Nível 4
                 </span>
@@ -649,8 +651,10 @@ function MyConnexyPage() {
                 className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
                 style={{ background: action.gradient }}
               >
-                <span className="text-2xl">{action.emoji}</span>
-                <span className="text-sm font-bold">{action.label}</span>
+                <span className="text-2xl shrink-0">{action.emoji}</span>
+                <span className="min-w-0 flex-1 text-sm font-bold leading-tight">
+                  {action.label}
+                </span>
               </motion.button>
             ))}
           </div>
@@ -661,7 +665,7 @@ function MyConnexyPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Estatísticas
           </h2>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5 min-[400px]:grid-cols-3">
             {STATS.map((stat, i) => (
               <motion.div
                 key={stat.id}
@@ -669,11 +673,11 @@ function MyConnexyPage() {
                 variants={animatedItem}
                 initial="hidden"
                 animate="visible"
-                className="rounded-2xl bg-surface border border-border p-3 shadow-soft"
+                className="min-w-0 rounded-2xl bg-surface border border-border p-3 shadow-soft"
               >
                 <stat.icon size={14} className="text-primary mb-1.5" />
                 <div className="text-sm font-bold">{stat.value}</div>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
                   <span
                     className={`text-[10px] font-semibold ${stat.positive ? "text-success" : "text-danger"}`}
                   >

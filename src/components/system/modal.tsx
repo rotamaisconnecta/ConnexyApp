@@ -51,7 +51,11 @@ export function Modal({
           <motion.div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
           <motion.div
-            className={cn("relative mx-auto w-full p-6", sizeClass, className)}
+            className={cn(
+              "relative mx-auto w-full max-h-[calc(100dvh-2rem)] overflow-y-auto p-6",
+              sizeClass,
+              className,
+            )}
             style={{
               borderRadius: Radius.lg,
               backgroundColor: Colors.card,

@@ -25,7 +25,7 @@ function EventCard({ event }: { event: HomeEvent }) {
     <Link
       to="/event/$eventId"
       params={{ eventId: event.id }}
-      className="block rounded-2xl overflow-hidden bg-surface border border-border/50 shadow-soft transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
+      className="block min-w-0 rounded-2xl overflow-hidden bg-surface border border-border/50 shadow-soft transition-all duration-300 hover:shadow-elevated active:scale-[0.98]"
     >
       <div className="relative" style={{ paddingBottom: "62%" }}>
         <img

@@ -10,6 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as QaSheetModalRouteImport } from './routes/qa-sheet-modal'
+import { Route as QaSheetCreateRouteImport } from './routes/qa-sheet-create'
+import { Route as QaSheetBottomRouteImport } from './routes/qa-sheet-bottom'
+import { Route as QaChatMediaRouteImport } from './routes/qa-chat-media'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LocalizacaoRouteImport } from './routes/localizacao'
 import { Route as InteressesRouteImport } from './routes/interesses'
@@ -97,6 +101,26 @@ import { Route as AppDriverTripTripIdRouteImport } from './routes/_app/driver/tr
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QaSheetModalRoute = QaSheetModalRouteImport.update({
+  id: '/qa-sheet-modal',
+  path: '/qa-sheet-modal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QaSheetCreateRoute = QaSheetCreateRouteImport.update({
+  id: '/qa-sheet-create',
+  path: '/qa-sheet-create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QaSheetBottomRoute = QaSheetBottomRouteImport.update({
+  id: '/qa-sheet-bottom',
+  path: '/qa-sheet-bottom',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QaChatMediaRoute = QaChatMediaRouteImport.update({
+  id: '/qa-chat-media',
+  path: '/qa-chat-media',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -526,6 +550,10 @@ export interface FileRoutesByFullPath {
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
   '/mcp': typeof McpRoute
+  '/qa-chat-media': typeof QaChatMediaRoute
+  '/qa-sheet-bottom': typeof QaSheetBottomRoute
+  '/qa-sheet-create': typeof QaSheetCreateRoute
+  '/qa-sheet-modal': typeof QaSheetModalRoute
   '/welcome': typeof WelcomeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -611,6 +639,10 @@ export interface FileRoutesByTo {
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
   '/mcp': typeof McpRoute
+  '/qa-chat-media': typeof QaChatMediaRoute
+  '/qa-sheet-bottom': typeof QaSheetBottomRoute
+  '/qa-sheet-create': typeof QaSheetCreateRoute
+  '/qa-sheet-modal': typeof QaSheetModalRoute
   '/welcome': typeof WelcomeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -697,6 +729,10 @@ export interface FileRoutesById {
   '/interesses': typeof InteressesRoute
   '/localizacao': typeof LocalizacaoRoute
   '/mcp': typeof McpRoute
+  '/qa-chat-media': typeof QaChatMediaRoute
+  '/qa-sheet-bottom': typeof QaSheetBottomRoute
+  '/qa-sheet-create': typeof QaSheetCreateRoute
+  '/qa-sheet-modal': typeof QaSheetModalRoute
   '/welcome': typeof WelcomeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -784,6 +820,10 @@ export interface FileRouteTypes {
     | '/interesses'
     | '/localizacao'
     | '/mcp'
+    | '/qa-chat-media'
+    | '/qa-sheet-bottom'
+    | '/qa-sheet-create'
+    | '/qa-sheet-modal'
     | '/welcome'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -869,6 +909,10 @@ export interface FileRouteTypes {
     | '/interesses'
     | '/localizacao'
     | '/mcp'
+    | '/qa-chat-media'
+    | '/qa-sheet-bottom'
+    | '/qa-sheet-create'
+    | '/qa-sheet-modal'
     | '/welcome'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -954,6 +998,10 @@ export interface FileRouteTypes {
     | '/interesses'
     | '/localizacao'
     | '/mcp'
+    | '/qa-chat-media'
+    | '/qa-sheet-bottom'
+    | '/qa-sheet-create'
+    | '/qa-sheet-modal'
     | '/welcome'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -1041,6 +1089,10 @@ export interface RootRouteChildren {
   InteressesRoute: typeof InteressesRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
   McpRoute: typeof McpRoute
+  QaChatMediaRoute: typeof QaChatMediaRoute
+  QaSheetBottomRoute: typeof QaSheetBottomRoute
+  QaSheetCreateRoute: typeof QaSheetCreateRoute
+  QaSheetModalRoute: typeof QaSheetModalRoute
   WelcomeRoute: typeof WelcomeRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1057,6 +1109,34 @@ declare module '@tanstack/react-router' {
       path: '/welcome'
       fullPath: '/welcome'
       preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qa-sheet-modal': {
+      id: '/qa-sheet-modal'
+      path: '/qa-sheet-modal'
+      fullPath: '/qa-sheet-modal'
+      preLoaderRoute: typeof QaSheetModalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qa-sheet-create': {
+      id: '/qa-sheet-create'
+      path: '/qa-sheet-create'
+      fullPath: '/qa-sheet-create'
+      preLoaderRoute: typeof QaSheetCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qa-sheet-bottom': {
+      id: '/qa-sheet-bottom'
+      path: '/qa-sheet-bottom'
+      fullPath: '/qa-sheet-bottom'
+      preLoaderRoute: typeof QaSheetBottomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qa-chat-media': {
+      id: '/qa-chat-media'
+      path: '/qa-chat-media'
+      fullPath: '/qa-chat-media'
+      preLoaderRoute: typeof QaChatMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -1855,6 +1935,10 @@ const rootRouteChildren: RootRouteChildren = {
   InteressesRoute: InteressesRoute,
   LocalizacaoRoute: LocalizacaoRoute,
   McpRoute: McpRoute,
+  QaChatMediaRoute: QaChatMediaRoute,
+  QaSheetBottomRoute: QaSheetBottomRoute,
+  QaSheetCreateRoute: QaSheetCreateRoute,
+  QaSheetModalRoute: QaSheetModalRoute,
   WelcomeRoute: WelcomeRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:

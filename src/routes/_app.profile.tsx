@@ -224,7 +224,7 @@ function SettingsSheet({ setting, onClose }: { setting: SettingId | null; onClos
   };
   return (
     <div className="fixed inset-0 z-[80] flex items-end bg-black/35 p-3 backdrop-blur-sm sm:items-center sm:justify-center">
-      <div className="w-full max-w-md rounded-[28px] bg-background p-5 shadow-elevated">
+      <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-[28px] bg-background p-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] shadow-elevated">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold">{title}</h2>
           <button type="button" onClick={onClose} className="text-sm font-semibold text-primary">

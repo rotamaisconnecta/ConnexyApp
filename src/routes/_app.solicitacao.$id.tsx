@@ -217,7 +217,9 @@ function Solicitacao() {
         params: { conversationId: conversationId ?? id },
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível aceitar a solicitação");
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível aceitar a solicitação",
+      );
     } finally {
       setActionLoading(false);
     }
@@ -248,7 +250,9 @@ function Solicitacao() {
       toast.success("Solicitação recusada.");
       goBack();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível recusar a solicitação");
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível recusar a solicitação",
+      );
     } finally {
       setActionLoading(false);
     }
@@ -272,7 +276,7 @@ function Solicitacao() {
 
   if (isLoadingProfile) {
     return (
-      <div className="grid h-full min-h-[620px] place-items-center bg-background">
+      <div className="grid h-full place-items-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
@@ -280,10 +284,14 @@ function Solicitacao() {
 
   if (!profile) {
     return (
-      <div className="grid h-full min-h-[620px] place-items-center bg-background px-6 text-center">
+      <div className="grid h-full place-items-center bg-background px-6 text-center">
         <div>
           <p className="text-sm text-muted-foreground">Pessoa não encontrada.</p>
-          <button type="button" onClick={goBack} className="mt-4 text-sm font-semibold text-primary">
+          <button
+            type="button"
+            onClick={goBack}
+            className="mt-4 text-sm font-semibold text-primary"
+          >
             Voltar
           </button>
         </div>
@@ -316,7 +324,7 @@ function Solicitacao() {
         : `${firstName} poderá aceitar ou recusar seu convite.`;
 
   return (
-    <div className="relative h-full min-h-[620px] overflow-hidden bg-gray-950">
+    <div className="relative h-full overflow-hidden bg-gray-950">
       <div className="absolute inset-0">
         {profile.photo_url ? (
           <img src={profile.photo_url} alt="" className="h-full w-full object-cover" />
@@ -348,7 +356,11 @@ function Solicitacao() {
         <div className="relative shrink-0 px-5 pb-3 pt-20 text-center">
           <div className="absolute left-1/2 top-3 h-16 w-16 -translate-x-1/2 overflow-hidden rounded-full border-[3px] border-white bg-gray-100 shadow-lg">
             {profile.photo_url ? (
-              <img src={profile.photo_url} alt={profile.name} className="h-full w-full object-cover" />
+              <img
+                src={profile.photo_url}
+                alt={profile.name}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div className="grid h-full w-full place-items-center text-primary">
                 <UserRound className="h-6 w-6" />
@@ -369,7 +381,8 @@ function Solicitacao() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
-          {!connected && !sent &&
+          {!connected &&
+            !sent &&
             (receive ? (
               <div className="rounded-2xl bg-primary/[0.08] px-4 py-3 text-left text-sm leading-relaxed text-primary">
                 <span className="mr-2 text-xl font-bold" aria-hidden>

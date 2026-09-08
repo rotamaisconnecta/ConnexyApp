@@ -70,18 +70,18 @@ function Locais() {
               className="block rounded-2xl bg-surface border border-border overflow-hidden shadow-soft"
             >
               <div className="flex gap-3">
-                <img src={p.cover} alt="" className="h-24 w-28 object-cover" />
-                <div className="flex-1 py-2.5 pr-3">
-                  <div className="text-[11px] uppercase text-primary font-semibold">
+                <img src={p.cover} alt="" className="h-24 w-28 shrink-0 object-cover" />
+                <div className="min-w-0 flex-1 py-2.5 pr-3">
+                  <div className="text-[11px] uppercase text-primary font-semibold truncate">
                     {p.category}
                   </div>
-                  <div className="font-display font-bold text-sm">{p.name}</div>
-                  <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-0.5">
+                  <div className="font-display font-bold text-sm truncate">{p.name}</div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.rating}
+                      <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" /> {p.rating}
                     </span>
                     <span>· {formatDistance(p.distanceMeters)}</span>
-                    <span>· {p.hours}</span>
+                    <span className="min-w-0 truncate">· {p.hours}</span>
                   </div>
                   {p.promo && (
                     <div className="mt-1.5 inline-flex rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-primary">

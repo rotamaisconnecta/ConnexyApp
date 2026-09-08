@@ -145,30 +145,30 @@ export function ConnexyPulse() {
         <MapArtwork />
         <div className="absolute inset-0 bg-gradient-to-b from-white/45 via-white/5 to-white/35" />
 
-        <div className="absolute left-5 top-5 z-20 max-w-[185px]">
-          <h2 className="font-display text-[22px] font-bold tracking-[-0.025em] text-gray-950">
+        <div className="absolute left-5 top-5 z-30 max-w-[52%]">
+          <h2 className="whitespace-nowrap font-display text-[20px] font-bold leading-tight tracking-[-0.025em] text-gray-950">
             Connexy Pulse
           </h2>
-          <p className="mt-1 text-[17px] leading-tight text-gray-800">
-            A cidade combina com você agora.
+          <p className="mt-1.5 text-[14px] leading-[1.25] text-gray-800">
+            Agora a cidade combina com você.
           </p>
         </div>
 
-        {featured[0] && <AvatarMarker person={featured[0]} className="left-[45%] top-5" />}
-        {featured[1] && <AvatarMarker person={featured[1]} className="right-[11%] top-[88px]" />}
-        {featured[2] && <AvatarMarker person={featured[2]} className="left-[17%] top-[142px]" />}
+        {featured[0] && <AvatarMarker person={featured[0]} className="right-[16%] top-6" />}
+        {featured[1] && <AvatarMarker person={featured[1]} className="right-[4%] top-[54%]" />}
+        {featured[2] && <AvatarMarker person={featured[2]} className="left-[5%] bottom-[110px]" />}
 
-        <div className="absolute left-[53%] top-[132px] z-10 grid h-11 w-11 place-items-center rounded-full bg-primary/20">
+        <div className="absolute right-[28%] top-[40%] z-10 grid h-11 w-11 place-items-center rounded-full bg-primary/20">
           <span className="absolute h-11 w-11 rounded-full bg-primary/25 motion-safe:animate-ping" />
           <span className="relative grid h-5 w-5 place-items-center rounded-full bg-primary shadow-[0_0_0_5px_rgba(255,255,255,0.75)]">
             <span className="h-2 w-2 rounded-full bg-white" />
           </span>
         </div>
 
-        <span className="absolute right-[17%] top-11 z-10 grid h-8 w-8 place-items-center rounded-full bg-primary text-white shadow-lg">
+        <span className="absolute right-[4%] top-[8%] z-10 grid h-8 w-8 place-items-center rounded-full bg-primary text-white shadow-lg">
           <Coffee className="h-4 w-4" />
         </span>
-        <span className="absolute bottom-[62px] left-[57%] z-10 grid h-8 w-8 place-items-center rounded-full bg-amber-400 text-white shadow-lg">
+        <span className="absolute left-[6%] bottom-[58px] z-10 grid h-8 w-8 place-items-center rounded-full bg-amber-400 text-white shadow-lg">
           <Star className="h-4 w-4 fill-current" />
         </span>
 

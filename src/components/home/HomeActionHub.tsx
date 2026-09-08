@@ -70,8 +70,8 @@ function suggestionForHour(hour: number): TimeSuggestion {
 
 function CardArrow() {
   return (
-    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/90 text-gray-800 shadow-sm backdrop-blur-sm transition-transform group-active:translate-x-0.5">
-      <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
+    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/90 text-gray-800 shadow-sm backdrop-blur-sm transition-transform group-active:translate-x-0.5">
+      <ChevronRight className="h-3 w-3" strokeWidth={2.4} />
     </span>
   );
 }
@@ -85,10 +85,10 @@ function ActionCard({ label, image, icon }: { label: string; image: string; icon
         loading="lazy"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/5" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1.5 p-2 text-white">
-        <span className="flex min-w-0 items-center gap-1.5 text-[15px] font-medium leading-none">
-          <span className="truncate">{label}</span>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/5" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 p-1.5 text-white">
+        <span className="flex min-w-0 items-center gap-1 text-[11px] font-medium leading-tight">
+          <span className="min-w-0">{label}</span>
           {icon}
         </span>
         <CardArrow />
@@ -124,9 +124,9 @@ function HappeningCard({
   tone: "primary" | "amber";
 }) {
   return (
-    <div className="group flex h-[108px] items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-3 shadow-soft transition-colors hover:bg-accent/35">
+    <div className="group flex min-h-[108px] items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-3 shadow-soft transition-colors hover:bg-accent/35">
       <span className="relative shrink-0">
-        <img src={image} alt="" className="h-[68px] w-[68px] rounded-[15px] object-cover" />
+        <img src={image} alt="" className="h-[60px] w-[60px] rounded-[14px] object-cover" />
         <StatusBadge tone={tone === "primary" ? "bg-primary" : "bg-amber-400"}>{badge}</StatusBadge>
       </span>
       <span className="min-w-0 flex-1">
@@ -135,7 +135,9 @@ function HappeningCard({
         >
           {eyebrow}
         </span>
-        <span className="mt-1 block truncate text-[13px] font-bold text-foreground">{title}</span>
+        <span className="mt-1 line-clamp-2 block text-[12px] font-bold leading-[1.3] text-foreground">
+          {title}
+        </span>
         <span className="mt-1 line-clamp-2 block text-[10px] leading-[1.35] text-muted-foreground">
           {description}
         </span>
@@ -216,12 +218,12 @@ export function HomeActionHub() {
         O que você quer fazer?
       </h2>
 
-      <div className="mt-2 grid grid-cols-3 gap-2">
+      <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(104px,1fr))] gap-2">
         <Link to="/ride/request" aria-label="Ir para um destino" className="min-w-0">
           <ActionCard
             label="Ir"
             image={ACTION_IMAGES.go}
-            icon={<Navigation className="h-3.5 w-3.5 -rotate-12" />}
+            icon={<Navigation className="h-3 w-3 -rotate-12" />}
           />
         </Link>
         <Link to="/locais" aria-label="Encontrar lugares para comer" className="min-w-0">

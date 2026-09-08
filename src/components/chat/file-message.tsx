@@ -20,7 +20,7 @@ export function FileMessage({ fileName, fileSize, mimeType }: FileMessageProps) 
   const icon = MIME_ICONS[mimeType] ?? "📄";
 
   return (
-    <div className="flex items-center gap-3 min-w-[200px]">
+    <div className="flex min-w-0 w-full items-center gap-3">
       <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-lg shrink-0">
         {icon}
       </div>

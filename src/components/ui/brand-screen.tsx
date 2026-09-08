@@ -20,7 +20,7 @@ export function BrandScreen({
   return (
     <div
       className={cn(
-        "min-h-screen",
+        "min-h-full",
         safeArea && "pt-safe",
         padded && "px-5",
         scroll && "overflow-y-auto",

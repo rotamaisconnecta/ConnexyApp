@@ -21,7 +21,7 @@ export function BottomSheet({
   title,
   className,
 }: BottomSheetProps) {
-  const height = snap === "HALF" ? "50vh" : "85vh";
+  const height = snap === "HALF" ? "min(50dvh, 460px)" : "85dvh";
 
   return (
     <AnimatePresence>
@@ -36,7 +36,7 @@ export function BottomSheet({
           <motion.div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
           <motion.div
-            className={cn("relative bottom-0 w-full overflow-hidden", className)}
+            className={cn("relative bottom-0 flex w-full flex-col overflow-hidden", className)}
             style={{
               height,
               borderTopLeftRadius: Radius.xl,
@@ -47,19 +47,21 @@ export function BottomSheet({
             animate={springSheet.animate}
             exit={springSheet.exit}
           >
-            <div className="flex w-full justify-center pt-3 pb-2" onClick={onClose}>
+            <div className="flex w-full shrink-0 justify-center pt-3 pb-2" onClick={onClose}>
               <div className="h-1 w-10 rounded-full" style={{ backgroundColor: Colors.border }} />
             </div>
 
             {title && (
-              <div className="px-6 pb-4">
+              <div className="shrink-0 px-6 pb-4">
                 <span className="text-base font-semibold" style={{ color: Colors.text.primary }}>
                   {title}
                 </span>
               </div>
             )}
 
-            <div className="overflow-y-auto px-6 pb-8">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)]">
+              {children}
+            </div>
           </motion.div>
         </motion.div>
       )}

@@ -61,15 +61,15 @@ function LocalDetail() {
       <div className="px-5 pt-5">
         <div className="text-[11px] uppercase text-primary font-semibold">{p.category}</div>
         <h1 className="font-display text-2xl font-bold">{p.name}</h1>
-        <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
-          <span className="flex items-center gap-0.5">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {p.rating} ({p.reviews}{" "}
-            avaliações)
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-0.5">
+            <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" /> {p.rating} (
+            {p.reviews} avaliações)
           </span>
           <span>·</span>
-          <span>{formatDistance(p.distanceMeters)}</span>
+          <span className="shrink-0">{formatDistance(p.distanceMeters)}</span>
           <span>·</span>
-          <span>{p.hours}</span>
+          <span className="min-w-0 truncate">{p.hours}</span>
         </div>
 
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{p.description}</p>
@@ -148,9 +148,8 @@ function LocalDetail() {
           }}
           className="flex items-center justify-center gap-2 w-full rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition-all hover:shadow-xl active:scale-[0.98]"
         >
-          <CarFront className="h-4 w-4" />
+          <CarFront className="h-4 w-4 shrink-0" />
           Pedir corrida pelo Connexy
-          <span className="text-xs opacity-80">Pelo Connexy</span>
         </Link>
         {p.lat != null && p.lng != null ? (
           <a

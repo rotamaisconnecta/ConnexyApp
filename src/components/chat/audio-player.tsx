@@ -46,7 +46,7 @@ export function AudioPlayer({ durationSec, waveform, isMine = false }: AudioPlay
   }, [playing, durationSec]);
 
   return (
-    <div className="flex items-center gap-2.5 min-w-[200px]">
+    <div className="flex min-w-0 w-full items-center gap-2.5">
       <button
         type="button"
         onClick={togglePlay}

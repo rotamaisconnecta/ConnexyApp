@@ -49,7 +49,7 @@ export function MessageBubble({
       )}
       {!isMe && grouped && <div className="w-6 shrink-0" />}
 
-      <div className={cn("max-w-[75%] space-y-0.5", isMe && "items-end")}>
+      <div className={cn("min-w-0 max-w-[75%] space-y-0.5", isMe && "items-end")}>
         <div
           className={cn(
             "relative rounded-2xl px-3 py-2 text-sm",

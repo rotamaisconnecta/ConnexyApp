@@ -479,7 +479,7 @@ function ActionButton({
       )}
     >
       <Icon className={cn("h-4 w-4 text-primary", active && "fill-current")} />
-      <span className="truncate">{label}</span>
+      <span className="text-center leading-tight">{label}</span>
     </button>
   );
 }

@@ -9,7 +9,7 @@ interface LocationMessageProps {
 
 export function LocationMessage({ label, proximity, cover, onView }: LocationMessageProps) {
   return (
-    <div className="rounded-2xl overflow-hidden min-w-[200px]">
+    <div className="min-w-0 w-full overflow-hidden rounded-2xl">
       {cover ? (
         <div className="relative h-28">
           <img src={cover} alt="" className="w-full h-full object-cover" />

@@ -94,7 +94,7 @@ function Splash() {
             <img
               src={splashImage}
               alt="Connexy"
-              className="h-auto max-h-[82dvh] w-auto max-w-[86vw] object-contain md:max-h-[680px] md:max-w-[360px]"
+              className="h-auto max-h-[82dvh] w-auto max-w-[86vw] object-contain md:max-h-[min(680px,62dvh)] md:max-w-[min(360px,100%)]"
             />
           </motion.div>
         )}
