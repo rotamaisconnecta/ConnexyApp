@@ -22,6 +22,11 @@ const CARD_WIDTH: Record<Breakpoint, number> = {
   mobile: 260,
 };
 
+/** Largura mínima aceitável do card, para telas de 320 pontos. */
+const MIN_CARD_WIDTH = 208;
+/** Fração da largura disponível ocupada por um card. */
+const CARD_WIDTH_RATIO = 0.78;
+
 interface PremiumCarouselProps<T> {
   items: T[];
   renderCard: (item: T, index: number) => React.ReactNode;
@@ -43,6 +48,7 @@ export function PremiumCarousel<T>({
   const restoredRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>("mobile");
+  const [containerWidth, setContainerWidth] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
 
   useEffect(() => {
@@ -52,8 +58,17 @@ export function PremiumCarousel<T>({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const cardWidth = cardWidths?.[breakpoint] ?? CARD_WIDTH[breakpoint];
-  const cardHeight = cardHeightProp ?? CARD_HEIGHT;
+  // Largura de referência (máxima) e largura fluida real: o card acompanha o
+  // espaço disponível, respeitando um mínimo para telas pequenas.
+  const baseWidth = cardWidths?.[breakpoint] ?? CARD_WIDTH[breakpoint];
+  const baseHeight = cardHeightProp ?? CARD_HEIGHT;
+  const cardWidth = containerWidth
+    ? Math.round(
+        Math.max(MIN_CARD_WIDTH, Math.min(baseWidth, containerWidth * CARD_WIDTH_RATIO)),
+      )
+    : baseWidth;
+  // Altura proporcional, para o card nunca ficar desproporcional em tela estreita.
+  const cardHeight = Math.round(baseHeight * (cardWidth / baseWidth));
   const step = cardWidth + GAP;
   const reduced = prefersReducedMotion();
 
@@ -61,6 +76,7 @@ export function PremiumCarousel<T>({
     const element = scrollRef.current;
     if (!element) return;
     const measure = () => {
+      setContainerWidth(element.clientWidth);
       const total = items.length * cardWidth + Math.max(0, items.length - 1) * GAP;
       const next = Math.max(0, total - element.clientWidth);
       setMaxScroll(next);
@@ -72,6 +88,7 @@ export function PremiumCarousel<T>({
         }
       }
     };
+
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(element);

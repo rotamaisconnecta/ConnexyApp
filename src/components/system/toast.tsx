@@ -38,7 +38,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
               exit={toastIn.exit}
               transition={toastIn.transition}
               className={cn(
-                "pointer-events-auto flex items-start gap-3 p-4 min-w-[320px] max-w-[420px]",
+                "pointer-events-auto flex items-start gap-3 p-4 w-[min(92vw,420px)]",
                 "backdrop-blur-xl border",
               )}
               style={{

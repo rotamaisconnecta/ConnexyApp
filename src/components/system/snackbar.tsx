@@ -43,7 +43,7 @@ export function SnackbarContainer({ snackbars, onDismiss }: SnackbarContainerPro
               exit={snackbarIn.exit}
               transition={snackbarIn.transition}
               className={cn(
-                "pointer-events-auto flex items-center gap-3 px-5 py-3 min-w-[280px] max-w-[480px]",
+                "pointer-events-auto flex items-center gap-3 px-5 py-3 w-[min(92vw,480px)]",
                 "backdrop-blur-xl border",
               )}
               style={{
