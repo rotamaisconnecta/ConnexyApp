@@ -113,6 +113,7 @@ export function DriverPanel({
   onCall,
   onSafety,
   onShare,
+  onCancel,
 }: {
   state: "encontrado" | "chegando" | "chegou";
   driver: DriverMock;
@@ -125,6 +126,7 @@ export function DriverPanel({
   onCall: () => void;
   onSafety: () => void;
   onShare: () => void;
+  onCancel: () => void;
 }) {
   const arrived = state === "chegou";
   const approaching = state === "chegando";
@@ -273,6 +275,14 @@ export function DriverPanel({
             </SecondaryCTA>
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={onCancel}
+          className="mt-4 w-full text-center text-[12px] font-bold text-red-500"
+        >
+          Cancelar corrida
+        </button>
       </div>
     </RideSheet>
   );
@@ -697,6 +707,59 @@ export function FinalPanel({
             { label: "Tempo", value: routeMeta.duration },
             { label: "Valor", value: formatPrice(fare) },
             { label: "Forma de pagamento", value: payment === "pix" ? "Pix" : "Dinheiro" },
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="shrink-0 text-[12px]" style={{ color: RIDE_MUTED }}>
+                {row.label}
+              </span>
+              <span className="min-w-0 truncate text-right text-[13px] font-bold text-[#111111]">
+                {row.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </RideSheet>
+  );
+}
+
+/* ─── Resumo de cancelamento ─────────────────────────────── */
+
+export function CancelledPanel({
+  byDriver,
+  originLabel,
+  destination,
+  onHome,
+}: {
+  byDriver: boolean;
+  originLabel: string;
+  destination: GeoLocation;
+  onHome: () => void;
+}) {
+  return (
+    <RideSheet footer={<PrimaryCTA onClick={onHome}>Voltar para Home</PrimaryCTA>}>
+      <div className="px-5 pb-3 pt-5 text-center">
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          className="mx-auto grid h-14 w-14 grid-cols-1 place-items-center rounded-full bg-red-50 text-red-500"
+        >
+          <ShieldCheck className="h-7 w-7 rotate-45" strokeWidth={2.6} />
+        </motion.span>
+        <h2 className="mt-3 text-[21px] font-extrabold tracking-tight text-[#111111]">
+          {byDriver ? "O motorista desistiu da corrida" : "Corrida cancelada"}
+        </h2>
+        <p className="mt-1 text-[12px]" style={{ color: RIDE_MUTED }}>
+          {byDriver
+            ? "A viagem foi cancelada pelo motorista. Sem cobrança na fase demo."
+            : "Você poderá solicitar uma nova corrida quando desejar."}
+        </p>
+
+        <div className="mt-4 divide-y divide-zinc-100 rounded-[18px] bg-zinc-50 px-4 text-left">
+          {[
+            { label: "Origem", value: originLabel },
+            { label: "Destino", value: destination.label },
           ].map((row) => (
             <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
               <span className="shrink-0 text-[12px]" style={{ color: RIDE_MUTED }}>

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { RideFlow } from "@/components/mobility/ride/ride-flow";
 import { rideSearchSchema, parseCompanions, buildCompanionStops } from "@/lib/mobility/ride-search";
 import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
@@ -32,6 +31,7 @@ function RideRequestConfirmPage() {
       initialStops={companionStops}
       source={search.source}
       companionLabel={search.source === "invite" ? "Ir juntos" : undefined}
+      seedInitial
     />
   );
 }

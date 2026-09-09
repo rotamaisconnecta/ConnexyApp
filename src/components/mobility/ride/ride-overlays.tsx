@@ -361,11 +361,17 @@ export function CancelConfirmModal({
   onClose,
   onConfirm,
   reason,
+  title = "Cancelar esta viagem?",
+  dismissLabel = "Manter viagem",
+  confirmLabel = "Cancelar",
 }: {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   reason: string;
+  title?: string;
+  dismissLabel?: string;
+  confirmLabel?: string;
 }) {
   return (
     <RideModal open={open} onClose={onClose}>
@@ -373,17 +379,17 @@ export function CancelConfirmModal({
         <ShieldCheck className="h-6 w-6 rotate-45 text-red-500" />
       </div>
       <h3 className="mt-3 text-center text-[17px] font-extrabold tracking-tight text-[#111111]">
-        Cancelar esta viagem?
+        {title}
       </h3>
       <p className="mt-1 text-center text-[12px] leading-relaxed text-zinc-500">{reason}</p>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <SecondaryCTA onClick={onClose}>Manter viagem</SecondaryCTA>
+        <SecondaryCTA onClick={onClose}>{dismissLabel}</SecondaryCTA>
         <button
           type="button"
           onClick={onConfirm}
           className="flex h-[48px] items-center justify-center rounded-[16px] bg-red-500 text-[14px] font-bold text-white"
         >
-          Cancelar
+          {confirmLabel}
         </button>
       </div>
     </RideModal>

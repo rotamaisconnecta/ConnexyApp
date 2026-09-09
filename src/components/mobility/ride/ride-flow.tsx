@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { RideMap } from "./ride-map";
@@ -17,6 +17,7 @@ import {
   ArrivalPanel,
   RatingPanel,
   FinalPanel,
+  CancelledPanel,
 } from "./ride-live-panels";
 import {
   PaymentOverlay,
@@ -31,14 +32,8 @@ import {
   CallModal,
   RouteStopsSheet,
 } from "./ride-overlays";
-import {
-  DEMO_ORIGIN,
-  MOCK_DRIVER,
-  CATEGORY_INFO,
-  PICKUP_CHIPS,
-  destinationToGeo,
-} from "./ride-data";
-import { RIDE_CATEGORIES, estimateDemoFare } from "@/lib/mobility/demo-fare";
+import { DEMO_ORIGIN, MOCK_DRIVER, PICKUP_CHIPS, CATEGORY_INFO } from "./ride-data";
+import { estimateDemoFare, RIDE_CATEGORIES, type RideCategory } from "@/lib/mobility/demo-fare";
 import {
   createStop,
   removeStop,
@@ -48,8 +43,18 @@ import {
 } from "@/lib/mobility/route-utils";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
-import type { FlowState, PaymentOption } from "./ride-flow-types";
-import type { RideCategory } from "@/lib/mobility/demo-fare";
+import type { TripStatus } from "@/lib/mobility/trip/trip-types";
+import { useTrip } from "@/hooks/use-trip";
+import { usePassengerDispatch } from "@/hooks/use-dispatch";
+import {
+  createTrip,
+  patchTrip,
+  transition,
+  completeTrip,
+  resetTrip,
+  getTrip,
+} from "@/lib/mobility/trip/trip-store";
+import { cancelPassengerTrip } from "@/lib/mobility/dispatch/dispatcher";
 
 const BUSCANDO_MESSAGES = [
   "Procurando motorista mais próximo",
@@ -63,6 +68,7 @@ export function RideFlow({
   initialStops = [],
   source,
   companionLabel,
+  seedInitial = false,
   onBackToHome,
 }: {
   origin?: GeoLocation;
@@ -70,24 +76,18 @@ export function RideFlow({
   initialStops?: RouteStop[];
   source?: string | null;
   companionLabel?: string;
+  seedInitial?: boolean;
   onBackToHome?: () => void;
 }) {
   const nav = useNavigate();
-  const driver = MOCK_DRIVER;
+  const trip = useTrip();
+  usePassengerDispatch(trip);
+  const flowState: TripStatus = trip?.status ?? "solicitar";
 
-  const [flowState, setFlowState] = useState<FlowState>(initialDestination ? "rota" : "solicitar");
-  const [destination, setDestination] = useState<GeoLocation | null>(initialDestination);
-  const [stops, setStops] = useState<RouteStop[]>(initialStops);
-  const [pickupLabel, setPickupLabel] = useState<string>(PICKUP_CHIPS[0].label);
-  const [pickupPoint, setPickupPoint] = useState<string>(PICKUP_CHIPS[0].active);
-  const [category, setCategory] = useState<RideCategory>("connexy");
-  const [payment, setPayment] = useState<PaymentOption>("pix");
-  const [pixConfirmed, setPixConfirmed] = useState(false);
+  const [buscandoMessageIdx, setBuscandoMessageIdx] = useState(0);
   const [ratingStars, setRatingStars] = useState(0);
   const [ratingTags, setRatingTags] = useState<string[]>([]);
   const [ratingComment, setRatingComment] = useState("");
-  const [buscandoMessageIdx, setBuscandoMessageIdx] = useState(0);
-  const [currentStopIdx, setCurrentStopIdx] = useState(0);
 
   const [showPaymentOverlay, setShowPaymentOverlay] = useState(false);
   const [showSafetyOverlay, setShowSafetyOverlay] = useState(false);
@@ -120,6 +120,28 @@ export function RideFlow({
   useEffect(() => {
     return () => clearTimers();
   }, [clearTimers]);
+
+  useEffect(() => {
+    if (seedInitial) {
+      const current = getTrip();
+      if (!current || current.status === "conclusao" || current.status === "cancelada") {
+        createTrip({
+          origin,
+          destination: initialDestination,
+          stops: initialStops,
+          source,
+          companionLabel,
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedInitial]);
+
+  const driver = useMemo(() => trip?.driver ?? null, [trip]);
+  const destination = useMemo(() => trip?.destination ?? null, [trip]);
+  const stops = useMemo(() => trip?.stops ?? [], [trip]);
+  const category = trip?.category ?? "connexy";
+  const payment = trip?.paymentMethod ?? "pix";
 
   const { distanceMeters, durationMinutes } = useMemo(() => {
     const points = [origin, ...stops.map((stop) => stop.location), destination ?? origin];
@@ -181,6 +203,7 @@ export function RideFlow({
   ].includes(flowState);
 
   const capsuleText = useMemo(() => {
+    const currentStopIndex = trip?.currentStopIndex ?? 0;
     switch (flowState) {
       case "solicitar":
       case "rota":
@@ -193,13 +216,13 @@ export function RideFlow({
         return BUSCANDO_MESSAGES[buscandoMessageIdx];
       case "encontrado":
       case "chegando":
-        return `${driver.name} a caminho`;
+        return driver ? `${driver.name} a caminho` : "Motorista a caminho";
       case "chegou":
-        return `${driver.name} chegou`;
+        return driver ? `${driver.name} chegou` : "Motorista chegou";
       case "emviagem":
-        return `Indo para ${stops[currentStopIdx]?.label ?? destination?.label ?? "destino"}`;
+        return `Indo para ${stops[currentStopIndex]?.label ?? destination?.label ?? "destino"}`;
       case "parada":
-        return `Parada ${currentStopIdx + 1} de ${stops.length}`;
+        return `Parada ${currentStopIndex + 1} de ${stops.length}`;
       case "chegada":
         return "Você chegou";
       case "avaliacao":
@@ -209,33 +232,35 @@ export function RideFlow({
       default:
         return "";
     }
-  }, [flowState, buscandoMessageIdx, driver.name, destination, stops, currentStopIdx]);
+  }, [flowState, buscandoMessageIdx, driver, destination, stops, trip?.currentStopIndex]);
 
   const pulseActive = ["buscando", "encontrado", "chegando"].includes(flowState);
   const canGoBack = ["rota", "embarque", "categoria"].includes(flowState);
 
   useEffect(() => {
     clearTimers();
-    switch (flowState) {
+    if (!trip) return;
+    const currentStopIndex = trip.currentStopIndex;
+    switch (trip.status) {
       case "buscando":
         intervalRef.current = setInterval(
           () => setBuscandoMessageIdx((prev) => (prev + 1) % BUSCANDO_MESSAGES.length),
           1800,
         );
-        timerRef.current = setTimeout(() => setFlowState("encontrado"), 2500);
+        /* A atribuição do motorista vem do dispatcher (passenger→dispatcher→driver). */
         break;
       case "encontrado":
-        timerRef.current = setTimeout(() => setFlowState("chegando"), 4000);
+        timerRef.current = setTimeout(() => transition("chegando"), 4000);
         break;
       case "chegando":
-        timerRef.current = setTimeout(() => setFlowState("chegou"), 3000);
+        timerRef.current = setTimeout(() => transition("chegou"), 3000);
         break;
       case "emviagem":
         timerRef.current = setTimeout(() => {
-          if (currentStopIdx < stops.length) {
-            setFlowState("parada");
+          if (currentStopIndex < trip.stops.length) {
+            transition("parada");
           } else {
-            setFlowState("chegada");
+            transition("chegada");
           }
         }, 5000);
         break;
@@ -243,26 +268,27 @@ export function RideFlow({
         break;
     }
     return () => clearTimers();
-  }, [flowState, currentStopIdx, stops.length, clearTimers]);
+  }, [trip, clearTimers]);
 
   const goBack = useCallback(() => {
+    if (!trip) return;
     switch (flowState) {
       case "rota":
-        setFlowState("solicitar");
+        transition("solicitar");
         break;
       case "embarque":
-        setFlowState("rota");
+        transition("rota");
         break;
       case "categoria":
-        setFlowState("embarque");
+        transition("embarque");
         break;
       default:
         break;
     }
-  }, [flowState]);
+  }, [flowState, trip]);
 
   const handleProceedSolicitar = useCallback(() => {
-    if (destination) setFlowState("rota");
+    if (destination) transition("rota");
   }, [destination]);
 
   const handleAddStop = useCallback(() => {
@@ -271,8 +297,8 @@ export function RideFlow({
       "Nova parada",
       stops.length + 1,
     );
-    setStops((prev) => [...prev, newStop]);
-  }, [stops.length]);
+    patchTrip({ stops: [...stops, newStop] });
+  }, [stops]);
 
   const handleAddSuggestion = useCallback(
     (label: string, address: string) => {
@@ -281,62 +307,90 @@ export function RideFlow({
         label,
         stops.length + 1,
       );
-      setStops((prev) => [...prev, newStop]);
+      patchTrip({ stops: [...stops, newStop] });
     },
-    [stops.length],
+    [stops],
   );
 
-  const handleRemoveStop = useCallback((id: string) => {
-    setStops((prev) => removeStop(prev, id));
-  }, []);
+  const handleRemoveStop = useCallback(
+    (id: string) => {
+      patchTrip({ stops: removeStop(trip?.stops ?? [], id) });
+    },
+    [trip?.stops],
+  );
 
-  const handleEditStop = useCallback((id: string, label: string) => {
-    setStops((prev) =>
-      prev.map((stop) =>
-        stop.id === id ? { ...stop, label, location: { ...stop.location, label } } : stop,
-      ),
-    );
-  }, []);
+  const handleEditStop = useCallback(
+    (id: string, label: string) => {
+      patchTrip({
+        stops: (trip?.stops ?? []).map((stop) =>
+          stop.id === id ? { ...stop, label, location: { ...stop.location, label } } : stop,
+        ),
+      });
+    },
+    [trip?.stops],
+  );
 
   const handleMoveStops = useCallback((next: RouteStop[]) => {
-    setStops(next);
+    patchTrip({ stops: next });
   }, []);
 
   const handleProceedRota = useCallback(() => {
-    if (destination) setFlowState("embarque");
+    if (destination) transition("embarque");
   }, [destination]);
 
   const handleRequestRide = useCallback(() => {
-    setFlowState("buscando");
+    patchTrip({ distanceMeters, durationMinutes, estimatedFare: fare });
+    transition("buscando");
     setBuscandoMessageIdx(0);
-  }, []);
+  }, [distanceMeters, durationMinutes, fare]);
 
   const handleStartRide = useCallback(() => {
-    setCurrentStopIdx(0);
-    setFlowState("emviagem");
+    patchTrip({ currentStopIndex: 0 });
+    transition("emviagem");
   }, []);
 
   const handleContinueStop = useCallback(() => {
-    if (currentStopIdx + 1 < stops.length) {
-      setCurrentStopIdx((prev) => prev + 1);
-      setFlowState("emviagem");
+    const currentStopIndex = trip?.currentStopIndex ?? 0;
+    const totalStops = trip?.stops.length ?? 0;
+    if (currentStopIndex + 1 < totalStops) {
+      patchTrip({ currentStopIndex: currentStopIndex + 1 });
+      transition("emviagem");
     } else {
-      setCurrentStopIdx(stops.length);
-      setFlowState("chegada");
+      patchTrip({ currentStopIndex: totalStops });
+      transition("chegada");
     }
-  }, [currentStopIdx, stops.length]);
+  }, [trip?.currentStopIndex, trip?.stops.length]);
 
   const handleContinueArrival = useCallback(() => {
-    setFlowState("avaliacao");
+    transition("avaliacao");
   }, []);
 
-  const handleSimulatePix = useCallback(() => setPixConfirmed(true), []);
+  const handleSimulatePix = useCallback(() => {
+    patchTrip({ paymentConfirmed: true });
+  }, []);
 
   const handleSendRating = useCallback(() => {
-    setFlowState("conclusao");
+    completeTrip({
+      stars: ratingStars,
+      tags: ratingTags,
+      comment: ratingComment,
+      createdAt: new Date().toISOString(),
+    });
+  }, [ratingStars, ratingTags, ratingComment]);
+
+  const handleSkipRating = useCallback(() => {
+    completeTrip();
   }, []);
 
   const handleGoHome = useCallback(() => {
+    const status = trip?.status;
+    if (status === "conclusao" || status === "cancelada") resetTrip();
+    if (onBackToHome) onBackToHome();
+    else nav({ to: "/home" });
+  }, [trip?.status, onBackToHome, nav]);
+
+  const handleCancelRide = useCallback(() => {
+    cancelPassengerTrip();
     if (onBackToHome) onBackToHome();
     else nav({ to: "/home" });
   }, [onBackToHome, nav]);
@@ -351,10 +405,10 @@ export function RideFlow({
         return (
           <SolicitarPanel
             destination={destination}
-            onPickDestination={(dest) => setDestination(dest)}
-            onClearDestination={() => setDestination(null)}
+            onPickDestination={(dest) => patchTrip({ destination: dest })}
+            onClearDestination={() => patchTrip({ destination: null })}
             onProceed={handleProceedSolicitar}
-            companionLabel={companionLabel}
+            companionLabel={companionLabel ?? trip?.companionLabel}
           />
         );
       case "rota":
@@ -371,20 +425,19 @@ export function RideFlow({
             onMoveStops={handleMoveStops}
             onProceed={handleProceedRota}
             routeMeta={routeMeta}
-            source={source}
+            source={trip?.source ?? source}
           />
         );
       case "embarque":
         return (
           <PickupPanel
-            pickupLabel={pickupLabel}
-            pickupPoint={pickupPoint}
+            pickupLabel={trip?.pickupLabel ?? PICKUP_CHIPS[0].label}
+            pickupPoint={trip?.pickupPoint ?? PICKUP_CHIPS[0].active}
             onPickupChip={(chip) => {
-              setPickupLabel(chip);
               const found = PICKUP_CHIPS.find((c) => c.label === chip);
-              setPickupPoint(found?.active ?? chip);
+              patchTrip({ pickupLabel: chip, pickupPoint: found?.active ?? chip });
             }}
-            onConfirm={() => setFlowState("categoria")}
+            onConfirm={() => transition("categoria")}
           />
         );
       case "categoria": {
@@ -397,7 +450,7 @@ export function RideFlow({
         return (
           <CategoryPanel
             category={category}
-            onCategory={setCategory}
+            onCategory={(next) => patchTrip({ category: next })}
             payment={payment}
             onPayment={() => setShowPaymentOverlay(true)}
             fares={fares}
@@ -414,12 +467,13 @@ export function RideFlow({
             categoryLabel={categoryLabel}
             fare={fare}
             payment={payment}
-            onCancel={() => nav({ to: "/home" })}
+            onCancel={() => setShowCancelConfirm(true)}
           />
         );
       case "encontrado":
       case "chegando":
       case "chegou":
+        if (!driver) return null;
         return (
           <DriverPanel
             state={flowState as "encontrado" | "chegando" | "chegou"}
@@ -439,22 +493,24 @@ export function RideFlow({
             onCall={() => setShowCall(true)}
             onSafety={() => setShowSafetyOverlay(true)}
             onShare={() => setShowShareSheet(true)}
+            onCancel={() => setShowCancelConfirm(true)}
           />
         );
       case "parada":
         return (
           <StopPanel
-            current={currentStopIdx + 1}
+            current={(trip?.currentStopIndex ?? 0) + 1}
             total={stops.length}
             onContinue={handleContinueStop}
           />
         );
       case "emviagem":
+        if (!driver) return null;
         return (
           <ActiveRidePanel
             driver={driver}
             destination={destination ?? origin}
-            stopLabel={stops[currentStopIdx]?.label}
+            stopLabel={stops[trip?.currentStopIndex ?? 0]?.label}
             etaMinutes={durationMinutes}
             onSafety={() => setShowSafetyOverlay(true)}
             onShare={() => setShowShareSheet(true)}
@@ -468,7 +524,7 @@ export function RideFlow({
             categoryLabel={categoryLabel}
             fare={fare}
             payment={payment}
-            pixConfirmed={pixConfirmed}
+            pixConfirmed={trip?.paymentConfirmed ?? false}
             onSimulatePix={handleSimulatePix}
             onContinue={handleContinueArrival}
             routeMeta={routeMeta}
@@ -476,6 +532,7 @@ export function RideFlow({
           />
         );
       case "avaliacao":
+        if (!driver) return null;
         return (
           <RatingPanel
             driver={driver}
@@ -487,7 +544,7 @@ export function RideFlow({
             comment={ratingComment}
             onComment={setRatingComment}
             onSend={handleSendRating}
-            onSkip={() => setFlowState("conclusao")}
+            onSkip={handleSkipRating}
           />
         );
       case "conclusao":
@@ -498,6 +555,15 @@ export function RideFlow({
             routeMeta={routeMeta}
             fare={fare}
             payment={payment}
+            onHome={handleGoHome}
+          />
+        );
+      case "cancelada":
+        return (
+          <CancelledPanel
+            byDriver={trip?.cancelledBy === "driver"}
+            originLabel={origin.label}
+            destination={destination ?? origin}
             onHome={handleGoHome}
           />
         );
@@ -514,7 +580,9 @@ export function RideFlow({
           destinationLabel={destination?.label ?? "Destino"}
           originLabel={origin.label}
           vehicle={
-            showVehicle ? { t: vehicleT, path: vehiclePath, label: driver.vehicle.plate } : null
+            showVehicle && driver
+              ? { t: vehicleT, path: vehiclePath, label: driver.vehicle.plate }
+              : null
           }
           radar={flowState === "buscando"}
           interactive={flowState === "embarque"}
@@ -538,7 +606,7 @@ export function RideFlow({
         onClose={() => setShowPaymentOverlay(false)}
         payment={payment}
         onPick={(p) => {
-          setPayment(p);
+          patchTrip({ paymentMethod: p });
           setShowPaymentOverlay(false);
         }}
       />
@@ -567,7 +635,7 @@ export function RideFlow({
         onClose={() => setShowAlterarOverlay(false)}
         onAddStop={() => {
           setShowAlterarOverlay(false);
-          setFlowState("rota");
+          transition("rota");
         }}
         onChangeDest={() => {
           setShowAlterarOverlay(false);
@@ -601,9 +669,9 @@ export function RideFlow({
         open={showChangeDestOverlay}
         onClose={() => setShowChangeDestOverlay(false)}
         onConfirm={(dest) => {
-          setDestination(dest);
+          patchTrip({ destination: dest });
           setShowChangeDestOverlay(false);
-          setFlowState("rota");
+          transition("rota");
         }}
       />
       <ShareSheet
@@ -621,10 +689,13 @@ export function RideFlow({
       <CancelConfirmModal
         open={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
-        reason="Tem certeza que deseja cancelar esta viagem?"
+        title="Cancelar corrida?"
+        dismissLabel="Continuar viagem"
+        confirmLabel="Cancelar corrida"
+        reason="Esta ação encerra a corrida e libera o motorista. Sem cobrança na fase demo."
         onConfirm={() => {
           setShowCancelConfirm(false);
-          nav({ to: "/home" });
+          handleCancelRide();
         }}
       />
       <InfoModal
@@ -652,21 +723,29 @@ export function RideFlow({
       >
         <div className="mt-2 flex flex-col gap-2 text-left">
           <p>
-            <strong>Nome:</strong> {driver.name}
+            <strong>Nome:</strong> {driver?.name}
           </p>
           <p>
-            <strong>Veículo:</strong> {driver.vehicle.name} {driver.vehicle.color}
+            <strong>Veículo:</strong> {driver?.vehicle.name} {driver?.vehicle.color}
           </p>
           <p>
-            <strong>Placa:</strong> {driver.vehicle.plate}
+            <strong>Placa:</strong> {driver?.vehicle.plate}
           </p>
           <p>
-            <strong>Avaliação:</strong> {driver.rating} ({driver.totalRides} corridas)
+            <strong>Avaliação:</strong> {driver?.rating} ({driver?.totalRides} corridas)
           </p>
         </div>
       </InfoModal>
-      <MessageModal open={showMessage} onClose={() => setShowMessage(false)} driver={driver} />
-      <CallModal open={showCall} onClose={() => setShowCall(false)} driver={driver} />
+      <MessageModal
+        open={showMessage}
+        onClose={() => setShowMessage(false)}
+        driver={driver ?? MOCK_DRIVER}
+      />
+      <CallModal
+        open={showCall}
+        onClose={() => setShowCall(false)}
+        driver={driver ?? MOCK_DRIVER}
+      />
       <RouteStopsSheet
         open={showRouteStops}
         onClose={() => setShowRouteStops(false)}
