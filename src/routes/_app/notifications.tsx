@@ -143,6 +143,7 @@ function NotificationsPage() {
     <div className="flex-1 pb-20">
       <StatusBar />
       <NotificationCenter
+        key={groupInvites.map((g) => g.id).join(",") || "none"}
         notifications={merged}
         onBack={handleBack}
         onOpen={(notification) => {
