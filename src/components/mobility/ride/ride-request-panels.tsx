@@ -17,6 +17,7 @@ import type { RideCategory } from "@/lib/mobility/demo-fare";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
 import type { RouteStop } from "@/lib/mobility/route-utils";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
+import { paymentMethodLabel } from "@/lib/mobility/payment";
 import type { PaymentOption } from "./ride-flow-types";
 
 /* ─── Tela 01 — Solicitar viagem ─────────────────────────── */
@@ -503,7 +504,9 @@ export function CategoryPanel({
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
               Forma de pagamento
             </span>
-            <span className="block text-[14px] font-bold capitalize text-[#111111]">{payment}</span>
+            <span className="block text-[14px] font-bold text-[#111111]">
+              {paymentMethodLabel(payment)}
+            </span>
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" />
         </button>

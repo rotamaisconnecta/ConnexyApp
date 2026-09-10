@@ -28,16 +28,6 @@ export const RIDE_STATUS = {
 
 export type RideStatusValue = (typeof RIDE_STATUS)[keyof typeof RIDE_STATUS];
 
-export const PaymentMethod = {
-  CREDIT: "CREDIT",
-  DEBIT: "DEBIT",
-  CASH: "CASH",
-  PIX: "PIX",
-  WALLET: "WALLET",
-} as const;
-
-export type PaymentMethodValue = (typeof PaymentMethod)[keyof typeof PaymentMethod];
-
 /* ─── Location ───────────────────────────────────────────── */
 
 export interface GeoLocation {
@@ -67,7 +57,6 @@ export interface RideRequest {
   durationMinutes: number;
   scheduledAt: Date | null;
   couponCode: string | null;
-  paymentMethod: PaymentMethodValue;
   createdAt: Date;
 }
 
@@ -126,7 +115,6 @@ export interface Trip {
   estimatedArrival: string;
   sharedWith: string[];
   rating: TripRating | null;
-  receipt: TripReceipt | null;
 }
 
 /* ─── Trip Rating ────────────────────────────────────────── */
@@ -136,38 +124,6 @@ export interface TripRating {
   comment: string;
   tags: string[];
   createdAt: Date;
-}
-
-/* ─── Trip Receipt ───────────────────────────────────────── */
-
-export interface TripReceipt {
-  tripId: string;
-  baseFare: number;
-  distanceFare: number;
-  timeFare: number;
-  discount: number;
-  total: number;
-  currency: string;
-  paymentMethod: PaymentMethodValue;
-  paidAt: Date;
-}
-
-/* ─── Ride History ───────────────────────────────────────── */
-
-export interface RideHistoryItem {
-  id: string;
-  driverName: string;
-  driverPhoto: string;
-  vehicleName: string;
-  origin: GeoLocation;
-  destination: GeoLocation;
-  distanceMeters: number;
-  durationMinutes: number;
-  price: number;
-  currency: string;
-  category: VehicleCategoryValue;
-  rating: number | null;
-  completedAt: Date;
 }
 
 /* ─── Favorite Destination ───────────────────────────────── */
@@ -236,16 +192,4 @@ export const VEHICLE_CATEGORY_OPTIONS: {
     icon: "👥",
     seats: 4,
   },
-];
-
-export const PAYMENT_METHOD_OPTIONS: {
-  value: PaymentMethodValue;
-  label: string;
-  icon: string;
-}[] = [
-  { value: PaymentMethod.CREDIT, label: "Cartão de crédito", icon: "💳" },
-  { value: PaymentMethod.DEBIT, label: "Cartão de débito", icon: "💳" },
-  { value: PaymentMethod.CASH, label: "Dinheiro", icon: "💵" },
-  { value: PaymentMethod.PIX, label: "PIX", icon: "📱" },
-  { value: PaymentMethod.WALLET, label: "Carteira digital", icon: "💰" },
 ];

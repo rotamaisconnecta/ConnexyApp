@@ -24,6 +24,7 @@ import {
   PrimaryCTA,
 } from "./ride-sheet";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
+import { paymentMethodLabel } from "@/lib/mobility/payment";
 import type { DriverMock } from "./ride-data";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
 
@@ -86,7 +87,7 @@ export function SearchingPanel({
               {formatPrice(fare)}
             </span>
             <span className="block text-[10px] capitalize" style={{ color: RIDE_MUTED }}>
-              {payment}
+              {paymentMethodLabel(payment)}
             </span>
           </span>
         </div>
@@ -186,7 +187,7 @@ export function DriverPanel({
               Motorista encontrado
             </h2>
             <p className="mt-0.5 text-[12px]" style={{ color: RIDE_MUTED }}>
-              {categoryLabel} · {formatPrice(fare)} · Pagamento {payment}
+              {categoryLabel} · {formatPrice(fare)} · Pagamento {paymentMethodLabel(payment)}
             </p>
           </>
         )}
@@ -295,6 +296,8 @@ export function ActiveRidePanel({
   destination,
   stopLabel,
   etaMinutes,
+  fare,
+  payment,
   onSafety,
   onShare,
   onRoute,
@@ -304,6 +307,8 @@ export function ActiveRidePanel({
   destination: GeoLocation;
   stopLabel?: string;
   etaMinutes: number;
+  fare: number;
+  payment: PaymentOption;
   onSafety: () => void;
   onShare: () => void;
   onRoute: () => void;
@@ -331,7 +336,14 @@ export function ActiveRidePanel({
           </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="mt-3 flex items-center justify-between rounded-[16px] bg-zinc-50 px-4 py-2.5">
+          <span className="text-[12px] font-semibold text-zinc-600">Pagamento</span>
+          <span className="text-[12px] font-bold text-[#111111]">
+            {paymentMethodLabel(payment)} · {formatPrice(fare)}
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-4 gap-2">
           {[
             { label: "Segurança", icon: ShieldCheck, action: onSafety },
             { label: "Compartilhar", icon: Share2, action: onShare },
@@ -404,8 +416,8 @@ export function ArrivalPanel({
   categoryLabel,
   fare,
   payment,
-  pixConfirmed,
-  onSimulatePix,
+  paymentConfirmed,
+  onConfirmPayment,
   onContinue,
   routeMeta,
   destination,
@@ -413,8 +425,8 @@ export function ArrivalPanel({
   categoryLabel: string;
   fare: number;
   payment: PaymentOption;
-  pixConfirmed: boolean;
-  onSimulatePix: () => void;
+  paymentConfirmed: boolean;
+  onConfirmPayment: () => void;
   onContinue: () => void;
   routeMeta: { distance: string; duration: string };
   destination: GeoLocation;
@@ -442,7 +454,7 @@ export function ArrivalPanel({
             { label: "Tempo total", value: routeMeta.duration },
             { label: "Distância", value: routeMeta.distance },
             { label: "Valor", value: formatPrice(fare) },
-            { label: "Pagamento", value: payment === "pix" ? "Pix" : "Dinheiro" },
+            { label: "Pagamento", value: paymentMethodLabel(payment) },
           ].map((row) => (
             <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
               <span className="shrink-0 text-[12px]" style={{ color: RIDE_MUTED }}>
@@ -458,11 +470,11 @@ export function ArrivalPanel({
         {/* Estado de pagamento */}
         <div
           className={`mt-3 rounded-[18px] border px-4 py-3.5 ${
-            pixConfirmed ? "border-emerald-200 bg-emerald-50" : "border-zinc-100 bg-white"
+            paymentConfirmed ? "border-emerald-200 bg-emerald-50" : "border-zinc-100 bg-white"
           }`}
         >
           {pix ? (
-            pixConfirmed ? (
+            paymentConfirmed ? (
               <div className="flex items-center gap-3">
                 <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-emerald-500 text-white">
                   <Check className="h-4 w-4" strokeWidth={3} />
@@ -497,7 +509,7 @@ export function ArrivalPanel({
                 </div>
                 <button
                   type="button"
-                  onClick={onSimulatePix}
+                  onClick={onConfirmPayment}
                   className="mt-3 flex h-[44px] w-full items-center justify-center gap-2 rounded-[14px] bg-zinc-900 text-[13px] font-bold text-white"
                 >
                   <Smartphone className="h-4 w-4" />
@@ -505,16 +517,38 @@ export function ArrivalPanel({
                 </button>
               </div>
             )
-          ) : (
+          ) : paymentConfirmed ? (
             <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-zinc-100">
-                <Banknote className="h-4 w-4 text-[#111111]" />
+              <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-emerald-500 text-white">
+                <Check className="h-4 w-4" strokeWidth={3} />
               </span>
               <div className="flex-1">
-                <p className="text-[13px] font-bold text-[#111111]">Pagamento em dinheiro</p>
-                <p className="text-[11px] text-zinc-500">Pague diretamente ao motorista.</p>
+                <p className="text-[13px] font-bold text-[#111111]">Pagamento confirmado</p>
+                <p className="text-[11px] text-zinc-500">Pago em dinheiro · {formatPrice(fare)}</p>
               </div>
-              <span className="text-[15px] font-extrabold text-[#111111]">{formatPrice(fare)}</span>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-zinc-100">
+                  <Banknote className="h-4 w-4 text-[#111111]" />
+                </span>
+                <div className="flex-1">
+                  <p className="text-[13px] font-bold text-[#111111]">Pagamento em dinheiro</p>
+                  <p className="text-[11px] text-zinc-500">Pague diretamente ao motorista.</p>
+                </div>
+                <span className="text-[15px] font-extrabold text-[#111111]">
+                  {formatPrice(fare)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onConfirmPayment}
+                className="mt-3 flex h-[44px] w-full items-center justify-center gap-2 rounded-[14px] bg-zinc-900 text-[13px] font-bold text-white"
+              >
+                <Banknote className="h-4 w-4" />
+                Confirmar pagamento
+              </button>
             </div>
           )}
         </div>
@@ -706,7 +740,7 @@ export function FinalPanel({
             { label: "Distância", value: routeMeta.distance },
             { label: "Tempo", value: routeMeta.duration },
             { label: "Valor", value: formatPrice(fare) },
-            { label: "Forma de pagamento", value: payment === "pix" ? "Pix" : "Dinheiro" },
+            { label: "Forma de pagamento", value: paymentMethodLabel(payment) },
           ].map((row) => (
             <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
               <span className="shrink-0 text-[12px]" style={{ color: RIDE_MUTED }}>
@@ -718,6 +752,12 @@ export function FinalPanel({
             </div>
           ))}
         </div>
+
+        {payment === "pix" && (
+          <p className="mt-3 text-center text-[11px]" style={{ color: RIDE_MUTED }}>
+            Combine o pagamento diretamente com o motorista.
+          </p>
+        )}
       </div>
     </RideSheet>
   );

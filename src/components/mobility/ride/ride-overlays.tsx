@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Banknote,
   Car,
   Info,
   LifeBuoy,
@@ -25,6 +24,8 @@ import {
 } from "./ride-sheet";
 import { RideProgress } from "./ride-progress";
 import { progressForState } from "./ride-live-panels";
+import { PaymentMethodSelector } from "../payment-method-selector";
+import { paymentMethodLabel } from "@/lib/mobility/payment";
 import type { PaymentOption } from "./ride-flow-types";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
 
@@ -70,23 +71,8 @@ export function PaymentOverlay({
   onPick: (payment: PaymentOption) => void;
 }) {
   return (
-    <RideOverlaySheet open={open} onClose={onClose} title="Forma de pagamento">
-      <div className="divide-y divide-zinc-100">
-        <ListRow
-          title="Pix"
-          subtitle="Pagamento instantâneo"
-          leading={<Smartphone className="h-4 w-4 text-[#111111]" />}
-          selected={payment === "pix"}
-          onClick={() => onPick("pix")}
-        />
-        <ListRow
-          title="Dinheiro"
-          subtitle="Pague diretamente ao motorista"
-          leading={<Banknote className="h-4 w-4 text-[#111111]" />}
-          selected={payment === "dinheiro"}
-          onClick={() => onPick("dinheiro")}
-        />
-      </div>
+    <RideOverlaySheet open={open} onClose={onClose} title="Como você quer pagar?">
+      <PaymentMethodSelector value={payment} onSelect={onPick} />
       <p className="pt-2 text-[10px] text-zinc-400">
         No modo demo não há cobrança real — apenas simulação local.
       </p>
@@ -260,7 +246,7 @@ export function DetailsOverlay({
           { label: "Categoria", value: categoryLabel },
           { label: "Distância", value: distance },
           { label: "Tempo estimado", value: duration },
-          { label: "Pagamento", value: payment === "pix" ? "Pix" : "Dinheiro" },
+          { label: "Pagamento", value: paymentMethodLabel(payment) },
           { label: "Valor", value: fare, bold: true },
         ].map((row) => (
           <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">

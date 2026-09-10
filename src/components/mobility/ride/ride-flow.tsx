@@ -512,6 +512,8 @@ export function RideFlow({
             destination={destination ?? origin}
             stopLabel={stops[trip?.currentStopIndex ?? 0]?.label}
             etaMinutes={durationMinutes}
+            fare={fare}
+            payment={payment}
             onSafety={() => setShowSafetyOverlay(true)}
             onShare={() => setShowShareSheet(true)}
             onRoute={() => setShowRouteStops(true)}
@@ -524,8 +526,8 @@ export function RideFlow({
             categoryLabel={categoryLabel}
             fare={fare}
             payment={payment}
-            pixConfirmed={trip?.paymentConfirmed ?? false}
-            onSimulatePix={handleSimulatePix}
+            paymentConfirmed={trip?.paymentConfirmed ?? false}
+            onConfirmPayment={handleSimulatePix}
             onContinue={handleContinueArrival}
             routeMeta={routeMeta}
             destination={destination ?? origin}

@@ -1,16 +1,24 @@
-import type { RideHistoryItem } from "@/lib/mobility/ride-types";
+import type { Trip } from "@/lib/mobility/trip/trip-types";
 import { RideHistoryCard } from "./ride-history-card";
 import { EmptyHistory } from "./empty-history";
 import { getTotalHistoryPrice } from "@/lib/mobility/ride-utils";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
 
 interface RideHistoryListProps {
-  history: RideHistoryItem[];
+  history: Trip[];
   onSelect?: (id: string) => void;
 }
 
+function tripTimestamp(trip: Trip): string {
+  return trip.completedAt ?? trip.cancelledAt ?? trip.createdAt;
+}
+
 export function RideHistoryList({ history, onSelect }: RideHistoryListProps) {
-  if (history.length === 0) {
+  const sorted = [...history].sort((a, b) => {
+    return tripTimestamp(b).localeCompare(tripTimestamp(a));
+  });
+
+  if (sorted.length === 0) {
     return <EmptyHistory />;
   }
 
@@ -19,20 +27,20 @@ export function RideHistoryList({ history, onSelect }: RideHistoryListProps) {
       <div className="flex items-center justify-between">
         <h2 className="font-display font-bold text-base">Histórico</h2>
         <span className="text-[11px] text-muted-foreground">
-          {history.length} viagem{history.length > 1 ? "s" : ""}
+          {sorted.length} {sorted.length === 1 ? "viagem" : "viagens"}
         </span>
       </div>
 
       <div className="rounded-2xl border border-border bg-surface p-3 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">Total gasto</span>
         <span className="font-display font-bold text-primary">
-          {formatPrice(getTotalHistoryPrice(history))}
+          {formatPrice(getTotalHistoryPrice(sorted))}
         </span>
       </div>
 
       <div className="space-y-2">
-        {history.map((item) => (
-          <RideHistoryCard key={item.id} item={item} onClick={onSelect} />
+        {sorted.map((trip) => (
+          <RideHistoryCard key={trip.id} trip={trip} onClick={onSelect} />
         ))}
       </div>
     </div>

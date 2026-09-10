@@ -93,6 +93,14 @@ export function getTripSnapshot(): Trip | null {
   return state.trip;
 }
 
+/* Histórico: fonte única = a própria Trip concluída/cancelada,
+   armazenada no MESMO connexy_demo_trip (não cria chave nova).
+   A Trip preserva finalFare, paymentMethod, paymentConfirmed,
+   createdAt/completedAt/cancelledAt, origem/destino e driver. */
+export function getHistorySnapshot(): Trip[] {
+  return state.history;
+}
+
 export function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => {

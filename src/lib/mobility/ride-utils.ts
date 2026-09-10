@@ -3,7 +3,8 @@
    Pure TypeScript. No React. No side effects.
 ========================================================= */
 
-import type { RideHistoryItem, GeoLocation } from "./ride-types";
+import type { GeoLocation } from "./ride-types";
+import type { Trip } from "./trip/trip-types";
 
 /* ─── formatDistance ─────────────────────────────────────── */
 
@@ -48,28 +49,12 @@ export function formatRideDateTime(date: Date): string {
   return `${formatRideDate(date)} · ${time}`;
 }
 
-/* ─── getTotalHistoryPrice ───────────────────────────────── */
+/* ─── getTotalHistoryPrice ─────────────────────────────────
+   Valor exibido = tariffa final (se confirmada) ou estimada
+   no pedido. Sempre a partir da Trip concluída. */
 
-export function getTotalHistoryPrice(history: RideHistoryItem[]): number {
-  return history.reduce((sum, item) => sum + item.price, 0);
-}
-
-/* ─── getHistoryByCategory ───────────────────────────────── */
-
-export function getHistoryByCategory(
-  history: RideHistoryItem[],
-  category: string,
-): RideHistoryItem[] {
-  return history.filter((item) => item.category === category);
-}
-
-/* ─── getAverageRating ───────────────────────────────────── */
-
-export function getAverageRating(history: RideHistoryItem[]): number {
-  const rated = history.filter((item) => item.rating !== null);
-  if (rated.length === 0) return 0;
-  const sum = rated.reduce((acc, item) => acc + (item.rating ?? 0), 0);
-  return sum / rated.length;
+export function getTotalHistoryPrice(history: Trip[]): number {
+  return history.reduce((sum, item) => sum + (item.finalFare ?? item.estimatedFare), 0);
 }
 
 /* ─── truncateAddress ────────────────────────────────────── */

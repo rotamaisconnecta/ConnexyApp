@@ -7,7 +7,7 @@ interface EmptyHistoryProps {
 
 export function EmptyHistory({
   message = "Nenhuma viagem ainda",
-  submessage = "Suas viagens aparecerão aqui depois que você usar o RotaMais.",
+  submessage = "Suas viagens aparecerão aqui.",
 }: EmptyHistoryProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">

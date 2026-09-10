@@ -1,46 +1,52 @@
-import { Star, MapPin } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { RideHistoryItem } from "@/lib/mobility/ride-types";
+import { Check, MapPin } from "lucide-react";
+import type { Trip } from "@/lib/mobility/trip/trip-types";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
-import { formatDistance, formatDuration, formatRideDate } from "@/lib/mobility/ride-utils";
-import { getCategoryLabel, getCategoryIcon, getCategoryColor } from "@/lib/mobility/vehicle-utils";
+import { formatDistance, formatRideDate } from "@/lib/mobility/ride-utils";
+import { paymentMethodLabel, paymentStatusLabel } from "@/lib/mobility/payment";
+import { demoCategoryLabel } from "@/lib/mobility/demo-fare";
 
 interface RideHistoryCardProps {
-  item: RideHistoryItem;
+  trip: Trip;
   onClick?: (id: string) => void;
 }
 
-export function RideHistoryCard({ item, onClick }: RideHistoryCardProps) {
+function tripTimestamp(trip: Trip): string {
+  return trip.completedAt ?? trip.cancelledAt ?? trip.createdAt;
+}
+
+function tripPrice(trip: Trip): number {
+  return trip.finalFare ?? trip.estimatedFare;
+}
+
+export function RideHistoryCard({ trip, onClick }: RideHistoryCardProps) {
+  const cancelled = trip.status === "cancelada";
+  const destination = trip.destination?.label ?? "Cancelada";
+  const driverName = trip.driver?.name;
+
   return (
     <button
-      onClick={() => onClick?.(item.id)}
+      type="button"
+      onClick={() => onClick?.(trip.id)}
       className="w-full rounded-2xl border border-border bg-surface p-3 text-left transition-colors hover:bg-accent/30"
     >
       <div className="flex items-start gap-3">
-        <img
-          src={item.driverPhoto}
-          alt={item.driverName}
-          className="h-10 w-10 rounded-full object-cover shrink-0"
-        />
-        <div className="flex-1 min-w-0 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-sm">{item.driverName}</span>
-            <span className="font-display font-bold text-sm">{formatPrice(item.price)}</span>
-          </div>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary text-[13px] font-bold text-foreground">
+          {driverName?.slice(0, 1) ?? "?"}
+        </span>
 
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                getCategoryColor(item.category),
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-center justify-between gap-3">
+            <span className="truncate font-semibold text-sm">
+              {driverName ?? "Motorista demo"}
+              {cancelled && (
+                <span className="ml-2 text-[11px] font-medium text-muted-foreground">
+                  Cancelada
+                </span>
               )}
-            >
-              {getCategoryIcon(item.category)} {getCategoryLabel(item.category)}
             </span>
-            {item.rating && (
-              <span className="text-[11px] flex items-center gap-0.5 text-muted-foreground">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                {item.rating}
+            {!cancelled && (
+              <span className="shrink-0 font-display font-bold text-sm">
+                {formatPrice(tripPrice(trip))}
               </span>
             )}
           </div>
@@ -48,14 +54,25 @@ export function RideHistoryCard({ item, onClick }: RideHistoryCardProps) {
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">
-              {item.origin.label} → {item.destination.label}
+              {trip.origin.label} → {destination}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-            <span>{formatDistance(item.distanceMeters)}</span>
-            <span>{formatDuration(item.durationMinutes)}</span>
-            <span>{formatRideDate(item.completedAt)}</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+            <span>{demoCategoryLabel(trip.category)}</span>
+            {!cancelled && (
+              <>
+                <span>{paymentMethodLabel(trip.paymentMethod)}</span>
+                {trip.paymentConfirmed && (
+                  <span className="flex items-center gap-0.5 text-emerald-600">
+                    <Check className="h-3 w-3" aria-hidden />
+                    {paymentStatusLabel(true)}
+                  </span>
+                )}
+              </>
+            )}
+            <span>{formatDistance(trip.distanceMeters)}</span>
+            <span>{formatRideDate(new Date(tripTimestamp(trip)))}</span>
           </div>
         </div>
       </div>
