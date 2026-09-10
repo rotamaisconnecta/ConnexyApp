@@ -10,6 +10,8 @@ import {
 import { PhoneFrame } from "@/components/phone-frame";
 import BottomNav from "@/components/bottom-nav";
 import { useAuth } from "@/hooks/use-auth";
+import { useDriverMode, restoreModeOnBoot } from "@/hooks/use-driver-mode";
+import { DriverModeSocialBlock } from "@/components/driver/driver-mode-social-block";
 import { ContextEngineProvider } from "@/lib/context/context-provider";
 import { PresenceProvider as CheckInPresenceProvider } from "@/providers/presence/presence-provider";
 import { PresenceProvider } from "@/providers/presence/presence-context";
@@ -57,9 +59,21 @@ function AppLayout() {
   const rideFlowOpen = /^\/ride(\/request|\/matching|\/active|\/)?$/.test(pathname);
   const immersiveRouteOpen = conversationOpen || requestOpen || profileEditorOpen || rideFlowOpen;
 
+  const { isDriverMode } = useDriverMode();
+  const socialRouteOpen =
+    pathname === "/pessoas" ||
+    pathname === "/matching" ||
+    pathname === "/connecta" ||
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/solicitacao");
+
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
   }, [loading, user, nav]);
+
+  useEffect(() => {
+    restoreModeOnBoot();
+  }, []);
 
   useEffect(() => {
     scrollAreaRef.current?.scrollTo({ top: 0, behavior: "auto" });
@@ -87,7 +101,7 @@ function AppLayout() {
                   immersiveRouteOpen ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]"
                 }`}
               >
-                <Outlet />
+                {isDriverMode && socialRouteOpen ? <DriverModeSocialBlock /> : <Outlet />}
               </div>
               {!immersiveRouteOpen && <ConnexyAiAssistant />}
               {!immersiveRouteOpen && <BottomNav />}

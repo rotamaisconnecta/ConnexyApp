@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useDriverMode } from "@/hooks/use-driver-mode";
 
 interface BottomNavItem {
   id: string;
@@ -26,9 +27,13 @@ function isActive(pathname: string, route: string): boolean {
 export default function BottomNav() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { isDriverMode } = useDriverMode();
 
-  const leftItems = NAV_ITEMS.slice(0, 2);
-  const rightItems = NAV_ITEMS.slice(2);
+  const navItems = isDriverMode
+    ? NAV_ITEMS.filter((item) => item.id !== "conversations")
+    : NAV_ITEMS;
+  const leftItems = navItems.slice(0, 2);
+  const rightItems = navItems.slice(2);
 
   const renderItem = (item: BottomNavItem) => {
     const active = isActive(pathname, item.route);
@@ -84,6 +89,7 @@ export default function BottomNav() {
         </div>
 
         {rightItems.map(renderItem)}
+        {isDriverMode && <div aria-hidden="true" />}
       </div>
     </nav>
   );

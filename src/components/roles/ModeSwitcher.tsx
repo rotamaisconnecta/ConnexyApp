@@ -1,42 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { Car, User, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { Colors, Shadows } from "@/theme";
-import { getStoredRoles, setActiveMode } from "@/lib/roles/roles-storage";
+import { setActiveMode } from "@/lib/roles/roles-storage";
 import { UserRole, type RoleMode } from "@/lib/roles/roles-types";
-import { getDriverApplication } from "@/lib/driver/driver-application-storage";
+import { useDriverMode, switchToPassengerMode } from "@/hooks/use-driver-mode";
 
 export default function ModeSwitcher() {
   const navigate = useNavigate();
-  const [rolesState, setRolesState] = useState(getStoredRoles);
-  const [driverStatus, setDriverStatus] = useState(() => getDriverApplication().status);
-  const hasDriverRole = rolesState.roles.includes(UserRole.DRIVER);
-  const canDrive = hasDriverRole && driverStatus === "approved";
-  const activeMode = rolesState.activeMode;
+  const { approved, hasDriverRole, isDriverMode, driverStatus } = useDriverMode();
+  const canDrive = hasDriverRole && approved;
 
   useEffect(() => {
-    function handleRoleChanged() {
-      setRolesState(getStoredRoles());
-      setDriverStatus(getDriverApplication().status);
-    }
-
-    window.addEventListener("roleChanged", handleRoleChanged);
-    window.addEventListener("driverApplicationChanged", handleRoleChanged);
-    return () => {
-      window.removeEventListener("roleChanged", handleRoleChanged);
-      window.removeEventListener("driverApplicationChanged", handleRoleChanged);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (activeMode !== UserRole.DRIVER || canDrive) return;
+    if (!isDriverMode || canDrive) return;
     setActiveMode(UserRole.USER);
-    setRolesState(getStoredRoles());
     window.dispatchEvent(new Event("roleChanged"));
-  }, [activeMode, canDrive]);
+  }, [isDriverMode, canDrive]);
 
   function handleSelect(mode: RoleMode) {
     if (mode === UserRole.DRIVER && !canDrive) {
@@ -44,12 +26,21 @@ export default function ModeSwitcher() {
       return;
     }
 
-    setActiveMode(mode);
-    window.dispatchEvent(new Event("roleChanged"));
+    if (mode === UserRole.USER && isDriverMode) {
+      if (!switchToPassengerMode()) {
+        toast.error("Corrida ativa", {
+          description: "Conclua ou cancele a corrida antes de trocar o modo.",
+        });
+        return;
+      }
+    } else {
+      setActiveMode(mode);
+      window.dispatchEvent(new Event("roleChanged"));
+    }
 
-    const isDriverMode = mode === UserRole.DRIVER;
-    const title = isDriverMode ? "🚗 Modo Motorista ativado" : "🚶 Modo Passageiro ativado";
-    const description = isDriverMode
+    const isDriverModeSelected = mode === UserRole.DRIVER;
+    const title = isDriverModeSelected ? "🚗 Modo Motorista ativado" : "🚶 Modo Passageiro ativado";
+    const description = isDriverModeSelected
       ? "Agora você está utilizando o painel do motorista."
       : "Agora você voltou ao modo passageiro.";
 
@@ -61,7 +52,7 @@ export default function ModeSwitcher() {
     });
 
     window.setTimeout(() => {
-      navigate({ to: isDriverMode ? "/driver" : "/home" });
+      navigate({ to: isDriverModeSelected ? "/driver" : "/home" });
     }, 300);
   }
 
@@ -98,7 +89,7 @@ export default function ModeSwitcher() {
 
   return (
     <motion.div
-      key={activeMode}
+      key={isDriverMode ? "driver" : "passenger"}
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
@@ -113,7 +104,7 @@ export default function ModeSwitcher() {
           transition={{ type: "spring", stiffness: 420, damping: 35 }}
           className="absolute top-1 bottom-1 w-[calc(50%-2px)] rounded-full"
           style={{
-            left: activeMode === UserRole.DRIVER ? "calc(50% + 1px)" : "4px",
+            left: isDriverMode ? "calc(50% + 1px)" : "4px",
             background: Colors.card,
             boxShadow: Shadows.medium,
           }}
@@ -126,15 +117,11 @@ export default function ModeSwitcher() {
         >
           <User
             size={16}
-            style={{
-              color: activeMode === UserRole.USER ? Colors.brand.primary : Colors.text.secondary,
-            }}
+            style={{ color: isDriverMode ? Colors.text.secondary : Colors.brand.primary }}
           />
           <span
             className="text-sm font-medium"
-            style={{
-              color: activeMode === UserRole.USER ? Colors.brand.primary : Colors.text.secondary,
-            }}
+            style={{ color: isDriverMode ? Colors.text.secondary : Colors.brand.primary }}
           >
             Passageiro
           </span>
@@ -147,15 +134,11 @@ export default function ModeSwitcher() {
         >
           <Car
             size={16}
-            style={{
-              color: activeMode === UserRole.DRIVER ? Colors.brand.primary : Colors.text.secondary,
-            }}
+            style={{ color: isDriverMode ? Colors.brand.primary : Colors.text.secondary }}
           />
           <span
             className="text-sm font-medium"
-            style={{
-              color: activeMode === UserRole.DRIVER ? Colors.brand.primary : Colors.text.secondary,
-            }}
+            style={{ color: isDriverMode ? Colors.brand.primary : Colors.text.secondary }}
           >
             Motorista
           </span>

@@ -3,6 +3,9 @@ import { useState } from "react";
 import { Car, ShieldCheck } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { DriverOperationsDashboard } from "@/components/driver/driver-operations-dashboard";
+import { DriverApprovalGate } from "@/components/driver/driver-approval-gate";
+import ModeSwitcher from "@/components/roles/ModeSwitcher";
+import { useDriverMode } from "@/hooks/use-driver-mode";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
 import { CancelConfirmModal } from "@/components/mobility/ride/ride-overlays";
 import { currentUser } from "@/lib/mock-data";
@@ -52,6 +55,7 @@ function offerToDriverRequest(offer: RideOffer): RideRequest {
 
 function DriverPage() {
   const navigate = useNavigate();
+  const { approved, hasDriverRole, driverStatus } = useDriverMode();
   const driver = useDemoDriver(DEMO_DRIVER_ID);
   const isOnline = useDemoDriverOnline(DEMO_DRIVER_ID);
   const offer = useOfferForDriver(DEMO_DRIVER_ID);
@@ -60,9 +64,19 @@ function DriverPage() {
 
   const midTrip = active?.tripStatus === "emviagem" || active?.tripStatus === "parada";
 
+  if (!approved || !hasDriverRole) {
+    return (
+      <div className="flex-1">
+        <StatusBar />
+        <DriverApprovalGate status={driverStatus} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1">
       <StatusBar />
+      <ModeSwitcher />
       <div className="px-4 pt-1">
         <DriverOperationsDashboard
           driverName={driver.name}

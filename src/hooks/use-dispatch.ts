@@ -21,6 +21,9 @@ import {
   requestPassengerRide,
   setDemoDriverOnline,
 } from "@/lib/mobility/dispatch/dispatcher";
+import { canOperateAsDriver } from "@/hooks/use-driver-mode";
+import { addRole, setActiveMode } from "@/lib/roles/roles-storage";
+import { UserRole } from "@/lib/roles/roles-types";
 
 /* ─── Snapshot reativo do dispatcher ─────────────────────── */
 
@@ -51,11 +54,19 @@ export function useOfferForDriver(driverId: string = DEMO_DRIVER_ID): RideOffer 
 /* ─── Ações do motorista demo ────────────────────────────── */
 
 export function toggleDemoDriverOnline(driverId: string = DEMO_DRIVER_ID): void {
+  if (!canOperateAsDriver()) return;
   const driver = getDriverById(driverId);
-  setDemoDriverOnline(driverId, driver?.status === "offline");
+  const turningOnline = driver?.status === "offline";
+  setDemoDriverOnline(driverId, turningOnline);
+  if (turningOnline) {
+    addRole(UserRole.DRIVER);
+    setActiveMode(UserRole.DRIVER);
+    window.dispatchEvent(new Event("roleChanged"));
+  }
 }
 
 export function acceptDemoDriverOffer(driverId: string = DEMO_DRIVER_ID): void {
+  if (!canOperateAsDriver()) return;
   const offer = getOfferForDriver(driverId);
   if (offer) acceptRideOffer(offer.tripId, driverId);
 }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Bell, UserRound } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
+import ModeSwitcher from "@/components/roles/ModeSwitcher";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
 import { ConnexyPulse } from "@/components/home/ConnexyPulse";
@@ -100,6 +101,7 @@ function Home() {
   return (
     <div className="flex-1 bg-background">
       <StatusBar />
+      <ModeSwitcher />
 
       <header className="flex items-center justify-between px-5 pb-2 pt-3 md:pt-1">
         <BrandLogo variant="full" size="md" />
