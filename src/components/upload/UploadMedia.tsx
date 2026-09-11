@@ -14,12 +14,13 @@ import {
   MIXED_ACCEPT,
   MAX_GRID_FILES,
   revokePreview,
+  uploadStorage,
+  type UploadDestination,
 } from "@/lib/upload";
 import { UploadDropzone } from "./UploadDropzone";
 import { UploadPreview } from "./UploadPreview";
 import { UploadGrid } from "./UploadGrid";
 import { UploadToolbar } from "./UploadToolbar";
-import { UploadProgress } from "./UploadProgress";
 import { UploadSources } from "./UploadSources";
 
 interface UploadMediaProps {
@@ -32,6 +33,7 @@ interface UploadMediaProps {
   className?: string;
   disabled?: boolean;
   label?: string;
+  destination?: UploadDestination;
 }
 
 export function UploadMedia({
@@ -44,12 +46,15 @@ export function UploadMedia({
   className,
   disabled,
   label,
+  destination,
 }: UploadMediaProps) {
   const [internalFiles, setInternalFiles] = useState<MediaFile[]>([]);
-  const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const files = value ?? internalFiles;
+  const filesRef = useRef(files);
+  filesRef.current = files;
   const effectiveMax = maxFiles ?? (multiple ? MAX_GRID_FILES : 1);
 
   const accept = mode === "photo" ? PHOTO_ACCEPT : mode === "video" ? VIDEO_ACCEPT : MIXED_ACCEPT;
@@ -105,6 +110,18 @@ export function UploadMedia({
     onChange?.([]);
   }, [files, value, onChange]);
 
+  const updateFile = useCallback(
+    (id: string, patch: Partial<MediaFile>) => {
+      const updated = filesRef.current.map((file) =>
+        file.id === id ? { ...file, ...patch } : file,
+      );
+      filesRef.current = updated;
+      if (!value) setInternalFiles(updated);
+      onChange?.(updated);
+    },
+    [onChange, value],
+  );
+
   const handleMove = useCallback(
     (id: string, dir: -1 | 1) => {
       const index = files.findIndex((f) => f.id === id);
@@ -146,20 +163,40 @@ export function UploadMedia({
     [files, value, onChange, validation],
   );
 
-  const simulateUpload = useCallback(() => {
+  const handleUpload = useCallback(async () => {
+    if (!destination || uploading) return;
     setUploading(true);
-    setProgress(0);
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          return 100;
-        }
-        return p + 10;
+    setUploadError(null);
+
+    for (const file of filesRef.current) {
+      if (file.status === "success") continue;
+      updateFile(file.id, {
+        status: "uploading",
+        progress: 0,
+        uploadError: undefined,
       });
-    }, 200);
-  }, []);
+
+      try {
+        const result = await uploadStorage(file, destination);
+        updateFile(file.id, {
+          status: "success",
+          progress: 100,
+          remotePath: result.path,
+          remoteUrl: result.url,
+          uploadError: undefined,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "Não foi possível enviar o arquivo. Tente novamente.";
+        updateFile(file.id, { status: "error", progress: 0, uploadError: message });
+        setUploadError(message);
+      }
+    }
+
+    setUploading(false);
+  }, [destination, updateFile, uploading]);
 
   useEffect(() => {
     return () => {
@@ -215,13 +252,13 @@ export function UploadMedia({
           onRemoveAll={files.length > 0 ? handleRemoveAll : undefined}
         />
 
-        {!uploading && files.length > 0 && (
+        {!uploading && destination && files.length > 0 && (
           <button
             type="button"
-            onClick={simulateUpload}
+            onClick={() => void handleUpload()}
             className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            Simular Upload
+            Enviar arquivos
           </button>
         )}
       </div>
@@ -245,7 +282,7 @@ export function UploadMedia({
         disabled={disabled}
       />
 
-      {uploading && <UploadProgress progress={progress} />}
+      {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
     </div>
   );
 }

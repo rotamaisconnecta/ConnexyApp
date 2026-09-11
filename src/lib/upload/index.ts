@@ -1,5 +1,12 @@
-export { ConnexyUploadEngine, uploadEngine } from './upload-engine'
-export type { MediaFile, MediaStatus, UploadMode, UploadValidation } from './upload-types'
+export { ConnexyUploadEngine, uploadEngine } from "./upload-engine";
+export type {
+  MediaFile,
+  MediaStatus,
+  UploadMode,
+  UploadValidation,
+  UploadDestination,
+  UploadedMedia,
+} from "./upload-types";
 export {
   PHOTO_VALIDATION,
   VIDEO_VALIDATION,
@@ -7,7 +14,7 @@ export {
   VIDEO_ACCEPT,
   MIXED_ACCEPT,
   MAX_GRID_FILES,
-} from './upload-types'
+} from "./upload-types";
 export {
   createMediaFile,
   generatePreview,
@@ -18,5 +25,5 @@ export {
   prepareForUpload,
   readFileAsDataURL,
   formatFileSize,
-} from './upload-utils'
-export { uploadStorage, uploadMultiple } from './upload-storage'
+} from "./upload-utils";
+export { uploadStorage, uploadMultiple } from "./upload-storage";

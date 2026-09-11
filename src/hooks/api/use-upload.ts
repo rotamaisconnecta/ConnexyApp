@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { UploadService } from "@/services/upload.service";
+import type { UploadDestination } from "@/lib/upload";
 
 export function useUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -15,6 +16,22 @@ export function useUpload() {
       return result;
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Upload failed"));
+      throw err;
+    } finally {
+      setIsUploading(false);
+    }
+  }, []);
+
+  const uploadMedia = useCallback(async (destination: UploadDestination, file: File) => {
+    setIsUploading(true);
+    setProgress(0);
+    setError(null);
+    try {
+      const result = await UploadService.uploadMedia(destination, file);
+      setProgress(100);
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Não foi possível enviar o arquivo."));
       throw err;
     } finally {
       setIsUploading(false);
@@ -57,6 +74,7 @@ export function useUpload() {
 
   return {
     uploadImage,
+    uploadMedia,
     uploadAvatar,
     uploadPostMedia,
     isUploading,

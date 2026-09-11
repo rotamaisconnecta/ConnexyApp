@@ -1,11 +1,16 @@
-import { MediaFile } from './upload-types'
+import { UploadService } from "@/services/upload.service";
+import type { MediaFile, UploadDestination, UploadedMedia } from "./upload-types";
 
-export function uploadStorage(file: MediaFile): Promise<string> {
-  throw new Error('Storage provider not configured.')
+export function uploadStorage(
+  file: MediaFile,
+  destination: UploadDestination,
+): Promise<UploadedMedia> {
+  return UploadService.uploadMedia(destination, file.file);
 }
 
 export async function uploadMultiple(
-  files: MediaFile[]
-): Promise<string[]> {
-  throw new Error('Storage provider not configured.')
+  files: MediaFile[],
+  destination: UploadDestination,
+): Promise<UploadedMedia[]> {
+  return Promise.all(files.map((file) => uploadStorage(file, destination)));
 }
