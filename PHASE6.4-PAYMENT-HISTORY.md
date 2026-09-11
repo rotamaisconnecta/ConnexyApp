@@ -1,5 +1,9 @@
 # Fase 6.4 — Pagamento e Histórico (demo/local)
 
+> **ATUALIZADO pela Fase 6.4-C** (`PHASE6.4C-PAYMENT-CONFIRMATION-REPORT.md`): a confirmação de
+> "Simular pagamento" (PIX) do §24 abaixo é, agora, apenas local/visual (feedback) — a autoridade de
+> `paymentConfirmed = true` é exclusiva do motorista. Ver também bloqueio por não pagamento e detalhe da viagem.
+
 ## Pagamento atual
 
 - Forma canônica (domínio): `PaymentOption = "pix" | "dinheiro"` em `src/lib/mobility/trip/trip-types.ts`.
