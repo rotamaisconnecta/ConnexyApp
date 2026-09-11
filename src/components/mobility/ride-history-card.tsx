@@ -1,8 +1,8 @@
-import { Check, MapPin } from "lucide-react";
+import { Check, MapPin, ShieldAlert } from "lucide-react";
 import type { Trip } from "@/lib/mobility/trip/trip-types";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
 import { formatDistance, formatRideDate } from "@/lib/mobility/ride-utils";
-import { paymentMethodLabel, paymentStatusLabel } from "@/lib/mobility/payment";
+import { paymentMethodLabel, tripPaymentStatus } from "@/lib/mobility/payment";
 import { demoCategoryLabel } from "@/lib/mobility/demo-fare";
 
 interface RideHistoryCardProps {
@@ -63,10 +63,25 @@ export function RideHistoryCard({ trip, onClick }: RideHistoryCardProps) {
             {!cancelled && (
               <>
                 <span>{paymentMethodLabel(trip.paymentMethod)}</span>
-                {trip.paymentConfirmed && (
+                {tripPaymentStatus(trip) === "paid" && (
                   <span className="flex items-center gap-0.5 text-emerald-600">
                     <Check className="h-3 w-3" aria-hidden />
-                    {paymentStatusLabel(true)}
+                    Pagamento confirmado
+                  </span>
+                )}
+                {tripPaymentStatus(trip) === "pending" && (
+                  <span className="flex items-center gap-1 text-zinc-500">
+                    <span
+                      className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-300"
+                      aria-hidden
+                    />
+                    Aguardando pagamento
+                  </span>
+                )}
+                {tripPaymentStatus(trip) === "unpaid" && (
+                  <span className="flex items-center gap-0.5 font-semibold text-red-600">
+                    <ShieldAlert className="h-3 w-3" aria-hidden />
+                    Corrida não paga
                   </span>
                 )}
               </>

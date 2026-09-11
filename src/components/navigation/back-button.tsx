@@ -18,6 +18,7 @@ export type FallbackRoute =
   | "/profile"
   | "/reels"
   | "/ride"
+  | "/ride/history"
   | "/rota"
   | "/welcome";
 

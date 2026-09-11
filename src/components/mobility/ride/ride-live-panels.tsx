@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import {
   Banknote,
   Car,
@@ -25,6 +26,7 @@ import {
 } from "./ride-sheet";
 import { formatPrice } from "@/lib/mobility/ride-pricing";
 import { paymentMethodLabel } from "@/lib/mobility/payment";
+import type { TripPaymentIssue } from "@/lib/mobility/trip/trip-types";
 import type { DriverMock } from "./ride-data";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
 
@@ -417,7 +419,7 @@ export function ArrivalPanel({
   fare,
   payment,
   paymentConfirmed,
-  onConfirmPayment,
+  paymentIssue,
   onContinue,
   routeMeta,
   destination,
@@ -426,12 +428,14 @@ export function ArrivalPanel({
   fare: number;
   payment: PaymentOption;
   paymentConfirmed: boolean;
-  onConfirmPayment: () => void;
+  paymentIssue?: TripPaymentIssue;
   onContinue: () => void;
   routeMeta: { distance: string; duration: string };
   destination: GeoLocation;
 }) {
+  const [simulatePix, setSimulatePix] = useState(false);
   const pix = payment === "pix";
+  const unpaid = paymentIssue === "user_not_paid";
   return (
     <RideSheet
       footer={
@@ -470,11 +474,15 @@ export function ArrivalPanel({
         {/* Estado de pagamento */}
         <div
           className={`mt-3 rounded-[18px] border px-4 py-3.5 ${
-            paymentConfirmed ? "border-emerald-200 bg-emerald-50" : "border-zinc-100 bg-white"
+            paymentConfirmed
+              ? "border-emerald-200 bg-emerald-50"
+              : unpaid
+                ? "border-red-200 bg-red-50"
+                : "border-zinc-100 bg-white"
           }`}
         >
-          {pix ? (
-            paymentConfirmed ? (
+          {paymentConfirmed ? (
+            pix ? (
               <div className="flex items-center gap-3">
                 <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-emerald-500 text-white">
                   <Check className="h-4 w-4" strokeWidth={3} />
@@ -485,47 +493,68 @@ export function ArrivalPanel({
                 </div>
               </div>
             ) : (
-              <div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full"
-                    style={{ background: RIDE_LILAC }}
-                  >
-                    <Smartphone className="h-4 w-4 text-white" />
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-bold text-[#111111]">Pagamento via Pix</p>
-                    <p className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-                      <span
-                        className="h-1.5 w-1.5 animate-pulse rounded-full"
-                        style={{ background: RIDE_LILAC }}
-                      />
-                      Aguardando pagamento
-                    </p>
-                  </div>
-                  <span className="text-[15px] font-extrabold text-[#111111]">
-                    {formatPrice(fare)}
-                  </span>
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-emerald-500 text-white">
+                  <Check className="h-4 w-4" strokeWidth={3} />
+                </span>
+                <div className="flex-1">
+                  <p className="text-[13px] font-bold text-[#111111]">Pagamento confirmado</p>
+                  <p className="text-[11px] text-zinc-500">
+                    Pago em dinheiro · {formatPrice(fare)}
+                  </p>
                 </div>
+              </div>
+            )
+          ) : unpaid ? (
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-red-500 text-white">
+                <ShieldCheck className="h-4 w-4 rotate-45" />
+              </span>
+              <div className="flex-1">
+                <p className="text-[13px] font-bold text-[#111111]">Corrida não paga</p>
+                <p className="text-[11px] text-zinc-500">
+                  O motorista não recebeu o pagamento. Você precisará regularizar esta pendência
+                  para solicitar novas corridas.
+                </p>
+              </div>
+            </div>
+          ) : pix ? (
+            <div>
+              <div className="flex items-center gap-3">
+                <span
+                  className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full"
+                  style={{ background: RIDE_LILAC }}
+                >
+                  <Smartphone className="h-4 w-4 text-white" />
+                </span>
+                <div className="flex-1">
+                  <p className="text-[13px] font-bold text-[#111111]">Pagamento via Pix</p>
+                  <p className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+                    <span
+                      className="h-1.5 w-1.5 animate-pulse rounded-full"
+                      style={{ background: RIDE_LILAC }}
+                    />
+                    Aguardando pagamento
+                  </p>
+                </div>
+                <span className="text-[15px] font-extrabold text-[#111111]">
+                  {formatPrice(fare)}
+                </span>
+              </div>
+              {simulatePix ? (
+                <p className="mt-3 rounded-[12px] bg-zinc-100 px-3 py-2 text-[11px] leading-relaxed text-zinc-600">
+                  Pagamento simulado enviado. O motorista confirmará o recebimento do PIX.
+                </p>
+              ) : (
                 <button
                   type="button"
-                  onClick={onConfirmPayment}
+                  onClick={() => setSimulatePix(true)}
                   className="mt-3 flex h-[44px] w-full items-center justify-center gap-2 rounded-[14px] bg-zinc-900 text-[13px] font-bold text-white"
                 >
                   <Smartphone className="h-4 w-4" />
                   Simular pagamento
                 </button>
-              </div>
-            )
-          ) : paymentConfirmed ? (
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 grid-cols-1 place-items-center rounded-full bg-emerald-500 text-white">
-                <Check className="h-4 w-4" strokeWidth={3} />
-              </span>
-              <div className="flex-1">
-                <p className="text-[13px] font-bold text-[#111111]">Pagamento confirmado</p>
-                <p className="text-[11px] text-zinc-500">Pago em dinheiro · {formatPrice(fare)}</p>
-              </div>
+              )}
             </div>
           ) : (
             <div>
@@ -535,20 +564,14 @@ export function ArrivalPanel({
                 </span>
                 <div className="flex-1">
                   <p className="text-[13px] font-bold text-[#111111]">Pagamento em dinheiro</p>
-                  <p className="text-[11px] text-zinc-500">Pague diretamente ao motorista.</p>
+                  <p className="text-[11px] text-zinc-500">
+                    Pague diretamente ao motorista — ele confirmará o recebimento.
+                  </p>
                 </div>
                 <span className="text-[15px] font-extrabold text-[#111111]">
                   {formatPrice(fare)}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={onConfirmPayment}
-                className="mt-3 flex h-[44px] w-full items-center justify-center gap-2 rounded-[14px] bg-zinc-900 text-[13px] font-bold text-white"
-              >
-                <Banknote className="h-4 w-4" />
-                Confirmar pagamento
-              </button>
             </div>
           )}
         </div>

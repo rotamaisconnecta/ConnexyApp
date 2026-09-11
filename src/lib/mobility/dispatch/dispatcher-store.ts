@@ -7,7 +7,7 @@
    (dispatcher.ts). Pure TS no núcleo de lógica.
 ========================================================= */
 
-import { buildDemoFleet } from "./demo-fleet";
+import { buildDemoFleet, DEMO_DRIVER_ID } from "./demo-fleet";
 import type {
   DemoDriver,
   DispatchDriverStatus,
@@ -314,14 +314,29 @@ function offerToNext(tripId: string): void {
   const origin = request.trip.origin;
   let next: DemoDriver | null = null;
   let best = Infinity;
-  for (const driver of state.fleet) {
-    if (driver.status !== "available") continue;
-    if (entry.offeredDriverIds.includes(driver.id)) continue;
-    if (entry.declinedDriverIds.includes(driver.id)) continue;
-    const d = distanceMeters(origin.lat, origin.lng, driver.lat, driver.lng);
-    if (d < best) {
-      best = d;
-      next = driver;
+
+  // O motorista demo registrado neste dispositivo (DEMO_DRIVER_ID) tem
+  // prioridade quando estiver disponível e elegível — a tela /driver é o
+  // dono deste dispositivo. Sem isso a corrida ia sempre para o motorista
+  // mais próximo (nem sempre o do dispositivo).
+  const deviceDriver = state.fleet.find((driver) => driver.id === DEMO_DRIVER_ID);
+  if (
+    deviceDriver &&
+    deviceDriver.status === "available" &&
+    !entry.offeredDriverIds.includes(deviceDriver.id) &&
+    !entry.declinedDriverIds.includes(deviceDriver.id)
+  ) {
+    next = deviceDriver;
+  } else {
+    for (const driver of state.fleet) {
+      if (driver.status !== "available") continue;
+      if (entry.offeredDriverIds.includes(driver.id)) continue;
+      if (entry.declinedDriverIds.includes(driver.id)) continue;
+      const d = distanceMeters(origin.lat, origin.lng, driver.lat, driver.lng);
+      if (d < best) {
+        best = d;
+        next = driver;
+      }
     }
   }
   if (!next) return; /* sem motoristas elegíveis: Trip segue "buscando" */

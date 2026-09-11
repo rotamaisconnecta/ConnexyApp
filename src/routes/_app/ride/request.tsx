@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RideFlow } from "@/components/mobility/ride/ride-flow";
+import { RideBlockedPanel } from "@/components/mobility/ride-blocked-panel";
 import { rideSearchSchema, parseCompanions, buildCompanionStops } from "@/lib/mobility/ride-search";
 import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
+import { useDemoIdentity } from "@/lib/demo/demo-identity";
+import { useRideBlock } from "@/hooks/use-ride-block";
 
 export const Route = createFileRoute("/_app/ride/request")({
   head: () => ({ meta: [{ title: "Solicitar viagem — Connexy" }] }),
@@ -11,6 +14,12 @@ export const Route = createFileRoute("/_app/ride/request")({
 
 function RideRequestConfirmPage() {
   const search = Route.useSearch();
+  const identity = useDemoIdentity();
+  const block = useRideBlock(identity.id);
+
+  if (block) {
+    return <RideBlockedPanel block={block} />;
+  }
 
   const destination =
     search.destinationAddress || search.destinationName

@@ -14,6 +14,12 @@ import type { RideCategory } from "../demo-fare";
 
 export type PaymentOption = "pix" | "dinheiro";
 
+/* ─── Pendência de pagamento (demo) ─────────────────────────
+   Só existe com paymentConfirmed = false. Quando presente,
+   o passageiro vinculado à viagem fica bloqueado para novas
+   solicitações até uma futura regularização (fora desta fase). */
+export type TripPaymentIssue = "user_not_paid";
+
 /* ─── Estados da viagem ────────────────────────────────────
    Nomenclatura coerente com o fluxo existente (RideFlow).
    Equivalências com o modelo conceitual:
@@ -95,6 +101,8 @@ export interface Trip {
   estimatedFare: number;
   finalFare: number | null;
   paymentConfirmed: boolean;
+  paymentIssue?: TripPaymentIssue;
+  userId?: string;
   currentStopIndex: number;
   rating: TripRating | null;
   source?: string | null;

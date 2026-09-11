@@ -12,6 +12,8 @@ import type { RouteStop } from "../route-utils";
 import { estimateRouteDistance, estimateRouteDuration } from "../route-utils";
 import { canTransition, isCancellable, isTerminal } from "./trip-machine";
 import type { Trip, TripDriver, TripRating, TripStatus } from "./trip-types";
+import { registerRideBlock } from "./ride-blocks";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
 
 const STORAGE_KEY = "connexy_demo_trip";
 
@@ -119,6 +121,7 @@ export interface TripSeed {
   stops?: RouteStop[];
   source?: string | null;
   companionLabel?: string;
+  userId?: string;
 }
 
 export function createTrip(seed: TripSeed): Trip {
@@ -145,6 +148,7 @@ export function createTrip(seed: TripSeed): Trip {
     estimatedFare: 0,
     finalFare: null,
     paymentConfirmed: false,
+    userId: seed.userId ?? getDemoIdentity().id,
     currentStopIndex: 0,
     rating: null,
     source: seed.source ?? null,
@@ -216,6 +220,43 @@ export function completeTrip(rating?: TripRating): Trip | null {
     finalFare: current.finalFare ?? current.estimatedFare,
     rating: rating ?? current.rating,
   });
+}
+
+/* ─── Confirmação de pagamento (ação do MOTORISTA) ─────────
+   Idempotente. Nunca roda em corrida registrada como não paga
+   (invariante: paymentConfirmed=true e user_not_paid → inválido)
+   e nunca roda depois da conclusão/cancelamento. */
+
+export function confirmDriverPayment(): Trip | null {
+  const current = state.trip;
+  if (!current) return null;
+  if (isTerminal(current.status)) return current;
+  if (current.paymentIssue === "user_not_paid") return current;
+  if (current.paymentConfirmed) return current;
+  const next = { ...current, paymentConfirmed: true, paymentIssue: undefined };
+  persistAndNotify({ ...state, trip: next });
+  return next;
+}
+
+/* ─── Usuário não pagou (ação explícita do MOTORISTA) ───────
+   Precisa confirmação na UI antes de chamar. Registra na Trip
+   e cria o bloqueio do passageiro (idempotente). Corridas
+   canceladas e pagas NUNCA caem aqui. */
+
+export function recordUnpaidTrip(): Trip | null {
+  const current = state.trip;
+  if (!current) return null;
+  if (isTerminal(current.status)) return current;
+  if (current.paymentConfirmed) return current;
+  if (current.status === "cancelada") return current;
+  if (current.paymentIssue === "user_not_paid") {
+    registerRideBlock(current);
+    return current;
+  }
+  const next = { ...current, paymentConfirmed: false, paymentIssue: "user_not_paid" as const };
+  persistAndNotify({ ...state, trip: next });
+  registerRideBlock(next);
+  return next;
 }
 
 /* ─── Reset/limpeza ──────────────────────────────────────── */

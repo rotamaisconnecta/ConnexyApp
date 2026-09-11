@@ -7,11 +7,13 @@ import { DriverApprovalGate } from "@/components/driver/driver-approval-gate";
 import ModeSwitcher from "@/components/roles/ModeSwitcher";
 import { useDriverMode } from "@/hooks/use-driver-mode";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
+import { DriverPaymentPanel } from "@/components/driver/driver-payment-panel";
 import { CancelConfirmModal } from "@/components/mobility/ride/ride-overlays";
 import { currentUser } from "@/lib/mock-data";
 import type { RideRequest } from "@/lib/driver/driver-types";
 import { DEMO_DRIVER_ID } from "@/lib/mobility/dispatch/demo-fleet";
-import { tripStatusLabel } from "@/lib/mobility/trip/trip-machine";
+import { tripStatusLabel, isTerminal } from "@/lib/mobility/trip/trip-machine";
+import { useTrip } from "@/hooks/use-trip";
 import {
   acceptDemoDriverOffer,
   cancelDemoDriverAssignment,
@@ -19,7 +21,6 @@ import {
   toggleDemoDriverOnline,
   useDemoDriver,
   useDemoDriverOnline,
-  useDriverActiveAssignment,
   useOfferForDriver,
 } from "@/hooks/use-dispatch";
 import type { RideOffer } from "@/lib/mobility/dispatch/dispatch-types";
@@ -59,9 +60,17 @@ function DriverPage() {
   const driver = useDemoDriver(DEMO_DRIVER_ID);
   const isOnline = useDemoDriverOnline(DEMO_DRIVER_ID);
   const offer = useOfferForDriver(DEMO_DRIVER_ID);
-  const active = useDriverActiveAssignment(DEMO_DRIVER_ID);
+  const trip = useTrip();
   const [showCancel, setShowCancel] = useState(false);
 
+  // Corrida ativa deste dispositivo: deriva direto da Trip (compartilhada
+  // com o painel do passageiro), sem depender da store de dispatch — que,
+  // por conta do code-splitting por rota, pode existir em instância própria
+  // nesse chunk. Equivale a useDriverActiveAssignment no caso demo.
+  const active =
+    trip && trip.driver?.id === DEMO_DRIVER_ID && !isTerminal(trip.status)
+      ? { tripId: trip.id, tripStatus: trip.status }
+      : null;
   const midTrip = active?.tripStatus === "emviagem" || active?.tripStatus === "parada";
 
   if (!approved || !hasDriverRole) {
@@ -115,6 +124,8 @@ function DriverPage() {
               </button>
             </div>
           </section>
+
+          {trip && <DriverPaymentPanel trip={trip} />}
         </div>
       )}
 

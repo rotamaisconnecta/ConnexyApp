@@ -96,6 +96,8 @@ import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$c
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as AppRideHistoryIndexRouteImport } from './routes/_app/ride/history/index'
+import { Route as AppRideHistoryTripIdRouteImport } from './routes/_app/ride/history/$tripId'
 import { Route as AppDriverTripTripIdRouteImport } from './routes/_app/driver/trip/$tripId'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -535,6 +537,16 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRideHistoryIndexRoute = AppRideHistoryIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRideHistoryRoute,
+} as any)
+const AppRideHistoryTripIdRoute = AppRideHistoryTripIdRouteImport.update({
+  id: '/$tripId',
+  path: '/$tripId',
+  getParentRoute: () => AppRideHistoryRoute,
+} as any)
 const AppDriverTripTripIdRoute = AppDriverTripTripIdRouteImport.update({
   id: '/driver/trip/$tripId',
   path: '/driver/trip/$tripId',
@@ -621,7 +633,7 @@ export interface FileRoutesByFullPath {
   '/profile/roles': typeof AppProfileRolesRoute
   '/reels/$reelId': typeof AppReelsReelIdRoute
   '/ride/active': typeof AppRideActiveRoute
-  '/ride/history': typeof AppRideHistoryRoute
+  '/ride/history': typeof AppRideHistoryRouteWithChildren
   '/ride/matching': typeof AppRideMatchingRoute
   '/ride/request': typeof AppRideRequestRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
@@ -629,6 +641,8 @@ export interface FileRoutesByFullPath {
   '/perfil/': typeof AppPerfilIndexRoute
   '/ride/': typeof AppRideIndexRoute
   '/driver/trip/$tripId': typeof AppDriverTripTripIdRoute
+  '/ride/history/$tripId': typeof AppRideHistoryTripIdRoute
+  '/ride/history/': typeof AppRideHistoryIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -709,7 +723,6 @@ export interface FileRoutesByTo {
   '/profile/roles': typeof AppProfileRolesRoute
   '/reels/$reelId': typeof AppReelsReelIdRoute
   '/ride/active': typeof AppRideActiveRoute
-  '/ride/history': typeof AppRideHistoryRoute
   '/ride/matching': typeof AppRideMatchingRoute
   '/ride/request': typeof AppRideRequestRoute
   '/solicitacao/$id': typeof AppSolicitacaoIdRoute
@@ -717,6 +730,8 @@ export interface FileRoutesByTo {
   '/perfil': typeof AppPerfilIndexRoute
   '/ride': typeof AppRideIndexRoute
   '/driver/trip/$tripId': typeof AppDriverTripTripIdRoute
+  '/ride/history/$tripId': typeof AppRideHistoryTripIdRoute
+  '/ride/history': typeof AppRideHistoryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -800,7 +815,7 @@ export interface FileRoutesById {
   '/_app/profile/roles': typeof AppProfileRolesRoute
   '/_app/reels/$reelId': typeof AppReelsReelIdRoute
   '/_app/ride/active': typeof AppRideActiveRoute
-  '/_app/ride/history': typeof AppRideHistoryRoute
+  '/_app/ride/history': typeof AppRideHistoryRouteWithChildren
   '/_app/ride/matching': typeof AppRideMatchingRoute
   '/_app/ride/request': typeof AppRideRequestRoute
   '/_app/solicitacao/$id': typeof AppSolicitacaoIdRoute
@@ -808,6 +823,8 @@ export interface FileRoutesById {
   '/_app/perfil/': typeof AppPerfilIndexRoute
   '/_app/ride/': typeof AppRideIndexRoute
   '/_app/driver/trip/$tripId': typeof AppDriverTripTripIdRoute
+  '/_app/ride/history/$tripId': typeof AppRideHistoryTripIdRoute
+  '/_app/ride/history/': typeof AppRideHistoryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -899,6 +916,8 @@ export interface FileRouteTypes {
     | '/perfil/'
     | '/ride/'
     | '/driver/trip/$tripId'
+    | '/ride/history/$tripId'
+    | '/ride/history/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -979,7 +998,6 @@ export interface FileRouteTypes {
     | '/profile/roles'
     | '/reels/$reelId'
     | '/ride/active'
-    | '/ride/history'
     | '/ride/matching'
     | '/ride/request'
     | '/solicitacao/$id'
@@ -987,6 +1005,8 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/ride'
     | '/driver/trip/$tripId'
+    | '/ride/history/$tripId'
+    | '/ride/history'
   id:
     | '__root__'
     | '/'
@@ -1077,6 +1097,8 @@ export interface FileRouteTypes {
     | '/_app/perfil/'
     | '/_app/ride/'
     | '/_app/driver/trip/$tripId'
+    | '/_app/ride/history/$tripId'
+    | '/_app/ride/history/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1713,6 +1735,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/ride/history/': {
+      id: '/_app/ride/history/'
+      path: '/'
+      fullPath: '/ride/history/'
+      preLoaderRoute: typeof AppRideHistoryIndexRouteImport
+      parentRoute: typeof AppRideHistoryRoute
+    }
+    '/_app/ride/history/$tripId': {
+      id: '/_app/ride/history/$tripId'
+      path: '/$tripId'
+      fullPath: '/ride/history/$tripId'
+      preLoaderRoute: typeof AppRideHistoryTripIdRouteImport
+      parentRoute: typeof AppRideHistoryRoute
+    }
     '/_app/driver/trip/$tripId': {
       id: '/_app/driver/trip/$tripId'
       path: '/driver/trip/$tripId'
@@ -1814,9 +1850,23 @@ const AppReelsRouteWithChildren = AppReelsRoute._addFileChildren(
   AppReelsRouteChildren,
 )
 
+interface AppRideHistoryRouteChildren {
+  AppRideHistoryTripIdRoute: typeof AppRideHistoryTripIdRoute
+  AppRideHistoryIndexRoute: typeof AppRideHistoryIndexRoute
+}
+
+const AppRideHistoryRouteChildren: AppRideHistoryRouteChildren = {
+  AppRideHistoryTripIdRoute: AppRideHistoryTripIdRoute,
+  AppRideHistoryIndexRoute: AppRideHistoryIndexRoute,
+}
+
+const AppRideHistoryRouteWithChildren = AppRideHistoryRoute._addFileChildren(
+  AppRideHistoryRouteChildren,
+)
+
 interface AppRideRouteChildren {
   AppRideActiveRoute: typeof AppRideActiveRoute
-  AppRideHistoryRoute: typeof AppRideHistoryRoute
+  AppRideHistoryRoute: typeof AppRideHistoryRouteWithChildren
   AppRideMatchingRoute: typeof AppRideMatchingRoute
   AppRideRequestRoute: typeof AppRideRequestRoute
   AppRideIndexRoute: typeof AppRideIndexRoute
@@ -1824,7 +1874,7 @@ interface AppRideRouteChildren {
 
 const AppRideRouteChildren: AppRideRouteChildren = {
   AppRideActiveRoute: AppRideActiveRoute,
-  AppRideHistoryRoute: AppRideHistoryRoute,
+  AppRideHistoryRoute: AppRideHistoryRouteWithChildren,
   AppRideMatchingRoute: AppRideMatchingRoute,
   AppRideRequestRoute: AppRideRequestRoute,
   AppRideIndexRoute: AppRideIndexRoute,

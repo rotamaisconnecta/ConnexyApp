@@ -365,10 +365,6 @@ export function RideFlow({
     transition("avaliacao");
   }, []);
 
-  const handleSimulatePix = useCallback(() => {
-    patchTrip({ paymentConfirmed: true });
-  }, []);
-
   const handleSendRating = useCallback(() => {
     completeTrip({
       stars: ratingStars,
@@ -527,7 +523,7 @@ export function RideFlow({
             fare={fare}
             payment={payment}
             paymentConfirmed={trip?.paymentConfirmed ?? false}
-            onConfirmPayment={handleSimulatePix}
+            paymentIssue={trip?.paymentIssue}
             onContinue={handleContinueArrival}
             routeMeta={routeMeta}
             destination={destination ?? origin}
