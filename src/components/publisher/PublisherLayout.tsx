@@ -6,9 +6,13 @@ interface PublisherLayoutProps {
   scroll?: boolean;
 }
 
-export function PublisherLayout({ children, scroll = true }: PublisherLayoutProps) {
+export function PublisherLayout({ children, scroll = false }: PublisherLayoutProps) {
   return (
-    <BrandScreen padded={false} scroll={scroll} className="flex flex-col h-full min-h-0">
+    <BrandScreen
+      padded={false}
+      scroll={scroll}
+      className="flex flex-col h-full min-h-0 overflow-hidden"
+    >
       {children}
     </BrandScreen>
   );

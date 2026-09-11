@@ -71,7 +71,7 @@ export default function BottomNav() {
       aria-label="Navegação principal"
       className="absolute inset-x-0 bottom-0 z-50 border-t border-border/40 bg-background/80 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-10px_35px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
     >
-      <div className="grid h-[4.75rem] grid-cols-5 items-center px-2">
+      <div className="grid h-[var(--bottom-nav-height,4.75rem)] grid-cols-5 items-center px-2">
         {leftItems.map(renderItem)}
 
         <div className="grid place-items-center">

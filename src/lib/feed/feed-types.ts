@@ -56,7 +56,13 @@ export interface FeedItem {
 /* ─── Item Data (union) ──────────────────────────────────── */
 
 export type FeedItemData =
-  PostData | MomentData | PlaceData | EventData | OfferData | RouteData | NetworkingData;
+  | PostData
+  | MomentData
+  | PlaceData
+  | EventData
+  | OfferData
+  | RouteData
+  | NetworkingData;
 
 export interface PostData {
   kind: "POST";
@@ -245,6 +251,7 @@ export interface NearbyPlacesSectionData {
     category: string;
     rating: number;
     distance: string;
+    distanceMeters: number;
     open: boolean;
     hours?: string;
   }>;
@@ -261,6 +268,7 @@ export interface NearbyEventsSectionData {
     time: string;
     participants: number;
     distance: string;
+    distanceMeters: number;
     location: string;
   }>;
 }

@@ -13,6 +13,7 @@ import type {
   TrendingSectionData,
   FooterSectionData,
 } from "./feed-types";
+import { sortByDistanceMeters } from "@/lib/proximity";
 
 const HERO_MESSAGES: Record<string, Array<{ message: string; emoji: string; subtitle: string }>> = {
   [ContextEnvironment.CITY]: [
@@ -235,6 +236,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Parque",
     rating: 4.7,
     distance: "80m",
+    distanceMeters: 80,
     open: true,
     hours: "24h",
   },
@@ -245,6 +247,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Cultura",
     rating: 4.5,
     distance: "200m",
+    distanceMeters: 200,
     open: true,
     hours: "08:00–18:00",
   },
@@ -255,6 +258,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Natureza",
     rating: 4.9,
     distance: "350m",
+    distanceMeters: 350,
     open: true,
     hours: "06:00–20:00",
   },
@@ -265,6 +269,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Compras",
     rating: 4.3,
     distance: "500m",
+    distanceMeters: 500,
     open: true,
     hours: "10:00–22:00",
   },
@@ -275,6 +280,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Esporte",
     rating: 4.6,
     distance: "600m",
+    distanceMeters: 600,
     open: true,
     hours: "06:00–23:00",
   },
@@ -285,6 +291,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Cultura",
     rating: 4.8,
     distance: "800m",
+    distanceMeters: 800,
     open: false,
     hours: "09:00–17:00",
   },
@@ -295,6 +302,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Natureza",
     rating: 4.7,
     distance: "1.2km",
+    distanceMeters: 1200,
     open: true,
     hours: "24h",
   },
@@ -305,6 +313,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Transporte",
     rating: 4.1,
     distance: "1.5km",
+    distanceMeters: 1500,
     open: true,
     hours: "05:00–23:00",
   },
@@ -315,6 +324,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Lazer",
     rating: 4.4,
     distance: "2.5km",
+    distanceMeters: 2500,
     open: false,
     hours: "10:00–18:00",
   },
@@ -325,6 +335,7 @@ const MOCK_PLACES: NearbyPlacesSectionData["places"] = [
     category: "Cultura",
     rating: 4.6,
     distance: "3km",
+    distanceMeters: 3000,
     open: false,
     hours: "14:00–22:00",
   },
@@ -339,6 +350,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "17:00",
     participants: 128,
     distance: "450m",
+    distanceMeters: 450,
     location: "Parque Central",
   },
   {
@@ -349,6 +361,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "11:00",
     participants: 85,
     distance: "1.2km",
+    distanceMeters: 1200,
     location: "Praca da Matriz",
   },
   {
@@ -359,6 +372,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "20:00",
     participants: 200,
     distance: "2.1km",
+    distanceMeters: 2100,
     location: "Teatro Municipal",
   },
   {
@@ -369,6 +383,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "14:00",
     participants: 45,
     distance: "800m",
+    distanceMeters: 800,
     location: "Espaco Cultural",
   },
   {
@@ -379,6 +394,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "07:00",
     participants: 32,
     distance: "1.5km",
+    distanceMeters: 1500,
     location: "Orla da Praia",
   },
   {
@@ -389,6 +405,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "21:00",
     participants: 67,
     distance: "1.8km",
+    distanceMeters: 1800,
     location: "Blue Note Club",
   },
   {
@@ -399,6 +416,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "09:00",
     participants: 110,
     distance: "3.2km",
+    distanceMeters: 3200,
     location: "Praca Central",
   },
   {
@@ -409,6 +427,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "19:00",
     participants: 78,
     distance: "2.5km",
+    distanceMeters: 2500,
     location: "Auditorio do Sebrae",
   },
   {
@@ -419,6 +438,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "06:00",
     participants: 250,
     distance: "900m",
+    distanceMeters: 900,
     location: "Avenida Beira-Mar",
   },
   {
@@ -429,6 +449,7 @@ const MOCK_EVENTS: NearbyEventsSectionData["events"] = [
     time: "18:30",
     participants: 25,
     distance: "1.1km",
+    distanceMeters: 1100,
     location: "Biblioteca Municipal",
   },
 ];
@@ -595,7 +616,7 @@ function createNearbyEventsTodaySection(context: ContextState): SmartSection {
   const data: NearbyEventsSectionData = {
     kind: "NEARBY_EVENTS",
     count,
-    events: todayEvents.slice(0, 5),
+    events: sortByDistanceMeters(todayEvents).slice(0, 5),
   };
 
   return {
@@ -614,7 +635,7 @@ function createNearbyEventsUpcomingSection(context: ContextState): SmartSection 
   const data: NearbyEventsSectionData = {
     kind: "NEARBY_EVENTS",
     count,
-    events: upcomingEvents.slice(0, 5),
+    events: sortByDistanceMeters(upcomingEvents).slice(0, 5),
   };
 
   return {
@@ -633,7 +654,7 @@ function createNearbyPeopleSection(context: ContextState): SmartSection {
   const data: NearbyPeopleSectionData = {
     kind: "NEARBY_PEOPLE",
     count,
-    people: MOCK_PEOPLE.slice(0, 7),
+    people: sortByDistanceMeters(MOCK_PEOPLE).slice(0, 7),
   };
 
   return {
@@ -652,7 +673,7 @@ function createNearbyPlacesSection(): SmartSection {
   const data: NearbyPlacesSectionData = {
     kind: "NEARBY_PLACES",
     count,
-    places: MOCK_PLACES.slice(0, 10),
+    places: sortByDistanceMeters(MOCK_PLACES).slice(0, 10),
   };
 
   return {

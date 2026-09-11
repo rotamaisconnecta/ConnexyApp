@@ -22,6 +22,7 @@ import {
   respondToDemoGroupInvite,
   type DemoGroup,
 } from "@/lib/demo/demo-db";
+import { triggerDemoCallFeedback } from "@/lib/chat/demo-call";
 import { GroupInviteSheet } from "./group-invite-sheet";
 import type {
   AttachmentAction,
@@ -376,7 +377,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   );
 
   return (
-    <main className="relative flex h-full min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom,0px)]">
+    <main className="relative flex h-full min-h-0 flex-1 flex-col">
       <StatusBar />
 
       <ChatHeader
@@ -387,6 +388,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             : undefined
         }
         onBack={handleBack}
+        onCall={() => triggerDemoCallFeedback((message) => toast.info(message))}
         onVideoCall={() => toast.info("Videocall em breve")}
         onSearch={() => setShowSearch((value) => !value)}
         onMenu={() => setMenuOpen(true)}
@@ -436,6 +438,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
       <div
         ref={scrollRef}
+        data-chat-thread
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto no-scrollbar min-h-0"
       >
@@ -493,7 +496,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             setNewMessagesCount(0);
           }}
           aria-label="Ir para as novas mensagens"
-          className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+4rem)] left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-elevated"
+          className="absolute bottom-16 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-elevated"
         >
           <ChevronDown className="h-3.5 w-3.5" />
           {newMessagesCount === 1 ? "Nova mensagem" : `${newMessagesCount} novas mensagens`}

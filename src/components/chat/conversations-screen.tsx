@@ -387,7 +387,7 @@ export function ConversationsScreen() {
         )}
       </motion.header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] no-scrollbar">
+      <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         {/* Loading state (real only) */}
         {configured && realLoading && (
           <div className="flex justify-center py-12">

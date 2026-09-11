@@ -162,7 +162,7 @@ function CreatePage() {
             </div>
           </div>
 
-          <div className="flex-1 px-5 pb-[140px] overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <motion.div
               variants={listContainer}
               initial="hidden"

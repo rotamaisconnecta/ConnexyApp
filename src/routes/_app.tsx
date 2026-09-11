@@ -19,6 +19,14 @@ import { requireAuth } from "@/lib/auth/route-guard";
 import { profileCompletionForGuard } from "@/lib/profile/profile-status";
 import { Loader2 } from "lucide-react";
 import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
+import {
+  APP_SCROLL_PADDING_BOTTOM,
+  BOTTOM_NAV_HEIGHT,
+  isAppBottomNavVisible,
+  isRideFlowPath,
+  resetGlobalShellScroll,
+  routeOwnsScroll as routeOwnsInternalScroll,
+} from "@/lib/shell/app-shell";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -56,8 +64,9 @@ function AppLayout() {
       return search.edit === true || search.edit === "true";
     },
   });
-  const rideFlowOpen = /^\/ride(\/request|\/matching|\/active|\/)?$/.test(pathname);
-  const immersiveRouteOpen = conversationOpen || requestOpen || profileEditorOpen || rideFlowOpen;
+  const rideFlowOpen = isRideFlowPath(pathname);
+  const immersiveContentOpen = requestOpen || profileEditorOpen || rideFlowOpen;
+  const routeOwnsScroll = routeOwnsInternalScroll(pathname);
 
   const { isDriverMode } = useDriverMode();
   const socialRouteOpen =
@@ -76,8 +85,8 @@ function AppLayout() {
   }, []);
 
   useEffect(() => {
-    scrollAreaRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [pathname]);
+    resetGlobalShellScroll(scrollAreaRef.current);
+  }, [pathname, profileEditorOpen, routeOwnsScroll]);
 
   if (loading || !user) {
     return (
@@ -90,21 +99,26 @@ function AppLayout() {
   }
 
   return (
-    <PhoneFrame>
+    <PhoneFrame contentScrollable={false}>
       <CheckInPresenceProvider>
         <ContextEngineProvider>
           <PresenceProvider userId={user.id}>
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div
+              className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
+              style={{ ["--bottom-nav-height" as string]: BOTTOM_NAV_HEIGHT }}
+            >
               <div
                 ref={scrollAreaRef}
-                className={`relative min-h-0 flex-1 overflow-y-auto no-scrollbar ${
-                  immersiveRouteOpen ? "pb-0" : "pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]"
+                data-app-scroll="global"
+                style={{ paddingBottom: APP_SCROLL_PADDING_BOTTOM }}
+                className={`relative min-h-0 flex-1 no-scrollbar ${
+                  routeOwnsScroll ? "flex flex-col overflow-hidden" : "overflow-y-auto"
                 }`}
               >
                 {isDriverMode && socialRouteOpen ? <DriverModeSocialBlock /> : <Outlet />}
               </div>
-              {!immersiveRouteOpen && <ConnexyAiAssistant />}
-              {!immersiveRouteOpen && <BottomNav />}
+              {!immersiveContentOpen && !conversationOpen && <ConnexyAiAssistant />}
+              {isAppBottomNavVisible(pathname) && <BottomNav />}
             </div>
           </PresenceProvider>
         </ContextEngineProvider>

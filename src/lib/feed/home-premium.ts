@@ -6,7 +6,7 @@
 ========================================================= */
 
 import { people, places, compatibilityScore, currentUser } from "@/lib/mock-data";
-import { formatDistance } from "@/lib/proximity";
+import { formatDistance, sortByDistanceMeters } from "@/lib/proximity";
 import { getCommonalities, shouldShowNearbyPerson } from "./commonalities";
 import type { PersonCommonalities } from "./commonalities";
 import type {
@@ -304,8 +304,8 @@ export function buildNearbyPeople(): NearbyPeopleSectionData {
   return {
     kind: "NEARBY_PEOPLE",
     count: visible.length,
-    people: visible
-      .map((p) => ({
+    people: sortByDistanceMeters(
+      visible.map((p) => ({
         id: p.id,
         name: p.name,
         photo: p.photo,
@@ -316,8 +316,8 @@ export function buildNearbyPeople(): NearbyPeopleSectionData {
         interests: p.interests,
         online: p.online,
         commonalities: getCommonalities(p),
-      }))
-      .sort((a, b) => a.distanceMeters - b.distanceMeters),
+      })),
+    ),
   };
 }
 
@@ -325,22 +325,19 @@ export function buildNearbyPlaces(): NearbyPlacesSectionData {
   return {
     kind: "NEARBY_PLACES",
     count: places.length,
-    places: places
-      .map((p) => ({
+    places: sortByDistanceMeters(
+      places.map((p) => ({
         id: p.id,
         name: p.name,
         photo: p.cover,
         category: p.category,
         rating: p.rating,
         distance: formatDistance(p.distanceMeters),
+        distanceMeters: p.distanceMeters,
         open: p.hours.startsWith("Aberto") || p.hours.includes("Hoje"),
         hours: p.hours,
-      }))
-      .sort((a, b) => {
-        const am = a.distance;
-        const bm = b.distance;
-        return am.localeCompare(bm);
-      }),
+      })),
+    ),
   };
 }
 
@@ -349,16 +346,19 @@ export function buildEventsToday(): NearbyEventsSectionData {
   return {
     kind: "NEARBY_EVENTS",
     count: today.length,
-    events: today.map((e) => ({
-      id: e.id,
-      name: e.name,
-      banner: e.banner,
-      date: e.date,
-      time: e.time,
-      participants: e.participants,
-      distance: e.distance,
-      location: e.location,
-    })),
+    events: sortByDistanceMeters(
+      today.map((e) => ({
+        id: e.id,
+        name: e.name,
+        banner: e.banner,
+        date: e.date,
+        time: e.time,
+        participants: e.participants,
+        distance: formatDistance(e.distanceMeters),
+        distanceMeters: e.distanceMeters,
+        location: e.location,
+      })),
+    ),
   };
 }
 
@@ -367,16 +367,19 @@ export function buildEventsUpcoming(): NearbyEventsSectionData {
   return {
     kind: "NEARBY_EVENTS",
     count: upcoming.length,
-    events: upcoming.map((e) => ({
-      id: e.id,
-      name: e.name,
-      banner: e.banner,
-      date: e.date,
-      time: e.time,
-      participants: e.participants,
-      distance: e.distance,
-      location: e.location,
-    })),
+    events: sortByDistanceMeters(
+      upcoming.map((e) => ({
+        id: e.id,
+        name: e.name,
+        banner: e.banner,
+        date: e.date,
+        time: e.time,
+        participants: e.participants,
+        distance: formatDistance(e.distanceMeters),
+        distanceMeters: e.distanceMeters,
+        location: e.location,
+      })),
+    ),
   };
 }
 
@@ -582,7 +585,7 @@ function eventsToCards(): PremiumCard[] {
     subtitle: `${e.date} às ${e.time}`,
     photo: e.banner,
     route: `/event/${e.id}`,
-    distance: e.distance,
+    distance: formatDistance(e.distanceMeters),
     distanceMeters: e.distanceMeters,
     people: e.participants,
     category: e.category ?? "Eventos",

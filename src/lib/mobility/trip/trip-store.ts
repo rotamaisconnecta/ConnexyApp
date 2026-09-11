@@ -17,9 +17,65 @@ import { getDemoIdentity } from "@/lib/demo/demo-identity";
 
 const STORAGE_KEY = "connexy_demo_trip";
 
+const KNOWN_TRIP_STATUSES = new Set<TripStatus>([
+  "solicitar",
+  "rota",
+  "embarque",
+  "categoria",
+  "buscando",
+  "encontrado",
+  "chegando",
+  "chegou",
+  "emviagem",
+  "parada",
+  "chegada",
+  "avaliacao",
+  "conclusao",
+  "cancelada",
+]);
+
+/* Estados que dependem do motorista persistido para renderizar o fluxo. */
+const DRIVER_DEPENDENT_STATUSES = new Set<TripStatus>([
+  "encontrado",
+  "chegando",
+  "chegou",
+  "emviagem",
+  "parada",
+  "chegada",
+  "avaliacao",
+]);
+
+const DESTINATION_REQUIRED_STATUSES = new Set<TripStatus>([
+  "rota",
+  "embarque",
+  "categoria",
+  "buscando",
+  ...DRIVER_DEPENDENT_STATUSES,
+]);
+
+/* ─── Sanitização da Trip persistida (recuperação pós-reload) ──
+   Uma Trip carregada do localStorage só é preservada quando pode
+   ser retomada: estados terminais ficam como estão; estados válidos
+   e ativos são restaurados (os timers do RideFlow rearmam). Trips
+   sem continuidade possível (status desconhecido, motorista ausente
+   onde é obrigatório ou fluxo avançado sem destino)
+   saem do slot ativo sem tocar no histórico — liberando nova
+   solicitação em vez de travar o usuário ("trip presa"). */
+export function sanitizeTrip(trip: Trip | null): Trip | null {
+  if (!trip || typeof trip !== "object") return null;
+  if (typeof trip.status !== "string") return null;
+  const status = trip.status as TripStatus;
+  if (!KNOWN_TRIP_STATUSES.has(status)) return null;
+  if (isTerminal(status)) return trip;
+  if (!trip.id || !trip.origin || typeof trip.origin.label !== "string") return null;
+  if (DESTINATION_REQUIRED_STATUSES.has(status) && !trip.destination) return null;
+  if (DRIVER_DEPENDENT_STATUSES.has(status) && !trip.driver) return null;
+  return trip;
+}
+
 /* ─── Estado interno ─────────────────────────────────────── */
 
-interface TripStoreState {
+export interface TripStoreState {
   trip: Trip | null;
   history: Trip[];
 }
@@ -52,18 +108,32 @@ function loadState(): TripStoreState {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { trip: null, history: [] };
-    const parsed = JSON.parse(raw) as { trip?: Trip | null; history?: Trip[] };
-    if (!parsed || typeof parsed !== "object") return { trip: null, history: [] };
-    if (parsed.trip && typeof parsed.trip.status === "string") {
-      return {
-        trip: parsed.trip,
-        history: Array.isArray(parsed.history) ? parsed.history : [],
-      };
+    const parsed: unknown = JSON.parse(raw);
+    const recovered = recoverPersistedTripState(parsed);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "trip" in parsed &&
+      parsed.trip &&
+      recovered.trip === null
+    ) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(recovered));
     }
-    return { trip: null, history: Array.isArray(parsed.history) ? parsed.history : [] };
+    return recovered;
   } catch {
     return { trip: null, history: [] };
   }
+}
+
+export function recoverPersistedTripState(value: unknown): TripStoreState {
+  if (!value || typeof value !== "object") return { trip: null, history: [] };
+  const parsed = value as { trip?: unknown; history?: unknown };
+  const history = Array.isArray(parsed.history) ? (parsed.history as Trip[]) : [];
+  const candidate =
+    parsed.trip && typeof parsed.trip === "object" && "status" in parsed.trip
+      ? (parsed.trip as Trip)
+      : null;
+  return { trip: sanitizeTrip(candidate), history };
 }
 
 let state: TripStoreState = loadState();

@@ -93,6 +93,12 @@ export function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1).replace(".", ",")}km`;
 }
 
+export function sortByDistanceMeters<T extends { distanceMeters: number }>(
+  items: readonly T[],
+): T[] {
+  return [...items].sort((a, b) => a.distanceMeters - b.distanceMeters);
+}
+
 /* ─── formatProtectedProximity (shared) ────────────────────
    Official Connexy privacy rule: exact distance is hidden up to
    2 km, replaced with proximity categories. Above 2 km the

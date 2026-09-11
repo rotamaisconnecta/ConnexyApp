@@ -441,7 +441,7 @@ function Solicitacao() {
           )}
         </div>
 
-        <div className="shrink-0 border-t border-gray-100 bg-white px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-4">
+        <div className="shrink-0 border-t border-gray-100 bg-white px-5 pb-4 pt-4">
           {connected ? (
             <button
               type="button"

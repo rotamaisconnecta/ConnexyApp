@@ -3,9 +3,11 @@ import { useEffect, type ReactNode } from "react";
 export function PhoneFrame({
   children,
   className = "",
+  contentScrollable = true,
 }: {
   children: ReactNode;
   className?: string;
+  contentScrollable?: boolean;
 }) {
   useEffect(() => {
     const orientation = screen.orientation as
@@ -31,7 +33,11 @@ export function PhoneFrame({
         style={{ aspectRatio: "68 / 165" }}
       >
         <div className="absolute left-1/2 top-2 z-40 hidden h-6 w-28 -translate-x-1/2 rounded-full bg-foreground/90 md:block" />
-        <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div
+          className={`relative flex h-full min-h-0 flex-col overflow-x-hidden overscroll-contain ${
+            contentScrollable ? "overflow-y-auto" : "overflow-y-hidden"
+          }`}
+        >
           {children}
         </div>
       </div>
