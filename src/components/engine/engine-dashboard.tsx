@@ -44,7 +44,7 @@ const SECTION_CONFIG = [
   },
   {
     key: "topReels" as const,
-    title: "Reels em Destaque",
+    title: "Agora em destaque",
     icon: <Film className="h-4 w-4 text-lilac" />,
   },
   {

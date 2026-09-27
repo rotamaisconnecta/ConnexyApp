@@ -14,6 +14,16 @@ import { BackButton } from "@/components/navigation/back-button";
 import { useAuth } from "@/hooks/use-auth";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { profileOnboardingForGuard } from "@/lib/profile/profile-status";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { isRemoteProfileEnabled } from "@/lib/profile/schema-a-profile-flag";
+import { getSchemaAProfile } from "@/lib/profile/schema-a-profile";
+import {
+  ageFromBirthDate,
+  applyDemoOnboardingProfile,
+  fileToPersistedPhoto,
+  getDemoOwnProfile,
+  hasStoredDemoOwnProfile,
+} from "@/lib/demo/demo-own-profile";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -30,17 +40,6 @@ export const Route = createFileRoute("/completar-perfil")({
 const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
 const AVATAR_DIMENSION = 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-function ageFromBirthDate(value: string): number | null {
-  if (!value) return null;
-  const birth = new Date(value);
-  if (Number.isNaN(birth.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  const months = now.getMonth() - birth.getMonth();
-  if (months < 0 || (months === 0 && now.getDate() < birth.getDate())) age -= 1;
-  return age;
-}
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -115,10 +114,11 @@ function CompleteProfile() {
     };
   }, [nav]);
 
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [birthDate, setBirthDate] = useState("");
+  const storedProfile = hasStoredDemoOwnProfile() ? getDemoOwnProfile() : null;
+  const [name, setName] = useState(storedProfile?.name ?? "");
+  const [username, setUsername] = useState(storedProfile?.handle ?? "");
+  const [bio, setBio] = useState(storedProfile?.bio ?? "");
+  const [birthDate, setBirthDate] = useState(storedProfile?.birthDate ?? "");
   const [saving, setSaving] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -172,6 +172,59 @@ function CompleteProfile() {
     let uploadedPath: string | null = null;
 
     try {
+      if (isDemoMode()) {
+        setSaving(true);
+        const photo = avatarFile ? await fileToPersistedPhoto(avatarFile) : undefined;
+        applyDemoOnboardingProfile({
+          name: name.trim(),
+          handle: username.trim(),
+          bio: bio.trim(),
+          birthDate,
+          photo,
+        });
+        nav({ to: "/interesses" });
+        return;
+      }
+
+      if (isRemoteProfileEnabled()) {
+        setSaving(true);
+        let photoUrl: string | undefined;
+        if (avatarFile && user) {
+          const path = `${user.id}/${crypto.randomUUID()}.jpg`;
+          const { error: uploadError } = await supabase.storage
+            .from("avatars")
+            .upload(path, avatarFile, { contentType: "image/jpeg", upsert: true });
+          if (uploadError) {
+            throw new Error(
+              uploadError.message
+                ? `Falha ao enviar a foto: ${uploadError.message}`
+                : "Falha ao enviar a foto. Tente novamente.",
+            );
+          }
+          uploadedPath = path;
+          photoUrl = path;
+        }
+        const current = await getSchemaAProfile().loadOwn();
+        try {
+          await getSchemaAProfile().saveOwn({
+            ...current,
+            name: name.trim(),
+            handle: username.trim().replace(/^@/, "").replace(/\s/g, "").toLowerCase(),
+            bio: bio.trim(),
+            birthDate,
+            age: ageFromBirthDate(birthDate),
+            ...(photoUrl ? { photo: photoUrl } : {}),
+          });
+        } catch {
+          if (uploadedPath) {
+            await supabase.storage.from("avatars").remove([uploadedPath]);
+          }
+          throw new Error("Não foi possível salvar seu perfil. Tente novamente.");
+        }
+        nav({ to: "/interesses" });
+        return;
+      }
+
       if (configured && user) {
         setSaving(true);
 
@@ -199,7 +252,6 @@ function CompleteProfile() {
           }
           photoUrl = signed.signedUrl;
         }
-
 
         try {
           await ProfileRepository.updateProfile(user.id, {

@@ -24,7 +24,7 @@ const TYPE_CONFIG: Record<
   BUSINESS: { icon: Store, color: "text-amber-600", bg: "bg-amber-50", label: "Negócio" },
   PLACE: { icon: MapPin, color: "text-emerald-600", bg: "bg-emerald-50", label: "Lugar" },
   OFFER: { icon: Store, color: "text-rose-600", bg: "bg-rose-50", label: "Oferta" },
-  REEL: { icon: Film, color: "text-purple-600", bg: "bg-purple-50", label: "Reel" },
+  REEL: { icon: Film, color: "text-purple-600", bg: "bg-purple-50", label: "Agora" },
   DRIVER: { icon: Navigation2, color: "text-primary", bg: "bg-primary/10", label: "Motorista" },
   ROUTE: { icon: Navigation2, color: "text-cyan-600", bg: "bg-cyan-50", label: "Rota" },
   NETWORKING: { icon: Star, color: "text-indigo-600", bg: "bg-indigo-50", label: "Networking" },

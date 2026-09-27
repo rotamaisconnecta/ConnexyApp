@@ -22,6 +22,12 @@ import { ConversationInviteButton } from "@/components/chat/conversation-invite-
 import { BackButton } from "@/components/navigation/back-button";
 import { StatusBar } from "@/components/phone-frame";
 import { enginePersonById } from "@/lib/engine/engine-detail";
+import { useAuth } from "@/hooks/use-auth";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { toggleFollow } from "@/lib/demo/demo-db";
+import { useDemoIsFollowing } from "@/lib/demo/use-demo-db";
+import { isRemoteSocialEnabled } from "@/lib/social/schema-a-social-flag";
+import { useRemoteFollowState } from "@/lib/social/use-remote-follow";
 import {
   commonGround,
   currentUser,
@@ -340,13 +346,14 @@ function ViewedProfile() {
       </motion.section>
 
       {!isOwnProfile && (
-        <section className="mx-auto mt-5 w-full max-w-[230px] px-4">
+        <section className="mx-auto mt-5 w-full max-w-[230px] px-4 space-y-2">
           <ConversationInviteButton
             personId={person.id}
             personName={person.name}
             variant="profile"
             className="h-11 w-full rounded-full text-[14px]"
           />
+          <ProfileFollowButton personId={person.id} />
         </section>
       )}
 
@@ -555,6 +562,56 @@ function ActivityItem({
       <span className="min-w-0 flex-1 truncate">{text}</span>
       <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
     </div>
+  );
+}
+
+function ProfileFollowButton({ personId }: { personId: string }) {
+  const { user } = useAuth();
+  const demo = isDemoMode();
+  const remote = isRemoteSocialEnabled();
+  const demoFollowing = useDemoIsFollowing(personId, user?.id);
+  const remoteFollow = useRemoteFollowState(personId);
+  if (!user?.id || user.id === personId) return null;
+
+  if (demo) {
+    return (
+      <button
+        type="button"
+        data-profile-follow={demoFollowing ? "following" : "follow"}
+        onClick={() => toggleFollow(personId, user.id)}
+        className={`h-11 w-full rounded-full text-[14px] font-semibold transition-all duration-200 active:scale-[0.98] ${
+          demoFollowing
+            ? "border border-border bg-secondary text-muted-foreground"
+            : "bg-secondary text-foreground"
+        }`}
+      >
+        {demoFollowing ? "Seguindo" : "Seguir"}
+      </button>
+    );
+  }
+
+  if (!remote || !remoteFollow.eligible) return null;
+
+  return (
+    <button
+      type="button"
+      data-profile-follow={remoteFollow.following ? "following" : "follow"}
+      disabled={remoteFollow.busy}
+      onClick={() => {
+        void remoteFollow.toggle().catch((error: unknown) => {
+          toast.error(
+            error instanceof Error ? error.message : "Não foi possível atualizar o follow.",
+          );
+        });
+      }}
+      className={`h-11 w-full rounded-full text-[14px] font-semibold transition-all duration-200 active:scale-[0.98] ${
+        remoteFollow.following
+          ? "border border-border bg-secondary text-muted-foreground"
+          : "bg-secondary text-foreground"
+      }`}
+    >
+      {remoteFollow.following ? "Seguindo" : "Seguir"}
+    </button>
   );
 }
 

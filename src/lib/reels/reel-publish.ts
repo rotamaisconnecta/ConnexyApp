@@ -1,8 +1,8 @@
 /* =========================================================
    reel-publish.ts — Adapter de publicação de Reels (Fase 3B).
    Desacoplado da UI. Fluxo:
-     1) Persiste mídia localmente (IndexedDB) + metadata
-        (localStorage) — garante exibição no feed unificado.
+     1) Persiste mídia + metadata nos bancos IndexedDB locais
+        canônicos — garante exibição no feed unificado.
      2) Se o Supabase estiver configurado, tenta publicar de
         verdade (storage "reels-media" + insert em "reels").
         Se qualquer passo remoto falhar, cai para o modo
@@ -12,14 +12,19 @@
 
 import type { Reel, ReelAuthor, ReelCategoryValue } from "./reel-types";
 import { ReelCategory } from "./reel-types";
-import { currentUser } from "@/lib/mock-data";
+import { currentUser, people } from "@/lib/mock-data";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { getCanonicalDemoProfile } from "@/lib/demo/demo-own-profile";
 import { supabase } from "@/lib/supabase/client";
-import { saveReelMedia, getReelVideoUrl, getReelPosterUrl } from "./reel-local-media-db";
 import {
-  saveStoredPublishedReel,
-  type ReelContextRef,
-  type ReelPersistence,
-} from "./reel-local-storage";
+  deleteReelMedia,
+  saveReelMedia,
+  getReelVideoUrl,
+  getReelPosterUrl,
+} from "./reel-local-media-db";
+import type { ReelContextRef, ReelPersistence } from "./reel-local-storage";
+import { savePersistedReel } from "./persisted-reels-reader";
 import { buildPublishedReel } from "./reel-feed";
 import {
   REEL_ALLOWED_EXTENSIONS,
@@ -75,11 +80,18 @@ function categoryForContext(context: ReelContextRef | null): ReelCategoryValue {
 }
 
 export function buildReelAuthorFromCurrentUser(): ReelAuthor {
+  const identity = getDemoIdentity();
+  const { identityId, profile } = getCanonicalDemoProfile();
+  const fixture =
+    identity.id === currentUser.id
+      ? currentUser
+      : people.find((person) => person.id === identity.id);
+  const ownsProfile = identityId === identity.id && profile.identityId === identity.id;
   return {
-    id: currentUser.id,
-    name: currentUser.name,
-    handle: currentUser.handle,
-    photoUrl: currentUser.photo,
+    id: identity.id,
+    name: ownsProfile ? profile.name : identity.name,
+    handle: ownsProfile ? profile.handle : (fixture?.handle ?? identity.id),
+    photoUrl: ownsProfile ? profile.photo : identity.photo,
     verified: false,
     profession: null,
     isFollowing: false,
@@ -95,6 +107,10 @@ export function isSupabaseConfigured(): boolean {
   const url = import.meta.env.VITE_APP_SUPABASE_URL;
   const key = import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY;
   return Boolean(url && key);
+}
+
+export function willPublishReelRemotely(): boolean {
+  return !isDemoMode() && isSupabaseConfigured();
 }
 
 async function publishToSupabase(input: ReelPublishInput, reelId: string): Promise<void> {
@@ -138,7 +154,7 @@ export async function publishReel(input: ReelPublishInput): Promise<ReelPublishR
   const author = buildReelAuthorFromCurrentUser();
 
   const persistence: ReelPersistence =
-    isSupabaseConfigured() &&
+    willPublishReelRemotely() &&
     (await publishToSupabase(input, reelId).then(
       () => true,
       () => false,
@@ -155,7 +171,7 @@ export async function publishReel(input: ReelPublishInput): Promise<ReelPublishR
     storedAt: createdAt,
   });
 
-  saveStoredPublishedReel({
+  const storedReel = {
     id: reelId,
     caption,
     category: categoryForContext(input.context),
@@ -164,25 +180,18 @@ export async function publishReel(input: ReelPublishInput): Promise<ReelPublishR
     durationS: input.durationS,
     createdAt,
     persistence,
-  });
+  };
+  try {
+    await savePersistedReel(storedReel);
+  } catch (error) {
+    await deleteReelMedia(reelId).catch(() => undefined);
+    throw error;
+  }
 
   const videoUrl = await getReelVideoUrl(reelId);
   const posterUrl = await getReelPosterUrl(reelId);
 
-  const reel = buildPublishedReel(
-    {
-      id: reelId,
-      caption,
-      category: categoryForContext(input.context),
-      author,
-      context: input.context,
-      durationS: input.durationS,
-      createdAt,
-      persistence,
-    },
-    videoUrl ?? "",
-    posterUrl,
-  );
+  const reel = buildPublishedReel(storedReel, videoUrl ?? "", posterUrl);
 
   return { reel, persistence };
 }

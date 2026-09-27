@@ -3,16 +3,24 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { resolveAuthenticatedUserId } from "@/lib/supabase/identity";
 import { isDemoMode } from "@/lib/demo/demo-config";
 import { isDemoAuthenticated, isDemoSignupPending } from "@/lib/demo/demo-auth";
+import {
+  computeProfileStep,
+  type ProfileEssentials,
+  type ProfileStep,
+} from "@/lib/profile/profile-rules";
+
+export {
+  PROFILE_MIN_INTERESTS,
+  computeProfileStep,
+  type ProfileEssentials,
+  type ProfileStep,
+} from "@/lib/profile/profile-rules";
 
 /**
- * A profile is considered complete when the user has a name, a handle and at
- * least PROFILE_MIN_INTERESTS interests. Photo is optional — the avatars
+ * A profile is considered complete when the user has a name, a handle, age and
+ * at least PROFILE_MIN_INTERESTS interests. Photo is optional — the avatars
  * bucket exists but absence of a photo must not trigger an onboarding loop.
  */
-export const PROFILE_MIN_INTERESTS = 3;
-
-export type ProfileStep = "completar-perfil" | "interesses" | null;
-
 export interface ProfileCompletion {
   authenticated: boolean;
   hasProfile: boolean;
@@ -27,27 +35,17 @@ export const INCOMPLETE_PROFILE: ProfileCompletion = {
   step: null,
 };
 
-interface ProfileEssentials {
-  name: string | null;
-  handle: string | null;
-  age: number | null;
-  interests: string[];
-}
-
-export function computeProfileStep(profile: ProfileEssentials | null): {
-  hasProfile: boolean;
-  complete: boolean;
-  step: ProfileStep;
-} {
-  if (!profile) return { hasProfile: false, complete: false, step: "completar-perfil" };
-  const { name, handle, age, interests } = profile;
-  if (!name || !handle || age == null) {
-    return { hasProfile: true, complete: false, step: "completar-perfil" };
-  }
-  if ((interests ?? []).length < PROFILE_MIN_INTERESTS) {
-    return { hasProfile: true, complete: false, step: "interesses" };
-  }
-  return { hasProfile: true, complete: true, step: null };
+export function computePendingDemoProfileStatus(
+  profile: ProfileEssentials | null,
+): ProfileCompletion {
+  const persistedStep = computeProfileStep(profile);
+  return {
+    authenticated: true,
+    hasProfile: persistedStep.hasProfile,
+    // Pending is only cleared after interests are durably written.
+    complete: false,
+    step: persistedStep.step === "completar-perfil" ? "completar-perfil" : "interesses",
+  };
 }
 
 async function resolveServerStatus(): Promise<ProfileCompletion | null> {
@@ -75,14 +73,28 @@ async function resolveServerStatus(): Promise<ProfileCompletion | null> {
 /**
  * Demo-mode status: the simulated profile has no remote backing. It is treated
  * as complete the moment a demo session exists, unless the user explicitly
- * started the local onboarding (pending signup) — in which case the guards
- * keep them in the "Complete seu perfil" flow instead of bouncing to Home.
- * Absence of remote data is never interpreted as an incomplete profile here.
+ * started the local onboarding. While signup is pending, the canonical local
+ * profile determines whether a reload resumes profile data or interests.
+ *
+ * The profile module is loaded lazily to avoid a static cycle: it reuses
+ * PROFILE_MIN_INTERESTS when validating writes.
  */
-function demoProfileStatus(): ProfileCompletion {
+async function demoProfileStatus(): Promise<ProfileCompletion> {
   if (!isDemoAuthenticated()) return INCOMPLETE_PROFILE;
   if (isDemoSignupPending()) {
-    return { authenticated: true, hasProfile: false, complete: false, step: "completar-perfil" };
+    const { getDemoOwnProfile, hasStoredDemoOwnProfile } =
+      await import("@/lib/demo/demo-own-profile");
+    const stored = hasStoredDemoOwnProfile() ? getDemoOwnProfile() : null;
+    return computePendingDemoProfileStatus(
+      stored
+        ? {
+            name: stored.name,
+            handle: stored.handle,
+            age: stored.age ?? null,
+            interests: stored.interests,
+          }
+        : null,
+    );
   }
   return { authenticated: true, hasProfile: true, complete: true, step: null };
 }
@@ -93,7 +105,7 @@ function demoProfileStatus(): ProfileCompletion {
  * Supabase is not configured (dev-mock) or when there is no valid session.
  */
 export async function getProfileStatus(): Promise<ProfileCompletion> {
-  if (isDemoMode()) return demoProfileStatus();
+  if (isDemoMode()) return await demoProfileStatus();
   if (!isSupabaseConfigured()) return INCOMPLETE_PROFILE;
   const status = await resolveServerStatus();
   if (!status) return INCOMPLETE_PROFILE;
@@ -117,7 +129,7 @@ export async function profileCompletionForGuard(): Promise<ProfileCompletion> {
     // Demo state (session + pending signup) lives in the browser. SSR cannot
     // see it and must stay permissive; the client re-evaluates after hydrate.
     if (import.meta.env.SSR) return INCOMPLETE_PROFILE;
-    return demoProfileStatus();
+    return await demoProfileStatus();
   }
   if (import.meta.env.SSR) return getProfileStatus();
   try {

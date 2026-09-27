@@ -90,22 +90,6 @@ export const CATEGORY_INFO: Record<
   moto: { label: "Moto", description: "1 pessoa · mais rápido", etaMinutes: 3, icon: Bike },
 };
 
-export const STOP_SUGGESTIONS = [
-  {
-    label: "Padaria Bella Paulista",
-    address: "Rua Haddock Lobo, 900",
-    lat: -23.5405,
-    lng: -46.643,
-  },
-  { label: "Shopping Cidade São Paulo", address: "Av. Paulista, 1230", lat: -23.547, lng: -46.645 },
-  {
-    label: "Praça Benedito Calixto",
-    address: "Praça Benedito Calixto, 1 — Pinheiros",
-    lat: -23.559,
-    lng: -46.673,
-  },
-] as const;
-
 export function destinationToGeo(dest: DemoDestination): GeoLocation {
   return { lat: dest.lat, lng: dest.lng, label: dest.address, address: dest.address };
 }

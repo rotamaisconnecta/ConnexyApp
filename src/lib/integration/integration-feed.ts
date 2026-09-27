@@ -55,7 +55,7 @@ export function createFeedItemFromReel(event: IntegrationEvent): IntegrationFeed
       id: generateIntegrationId("feed"),
       source: IntegrationTarget.REELS,
       type: "REEL",
-      title: `${p.authorName} postou um reel`,
+      title: `${p.authorName} publicou no Agora`,
       subtitle: p.locationName ?? p.category,
       timestamp: event.timestamp,
       priority: 7,
@@ -215,7 +215,7 @@ export function generateFeedContent(event: IntegrationEvent): {
     case IntegrationAction.REEL_POSTED: {
       const p = event.payload as Extract<IntegrationPayload, { kind: "reel" }>;
       return {
-        text: `${p.authorName} postou um reel${p.locationName ? ` em ${p.locationName}` : ""}`,
+        text: `${p.authorName} publicou no Agora${p.locationName ? ` em ${p.locationName}` : ""}`,
         emoji: "🎬",
       };
     }

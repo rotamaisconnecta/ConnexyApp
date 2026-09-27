@@ -61,7 +61,7 @@ export const CREATE_ACTIONS: CreateActionItem[] = [
   {
     id: CreateCategory.REEL,
     emoji: "▶",
-    label: "Reel",
+    label: "Agora",
     description: "Vídeos curtos",
     route: "/create?category=reel",
   },

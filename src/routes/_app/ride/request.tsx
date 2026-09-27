@@ -5,6 +5,8 @@ import { rideSearchSchema, parseCompanions, buildCompanionStops } from "@/lib/mo
 import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
 import { useDemoIdentity } from "@/lib/demo/demo-identity";
 import { useRideBlock } from "@/hooks/use-ride-block";
+import { useTrip } from "@/hooks/use-trip";
+import { isTerminal } from "@/lib/mobility/trip/trip-machine";
 
 export const Route = createFileRoute("/_app/ride/request")({
   head: () => ({ meta: [{ title: "Solicitar viagem — Connexy" }] }),
@@ -16,8 +18,9 @@ function RideRequestConfirmPage() {
   const search = Route.useSearch();
   const identity = useDemoIdentity();
   const block = useRideBlock(identity.id);
+  const trip = useTrip();
 
-  if (block) {
+  if (block && (!trip || isTerminal(trip.status))) {
     return <RideBlockedPanel block={block} />;
   }
 

@@ -175,7 +175,7 @@ const ALL_CREATE_ACTIONS: Omit<CreateAction, "enabled">[] = [
   },
   {
     id: "reel",
-    title: "Reel",
+    title: "Agora",
     emoji: "▶",
     icon: "Film",
     route: "/create/reel",
@@ -345,7 +345,7 @@ export function getBottomNavConfig(activeRole: UserRole): BottomNavConfig {
       return {
         leftItems: [
           { id: "feed", label: "Feed", icon: "Home", route: "/feed" },
-          { id: "reels", label: "Reels", icon: "Film", route: "/reels" },
+          { id: "reels", label: "Agora", icon: "Film", route: "/reels" },
         ],
         centerItem: CENTER_ITEM,
         rightItems: [

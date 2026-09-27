@@ -54,7 +54,7 @@ const TYPE_CONFIG: Record<
   EVENT: { icon: Calendar, label: "Eventos", color: "bg-purple-500" },
   BUSINESS: { icon: Store, label: "Comércios", color: "bg-amber-500" },
   OFFER: { icon: Tag, label: "Ofertas", color: "bg-red-500" },
-  REEL: { icon: Film, label: "Reels", color: "bg-pink-500" },
+  REEL: { icon: Film, label: "Agora", color: "bg-pink-500" },
   MOMENT: { icon: Sparkles, label: "Momentos", color: "bg-cyan-500" },
   PLACE: { icon: Star, label: "Locais", color: "bg-orange-500" },
 };

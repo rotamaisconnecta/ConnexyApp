@@ -2,11 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { Calendar, MapPin, Users } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { eventsToday, eventsUpcoming, type HomeEvent } from "@/lib/feed/home-premium";
 import { formatEventDistance } from "@/lib/marketplace/event-utils";
+import { listCatalogHomeEvents } from "@/lib/marketplace/local-event-lookup";
+import { subscribeLocalCatalog } from "@/lib/catalog/local-catalog";
 
 const searchSchema = z.object({
   today: z.enum(["true", "false"]).optional(),
@@ -66,8 +68,16 @@ function EventsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [today, setToday] = useState(search.today === "true");
+  const [catalogTick, setCatalogTick] = useState(0);
+  useEffect(() => subscribeLocalCatalog(() => setCatalogTick((tick) => tick + 1)), []);
 
-  const events = today ? eventsToday() : eventsUpcoming();
+  const events = useMemo(() => {
+    void catalogTick;
+    const fixtures = today ? eventsToday() : eventsUpcoming();
+    const catalog = listCatalogHomeEvents({ today });
+    const seen = new Set(catalog.map((event) => event.id));
+    return [...catalog, ...fixtures.filter((event) => !seen.has(event.id))];
+  }, [catalogTick, today]);
 
   function selectToday(next: boolean) {
     setToday(next);

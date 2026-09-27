@@ -5,6 +5,8 @@
 
 import type { GeoLocation } from "./ride-types";
 
+export const MAX_ROUTE_STOPS = 3;
+
 /* ─── RouteStop ──────────────────────────────────────────── */
 
 export interface RouteStop {
@@ -28,8 +30,13 @@ export function createStop(location: GeoLocation, label: string, order: number):
 /* ─── addStop ────────────────────────────────────────────── */
 
 export function addStop(stops: RouteStop[], location: GeoLocation, label: string): RouteStop[] {
+  if (stops.length >= MAX_ROUTE_STOPS) return stops;
   const newStop = createStop(location, label, stops.length + 1);
   return [...stops, newStop];
+}
+
+export function limitRouteStops(stops: RouteStop[]): RouteStop[] {
+  return stops.slice(0, MAX_ROUTE_STOPS).map((stop, index) => ({ ...stop, order: index + 1 }));
 }
 
 /* ─── removeStop ─────────────────────────────────────────── */

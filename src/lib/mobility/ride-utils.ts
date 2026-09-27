@@ -54,7 +54,9 @@ export function formatRideDateTime(date: Date): string {
    no pedido. Sempre a partir da Trip concluída. */
 
 export function getTotalHistoryPrice(history: Trip[]): number {
-  return history.reduce((sum, item) => sum + (item.finalFare ?? item.estimatedFare), 0);
+  return history
+    .filter((item) => item.status === "conclusao")
+    .reduce((sum, item) => sum + (item.finalFare ?? item.estimatedFare), 0);
 }
 
 /* ─── truncateAddress ────────────────────────────────────── */

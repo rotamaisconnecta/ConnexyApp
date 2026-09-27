@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, Send, Plus, X, Clapperboard, Users } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,106 +8,90 @@ import { ReelShareSheet } from "@/components/reels/reel-share-sheet";
 import { ReelLoading } from "@/components/reels/reel-loading";
 import { getReelFeed } from "@/lib/reels/reel-feed";
 import type { Reel, ReelComment } from "@/lib/reels/reel-types";
-import { sortSmart } from "@/lib/reels/reel-ranking";
 import { filterReels, type ReelFilterState } from "@/lib/reels/reel-filter";
 import { REEL_CATEGORY_META } from "@/lib/reels/reel-types";
+import { getStoredSoundPref, setStoredSoundPref } from "@/lib/reels/reel-local-storage";
 import {
-  getReelLikes,
-  toggleReelLike,
-  getReelComments,
-  addReelComment,
-  toggleCommentLike,
-  getStoredSoundPref,
-  setStoredSoundPref,
-} from "@/lib/reels/reel-local-storage";
+  addPersistedReelComment,
+  getPersistedReelComments,
+  getPersistedReelInteractionState,
+  togglePersistedCommentLike,
+  togglePersistedReelLike,
+  type PersistedReelInteractionState,
+} from "@/lib/reels/persisted-reels-reader";
 import type { ReelContextTarget } from "@/lib/reels/reel-context";
+import { useDemoIdentity } from "@/lib/demo/demo-identity";
+import { toast } from "sonner";
+import { toggleFollow, subscribeDemoDB } from "@/lib/demo/demo-db";
+import { toggleSavedDetail, subscribeSavedDetails } from "@/lib/marketplace/saved-details";
+import {
+  applyReelSocialState,
+  getReelConnectStatus,
+  getReelDirectConversationId,
+} from "@/lib/reels/reel-social-state";
 
 export const Route = createFileRoute("/_app/reels")({
   head: () => ({
     meta: [
-      { title: "Reels — Connexy" },
+      { title: "Agora — Connexy" },
       {
         name: "description",
         content:
-          "Momentos reais de quem está por perto. Reels ancorados em lugares e eventos do Connexy.",
+          "Momentos reais de quem está por perto. Agora ancora lugares e eventos do Connexy.",
       },
     ],
   }),
-  component: ReelsPage,
+  component: ReelsRoute,
 });
 
 type Tab = "reels" | "amigos";
 
-const SEED_COMMENTS: ReelComment[] = [
-  {
-    id: "c1",
-    text: "Que momento incrível! 🔥",
-    authorId: "u1",
-    authorName: "Ana Silva",
-    authorPhoto: "https://i.pravatar.cc/150?img=1",
-    createdAt: "2026-07-21T10:00:00Z",
-    likes: 12,
-    likedByMe: false,
-    replies: [],
-  },
-  {
-    id: "c2",
-    text: "Adorei! Vou lá amanhã",
-    authorId: "u2",
-    authorName: "Carlos Souza",
-    authorPhoto: "https://i.pravatar.cc/150?img=3",
-    createdAt: "2026-07-21T09:30:00Z",
-    likes: 5,
-    likedByMe: true,
-    replies: [],
-  },
-  {
-    id: "c3",
-    text: "Esse lugar é demais 🙌",
-    authorId: "u3",
-    authorName: "Maria Costa",
-    authorPhoto: "https://i.pravatar.cc/150?img=5",
-    createdAt: "2026-07-20T18:00:00Z",
-    likes: 8,
-    likedByMe: false,
-    replies: [],
-  },
-];
+function ReelsRoute() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  return pathname.replace(/\/$/, "") === "/reels" ? <ReelsPage /> : <Outlet />;
+}
 
 function ReelsPage() {
   const navigate = useNavigate();
+  const identity = useDemoIdentity();
   const [tab, setTab] = useState<Tab>("reels");
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const [muted, setMuted] = useState<boolean>(() => getStoredSoundPref());
-  const [likeMap, setLikeMap] = useState<Record<string, boolean>>(() => getReelLikes());
-  const [commentMap, setCommentMap] = useState<Record<string, ReelComment[]>>(() =>
-    getReelComments(),
-  );
+  const [interactionMap, setInteractionMap] = useState<
+    Record<string, PersistedReelInteractionState>
+  >({});
+  const [commentMap, setCommentMap] = useState<Record<string, ReelComment[]>>({});
   const [commentsFor, setCommentsFor] = useState<string | null>(null);
   const [shareFor, setShareFor] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [socialVersion, setSocialVersion] = useState(0);
   const [filters, setFilters] = useState<ReelFilterState>({
     category: "ALL",
     searchQuery: "",
-    sortBy: "smart",
+    sortBy: "recent",
   });
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const storedLikes = getReelLikes();
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         const feed = await getReelFeed();
         if (cancelled) return;
-        setReels(
-          sortSmart(feed).map((r) => ({
-            ...r,
-            likedByMe: storedLikes[r.id] ?? r.likedByMe,
-          })),
+        const interactions = await Promise.all(
+          feed.map(
+            async (reel) =>
+              [reel.id, await getPersistedReelInteractionState(reel.id, identity.id)] as const,
+          ),
         );
+        if (cancelled) return;
+        setReels(feed);
+        setInteractionMap(Object.fromEntries(interactions));
+      } catch (error) {
+        console.warn("[reels] falha ao carregar Feed local.", error);
+        toast.error("Não foi possível carregar o Agora local.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -115,6 +99,15 @@ function ReelsPage() {
     return () => {
       cancelled = true;
       clearTimeout(timer);
+    };
+  }, [identity.id]);
+
+  useEffect(() => {
+    const unsubSaved = subscribeSavedDetails(() => setSocialVersion((current) => current + 1));
+    const unsubDemo = subscribeDemoDB(() => setSocialVersion((current) => current + 1));
+    return () => {
+      unsubSaved();
+      unsubDemo();
     };
   }, []);
 
@@ -129,87 +122,140 @@ function ReelsPage() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [reels.length]);
 
-  const viewReels = useMemo(
-    () =>
-      reels.map((r) => {
-        const liked = likeMap[r.id] ?? r.likedByMe;
-        const baseLikes = r.stats.likes - (r.likedByMe ? 1 : 0);
-        return {
+  const viewReels = useMemo(() => {
+    void socialVersion;
+    return reels.map((r) => {
+      const interaction = interactionMap[r.id];
+      return applyReelSocialState(
+        {
           ...r,
-          likedByMe: liked,
-          stats: { ...r.stats, likes: baseLikes + (liked ? 1 : 0) },
-        };
-      }),
-    [reels, likeMap],
-  );
+          likedByMe: interaction?.likedByMe ?? false,
+          stats: {
+            ...r.stats,
+            likes: r.stats.likes + (interaction?.likeCount ?? 0),
+            comments: r.stats.comments + (interaction?.commentCount ?? 0),
+          },
+        },
+        identity.id,
+      );
+    });
+  }, [reels, interactionMap, identity.id, socialVersion]);
 
   const filteredReels = filterReels(viewReels, filters);
 
-  const openComments = commentsFor
-    ? [...(commentsFor === "reel-001" ? SEED_COMMENTS : []), ...(commentMap[commentsFor] ?? [])]
-    : [];
+  const openComments = commentsFor ? (commentMap[commentsFor] ?? []) : [];
 
-  function handleToggleLike(reelId: string) {
-    const next = toggleReelLike(reelId);
-    setLikeMap((prev) => ({ ...prev, [reelId]: next }));
+  async function handleToggleLike(reelId: string) {
+    try {
+      const next = await togglePersistedReelLike(reelId, identity.id);
+      setInteractionMap((prev) => ({
+        ...prev,
+        [reelId]: {
+          ...(prev[reelId] ?? { commentCount: 0 }),
+          ...next,
+        },
+      }));
+    } catch (error) {
+      console.warn(`[reels] falha ao alternar Like de "${reelId}".`, error);
+      toast.error("Não foi possível atualizar a curtida.");
+    }
   }
 
   function handleToggleSave(reelId: string) {
-    setReels((prev) =>
-      prev.map((r) =>
-        r.id === reelId
-          ? {
-              ...r,
-              savedByMe: !r.savedByMe,
-              stats: { ...r.stats, saves: r.stats.saves + (r.savedByMe ? -1 : 1) },
-            }
-          : r,
-      ),
-    );
+    toggleSavedDetail(reelId);
   }
 
   function handleToggleFollow(reelId: string) {
-    setReels((prev) =>
-      prev.map((r) =>
-        r.id === reelId ? { ...r, author: { ...r.author, isFollowing: !r.author.isFollowing } } : r,
-      ),
-    );
+    const reel = reels.find((item) => item.id === reelId);
+    if (!reel || reel.author.id === identity.id) return;
+    toggleFollow(reel.author.id, identity.id);
   }
 
-  function handleAddComment(text: string) {
-    if (!commentsFor) return;
-    const created = addReelComment(commentsFor, text);
-    if (!created) return;
-    setCommentMap((prev) => ({
-      ...prev,
-      [commentsFor]: [...(prev[commentsFor] ?? []), created],
-    }));
-    setReels((prev) =>
-      prev.map((r) =>
-        r.id === commentsFor ? { ...r, stats: { ...r.stats, comments: r.stats.comments + 1 } } : r,
-      ),
-    );
-  }
-
-  function handleLikeComment(commentId: string) {
-    if (!commentsFor) return;
-    const target = openComments.find((c) => c.id === commentId);
-    if (!target) return;
-    const next = !target.likedByMe;
-    toggleCommentLike(commentsFor, commentId);
-    const updated: ReelComment = {
-      ...target,
-      likedByMe: next,
-      likes: target.likes + (next ? 1 : -1),
-    };
-    setCommentMap((prev) => {
-      const stored = prev[commentsFor] ?? [];
-      const exists = stored.some((c) => c.id === commentId);
-      const nextList = exists
-        ? stored.map((c) => (c.id === commentId ? updated : c))
-        : [...stored, updated];
-      return { ...prev, [commentsFor]: nextList };
+  function handleConnect(reelId: string) {
+    const reel =
+      reels.find((item) => item.id === reelId) ?? viewReels.find((item) => item.id === reelId);
+    if (!reel) return;
+    const status = getReelConnectStatus(reel.author.id, identity.id);
+    if (status === "unavailable" || status === "pending") return;
+    if (status === "connected") {
+      const conversationId = getReelDirectConversationId(reel.author.id, identity.id);
+      if (conversationId) {
+        navigate({ to: "/chat/$conversationId", params: { conversationId } });
+      }
+      return;
+    }
+    navigate({
+      to: "/solicitacao/$id",
+      params: { id: reel.author.id },
+      search: { mode: "send" },
     });
+  }
+
+  async function loadComments(reelId: string) {
+    const comments = await getPersistedReelComments(reelId);
+    setCommentMap((prev) => ({ ...prev, [reelId]: comments }));
+  }
+
+  async function handleAddComment(text: string): Promise<boolean> {
+    if (!commentsFor) return false;
+    try {
+      const created = await addPersistedReelComment({
+        reelId: commentsFor,
+        text,
+        author: { id: identity.id, name: identity.name, photoUrl: identity.photo },
+      });
+      if (!created) return false;
+      await loadComments(commentsFor);
+      setInteractionMap((prev) => ({
+        ...prev,
+        [commentsFor]: {
+          ...(prev[commentsFor] ?? { likedByMe: false, likeCount: 0 }),
+          commentCount: (prev[commentsFor]?.commentCount ?? 0) + 1,
+        },
+      }));
+      return true;
+    } catch (error) {
+      console.warn(`[reels] falha ao comentar em "${commentsFor}".`, error);
+      toast.error("Não foi possível salvar o comentário.");
+      return false;
+    }
+  }
+
+  async function handleReply(parentId: string, text: string): Promise<boolean> {
+    if (!commentsFor) return false;
+    try {
+      const created = await addPersistedReelComment({
+        reelId: commentsFor,
+        parentId,
+        text,
+        author: { id: identity.id, name: identity.name, photoUrl: identity.photo },
+      });
+      if (!created) return false;
+      await loadComments(commentsFor);
+      setInteractionMap((prev) => ({
+        ...prev,
+        [commentsFor]: {
+          ...(prev[commentsFor] ?? { likedByMe: false, likeCount: 0 }),
+          commentCount: (prev[commentsFor]?.commentCount ?? 0) + 1,
+        },
+      }));
+      return true;
+    } catch (error) {
+      console.warn(`[reels] falha ao responder em "${commentsFor}".`, error);
+      toast.error("Não foi possível salvar a resposta.");
+      return false;
+    }
+  }
+
+  async function handleLikeComment(commentId: string) {
+    if (!commentsFor) return;
+    try {
+      await togglePersistedCommentLike(commentsFor, commentId);
+      await loadComments(commentsFor);
+    } catch (error) {
+      console.warn(`[reels] falha ao curtir comentário "${commentId}".`, error);
+      toast.error("Não foi possível atualizar o comentário.");
+    }
   }
 
   function handleOpenContext(target: ReelContextTarget) {
@@ -266,7 +312,7 @@ function ReelsPage() {
           <TabBtn
             active={tab === "reels"}
             onClick={() => setTab("reels")}
-            label="Reels"
+            label="Agora"
             icon={<Clapperboard className="h-4 w-4" />}
           />
           <TabBtn
@@ -299,7 +345,7 @@ function ReelsPage() {
               onChange={(e) => setFilters((f) => ({ ...f, searchQuery: e.target.value }))}
               placeholder="Buscar por nome, hashtag, local, negócio ou evento…"
               className="w-full h-10 rounded-xl bg-white/10 border border-white/20 px-4 text-sm text-white placeholder:text-white/50 outline-none focus:border-primary"
-              aria-label="Buscar reels"
+              aria-label="Buscar no Agora"
             />
           </div>
         )}
@@ -317,7 +363,7 @@ function ReelsPage() {
               <h2 className="mt-4 font-display text-xl text-white font-bold">
                 {filters.searchQuery || filters.category !== "ALL"
                   ? "Nenhum resultado"
-                  : "Nenhum reel encontrado"}
+                  : "Nada no Agora"}
               </h2>
               <p className="mt-2 text-sm text-white/70">
                 {filters.searchQuery || filters.category !== "ALL"
@@ -325,11 +371,10 @@ function ReelsPage() {
                   : "Seja o primeiro a compartilhar um momento real."}
               </p>
               <Link
-                to="/create"
-                search={{}}
+                to="/gerenciar/novo-reel"
                 className="mt-5 inline-flex items-center gap-2 h-11 rounded-full bg-gradient-brand text-white font-semibold px-5 shadow-lg"
               >
-                <Plus className="h-4 w-4" /> Criar reel
+                <Plus className="h-4 w-4" /> Criar no Agora
               </Link>
             </div>
           </div>
@@ -348,11 +393,17 @@ function ReelsPage() {
               })
             }
             onToggleLike={handleToggleLike}
-            onOpenComments={(id) => setCommentsFor(id)}
+            onOpenComments={(id) => {
+              setCommentsFor(id);
+              void loadComments(id).catch((error) => {
+                console.warn(`[reels] falha ao carregar comentários de "${id}".`, error);
+                toast.error("Não foi possível carregar os comentários.");
+              });
+            }}
             onShare={(id) => setShareFor(id)}
             onSave={handleToggleSave}
             onFollow={handleToggleFollow}
-            onConnect={() => {}}
+            onConnect={handleConnect}
             onOpenContext={handleOpenContext}
           />
         )}
@@ -374,10 +425,9 @@ function ReelsPage() {
       )}
 
       <Link
-        to="/create"
-        search={{}}
+        to="/gerenciar/novo-reel"
         className="absolute right-4 bottom-8 z-30 h-14 w-14 grid place-items-center rounded-full bg-gradient-brand text-white shadow-lg active:scale-95 transition"
-        aria-label="Criar reel"
+        aria-label="Criar no Agora"
       >
         <Plus className="h-6 w-6" />
       </Link>
@@ -388,6 +438,7 @@ function ReelsPage() {
         onClose={() => setCommentsFor(null)}
         comments={openComments}
         onAddComment={handleAddComment}
+        onReply={handleReply}
         onLikeComment={handleLikeComment}
       />
 

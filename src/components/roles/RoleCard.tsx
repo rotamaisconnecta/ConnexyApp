@@ -12,7 +12,7 @@ const CRIAR_LABELS: Partial<Record<UserRole, string>> = {
   [UserRole.EVENT_CREATOR]: "Criar Evento",
   [UserRole.PLACE_OWNER]: "Criar Local",
   [UserRole.DRIVER]: "Começar a Dirigir",
-  [UserRole.REELS_CREATOR]: "Criar Reel",
+  [UserRole.REELS_CREATOR]: "Criar no Agora",
 };
 
 interface RoleCardProps {

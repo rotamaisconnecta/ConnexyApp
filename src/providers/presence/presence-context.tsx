@@ -8,28 +8,10 @@ import {
   type PresenceStatus,
   type UserPresenceRow,
 } from "@/types/phase-13b";
-
-const STORAGE_KEY = "connexy.presence.preference";
-
-function loadStoredPreference(): PresencePreference {
-  if (typeof window === "undefined") return "invisible";
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === "online" || raw === "available" || raw === "dnd" || raw === "invisible") return raw;
-  } catch {
-    // storage unavailable
-  }
-  return "invisible";
-}
-
-function storePreference(pref: PresencePreference): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, pref);
-  } catch {
-    // storage unavailable
-  }
-}
+import {
+  readStoredPresencePreference,
+  writeStoredPresencePreference,
+} from "@/lib/presence/presence-preference";
 
 interface PresenceContextValue {
   preference: PresencePreference;
@@ -55,7 +37,9 @@ interface PresenceProviderProps {
 }
 
 export function PresenceProvider({ userId, children }: PresenceProviderProps) {
-  const [preference, setPreferenceState] = useState<PresencePreference>(loadStoredPreference);
+  const [preference, setPreferenceState] = useState<PresencePreference>(
+    readStoredPresencePreference,
+  );
   const [presenceByUser, setPresenceByUser] = useState<Map<string, UserPresenceRow>>(new Map());
   const preferenceRef = useRef(preference);
   const previousPreferenceRef = useRef(preference);
@@ -66,7 +50,7 @@ export function PresenceProvider({ userId, children }: PresenceProviderProps) {
 
   const setPreference = useCallback((next: PresencePreference) => {
     setPreferenceState(next);
-    storePreference(next);
+    writeStoredPresencePreference(next);
   }, []);
 
   const goOnline = useCallback(() => setPreference("online"), [setPreference]);

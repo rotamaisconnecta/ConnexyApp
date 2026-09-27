@@ -27,6 +27,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as AppTrendingRouteImport } from './routes/_app.trending'
 import { Route as AppRotaRouteImport } from './routes/_app.rota'
 import { Route as AppRideRouteImport } from './routes/_app/ride'
+import { Route as AppReservasRouteImport } from './routes/_app/reservas'
 import { Route as AppReelsRouteImport } from './routes/_app.reels'
 import { Route as AppRecommendationsRouteImport } from './routes/_app.recommendations'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
@@ -52,6 +53,7 @@ import { Route as AppCreateRouteImport } from './routes/_app/create'
 import { Route as AppCorridaRouteImport } from './routes/_app.corrida'
 import { Route as AppConnectaRouteImport } from './routes/_app.connecta'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
+import { Route as AppCaronaRouteImport } from './routes/_app/carona'
 import { Route as AppAvaliarRouteImport } from './routes/_app.avaliar'
 import { Route as _devDemoRouteImport } from './routes/__dev/demo'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -64,6 +66,7 @@ import { Route as AppRideRequestRouteImport } from './routes/_app/ride/request'
 import { Route as AppRideMatchingRouteImport } from './routes/_app/ride/matching'
 import { Route as AppRideHistoryRouteImport } from './routes/_app/ride/history'
 import { Route as AppRideActiveRouteImport } from './routes/_app/ride/active'
+import { Route as AppReservaResourceIdRouteImport } from './routes/_app/reserva.$resourceId'
 import { Route as AppReelsReelIdRouteImport } from './routes/_app/reels/$reelId'
 import { Route as AppProfileRolesRouteImport } from './routes/_app/profile/roles'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
@@ -93,6 +96,8 @@ import { Route as AppCreateOfferRouteImport } from './routes/_app/create/offer'
 import { Route as AppCreateMomentRouteImport } from './routes/_app/create/moment'
 import { Route as AppCreateEventRouteImport } from './routes/_app/create/event'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
+import { Route as AppCaronaNovaRouteImport } from './routes/_app/carona.nova'
+import { Route as AppCaronaOfferIdRouteImport } from './routes/_app/carona.$offerId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -187,6 +192,11 @@ const AppRotaRoute = AppRotaRouteImport.update({
 const AppRideRoute = AppRideRouteImport.update({
   id: '/ride',
   path: '/ride',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReservasRoute = AppReservasRouteImport.update({
+  id: '/reservas',
+  path: '/reservas',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReelsRoute = AppReelsRouteImport.update({
@@ -314,6 +324,11 @@ const AppChatRoute = AppChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCaronaRoute = AppCaronaRouteImport.update({
+  id: '/carona',
+  path: '/carona',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAvaliarRoute = AppAvaliarRouteImport.update({
   id: '/avaliar',
   path: '/avaliar',
@@ -375,6 +390,11 @@ const AppRideActiveRoute = AppRideActiveRouteImport.update({
   id: '/active',
   path: '/active',
   getParentRoute: () => AppRideRoute,
+} as any)
+const AppReservaResourceIdRoute = AppReservaResourceIdRouteImport.update({
+  id: '/reserva/$resourceId',
+  path: '/reserva/$resourceId',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppReelsReelIdRoute = AppReelsReelIdRouteImport.update({
   id: '/$reelId',
@@ -521,6 +541,16 @@ const AppChatConversationIdRoute = AppChatConversationIdRouteImport.update({
   path: '/$conversationId',
   getParentRoute: () => AppChatRoute,
 } as any)
+const AppCaronaNovaRoute = AppCaronaNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => AppCaronaRoute,
+} as any)
+const AppCaronaOfferIdRoute = AppCaronaOfferIdRouteImport.update({
+  id: '/$offerId',
+  path: '/$offerId',
+  getParentRoute: () => AppCaronaRoute,
+} as any)
 const AppBusinessBusinessIdRoute = AppBusinessBusinessIdRouteImport.update({
   id: '/business/$businessId',
   path: '/business/$businessId',
@@ -571,6 +601,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/demo': typeof _devDemoRoute
   '/avaliar': typeof AppAvaliarRoute
+  '/carona': typeof AppCaronaRouteWithChildren
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
@@ -596,6 +627,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AppProfileRouteWithChildren
   '/recommendations': typeof AppRecommendationsRoute
   '/reels': typeof AppReelsRouteWithChildren
+  '/reservas': typeof AppReservasRoute
   '/ride': typeof AppRideRouteWithChildren
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
@@ -603,6 +635,8 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
+  '/carona/$offerId': typeof AppCaronaOfferIdRoute
+  '/carona/nova': typeof AppCaronaNovaRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
   '/create/moment': typeof AppCreateMomentRoute
@@ -632,6 +666,7 @@ export interface FileRoutesByFullPath {
   '/perfil/$id': typeof AppPerfilIdRoute
   '/profile/roles': typeof AppProfileRolesRoute
   '/reels/$reelId': typeof AppReelsReelIdRoute
+  '/reserva/$resourceId': typeof AppReservaResourceIdRoute
   '/ride/active': typeof AppRideActiveRoute
   '/ride/history': typeof AppRideHistoryRouteWithChildren
   '/ride/matching': typeof AppRideMatchingRoute
@@ -662,6 +697,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/demo': typeof _devDemoRoute
   '/avaliar': typeof AppAvaliarRoute
+  '/carona': typeof AppCaronaRouteWithChildren
   '/chat': typeof AppChatRouteWithChildren
   '/connecta': typeof AppConnectaRoute
   '/corrida': typeof AppCorridaRoute
@@ -687,12 +723,15 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileRouteWithChildren
   '/recommendations': typeof AppRecommendationsRoute
   '/reels': typeof AppReelsRouteWithChildren
+  '/reservas': typeof AppReservasRoute
   '/rota': typeof AppRotaRoute
   '/trending': typeof AppTrendingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
+  '/carona/$offerId': typeof AppCaronaOfferIdRoute
+  '/carona/nova': typeof AppCaronaNovaRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
   '/create/moment': typeof AppCreateMomentRoute
@@ -722,6 +761,7 @@ export interface FileRoutesByTo {
   '/perfil/$id': typeof AppPerfilIdRoute
   '/profile/roles': typeof AppProfileRolesRoute
   '/reels/$reelId': typeof AppReelsReelIdRoute
+  '/reserva/$resourceId': typeof AppReservaResourceIdRoute
   '/ride/active': typeof AppRideActiveRoute
   '/ride/matching': typeof AppRideMatchingRoute
   '/ride/request': typeof AppRideRequestRoute
@@ -753,6 +793,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/__dev/demo': typeof _devDemoRoute
   '/_app/avaliar': typeof AppAvaliarRoute
+  '/_app/carona': typeof AppCaronaRouteWithChildren
   '/_app/chat': typeof AppChatRouteWithChildren
   '/_app/connecta': typeof AppConnectaRoute
   '/_app/corrida': typeof AppCorridaRoute
@@ -778,6 +819,7 @@ export interface FileRoutesById {
   '/_app/profile': typeof AppProfileRouteWithChildren
   '/_app/recommendations': typeof AppRecommendationsRoute
   '/_app/reels': typeof AppReelsRouteWithChildren
+  '/_app/reservas': typeof AppReservasRoute
   '/_app/ride': typeof AppRideRouteWithChildren
   '/_app/rota': typeof AppRotaRoute
   '/_app/trending': typeof AppTrendingRoute
@@ -785,6 +827,8 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
+  '/_app/carona/$offerId': typeof AppCaronaOfferIdRoute
+  '/_app/carona/nova': typeof AppCaronaNovaRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/create/event': typeof AppCreateEventRoute
   '/_app/create/moment': typeof AppCreateMomentRoute
@@ -814,6 +858,7 @@ export interface FileRoutesById {
   '/_app/perfil/$id': typeof AppPerfilIdRoute
   '/_app/profile/roles': typeof AppProfileRolesRoute
   '/_app/reels/$reelId': typeof AppReelsReelIdRoute
+  '/_app/reserva/$resourceId': typeof AppReservaResourceIdRoute
   '/_app/ride/active': typeof AppRideActiveRoute
   '/_app/ride/history': typeof AppRideHistoryRouteWithChildren
   '/_app/ride/matching': typeof AppRideMatchingRoute
@@ -846,6 +891,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/demo'
     | '/avaliar'
+    | '/carona'
     | '/chat'
     | '/connecta'
     | '/corrida'
@@ -871,6 +917,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recommendations'
     | '/reels'
+    | '/reservas'
     | '/ride'
     | '/rota'
     | '/trending'
@@ -878,6 +925,8 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/business/$businessId'
+    | '/carona/$offerId'
+    | '/carona/nova'
     | '/chat/$conversationId'
     | '/create/event'
     | '/create/moment'
@@ -907,6 +956,7 @@ export interface FileRouteTypes {
     | '/perfil/$id'
     | '/profile/roles'
     | '/reels/$reelId'
+    | '/reserva/$resourceId'
     | '/ride/active'
     | '/ride/history'
     | '/ride/matching'
@@ -937,6 +987,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/demo'
     | '/avaliar'
+    | '/carona'
     | '/chat'
     | '/connecta'
     | '/corrida'
@@ -962,12 +1013,15 @@ export interface FileRouteTypes {
     | '/profile'
     | '/recommendations'
     | '/reels'
+    | '/reservas'
     | '/rota'
     | '/trending'
     | '/auth/callback'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/business/$businessId'
+    | '/carona/$offerId'
+    | '/carona/nova'
     | '/chat/$conversationId'
     | '/create/event'
     | '/create/moment'
@@ -997,6 +1051,7 @@ export interface FileRouteTypes {
     | '/perfil/$id'
     | '/profile/roles'
     | '/reels/$reelId'
+    | '/reserva/$resourceId'
     | '/ride/active'
     | '/ride/matching'
     | '/ride/request'
@@ -1027,6 +1082,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/__dev/demo'
     | '/_app/avaliar'
+    | '/_app/carona'
     | '/_app/chat'
     | '/_app/connecta'
     | '/_app/corrida'
@@ -1052,6 +1108,7 @@ export interface FileRouteTypes {
     | '/_app/profile'
     | '/_app/recommendations'
     | '/_app/reels'
+    | '/_app/reservas'
     | '/_app/ride'
     | '/_app/rota'
     | '/_app/trending'
@@ -1059,6 +1116,8 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_app/business/$businessId'
+    | '/_app/carona/$offerId'
+    | '/_app/carona/nova'
     | '/_app/chat/$conversationId'
     | '/_app/create/event'
     | '/_app/create/moment'
@@ -1088,6 +1147,7 @@ export interface FileRouteTypes {
     | '/_app/perfil/$id'
     | '/_app/profile/roles'
     | '/_app/reels/$reelId'
+    | '/_app/reserva/$resourceId'
     | '/_app/ride/active'
     | '/_app/ride/history'
     | '/_app/ride/matching'
@@ -1250,6 +1310,13 @@ declare module '@tanstack/react-router' {
       path: '/ride'
       fullPath: '/ride'
       preLoaderRoute: typeof AppRideRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reservas': {
+      id: '/_app/reservas'
+      path: '/reservas'
+      fullPath: '/reservas'
+      preLoaderRoute: typeof AppReservasRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reels': {
@@ -1427,6 +1494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/carona': {
+      id: '/_app/carona'
+      path: '/carona'
+      fullPath: '/carona'
+      preLoaderRoute: typeof AppCaronaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/avaliar': {
       id: '/_app/avaliar'
       path: '/avaliar'
@@ -1510,6 +1584,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ride/active'
       preLoaderRoute: typeof AppRideActiveRouteImport
       parentRoute: typeof AppRideRoute
+    }
+    '/_app/reserva/$resourceId': {
+      id: '/_app/reserva/$resourceId'
+      path: '/reserva/$resourceId'
+      fullPath: '/reserva/$resourceId'
+      preLoaderRoute: typeof AppReservaResourceIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/reels/$reelId': {
       id: '/_app/reels/$reelId'
@@ -1714,6 +1795,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatConversationIdRouteImport
       parentRoute: typeof AppChatRoute
     }
+    '/_app/carona/nova': {
+      id: '/_app/carona/nova'
+      path: '/nova'
+      fullPath: '/carona/nova'
+      preLoaderRoute: typeof AppCaronaNovaRouteImport
+      parentRoute: typeof AppCaronaRoute
+    }
+    '/_app/carona/$offerId': {
+      id: '/_app/carona/$offerId'
+      path: '/$offerId'
+      fullPath: '/carona/$offerId'
+      preLoaderRoute: typeof AppCaronaOfferIdRouteImport
+      parentRoute: typeof AppCaronaRoute
+    }
     '/_app/business/$businessId': {
       id: '/_app/business/$businessId'
       path: '/business/$businessId'
@@ -1758,6 +1853,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AppCaronaRouteChildren {
+  AppCaronaOfferIdRoute: typeof AppCaronaOfferIdRoute
+  AppCaronaNovaRoute: typeof AppCaronaNovaRoute
+}
+
+const AppCaronaRouteChildren: AppCaronaRouteChildren = {
+  AppCaronaOfferIdRoute: AppCaronaOfferIdRoute,
+  AppCaronaNovaRoute: AppCaronaNovaRoute,
+}
+
+const AppCaronaRouteWithChildren = AppCaronaRoute._addFileChildren(
+  AppCaronaRouteChildren,
+)
 
 interface AppChatRouteChildren {
   AppChatConversationIdRoute: typeof AppChatConversationIdRoute
@@ -1885,6 +1994,7 @@ const AppRideRouteWithChildren =
 
 interface AppRouteChildren {
   AppAvaliarRoute: typeof AppAvaliarRoute
+  AppCaronaRoute: typeof AppCaronaRouteWithChildren
   AppChatRoute: typeof AppChatRouteWithChildren
   AppConnectaRoute: typeof AppConnectaRoute
   AppCorridaRoute: typeof AppCorridaRoute
@@ -1910,6 +2020,7 @@ interface AppRouteChildren {
   AppProfileRoute: typeof AppProfileRouteWithChildren
   AppRecommendationsRoute: typeof AppRecommendationsRoute
   AppReelsRoute: typeof AppReelsRouteWithChildren
+  AppReservasRoute: typeof AppReservasRoute
   AppRideRoute: typeof AppRideRouteWithChildren
   AppRotaRoute: typeof AppRotaRoute
   AppTrendingRoute: typeof AppTrendingRoute
@@ -1922,6 +2033,7 @@ interface AppRouteChildren {
   AppEventEventIdRoute: typeof AppEventEventIdRoute
   AppLocalIdRoute: typeof AppLocalIdRoute
   AppPerfilIdRoute: typeof AppPerfilIdRoute
+  AppReservaResourceIdRoute: typeof AppReservaResourceIdRoute
   AppSolicitacaoIdRoute: typeof AppSolicitacaoIdRoute
   AppDriverIndexRoute: typeof AppDriverIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
@@ -1930,6 +2042,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAvaliarRoute: AppAvaliarRoute,
+  AppCaronaRoute: AppCaronaRouteWithChildren,
   AppChatRoute: AppChatRouteWithChildren,
   AppConnectaRoute: AppConnectaRoute,
   AppCorridaRoute: AppCorridaRoute,
@@ -1955,6 +2068,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRoute: AppProfileRouteWithChildren,
   AppRecommendationsRoute: AppRecommendationsRoute,
   AppReelsRoute: AppReelsRouteWithChildren,
+  AppReservasRoute: AppReservasRoute,
   AppRideRoute: AppRideRouteWithChildren,
   AppRotaRoute: AppRotaRoute,
   AppTrendingRoute: AppTrendingRoute,
@@ -1967,6 +2081,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEventEventIdRoute: AppEventEventIdRoute,
   AppLocalIdRoute: AppLocalIdRoute,
   AppPerfilIdRoute: AppPerfilIdRoute,
+  AppReservaResourceIdRoute: AppReservaResourceIdRoute,
   AppSolicitacaoIdRoute: AppSolicitacaoIdRoute,
   AppDriverIndexRoute: AppDriverIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,

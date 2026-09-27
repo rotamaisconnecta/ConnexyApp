@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { people } from "@/lib/mock-data";
 import { proximityTone, personProximityLabel, personProximityRadius } from "@/lib/proximity";
@@ -7,6 +7,11 @@ import { ConversationInviteButton } from "@/components/chat/conversation-invite-
 import { useState } from "react";
 import { SlidersHorizontal, RefreshCw } from "lucide-react";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { useAuth } from "@/hooks/use-auth";
+import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
+import { matchesConnectaListFilter } from "@/lib/discovery/connecta-list-filter";
+import { resolveDemoCatalogPerson } from "@/lib/chat/functional-conversation-list";
 import { useDiscovery } from "@/hooks/api/use-discovery";
 import { formatPersonDistance } from "@/lib/proximity";
 
@@ -16,9 +21,23 @@ export const Route = createFileRoute("/_app/connecta")({
 });
 
 function Connecta() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [tab, setTab] = useState<"pessoas" | "solicitacoes">("pessoas");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [onlyOnline, setOnlyOnline] = useState(false);
+  const [onlyNearby, setOnlyNearby] = useState(false);
   const configured = isPublicSupabaseConfigured();
+  const demo = isDemoMode();
+  const pendingRequests = useDemoPendingRequests(user?.id);
   const { people: nearbyProfiles, isLoading, error, refresh } = useDiscovery();
+  const filtersActive = onlyOnline || onlyNearby;
+  const filter = { onlyOnline, onlyNearby };
+  const filteredPeople = people.filter((person) => matchesConnectaListFilter(person, filter));
+  const filteredRequests = pendingRequests.filter((request) => {
+    const person = resolveDemoCatalogPerson(request.fromUserId);
+    return matchesConnectaListFilter(person ?? undefined, filter);
+  });
 
   return (
     <div className="flex-1">
@@ -33,17 +52,70 @@ function Connecta() {
           {(["pessoas", "solicitacoes"] as const).map((t) => (
             <button
               key={t}
+              type="button"
+              data-connecta-tab={t}
               onClick={() => setTab(t)}
               className={`flex-1 rounded-full py-2 text-xs font-semibold capitalize ${tab === t ? "bg-surface shadow-soft text-foreground" : "text-muted-foreground"}`}
             >
               {t === "pessoas" ? "Pessoas" : "Solicitações"}
+              {t === "solicitacoes" && pendingRequests.length > 0 ? (
+                <span className="ml-1 inline-grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] text-primary-foreground">
+                  {pendingRequests.length}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>
-        <button className="h-10 w-10 grid place-items-center rounded-full bg-secondary">
+        <button
+          type="button"
+          aria-label="Filtrar pessoas"
+          aria-pressed={filterOpen || filtersActive}
+          onClick={() => setFilterOpen((open) => !open)}
+          className={`h-10 w-10 grid place-items-center rounded-full ${
+            filtersActive ? "bg-primary text-primary-foreground" : "bg-secondary"
+          }`}
+        >
           <SlidersHorizontal className="h-4 w-4" />
         </button>
       </div>
+
+      {filterOpen && (
+        <div className="mx-5 mt-3 rounded-2xl border border-border bg-surface p-3 shadow-soft">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold">Filtrar pessoas</span>
+            <button
+              type="button"
+              onClick={() => {
+                setOnlyOnline(false);
+                setOnlyNearby(false);
+              }}
+              className="text-[11px] font-semibold text-primary"
+            >
+              Limpar
+            </button>
+          </div>
+          <label className="mt-3 flex items-center justify-between text-sm">
+            <span>Disponíveis agora</span>
+            <input
+              type="checkbox"
+              data-connecta-filter="online"
+              checked={onlyOnline}
+              onChange={(event) => setOnlyOnline(event.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+          </label>
+          <label className="mt-3 flex items-center justify-between text-sm">
+            <span>Perto de você</span>
+            <input
+              type="checkbox"
+              data-connecta-filter="nearby"
+              checked={onlyNearby}
+              onChange={(event) => setOnlyNearby(event.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+          </label>
+        </div>
+      )}
 
       {tab === "pessoas" && (
         <ul className="mt-4 px-5 space-y-3 pb-4">
@@ -143,10 +215,19 @@ function Connecta() {
                 );
               })
             )
+          ) : filteredPeople.length === 0 ? (
+            <li className="rounded-2xl bg-surface border border-border p-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                {filtersActive
+                  ? "Nenhuma pessoa neste filtro."
+                  : "Nenhuma pessoa nova nas proximidades agora."}
+              </p>
+            </li>
           ) : (
-            people.map((p) => (
+            filteredPeople.map((p) => (
               <li
                 key={p.id}
+                data-connecta-person={p.id}
                 className="rounded-2xl bg-surface border border-border p-3 shadow-soft flex items-center gap-3"
               >
                 <Link
@@ -190,6 +271,67 @@ function Connecta() {
                 <ConversationInviteButton personId={p.id} personName={p.name} variant="compact" />
               </li>
             ))
+          )}
+        </ul>
+      )}
+
+      {tab === "solicitacoes" && (
+        <ul className="mt-4 px-5 space-y-3 pb-4">
+          {!demo || filteredRequests.length === 0 ? (
+            <li className="rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                {!demo
+                  ? "Nenhuma solicitação agora."
+                  : pendingRequests.length > 0 && filtersActive
+                    ? "Nenhuma solicitação neste filtro."
+                    : "Nenhuma solicitação agora."}
+              </p>
+            </li>
+          ) : (
+            filteredRequests.map((request) => {
+              const person = resolveDemoCatalogPerson(request.fromUserId);
+              if (!person) return null;
+              return (
+                <li key={request.id}>
+                  <button
+                    type="button"
+                    data-pending-request-id={request.id}
+                    data-from-user-id={request.fromUserId}
+                    onClick={() =>
+                      navigate({
+                        to: "/solicitacao/$id",
+                        params: { id: person.id },
+                        search: { mode: "receive" },
+                      })
+                    }
+                    className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left shadow-soft transition active:scale-[0.99]"
+                  >
+                    <span className="relative shrink-0">
+                      <img
+                        src={person.photo}
+                        alt=""
+                        className="h-14 w-14 rounded-full object-cover"
+                      />
+                      <PresenceDot
+                        online={person.online}
+                        className="absolute -bottom-0.5 -right-0.5"
+                      />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        {person.age ? `${person.name}, ${person.age}` : person.name}
+                      </span>
+                      <span className="mt-0.5 line-clamp-2 block text-[11px] text-muted-foreground">
+                        {request.message || "Quer iniciar uma conversa com você."}
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary">
+                      Ver
+                    </span>
+                  </button>
+                </li>
+              );
+            })
           )}
         </ul>
       )}

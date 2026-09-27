@@ -12,9 +12,9 @@ import {
   REEL_MAX_FILE_SIZE,
 } from "@/lib/reels/reel-limits";
 import {
-  isSupabaseConfigured,
   publishReel,
   validateReelVideo,
+  willPublishReelRemotely,
   type ReelValidationError,
 } from "@/lib/reels/reel-publish";
 import type { ReelContextType } from "@/lib/reels/reel-local-storage";
@@ -22,12 +22,18 @@ import { MOCK_REELS } from "@/lib/reels/reel-mocks";
 import { formatDuration } from "@/lib/reels/reel-utils";
 
 export const Route = createFileRoute("/_app/gerenciar/novo-reel")({
-  head: () => ({ meta: [{ title: "Novo reel — Connexy" }] }),
+  head: () => ({ meta: [{ title: "Novo no Agora — Connexy" }] }),
   component: NovoReel,
 });
 
 type ReelPublishState =
-  "idle" | "validating" | "uploading" | "saving" | "saving_local" | "success" | "error";
+  | "idle"
+  | "validating"
+  | "uploading"
+  | "saving"
+  | "saving_local"
+  | "success"
+  | "error";
 
 interface ContextOption {
   tipo: ReelContextType;
@@ -179,7 +185,7 @@ function NovoReel() {
 
     setPublishState("validating");
     try {
-      setPublishState(isSupabaseConfigured() ? "uploading" : "saving_local");
+      setPublishState(willPublishReelRemotely() ? "uploading" : "saving_local");
       const result = await publishReel({
         file: file as File,
         caption,
@@ -192,14 +198,14 @@ function NovoReel() {
       setPublishState("success");
       toast.success(
         result.persistence === "supabase"
-          ? "Reel publicado!"
-          : "Reel salvo neste dispositivo (modo de desenvolvimento)",
+          ? "Publicado no Agora!"
+          : "Salvo no Agora neste dispositivo (modo de desenvolvimento)",
       );
       nav({ to: "/reels/$reelId", params: { reelId: result.reel.id } });
     } catch (err) {
       console.error("[NovoReel] Falha ao publicar", err);
       setPublishState("error");
-      toast.error("Falha ao publicar o reel. Tente novamente.");
+      toast.error("Falha ao publicar no Agora. Tente novamente.");
     }
   }
 
@@ -218,7 +224,7 @@ function NovoReel() {
       case "error":
         return "Tentar novamente";
       default:
-        return "Publicar reel";
+        return "Publicar no Agora";
     }
   })();
 
@@ -231,7 +237,7 @@ function NovoReel() {
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
         />
         <div className="flex-1">
-          <h1 className="font-display font-bold text-lg">Novo reel</h1>
+          <h1 className="font-display font-bold text-lg">Novo no Agora</h1>
           <p className="text-[11px] text-muted-foreground">
             Um momento real de um lugar do Connexy
           </p>
@@ -376,7 +382,7 @@ function NovoReel() {
                 selectedContext ? `${selectedContext.emoji} ${selectedContext.titulo}` : "Nenhum"
               }
             />
-            {isSupabaseConfigured() && (
+            {willPublishReelRemotely() && (
               <Row label="Destino" value="Supabase (com fallback local)" />
             )}
           </div>

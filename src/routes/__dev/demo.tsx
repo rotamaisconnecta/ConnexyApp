@@ -71,7 +71,7 @@ const ROUTES: { group: string; items: DemoLink[] }[] = [
       { label: "/feed", to: "/feed", desc: "Feed inteligente" },
       { label: "/trending", to: "/trending", desc: "Em alta" },
       { label: "/recommendations", to: "/recommendations", desc: "Recomendações" },
-      { label: "/reels", to: "/reels", desc: "Reels" },
+      { label: "/reels", to: "/reels", desc: "Agora" },
       { label: "/my-connexy", to: "/my-connexy", desc: "Meu Connexy" },
       { label: "/gerenciar", to: "/gerenciar", desc: "Gerenciar" },
       { label: "/engine", to: "/engine", desc: "Motor de recomendação" },

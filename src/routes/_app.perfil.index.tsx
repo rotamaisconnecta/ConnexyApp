@@ -27,12 +27,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { MediaViewer } from "@/components/system/media-viewer";
-import {
-  saveDemoOwnProfile,
-  useDemoOwnProfile,
-  type DemoOwnProfile,
-  type ProfileVisibility,
-} from "@/lib/demo/demo-own-profile";
+import { type DemoOwnProfile, type ProfileVisibility } from "@/lib/demo/demo-own-profile";
+import { useOwnProfileController } from "@/lib/profile/use-own-profile";
 import { currentUser, findPlace, people } from "@/lib/mock-data";
 import {
   POST_CATEGORY_META,
@@ -128,7 +124,7 @@ type AddressKey = keyof DemoOwnProfile["privateAddresses"];
 type VisibilityKey = keyof DemoOwnProfile["visibility"];
 
 function OwnProfile() {
-  const profile = useDemoOwnProfile();
+  const { profile, save: persistProfile, loading, error, source } = useOwnProfileController();
   const { edit = false } = Route.useSearch();
   const navigate = useNavigate();
   const [draft, setDraft] = useState(profile);
@@ -163,21 +159,42 @@ function OwnProfile() {
       return;
     }
 
-    try {
-      saveDemoOwnProfile({
-        ...draft,
-        name,
-        handle,
-        city,
-        bio: draft.bio.trim(),
-        interests: uniqueInterests(draft.interests),
+    void persistProfile({
+      ...draft,
+      name,
+      handle,
+      city,
+      bio: draft.bio.trim(),
+      interests: uniqueInterests(draft.interests),
+    })
+      .then(() => {
+        closeEditor();
+        toast.success(
+          source === "remote" ? "Alterações salvas." : "Alterações salvas neste dispositivo.",
+        );
+      })
+      .catch(() => {
+        toast.error("Não foi possível salvar. Tente usar imagens menores.");
       });
-      closeEditor();
-      toast.success("Alterações salvas neste dispositivo.");
-    } catch {
-      toast.error("Não foi possível salvar. Tente usar imagens menores.");
-    }
   };
+
+  if (loading) {
+    return (
+      <main className="relative min-h-full bg-background px-4 py-8 text-sm text-muted-foreground">
+        <StatusBar />
+        Carregando perfil…
+      </main>
+    );
+  }
+
+  if (error && source === "remote") {
+    return (
+      <main className="relative min-h-full bg-background px-4 py-8 text-sm text-muted-foreground">
+        <StatusBar />
+        {error}
+      </main>
+    );
+  }
 
   return edit ? (
     <Editor

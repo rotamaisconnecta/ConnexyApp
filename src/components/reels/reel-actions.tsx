@@ -6,6 +6,9 @@ import { ReelSaveButton } from "./reel-save-button";
 import { ReelFollowButton } from "./reel-follow-button";
 import { ReelConnectButton } from "./reel-connect-button";
 import { getReelContext, type ReelContextTarget } from "@/lib/reels/reel-context";
+import { getReelConnectStatus } from "@/lib/reels/reel-social-state";
+import { useDemoIdentity } from "@/lib/demo/demo-identity";
+import { useDemoIsConnected, useDemoOutgoingRequest } from "@/lib/demo/use-demo-db";
 
 interface ReelActionsProps {
   reel: Reel;
@@ -32,6 +35,10 @@ export function ReelActions({
   onOpenAuthor,
   muted,
 }: ReelActionsProps) {
+  const identity = useDemoIdentity();
+  useDemoIsConnected(reel.author.id, identity.id);
+  useDemoOutgoingRequest(identity.id, reel.author.id);
+  const connectStatus = getReelConnectStatus(reel.author.id, identity.id);
   const authorTarget = getReelContext(reel).authorTarget;
 
   return (
@@ -87,9 +94,11 @@ export function ReelActions({
 
       <ReelSaveButton saved={reel.savedByMe} onToggle={onSave} />
 
-      <ReelConnectButton onConnect={onConnect} />
+      <ReelConnectButton status={connectStatus} onConnect={onConnect} />
 
-      <ReelFollowButton following={reel.author.isFollowing} onToggle={onFollow} />
+      {reel.author.id !== identity.id ? (
+        <ReelFollowButton following={reel.author.isFollowing} onToggle={onFollow} />
+      ) : null}
 
       <button
         onClick={onMute}

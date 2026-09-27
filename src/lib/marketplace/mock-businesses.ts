@@ -25,6 +25,7 @@ import {
   EventStatus,
   DiscountType,
 } from "./business-types";
+import { mergeCatalogBusinesses } from "@/lib/catalog/local-catalog";
 
 /* ─── Mock helpers ─────────────────────────────────────── */
 
@@ -597,7 +598,7 @@ export const MOCK_COUPONS: Coupon[] = [
 /* ─── Lookups ──────────────────────────────────────────── */
 
 export function getAllBusinesses(): Business[] {
-  return [...MOCK_BUSINESSES, ...MOCK_EXTRA_BUSINESSES];
+  return mergeCatalogBusinesses([...MOCK_BUSINESSES, ...MOCK_EXTRA_BUSINESSES]);
 }
 
 export function getBusinessById(id: string): Business | undefined {

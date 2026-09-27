@@ -54,7 +54,7 @@ const ENVIRONMENT_RULES: Record<ContextEnvironmentValue, Omit<ContextRecommendat
     },
     {
       type: "content",
-      title: "Criar reel do evento",
+      title: "Publicar o evento no Agora",
       description: "Compartilhe os melhores momentos",
       icon: "🎬",
       route: "/create/reel",
@@ -116,7 +116,7 @@ const ENVIRONMENT_RULES: Record<ContextEnvironmentValue, Omit<ContextRecommendat
     },
     {
       type: "content",
-      title: "Assistir reels",
+      title: "Ver Agora",
       description: "Conteúdo curto para relaxar",
       icon: "▶",
       route: "/reels",

@@ -54,7 +54,7 @@ export function isCancellable(status: TripStatus): boolean {
 /* ─── Pode concluir (rating completo) ────────────────────── */
 
 export function canComplete(status: TripStatus): boolean {
-  return status === "avaliacao" || status === "chegada";
+  return status === "avaliacao";
 }
 
 /* ─── Retorno no planejamento ────────────────────────────── */

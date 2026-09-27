@@ -8,6 +8,7 @@ interface ReelFollowButtonProps {
 export function ReelFollowButton({ following, onToggle }: ReelFollowButtonProps) {
   return (
     <button
+      data-reel-follow={following ? "following" : "follow"}
       onClick={onToggle}
       className={cn(
         "h-8 rounded-full px-4 text-[11px] font-semibold transition-colors",

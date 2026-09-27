@@ -533,6 +533,21 @@ export function findPlace(id: string): Place | undefined {
   return places.find((p) => p.id === id);
 }
 
+function placeSearchHaystack(place: Place): string {
+  return [place.name, place.category, place.description, place.promo, place.address]
+    .filter((value): value is string => Boolean(value))
+    .join(" ")
+    .toLowerCase();
+}
+
+export function filterNearbyPlaces(list: Place[], query: string, category = "Todos"): Place[] {
+  const byCategory =
+    category === "Todos" ? list : list.filter((place) => place.category === category);
+  const term = query.trim().toLowerCase();
+  if (!term) return byCategory;
+  return byCategory.filter((place) => placeSearchHaystack(place).includes(term));
+}
+
 export const suggestions = [
   { label: "Shopping Ibirapuera", distance: "2,4 km", icon: "🛍️" },
   { label: "Aeroporto de Congonhas", distance: "7,1 km", icon: "✈️" },

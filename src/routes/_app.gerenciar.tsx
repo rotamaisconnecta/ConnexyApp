@@ -14,14 +14,22 @@ import {
   Car,
   ArrowRight,
   Plus,
-  Settings,
   Building2,
   UserRound,
 } from "lucide-react";
 
 import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
-import { PresenceAnalytics } from "@/components/event-checkin/presence-analytics";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import {
+  CatalogKind,
+  catalogEntityLabel,
+  listCatalogByKind,
+  LOCAL_CATALOG_DISCLAIMER,
+  subscribeLocalCatalog,
+  type CatalogEntity,
+  type CatalogKindValue,
+} from "@/lib/catalog/local-catalog";
 
 export const Route = createFileRoute("/_app/gerenciar")({
   head: () => ({ meta: [{ title: "Meu Connexy — Connexy" }] }),
@@ -43,7 +51,7 @@ const SECTIONS: Section[] = [
     id: "negocios",
     icon: Store,
     title: "Meus Negócios",
-    subtitle: "Cadastre e gerencie seu negócio",
+    subtitle: LOCAL_CATALOG_DISCLAIMER,
     createRoute: "/create/place-business",
     bgColor: "bg-amber-50 dark:bg-amber-950/20",
     role: UserRole.BUSINESS,
@@ -52,7 +60,7 @@ const SECTIONS: Section[] = [
     id: "eventos",
     icon: Calendar,
     title: "Meus Eventos",
-    subtitle: "Crie e organize eventos",
+    subtitle: LOCAL_CATALOG_DISCLAIMER,
     createRoute: "/create/event",
     bgColor: "bg-pink-50 dark:bg-pink-950/20",
     role: UserRole.EVENT_CREATOR,
@@ -61,7 +69,7 @@ const SECTIONS: Section[] = [
     id: "locais",
     icon: MapPin,
     title: "Meus Locais",
-    subtitle: "Adicione locais ao mapa",
+    subtitle: LOCAL_CATALOG_DISCLAIMER,
     createRoute: "/create/place",
     bgColor: "bg-blue-50 dark:bg-blue-950/20",
     role: UserRole.PLACE_OWNER,
@@ -70,7 +78,7 @@ const SECTIONS: Section[] = [
     id: "ofertas",
     icon: Tag,
     title: "Minhas Promoções",
-    subtitle: "Publique ofertas e descontos",
+    subtitle: LOCAL_CATALOG_DISCLAIMER,
     createRoute: "/create/offer",
     bgColor: "bg-purple-50 dark:bg-purple-950/20",
     role: UserRole.BUSINESS,
@@ -95,12 +103,86 @@ const roleIcons: Record<UserRole, string> = {
   [UserRole.REELS_CREATOR]: "🎬",
 };
 
+const SECTION_CATALOG_KIND: Partial<Record<string, CatalogKindValue>> = {
+  negocios: CatalogKind.BUSINESS,
+  eventos: CatalogKind.EVENT,
+  locais: CatalogKind.PLACE,
+  ofertas: CatalogKind.OFFER,
+};
+
+function catalogSectionSubtitle(sectionId: string, fallback: string): string {
+  const kind = SECTION_CATALOG_KIND[sectionId];
+  if (!kind) return fallback;
+  const count = listCatalogByKind(kind, getDemoIdentity().id).length;
+  if (count === 0) return fallback;
+  return `${count} no catálogo local`;
+}
+
+function ownedCatalogItems(): CatalogEntity[] {
+  const ownerId = getDemoIdentity().id;
+  return [
+    ...listCatalogByKind(CatalogKind.EVENT, ownerId),
+    ...listCatalogByKind(CatalogKind.PLACE, ownerId),
+    ...listCatalogByKind(CatalogKind.BUSINESS, ownerId),
+    ...listCatalogByKind(CatalogKind.OFFER, ownerId),
+  ].sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function OwnedCatalogLink({ entity }: { entity: CatalogEntity }) {
+  const kindLabel =
+    entity.kind === CatalogKind.EVENT
+      ? "Evento"
+      : entity.kind === CatalogKind.PLACE
+        ? "Local"
+        : entity.kind === CatalogKind.BUSINESS
+          ? "Negócio"
+          : "Oferta";
+  const className =
+    "flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-accent/40";
+  if (entity.kind === CatalogKind.EVENT) {
+    return (
+      <Link to="/event/$eventId" params={{ eventId: entity.id }} className={className}>
+        <span className="min-w-0">
+          <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+            {kindLabel}
+          </span>
+          <span className="block truncate text-sm font-semibold">{catalogEntityLabel(entity)}</span>
+        </span>
+      </Link>
+    );
+  }
+  if (entity.kind === CatalogKind.PLACE) {
+    return (
+      <Link to="/local/$id" params={{ id: entity.id }} className={className}>
+        <span className="min-w-0">
+          <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+            {kindLabel}
+          </span>
+          <span className="block truncate text-sm font-semibold">{catalogEntityLabel(entity)}</span>
+        </span>
+      </Link>
+    );
+  }
+  const businessId = entity.kind === CatalogKind.OFFER ? entity.businessId : entity.id;
+  return (
+    <Link to="/business/$businessId" params={{ businessId }} className={className}>
+      <span className="min-w-0">
+        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+          {kindLabel}
+        </span>
+        <span className="block truncate text-sm font-semibold">{catalogEntityLabel(entity)}</span>
+      </span>
+    </Link>
+  );
+}
+
 function GerenciarLayout() {
   const { user } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const isRoot = location.pathname === "/gerenciar";
   const [rolesState, setRolesState] = useState<UserRolesState>(getStoredRoles);
+  const [catalogTick, setCatalogTick] = useState(0);
 
   useEffect(() => {
     function handleChange() {
@@ -109,6 +191,7 @@ function GerenciarLayout() {
     window.addEventListener("roleChanged", handleChange);
     return () => window.removeEventListener("roleChanged", handleChange);
   }, []);
+  useEffect(() => subscribeLocalCatalog(() => setCatalogTick((tick) => tick + 1)), []);
 
   if (!user) return null;
 
@@ -122,6 +205,8 @@ function GerenciarLayout() {
 
   const hasRole = (role: UserRole) => rolesState.roles.includes(role);
   const activeRoles = rolesState.roles.filter((r) => r !== UserRole.USER);
+  void catalogTick;
+  const ownedItems = ownedCatalogItems();
 
   return (
     <div className="flex-1 flex flex-col pb-24">
@@ -171,7 +256,7 @@ function GerenciarLayout() {
                       : role === UserRole.PLACE_OWNER
                         ? "Locais"
                         : role === UserRole.REELS_CREATOR
-                          ? "Reels"
+                          ? "Agora"
                           : role}
               </span>
             </span>
@@ -186,7 +271,7 @@ function GerenciarLayout() {
           return (
             <Link
               key={section.id}
-              to={active ? section.createRoute : "/profile/roles"}
+              to={section.id === "corridas" && !active ? "/profile/roles" : section.createRoute}
               className={`flex items-center gap-3 rounded-2xl border border-border p-4 shadow-soft transition-all active:scale-[0.98] ${active ? "bg-surface" : section.bgColor}`}
             >
               <span
@@ -199,7 +284,11 @@ function GerenciarLayout() {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold">{section.title}</div>
                 <div className="text-[11px] text-muted-foreground">
-                  {active ? "Gerenciar" : section.subtitle}
+                  {section.id === "corridas"
+                    ? active
+                      ? "Gerenciar"
+                      : section.subtitle
+                    : catalogSectionSubtitle(section.id, section.subtitle)}
                 </div>
               </div>
               {active ? (
@@ -211,6 +300,19 @@ function GerenciarLayout() {
           );
         })}
       </div>
+
+      {ownedItems.length > 0 && (
+        <div className="px-4 mt-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Catálogo local
+          </h2>
+          <div className="rounded-2xl border border-border bg-surface divide-y divide-border shadow-soft">
+            {ownedItems.map((item) => (
+              <OwnedCatalogLink key={item.id} entity={item} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bio management */}
       <div className="px-4 mt-6">
@@ -241,7 +343,7 @@ function GerenciarLayout() {
             { label: "Foto", icon: "📷", route: "/gerenciar/nova-foto" },
             { label: "Video", icon: "🎥", route: "/gerenciar/novo-video" },
             { label: "Texto", icon: "✍", route: "/gerenciar/novo-texto" },
-            { label: "Reel", icon: "▶", route: "/gerenciar/novo-reel" },
+            { label: "Agora", icon: "▶", route: "/gerenciar/novo-reel" },
           ].map((item) => (
             <Link
               key={item.label}
@@ -260,7 +362,9 @@ function GerenciarLayout() {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Análises de presença
         </h2>
-        <PresenceAnalytics targetIds={["cafe-central", "evt-1"]} title="Meus locais e eventos" />
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Análises de locais e eventos próprios ainda não estão disponíveis no MVP local.
+        </p>
       </div>
     </div>
   );

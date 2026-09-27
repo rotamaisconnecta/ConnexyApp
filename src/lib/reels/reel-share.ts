@@ -7,11 +7,11 @@ export function getShareOptions() {
   return SHARE_OPTIONS;
 }
 
-const DEFAULT_SHARE_MESSAGE = "Veja este Reel no Connexy — seu ecossistema digital.";
+const DEFAULT_SHARE_MESSAGE = "Veja isto no Agora do Connexy — seu ecossistema digital.";
 
 export function buildReelShareMessage(caption?: string, reelId?: string): string {
   const title = caption ? truncateCaption(caption, 80) : null;
-  const message = title ? `Veja este Reel sobre "${title}" no Connexy.` : DEFAULT_SHARE_MESSAGE;
+  const message = title ? `Veja isto no Agora: "${title}".` : DEFAULT_SHARE_MESSAGE;
   return reelId ? `${message}\n\n${getReelShareUrl(reelId)}` : message;
 }
 

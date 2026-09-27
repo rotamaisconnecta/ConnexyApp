@@ -9,7 +9,6 @@ import { useDriverMode } from "@/hooks/use-driver-mode";
 import { DriverRideBottomSheet } from "@/components/driver/driver-ride-bottom-sheet";
 import { DriverPaymentPanel } from "@/components/driver/driver-payment-panel";
 import { CancelConfirmModal } from "@/components/mobility/ride/ride-overlays";
-import { currentUser } from "@/lib/mock-data";
 import type { RideRequest } from "@/lib/driver/driver-types";
 import { DEMO_DRIVER_ID } from "@/lib/mobility/dispatch/demo-fleet";
 import { tripStatusLabel, isTerminal } from "@/lib/mobility/trip/trip-machine";

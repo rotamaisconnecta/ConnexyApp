@@ -1,16 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
-import {
-  Shield,
-  Bell,
-  CreditCard,
-  Globe,
-  HelpCircle,
-  ChevronRight,
-  EyeOff,
-  Circle,
-} from "lucide-react";
+import { Shield, Bell, CreditCard, Globe, HelpCircle, ChevronRight, EyeOff } from "lucide-react";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
@@ -145,9 +136,9 @@ function Privacy() {
 
       <section className="mt-5 mx-5 rounded-2xl bg-surface border border-border divide-y divide-border">
         <Item icon={Shield} label="Privacidade" hint="Controle sua visibilidade" />
-        <Item icon={Bell} label="Notificações" hint="Escolha o que receber" />
+        <Item icon={Bell} label="Notificações" hint="Escolha o que receber" to="/notificacoes" />
         <Item icon={Shield} label="Segurança" hint="Configurações de segurança" />
-        <Item icon={CreditCard} label="Pagamentos" hint="Métodos e histórico" />
+        <Item icon={CreditCard} label="Pagamentos" hint="Métodos e histórico" to="/ride/history" />
         <Item icon={Globe} label="Idioma" hint="Português" />
         <Item icon={HelpCircle} label="Ajuda" hint="Central de ajuda e suporte" />
       </section>
@@ -173,13 +164,15 @@ function Item({
   icon: Icon,
   label,
   hint,
+  to,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   hint: string;
+  to?: "/notificacoes" | "/ride/history";
 }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
+  const content = (
+    <>
       <span className="h-9 w-9 grid place-items-center rounded-xl bg-accent text-primary">
         <Icon className="h-4 w-4" />
       </span>
@@ -188,6 +181,16 @@ function Item({
         <div className="text-[11px] text-muted-foreground">{hint}</div>
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground" />
-    </div>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link to={to} className="flex items-center gap-3 px-4 py-3">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="flex items-center gap-3 px-4 py-3">{content}</div>;
 }

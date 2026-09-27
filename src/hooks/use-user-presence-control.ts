@@ -1,36 +1,20 @@
 import { useCallback, useState } from "react";
 import { PresenceService } from "@/services/presence.service";
 import type { PresencePreference } from "@/types/phase-13b";
-
-const STORAGE_KEY = "connexy.presence.preference";
-
-function loadStoredPreference(): PresencePreference {
-  if (typeof window === "undefined") return "invisible";
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === "online" || raw === "available" || raw === "dnd" || raw === "invisible") return raw;
-  } catch {
-    // storage unavailable, use default
-  }
-  return "invisible";
-}
-
-function storePreference(pref: PresencePreference): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, pref);
-  } catch {
-    // storage unavailable, silently ignore
-  }
-}
+import {
+  readStoredPresencePreference,
+  writeStoredPresencePreference,
+} from "@/lib/presence/presence-preference";
 
 export function useUserPresenceControl(userId: string | null) {
-  const [preference, setPreferenceState] = useState<PresencePreference>(loadStoredPreference);
+  const [preference, setPreferenceState] = useState<PresencePreference>(
+    readStoredPresencePreference,
+  );
 
   const setPreference = useCallback(
     async (next: PresencePreference) => {
       setPreferenceState(next);
-      storePreference(next);
+      writeStoredPresencePreference(next);
       if (!userId) return;
       try {
         await PresenceService.publish(userId, next);

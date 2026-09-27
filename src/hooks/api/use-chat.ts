@@ -13,6 +13,8 @@ import {
   sendLocalMessage,
   sendSharedContentMessage,
 } from "@/lib/demo/demo-db";
+import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
+import { getSchemaAConversations } from "@/lib/chat/schema-a-conversations";
 
 const PAGE_SIZE = 50;
 
@@ -110,6 +112,24 @@ function readLocalChatMessages(
   return demoRowsToChatMessages(conversationId, getMessages(conversationId), currentUserId);
 }
 
+function schemaAMessageToChat(message: {
+  id: string;
+  conversationId: string;
+  text: string;
+  at: number;
+  from: "me" | "them";
+}): ChatMessage {
+  return {
+    id: message.id,
+    conversationId: message.conversationId,
+    from: message.from,
+    kind: MessageKind.TEXT,
+    text: message.text,
+    at: new Date(message.at),
+    status: message.from === "me" ? "sent" : "delivered",
+  };
+}
+
 interface UseChatOptions {
   conversationId: string | null;
   currentUserId: string | null;
@@ -117,7 +137,8 @@ interface UseChatOptions {
 
 export function useChat({ conversationId, currentUserId }: UseChatOptions) {
   const queryClient = useQueryClient();
-  const local = !isPublicSupabaseConfigured();
+  const schemaA = isRemoteConversationsEnabled();
+  const local = !schemaA && !isPublicSupabaseConfigured();
   const queryKey = localChatQueryKey(conversationId);
 
   const [remoteMessages, setRemoteMessages] = useState<ChatMessage[]>([]);
@@ -186,7 +207,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       text?: string,
     ) => {
       if (!local || !conversationId) return;
-      sendSharedContentMessage(conversationId, "me", payload, text);
+      sendSharedContentMessage(conversationId, "me", payload, text, getDemoIdentity());
       queryClient.setQueryData(
         localChatQueryKey(conversationId),
         readLocalChatMessages(conversationId, currentUserId),
@@ -207,8 +228,41 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     [local, conversationId, currentUserId, queryClient],
   );
 
+  const sendSchemaAMessage = useCallback(
+    async (text: string) => {
+      if (!schemaA || !conversationId) return;
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const tempId = `temp-${crypto.randomUUID()}`;
+      const optimistic: ChatMessage = {
+        id: tempId,
+        conversationId,
+        from: "me",
+        kind: MessageKind.TEXT,
+        text: trimmed,
+        at: new Date(),
+        status: "sending",
+      };
+      setRemoteMessages((prev) => {
+        if (hasSamePendingText(prev, trimmed)) return prev;
+        return [...prev, optimistic];
+      });
+      try {
+        const sent = await getSchemaAConversations().sendMessage(conversationId, trimmed);
+        setRemoteMessages((prev) =>
+          prev.map((item) => (item.id === tempId ? schemaAMessageToChat(sent) : item)),
+        );
+      } catch (err) {
+        setRemoteMessages((prev) => prev.filter((item) => item.id !== tempId));
+        setError(err instanceof Error ? err.message : "Erro ao enviar mensagem");
+      }
+    },
+    [schemaA, conversationId],
+  );
+
   const loadMessages = useCallback(async () => {
-    if (local || !conversationId || !currentUserId || !isPublicSupabaseConfigured()) return;
+    if (local || schemaA || !conversationId || !currentUserId || !isPublicSupabaseConfigured())
+      return;
     setIsLoading(true);
     setError(null);
     pageRef.current = 0;
@@ -222,15 +276,50 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, currentUserId, local]);
+  }, [conversationId, currentUserId, local, schemaA]);
 
   useEffect(() => {
-    if (local) return;
+    if (!schemaA || !conversationId) {
+      if (schemaA) {
+        setRemoteMessages([]);
+        setHasMore(false);
+        setSubscriptionStatus("disconnected");
+      }
+      return;
+    }
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    setHasMore(false);
+    setSubscriptionStatus("connected");
+    void (async () => {
+      try {
+        const chat = getSchemaAConversations();
+        const rows = await chat.listMessages(conversationId);
+        if (cancelled) return;
+        setRemoteMessages(rows.map(schemaAMessageToChat));
+        await chat.markRead(conversationId);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Erro ao carregar mensagens");
+          setRemoteMessages([]);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [schemaA, conversationId]);
+
+  useEffect(() => {
+    if (local || schemaA) return;
     void loadMessages();
-  }, [loadMessages, local]);
+  }, [loadMessages, local, schemaA]);
 
   useEffect(() => {
-    if (local) return;
+    if (local || schemaA) return;
     if (!conversationId || !isPublicSupabaseConfigured()) {
       setSubscriptionStatus("disconnected");
       return;
@@ -294,7 +383,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       channelRef.current = null;
       setSubscriptionStatus("disconnected");
     };
-  }, [conversationId, local]);
+  }, [conversationId, local, schemaA]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -339,7 +428,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
   );
 
   const loadMore = useCallback(async () => {
-    if (local || !conversationId || !currentUserId || isLoading || !hasMore) return;
+    if (local || schemaA || !conversationId || !currentUserId || isLoading || !hasMore) return;
     setIsLoading(true);
     try {
       pageRef.current += 1;
@@ -356,7 +445,7 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, currentUserId, isLoading, hasMore, local]);
+  }, [conversationId, currentUserId, isLoading, hasMore, local, schemaA]);
 
   if (local) {
     return {
@@ -369,6 +458,29 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       sendMedia,
       loadMore: () => Promise.resolve(),
       retry: demoSend,
+      subscriptionStatus,
+    };
+  }
+
+  if (schemaA) {
+    return {
+      messages: remoteMessages,
+      isLoading,
+      error,
+      hasMore: false,
+      sendMessage: sendSchemaAMessage,
+      sendSharedContent: () => undefined,
+      sendMedia: () => undefined,
+      loadMore: () => Promise.resolve(),
+      retry: () => {
+        if (!conversationId) return;
+        void getSchemaAConversations()
+          .listMessages(conversationId)
+          .then((rows) => setRemoteMessages(rows.map(schemaAMessageToChat)))
+          .catch((err: unknown) => {
+            setError(err instanceof Error ? err.message : "Erro ao carregar mensagens");
+          });
+      },
       subscriptionStatus,
     };
   }

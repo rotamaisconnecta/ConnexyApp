@@ -3,15 +3,17 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { CreatePostForm } from "@/components/post/create-post-form";
-import { isPostValid, type PostDraft } from "@/lib/types/post";
+import { isPostValid, PostCategory, type PostDraft } from "@/lib/types/post";
 import { BackButton } from "@/components/navigation/back-button";
 import { currentUser } from "@/lib/mock-data";
 import { useDemoOwnProfile } from "@/lib/demo/demo-own-profile";
 import { saveDemoPost, type DemoPost, type DemoPostMedia } from "@/lib/demo/demo-posts";
+import { CANONICAL_MOMENT_CATEGORY } from "@/lib/create/create-hub-destinations";
 import { compressImage, readFileAsDataURL } from "@/lib/upload/upload-utils";
 
 const searchSchema = z.object({
   from: z.enum(["bio"]).optional(),
+  category: z.literal(CANONICAL_MOMENT_CATEGORY).optional(),
 });
 
 export const Route = createFileRoute("/_app/create-post")({
@@ -41,10 +43,14 @@ async function buildPersistedMedia(draft: PostDraft): Promise<DemoPostMedia[]> {
 
 function CreatePostPage() {
   const nav = useNavigate();
-  const { from } = Route.useSearch() as { from?: "bio" };
+  const { from, category } = Route.useSearch() as {
+    from?: "bio";
+    category?: typeof CANONICAL_MOMENT_CATEGORY;
+  };
   const demoProfile = useDemoOwnProfile();
   const fromBio = from === "bio";
   const backTo = fromBio ? ("/perfil" as const) : ("/home" as const);
+  const initialCategory = category === CANONICAL_MOMENT_CATEGORY ? PostCategory.MOMENT : undefined;
 
   const handlePublish = async (draft: PostDraft) => {
     if (!isPostValid(draft)) {
@@ -113,6 +119,7 @@ function CreatePostPage() {
           authorName={demoProfile.name}
           authorPhoto={demoProfile.photo}
           authorHandle={demoProfile.handle}
+          initialCategory={initialCategory}
           onPublish={handlePublish}
         />
       </div>

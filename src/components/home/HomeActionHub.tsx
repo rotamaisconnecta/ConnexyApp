@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { people } from "@/lib/mock-data";
 import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
+import { useAuth } from "@/hooks/use-auth";
 
 const ACTION_IMAGES = {
   go: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=700&q=85",
@@ -150,7 +151,8 @@ function HappeningCard({
 }
 
 export function HomeActionHub() {
-  const pendingRequests = useDemoPendingRequests();
+  const { user } = useAuth();
+  const pendingRequests = useDemoPendingRequests(user?.id);
   const pendingRequest = pendingRequests[0];
   const conversationPerson =
     people.find((person) => person.id === pendingRequest?.fromUserId) ??

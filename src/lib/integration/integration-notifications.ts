@@ -224,7 +224,7 @@ function generateReelNotifications(
       category: "LIKE",
       priority: "LOW",
       title: `🎬 ${payload.authorName}`,
-      body: `postou um novo reel${payload.locationName ? ` em ${payload.locationName}` : ""}`,
+      body: `publicou no Agora${payload.locationName ? ` em ${payload.locationName}` : ""}`,
       actorName: payload.authorName,
       metadata: { reelId: payload.reelId },
     },

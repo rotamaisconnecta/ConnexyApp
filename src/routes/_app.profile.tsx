@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StatusBar } from "@/components/phone-frame";
 import { ConfirmDialog } from "@/components/system/confirm-dialog";
 import { signOut } from "@/lib/auth/sign-out";
@@ -9,17 +9,35 @@ import { exitDemoSession } from "@/lib/demo/demo-auth";
 import { toast } from "sonner";
 import {
   Bell,
+  Calendar,
   CarFront,
   ChevronRight,
   CircleHelp,
+  Clapperboard,
   Globe2,
   LockKeyhole,
   LogOut,
+  MapPin,
   MoreVertical,
+  Settings2,
   ShieldCheck,
   SlidersHorizontal,
+  Store,
+  Tag,
   WalletCards,
 } from "lucide-react";
+import { MORE_MENU_ITEMS } from "@/lib/navigation/more-menu";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { readDemoSettings, writeDemoSettings } from "@/lib/demo/demo-settings";
+
+const MORE_MENU_ICONS = {
+  locais: MapPin,
+  eventos: Calendar,
+  negocios: Store,
+  reel: Clapperboard,
+  ofertas: Tag,
+  gerenciar: Settings2,
+} as const;
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({ meta: [{ title: "Configurações — Connexy" }] }),
@@ -73,6 +91,9 @@ function ProfilePage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [activeSetting, setActiveSetting] = useState<SettingId | null>(null);
+  const [settingsTick, setSettingsTick] = useState(0);
+  void settingsTick;
+  const storedSettings = readDemoSettings(getDemoIdentity().id);
 
   async function doSignOut() {
     if (signingOut) return;
@@ -116,13 +137,27 @@ function ProfilePage() {
                 onClick={() => setMenuOpen(false)}
                 className="fixed inset-0 z-40 cursor-default"
               />
-              <Link
-                to="/my-connexy"
-                onClick={() => setMenuOpen(false)}
-                className="absolute right-0 top-full z-50 mt-2 flex w-52 items-center gap-2.5 rounded-2xl border border-border bg-surface px-3 py-3 text-sm font-semibold shadow-elevated"
+              <div
+                role="menu"
+                aria-label="Mais"
+                className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-surface py-1 shadow-elevated"
               >
-                <SlidersHorizontal className="h-4 w-4 text-primary" /> Meu Connexy
-              </Link>
+                {MORE_MENU_ITEMS.map((item) => {
+                  const Icon = MORE_MENU_ICONS[item.id];
+                  return (
+                    <Link
+                      key={item.id}
+                      role="menuitem"
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-semibold hover:bg-accent/50"
+                    >
+                      <Icon className="h-4 w-4 text-primary" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>
@@ -134,7 +169,17 @@ function ProfilePage() {
             <button
               key={title}
               type="button"
-              onClick={() => setActiveSetting(id)}
+              onClick={() => {
+                if (id === "privacy") {
+                  nav({ to: "/privacidade" });
+                  return;
+                }
+                if (id === "notifications") {
+                  nav({ to: "/notificacoes" });
+                  return;
+                }
+                setActiveSetting(id);
+              }}
               className={`flex items-center gap-3 px-4 py-4 transition-colors hover:bg-accent/40 ${index > 0 ? "border-t border-border" : ""}`}
             >
               <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
@@ -143,7 +188,7 @@ function ProfilePage() {
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold">{title}</span>
                 <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                  {description}
+                  {id === "language" ? storedSettings.language : description}
                 </span>
               </span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -177,7 +222,7 @@ function ProfilePage() {
           <span className="flex-1">
             <span className="block text-sm font-bold">Meu Connexy</span>
             <span className="mt-0.5 block text-[11px] text-white/80">
-              Estatísticas, atividade e criações
+              Estatísticas e criações do MVP local
             </span>
           </span>
           <ChevronRight className="h-4 w-4" />
@@ -203,22 +248,47 @@ function ProfilePage() {
         cancelLabel="Cancelar"
         danger
       />
-      <SettingsSheet setting={activeSetting} onClose={() => setActiveSetting(null)} />
+      <SettingsSheet
+        setting={activeSetting}
+        onClose={() => setActiveSetting(null)}
+        onSaved={() => setSettingsTick((tick) => tick + 1)}
+      />
     </div>
   );
 }
 
-function SettingsSheet({ setting, onClose }: { setting: SettingId | null; onClose: () => void }) {
+function SettingsSheet({
+  setting,
+  onClose,
+  onSaved,
+}: {
+  setting: SettingId | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const nav = useNavigate();
+  const stored = readDemoSettings(getDemoIdentity().id);
   const [visibility, setVisibility] = useState("Conexões");
   const [locationVisible, setLocationVisible] = useState(true);
   const [messages, setMessages] = useState(true);
   const [promotions, setPromotions] = useState(true);
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [payment, setPayment] = useState("Cartão final 4821");
-  const [language, setLanguage] = useState("Português");
+  const [twoFactor, setTwoFactor] = useState(stored.twoFactor);
+  const [payment, setPayment] = useState(stored.payment);
+  const [language, setLanguage] = useState(stored.language);
+  useEffect(() => {
+    if (!setting) return;
+    const next = readDemoSettings(getDemoIdentity().id);
+    setTwoFactor(next.twoFactor);
+    setPayment(next.payment);
+    setLanguage(next.language);
+  }, [setting]);
   if (!setting) return null;
   const title = SETTINGS.find((item) => item.id === setting)?.title ?? "Configurações";
   const save = () => {
+    if (setting === "security") writeDemoSettings({ twoFactor });
+    if (setting === "payments") writeDemoSettings({ payment });
+    if (setting === "language") writeDemoSettings({ language });
+    onSaved();
     toast.success(`${title} atualizado.`);
     onClose();
   };
@@ -290,7 +360,10 @@ function SettingsSheet({ setting, onClose }: { setting: SettingId | null; onClos
             </label>
             <button
               type="button"
-              onClick={() => toast("Histórico de pagamentos disponível no modo demonstração.")}
+              onClick={() => {
+                onClose();
+                nav({ to: "/ride/history" });
+              }}
               className="w-full rounded-xl bg-secondary px-3 py-3 text-left text-sm font-semibold"
             >
               Ver histórico

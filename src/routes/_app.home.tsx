@@ -66,7 +66,7 @@ function Home() {
   const configured = isPublicSupabaseConfigured();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const pendingRequests = useDemoPendingRequests();
+  const pendingRequests = useDemoPendingRequests(user?.id);
   const pendingRequestCount = isDemoMode() ? pendingRequests.length : 0;
   const demoProfile = useDemoOwnProfile();
 

@@ -5,10 +5,17 @@ import { StatusBar } from "@/components/phone-frame";
 import { Users, Calendar, Building2, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currentUser, places, people as mockPeople } from "@/lib/mock-data";
+import {
+  CatalogKind,
+  listCatalogByKind,
+  mergeCatalogPlaces,
+  subscribeLocalCatalog,
+} from "@/lib/catalog/local-catalog";
 import { usePresence } from "@/providers/presence/presence-provider";
 import { formatPersonDistance } from "@/lib/proximity";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { useDiscovery } from "@/hooks/api/use-discovery";
+import { getDiscoverItemNavigation } from "@/lib/discovery/discover-navigation";
 import type { NearbyProfile } from "@/types/phase-13b";
 
 const searchSchema = z.object({
@@ -38,6 +45,8 @@ function DiscoverPage() {
   const search = Route.useSearch();
   const [activeFilter, setActiveFilter] = useState<MapFilter>("todos");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [catalogTick, setCatalogTick] = useState(0);
+  useEffect(() => subscribeLocalCatalog(() => setCatalogTick((tick) => tick + 1)), []);
 
   const { checkins, placeUpdates } = usePresence();
   const { people: nearbyProfiles } = useDiscovery();
@@ -63,6 +72,11 @@ function DiscoverPage() {
       setSelectedItem(null);
     }
   }, [search.filter]);
+
+  const nearbyPlaces = useMemo(() => {
+    void catalogTick;
+    return mergeCatalogPlaces(places);
+  }, [catalogTick]);
 
   const mapItems = useMemo(() => {
     const items: Array<{
@@ -127,7 +141,7 @@ function DiscoverPage() {
     }
 
     if (activeFilter === "todos" || activeFilter === "locais") {
-      places.slice(0, 6).forEach((p) => {
+      nearbyPlaces.slice(0, 6).forEach((p) => {
         const update = placeUpdates.find((u) => u.placeId === p.id);
         items.push({
           id: p.id,
@@ -149,7 +163,20 @@ function DiscoverPage() {
     }
 
     if (activeFilter === "todos" || activeFilter === "negocios") {
-      places.slice(0, 6).forEach((p) => {
+      listCatalogByKind(CatalogKind.BUSINESS).forEach((business) => {
+        items.push({
+          id: business.id,
+          name: business.name,
+          type: "negocios",
+          distanceMeters: 0,
+          distanceLabel: "perto",
+          icon: "🏪",
+          color: "bg-amber-100 border-amber-200",
+          subtitle: business.category,
+          targetId: business.id,
+        });
+      });
+      nearbyPlaces.slice(0, 6).forEach((p) => {
         const update = placeUpdates.find((u) => u.placeId === p.id);
         items.push({
           id: `biz-${p.id}`,
@@ -171,7 +198,20 @@ function DiscoverPage() {
     }
 
     if (activeFilter === "todos" || activeFilter === "eventos") {
-      places
+      listCatalogByKind(CatalogKind.EVENT).forEach((event) => {
+        items.push({
+          id: event.id,
+          name: event.title,
+          type: "eventos",
+          distanceMeters: 0,
+          distanceLabel: "perto",
+          icon: "🎉",
+          color: "bg-pink-100 border-pink-200",
+          subtitle: event.location,
+          targetId: event.id,
+        });
+      });
+      nearbyPlaces
         .filter((p) => p.category === "Eventos")
         .forEach((p) => {
           items.push({
@@ -186,12 +226,13 @@ function DiscoverPage() {
             icon: "🎉",
             color: "bg-pink-100 border-pink-200",
             subtitle: p.hours,
+            targetId: p.id,
           });
         });
     }
 
     return items.sort((a, b) => a.distanceMeters - b.distanceMeters);
-  }, [activeFilter, placeUpdates, presencePeople, nearbyProfiles]);
+  }, [activeFilter, nearbyPlaces, placeUpdates, presencePeople, nearbyProfiles]);
 
   return (
     <div className="flex-1">
@@ -315,18 +356,9 @@ function DiscoverPage() {
               key={item.id}
               type="button"
               onClick={() => {
-                if (item.type === "pessoas") {
-                  if (item.targetId) {
-                    navigate({ to: "/perfil/$id", params: { id: item.targetId } });
-                  }
-                } else if (item.type === "locais") {
-                  navigate({ to: "/local/$id", params: { id: item.id } });
-                } else if (item.type === "negocios") {
-                  navigate({
-                    to: "/local/$id",
-                    params: { id: item.id.replace(/^biz-/, "") },
-                  });
-                }
+                const target = getDiscoverItemNavigation(item);
+                if (!target) return;
+                navigate(target);
               }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border hover:bg-accent/50 transition-colors text-left"
             >

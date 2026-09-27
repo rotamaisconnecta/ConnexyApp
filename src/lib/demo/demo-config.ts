@@ -17,6 +17,9 @@
  */
 export const DEMO_STORAGE_PREFIX = "connexy:demo:";
 
+/** Evento window disparado quando o estado demo (incl. chat local) muda. */
+export const DEMO_DB_EVENT = "connexy:demo:db";
+
 export const DEMO_MODE_ENABLED =
   import.meta.env.DEV && import.meta.env.VITE_APP_DEMO_MODE === "true";
 

@@ -10,10 +10,21 @@ import { ConnectionsService } from "@/services/connections.service";
 import { UserRepository } from "@/repositories/user.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
-import { connectUser, declineRequest, hasPendingRequest, sendRequest } from "@/lib/demo/demo-db";
-import { useDemoIsConnected } from "@/lib/demo/use-demo-db";
+import { isRemoteSocialEnabled } from "@/lib/social/schema-a-social-flag";
+import { canRemoteSocialTarget, getSchemaASocial } from "@/lib/social/schema-a-social";
+import {
+  acceptRequest,
+  declineRequest,
+  getConnectionBetween,
+  sendRequest,
+} from "@/lib/demo/demo-db";
+import {
+  useDemoIsConnected,
+  useDemoOutgoingRequest,
+  useDemoPendingRequests,
+} from "@/lib/demo/use-demo-db";
 import type { ProfileRow } from "@/types/database/tables";
-import { people } from "@/lib/mock-data";
+import { currentUser, people } from "@/lib/mock-data";
 import { enginePersonById } from "@/lib/engine/engine-detail";
 import { formatPersonDistance } from "@/lib/proximity";
 
@@ -52,7 +63,11 @@ function Solicitacao() {
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
   const demo = isDemoMode();
-  const demoConnected = useDemoIsConnected(id);
+  const remote = isRemoteSocialEnabled();
+  const demoConnected = useDemoIsConnected(id, user?.id);
+  const outgoingRequest = useDemoOutgoingRequest(user?.id, id);
+  const incomingRequests = useDemoPendingRequests(user?.id);
+  const incomingRequest = incomingRequests.find((request) => request.fromUserId === id) ?? null;
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -66,11 +81,78 @@ function Solicitacao() {
   }, [demo, demoConnected]);
 
   useEffect(() => {
+    if (!canRemoteSocialTarget(id)) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const social = getSchemaASocial();
+        if (await social.isConnected(id)) {
+          if (!cancelled) setStatus("connected");
+          return;
+        }
+        if (mode === "receive") {
+          const incoming = await social.incomingPendingFrom(id);
+          if (cancelled) return;
+          setPendingRequestId(incoming?.id ?? null);
+          setStatus(incoming ? "receive" : "send");
+          return;
+        }
+        const outgoing = await social.outgoingPendingTo(id);
+        if (cancelled) return;
+        setStatus(outgoing ? "sent" : "send");
+      } catch {
+        if (!cancelled) setStatus(mode === "receive" ? "receive" : "send");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, mode, remote]);
+
+  useEffect(() => {
+    if (remote) {
+      const nearbyPerson = people.find((person) => person.id === id);
+      const mockPerson = nearbyPerson ?? enginePersonById(id) ?? null;
+      if (mockPerson) {
+        setProfile({
+          name: mockPerson.name,
+          photo_url: mockPerson.photo,
+          headline: mockPerson.headline ?? null,
+          interests: mockPerson.interests,
+          age: nearbyPerson?.age ?? null,
+          distanceMeters: nearbyPerson?.distanceMeters ?? null,
+        });
+      } else {
+        setProfile({
+          name: "Pessoa",
+          photo_url: null,
+          headline: null,
+          interests: [],
+          age: null,
+          distanceMeters: null,
+        });
+      }
+      setInvitationMessage("");
+      setIsLoadingProfile(false);
+      return;
+    }
     if (!configured) {
       const nearbyPerson = people.find((person) => person.id === id);
-      const mockPerson = nearbyPerson ?? enginePersonById(id);
+      const identityPerson =
+        id === currentUser.id
+          ? {
+              id: currentUser.id,
+              name: currentUser.name,
+              photo: currentUser.photo,
+              headline: currentUser.bio,
+              interests: currentUser.interests,
+              age: null,
+              distanceMeters: 0,
+            }
+          : null;
+      const mockPerson = nearbyPerson ?? enginePersonById(id) ?? identityPerson;
       if (mockPerson) {
-        const pendingRequest = demo ? hasPendingRequest(id) : null;
+        const pendingRequest = demo && mode === "receive" ? incomingRequest : outgoingRequest;
         setProfile({
           name: mockPerson.name,
           photo_url: mockPerson.photo,
@@ -85,9 +167,9 @@ function Solicitacao() {
         setStatus(
           demo && demoConnected
             ? "connected"
-            : mode === "receive"
+            : mode === "receive" && incomingRequest
               ? "receive"
-              : demo && hasPendingRequest(id)
+              : demo && outgoingRequest
                 ? "sent"
                 : "send",
         );
@@ -148,7 +230,17 @@ function Solicitacao() {
     return () => {
       cancelled = true;
     };
-  }, [configured, demo, demoConnected, id, mode, user?.id]);
+  }, [
+    configured,
+    demo,
+    demoConnected,
+    id,
+    incomingRequest,
+    mode,
+    outgoingRequest,
+    remote,
+    user?.id,
+  ]);
 
   function goBack() {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -161,15 +253,35 @@ function Solicitacao() {
   async function sendInvite() {
     if (actionLoading) return;
     const message = invitationMessage.trim();
-    if (!message) {
-      toast.error("Escreva uma mensagem antes de enviar.");
+    setActionLoading(true);
+    if (remote) {
+      try {
+        if (!canRemoteSocialTarget(id)) {
+          throw new Error("Este perfil demo não entra no grafo Social remoto.");
+        }
+        await getSchemaASocial().sendRequest(id);
+        setStatus("sent");
+        toast.success(`Solicitação enviada para ${profile?.name ?? "essa pessoa"}`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível enviar o convite.");
+      }
+      setActionLoading(false);
       return;
     }
-    setActionLoading(true);
     if (demo) {
-      sendRequest(id, message);
-      setStatus("sent");
-      toast.success(`Solicitação enviada para ${profile?.name ?? "essa pessoa"}`);
+      if (!message) {
+        toast.error("Escreva uma mensagem antes de enviar.");
+        setActionLoading(false);
+        return;
+      }
+      try {
+        if (!user?.id) throw new Error("Identidade local indisponível.");
+        sendRequest(user.id, id, message);
+        setStatus("sent");
+        toast.success(`Solicitação enviada para ${profile?.name ?? "essa pessoa"}`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível enviar o convite.");
+      }
       setActionLoading(false);
       return;
     }
@@ -191,11 +303,44 @@ function Solicitacao() {
   async function acceptInvite() {
     if (actionLoading) return;
     setActionLoading(true);
+    if (remote) {
+      try {
+        if (!canRemoteSocialTarget(id)) {
+          throw new Error("Este perfil demo não entra no grafo Social remoto.");
+        }
+        const incoming = pendingRequestId ?? (await getSchemaASocial().incomingPendingFrom(id))?.id;
+        if (!incoming) {
+          toast.error("Nenhuma solicitação pendente encontrada");
+          return;
+        }
+        const accepted = await getSchemaASocial().acceptRequest(incoming);
+        if (accepted.connection.conversationId) {
+          throw new Error("Connection remota não deve criar conversa.");
+        }
+        setStatus("connected");
+        toast.success(`${profile?.name ?? "Essa pessoa"} agora faz parte das suas conexões.`);
+        nav({ to: "/perfil/$id", params: { id } });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível aceitar o convite.");
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
     if (demo) {
-      connectUser(id);
-      toast.success(`${profile?.name ?? "Essa pessoa"} agora está nas suas conversas.`);
-      nav({ to: "/chat/$conversationId", params: { conversationId: id } });
-      setActionLoading(false);
+      try {
+        if (!user?.id) throw new Error("Identidade local indisponível.");
+        const connection = await acceptRequest(id, user.id);
+        toast.success(`${profile?.name ?? "Essa pessoa"} agora está nas suas conversas.`);
+        nav({
+          to: "/chat/$conversationId",
+          params: { conversationId: connection.conversationId },
+        });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível aceitar o convite.");
+      } finally {
+        setActionLoading(false);
+      }
       return;
     }
     if (!configured) {
@@ -228,10 +373,32 @@ function Solicitacao() {
   async function declineInvite() {
     if (actionLoading) return;
     setActionLoading(true);
+    if (remote) {
+      try {
+        if (!canRemoteSocialTarget(id)) {
+          throw new Error("Este perfil demo não entra no grafo Social remoto.");
+        }
+        const incoming = pendingRequestId ?? (await getSchemaASocial().incomingPendingFrom(id))?.id;
+        if (!incoming) {
+          toast.error("Nenhuma solicitação pendente encontrada");
+          return;
+        }
+        await getSchemaASocial().declineRequest(incoming);
+        toast.success("Solicitação recusada.");
+        goBack();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível recusar o convite.");
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
     if (demo) {
-      declineRequest(id);
-      toast.success("Solicitação recusada.");
-      goBack();
+      if (user?.id) {
+        declineRequest(id, user.id);
+        toast.success("Solicitação recusada.");
+        goBack();
+      }
       setActionLoading(false);
       return;
     }
@@ -259,8 +426,13 @@ function Solicitacao() {
   }
 
   async function openConversation() {
+    if (remote) {
+      nav({ to: "/perfil/$id", params: { id } });
+      return;
+    }
     if (demo) {
-      nav({ to: "/chat/$conversationId", params: { conversationId: id } });
+      const conversationId = user?.id ? getConnectionBetween(user.id, id)?.conversationId : null;
+      nav({ to: "/chat/$conversationId", params: { conversationId: conversationId ?? id } });
       return;
     }
     try {
@@ -308,19 +480,31 @@ function Solicitacao() {
     profile.distanceMeters != null ? formatPersonDistance(profile.distanceMeters) : "Perto de você";
 
   const title = connected
-    ? "Vocês já podem conversar"
+    ? remote
+      ? "Vocês estão conectados"
+      : "Vocês já podem conversar"
     : sent
       ? "Solicitação enviada"
       : receive
-        ? `${firstName} quer conversar com você`
-        : "Começar uma conversa?";
+        ? remote
+          ? `${firstName} quer se conectar com você`
+          : `${firstName} quer conversar com você`
+        : remote
+          ? "Começar uma conexão?"
+          : "Começar uma conversa?";
 
   const support = connected
-    ? `${firstName} já está disponível na sua tela de conversas.`
+    ? remote
+      ? "A conexão foi salva. Nenhuma conversa foi criada automaticamente."
+      : `${firstName} já está disponível na sua tela de conversas.`
     : sent
-      ? `${firstName} poderá aceitar ou recusar o seu convite.`
+      ? remote
+        ? `${firstName} poderá aceitar ou recusar. Aceitar cria só a conexão.`
+        : `${firstName} poderá aceitar ou recusar o seu convite.`
       : receive
-        ? "Leia a mensagem e decida se deseja iniciar essa conexão."
+        ? remote
+          ? "Aceitar cria uma Connection. Nenhuma conversa é aberta automaticamente."
+          : "Leia a mensagem e decida se deseja iniciar essa conexão."
         : `${firstName} poderá aceitar ou recusar seu convite.`;
 
   return (
@@ -383,6 +567,7 @@ function Solicitacao() {
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
           {!connected &&
             !sent &&
+            !remote &&
             (receive ? (
               <div className="rounded-2xl bg-primary/[0.08] px-4 py-3 text-left text-sm leading-relaxed text-primary">
                 <span className="mr-2 text-xl font-bold" aria-hidden>
@@ -423,7 +608,9 @@ function Solicitacao() {
               </span>
               <p className="mt-3 text-sm font-semibold text-primary">Aguardando resposta</p>
               <p className="mt-1 text-xs text-gray-500">
-                A conversa só será criada se {firstName} aceitar.
+                {remote
+                  ? `Aceitar cria só a conexão. Nenhuma conversa será aberta.`
+                  : `A conversa só será criada se ${firstName} aceitar.`}
               </p>
             </div>
           )}
@@ -435,7 +622,9 @@ function Solicitacao() {
               </span>
               <p className="mt-3 text-sm font-semibold text-emerald-700">Conexão aceita</p>
               <p className="mt-1 text-xs text-emerald-700/70">
-                Vocês agora podem trocar mensagens.
+                {remote
+                  ? "Nenhuma conversa foi criada automaticamente."
+                  : "Vocês agora podem trocar mensagens."}
               </p>
             </div>
           )}
@@ -448,7 +637,7 @@ function Solicitacao() {
               onClick={openConversation}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-brand text-sm font-semibold text-white shadow-elegant"
             >
-              <MessageCircle className="h-4 w-4" /> Conversar agora
+              <MessageCircle className="h-4 w-4" /> {remote ? "Ver perfil" : "Conversar agora"}
             </button>
           ) : sent ? (
             <button
@@ -471,7 +660,7 @@ function Solicitacao() {
                 ) : (
                   <Check className="h-4 w-4" />
                 )}
-                Aceitar e conversar
+                {remote ? "Aceitar conexão" : "Aceitar e conversar"}
               </button>
               <button
                 type="button"

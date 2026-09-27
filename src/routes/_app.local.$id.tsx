@@ -3,6 +3,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { places } from "@/lib/mock-data";
 import { enginePlaceById } from "@/lib/engine/engine-detail";
+import { mergeCatalogPlaces } from "@/lib/catalog/local-catalog";
 import { formatDistance } from "@/lib/proximity";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
@@ -13,9 +14,11 @@ import {
 } from "@/components/marketplace/local-engagement";
 import { PlaceStatusMeta } from "@/lib/integration/integration-types";
 import { usePresence } from "@/providers/presence/presence-provider";
-import { Star, Users, MapPinned, CarFront } from "lucide-react";
+import { CalendarDays, Star, Users, MapPinned, CarFront } from "lucide-react";
+import { isPlaceReservable } from "@/lib/reservations/reservable";
 
 export const Route = createFileRoute("/_app/local/$id")({
+  ssr: false,
   head: ({ loaderData }: { loaderData?: { name: string; cover: string } }) => ({
     meta: [
       {
@@ -30,7 +33,9 @@ export const Route = createFileRoute("/_app/local/$id")({
     ],
   }),
   loader: ({ params }) => {
-    const p = places.find((x) => x.id === params.id) ?? enginePlaceById(params.id);
+    const p =
+      mergeCatalogPlaces(places).find((item) => item.id === params.id) ??
+      enginePlaceById(params.id);
     if (!p) throw notFound();
     return p;
   },
@@ -136,6 +141,16 @@ function LocalDetail() {
       </div>
 
       <div className="p-5 space-y-3">
+        {isPlaceReservable(p) && (
+          <Link
+            to="/reserva/$resourceId"
+            params={{ resourceId: p.id }}
+            search={{ type: "place" }}
+            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary py-3.5 text-sm font-semibold text-primary transition hover:bg-primary/5 active:scale-[0.98]"
+          >
+            <CalendarDays className="h-4 w-4" /> Reservar
+          </Link>
+        )}
         <Link
           to="/ride/request"
           search={{

@@ -10,7 +10,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { CATEGORY_INFO, DEMO_DESTINATIONS, PICKUP_CHIPS, STOP_SUGGESTIONS } from "./ride-data";
+import { CATEGORY_INFO, DEMO_DESTINATIONS, PICKUP_CHIPS } from "./ride-data";
 import { ListRow, RideSheet, RIDE_MUTED, RIDE_LILAC, RIDE_PURPLE, PrimaryCTA } from "./ride-sheet";
 import { RIDE_CATEGORIES } from "@/lib/mobility/demo-fare";
 import type { RideCategory } from "@/lib/mobility/demo-fare";
@@ -170,7 +170,6 @@ export function RouteEditorPanel({
   destination,
   stops,
   onAddStop,
-  onAddSuggestion,
   onRemoveStop,
   onEditStop,
   onMoveStops,
@@ -182,7 +181,6 @@ export function RouteEditorPanel({
   destination: GeoLocation;
   stops: RouteStop[];
   onAddStop: () => void;
-  onAddSuggestion: (label: string, address: string) => void;
   onRemoveStop: (id: string) => void;
   onEditStop: (id: string, label: string) => void;
   onMoveStops: (next: RouteStop[]) => void;
@@ -292,18 +290,6 @@ export function RouteEditorPanel({
               <Plus className="h-4 w-4" />
               Adicionar parada
             </button>
-            <div className="mt-2.5 flex flex-wrap gap-1.5 pb-1">
-              {STOP_SUGGESTIONS.slice(0, 3 - stops.length).map((suggestion) => (
-                <button
-                  key={suggestion.label}
-                  type="button"
-                  onClick={() => onAddSuggestion(suggestion.label, suggestion.address)}
-                  className="h-8 rounded-full border border-zinc-200 px-3 text-[11px] font-semibold text-zinc-600 transition-colors hover:bg-zinc-50"
-                >
-                  + {suggestion.label}
-                </button>
-              ))}
-            </div>
           </div>
         )}
       </div>

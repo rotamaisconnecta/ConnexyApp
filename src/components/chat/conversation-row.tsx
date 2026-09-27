@@ -41,6 +41,8 @@ export function ConversationRow({ conversation, onGesture, onMenu }: Conversatio
   return (
     <motion.article
       variants={item}
+      data-conversation-id={conversation.id}
+      data-participant-id={participant.id}
       className="group relative flex items-center gap-3 rounded-2xl px-5 py-3 transition-colors hover:bg-accent/40 active:bg-accent"
     >
       <Link

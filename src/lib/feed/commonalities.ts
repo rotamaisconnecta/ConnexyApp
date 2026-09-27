@@ -6,10 +6,8 @@
 ========================================================= */
 
 import { currentUser, findPlace, type Person, type Place } from "@/lib/mock-data";
-import {
-  getConversationId,
-  getConversationInviteStatus,
-} from "@/lib/chat/mock-conversation-invites";
+import { getOutgoingPendingRequest, isConnected } from "@/lib/demo/demo-db";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
 
 /* ─── Afinidades ───────────────────────────────────────── */
 
@@ -69,7 +67,7 @@ export function getCommonalities(person: Person): PersonCommonalities {
     }
   }
 
-  if (getConversationId(person.id) != null) {
+  if (isConnected(person.id)) {
     items.push({ label: "Conexão ativa", group: "connections" });
   }
 
@@ -98,10 +96,10 @@ function readStringSet(key: string): Set<string> {
 }
 
 export function shouldShowNearbyPerson(personId: string): boolean {
-  if (personId === currentUser.id) return false;
-  if (getConversationId(personId) != null) return false;
-  const status = getConversationInviteStatus(personId);
-  if (status === "connected" || status === "invited") return false;
+  const identityId = getDemoIdentity().id;
+  if (personId === identityId) return false;
+  if (isConnected(personId, identityId)) return false;
+  if (getOutgoingPendingRequest(identityId, personId)) return false;
   if (readStringSet(BLOCKED_STORAGE_KEY).has(personId)) return false;
   if (readStringSet(HIDDEN_STORAGE_KEY).has(personId)) return false;
   return true;

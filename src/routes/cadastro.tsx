@@ -4,7 +4,12 @@ import { PhoneFrame, StatusBar } from "@/components/phone-frame";
 import { Camera } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
 import { isDemoMode } from "@/lib/demo/demo-config";
-import { startDemoSignup, clearDemoSignup, isDemoAuthenticated } from "@/lib/demo/demo-auth";
+import {
+  startDemoSignup,
+  clearDemoSignup,
+  enterDemoSession,
+  isDemoAuthenticated,
+} from "@/lib/demo/demo-auth";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({ meta: [{ title: "Criar conta — Connexy" }] }),
@@ -52,7 +57,10 @@ function Signup() {
         <div className="mt-auto pt-6 pb-6 space-y-3">
           <button
             onClick={() => {
-              if (isDemoMode()) startDemoSignup();
+              if (isDemoMode()) {
+                enterDemoSession();
+                startDemoSignup();
+              }
               nav({ to: "/completar-perfil" });
             }}
             className="w-full rounded-full bg-gradient-brand py-4 text-white font-semibold shadow-elegant"

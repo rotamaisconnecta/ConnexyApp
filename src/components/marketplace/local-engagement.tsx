@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import {
   Bookmark,
-  CarFront,
   Check,
   Copy,
   MapPin,
@@ -18,6 +16,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { people, type Person } from "@/lib/mock-data";
 import { estimateRouteDistance } from "@/lib/mobility/route-utils";
+import { isDetailSaved, toggleSavedDetail } from "@/lib/marketplace/saved-details";
+import {
+  OutingInviteStatus,
+  getOutingRideSearch,
+  isOutingRideAvailable,
+  listOutgoingOutingInvites,
+  sendOutingInvite,
+  useOutingInviteVersion,
+} from "@/lib/marketplace/outing-invites";
+import { useNavigate } from "@tanstack/react-router";
+import { useDemoIdentity } from "@/lib/demo/demo-identity";
 
 type LocalReview = {
   id: string;
@@ -35,10 +44,8 @@ type RedeemedPromotion = {
   redeemedAt: number;
 };
 
-const SAVED_KEY = "connexy:demo:saved-details";
 const REVIEWS_KEY_PREFIX = "connexy:demo:recent-reviews:";
 const PROMOTIONS_KEY = "connexy:demo:redeemed-promotions";
-const OUTING_INVITES_KEY = "connexy:demo:outing-invites";
 
 type OutingTarget = {
   id: string;
@@ -155,35 +162,33 @@ function writeJson<T>(key: string, value: T): void {
   }
 }
 
-function savedDetailIds(): string[] {
-  const value = readJson<unknown>(SAVED_KEY, []);
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
 export function DetailActionBar({
   targetId,
   title,
   phone,
   outing,
+  saved: savedProp,
+  onToggleSaved,
 }: {
   targetId: string;
   title: string;
   phone?: string;
   outing?: OutingTarget;
+  saved?: boolean;
+  onToggleSaved?: () => void;
 }) {
-  const [saved, setSaved] = useState(() => savedDetailIds().includes(targetId));
+  const [savedInternal, setSavedInternal] = useState(() => isDetailSaved(targetId));
   const [inviteOpen, setInviteOpen] = useState(false);
+  const saved = savedProp ?? savedInternal;
 
   const toggleSaved = () => {
-    const current = savedDetailIds();
-    const next = current.includes(targetId)
-      ? current.filter((id) => id !== targetId)
-      : [...current, targetId];
-    writeJson(SAVED_KEY, next);
-    setSaved(next.includes(targetId));
-    toast.success(next.includes(targetId) ? "Salvo nos seus itens." : "Removido dos itens salvos.");
+    if (onToggleSaved) {
+      onToggleSaved();
+      return;
+    }
+    const nextSaved = toggleSavedDetail(targetId);
+    setSavedInternal(nextSaved);
+    toast.success(nextSaved ? "Salvo nos seus itens." : "Removido dos itens salvos.");
   };
 
   const share = async () => {
@@ -224,7 +229,12 @@ export function DetailActionBar({
         />
         <ActionButton icon={Share2} label="Compartilhar" onClick={() => void share()} />
         {outing && (
-          <ActionButton icon={UsersRound} label="Ir juntos" onClick={() => setInviteOpen(true)} />
+          <ActionButton
+            icon={UsersRound}
+            label="Ir juntos"
+            dataOutingOpen
+            onClick={() => setInviteOpen(true)}
+          />
         )}
       </div>
       {outing && (
@@ -248,10 +258,23 @@ function InviteTogetherSheet({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const identity = useDemoIdentity();
+  const outingVersion = useOutingInviteVersion();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [message, setMessage] = useState(`Vamos juntos para ${target.title}?`);
-  const [accepted, setAccepted] = useState<CompanionStop[]>([]);
-  const candidates = people.slice(0, 7);
+  const candidates = people.filter((person) => person.id !== identity.id).slice(0, 7);
+  const outgoing = listOutgoingOutingInvites(identity.id, target.id);
+  void outingVersion;
+  const rideAvailable = isOutingRideAvailable(identity.id, target.id);
+  const allDeclined =
+    outgoing.length > 0 &&
+    outgoing.every((invite) => invite.status === OutingInviteStatus.DECLINED);
+  const showStatus = outgoing.length > 0;
+  const previewStops = outgoing
+    .map((invite) => people.find((person) => person.id === invite.personId))
+    .filter((person): person is Person => person != null)
+    .map(companionStopFor);
+  const orderedRoute = previewStops.length > 0 ? orderCompanionsByRoute(previewStops) : [];
 
   if (!open) return null;
 
@@ -266,36 +289,40 @@ function InviteTogetherSheet({
     });
   };
 
-  const buildCompanions = (): CompanionStop[] =>
-    people.filter((person) => selectedIds.includes(person.id)).map(companionStopFor);
-
   const sendInvite = () => {
     if (selectedIds.length === 0) {
       toast.error("Escolha ao menos uma pessoa para convidar.");
       return;
     }
-    const companions = buildCompanions();
-    const current = readJson<Array<Record<string, unknown>>>(OUTING_INVITES_KEY, []);
-    writeJson(OUTING_INVITES_KEY, [
-      ...companions.map((companion) => ({
-        id: `outing-${Date.now()}-${companion.id}`,
-        targetId: target.id,
-        personId: companion.id,
+    const companions = people
+      .filter((person) => selectedIds.includes(person.id) && person.id !== identity.id)
+      .map(companionStopFor);
+    if (companions.length === 0) {
+      toast.error("Escolha ao menos uma pessoa para convidar.");
+      return;
+    }
+    for (const companion of companions) {
+      sendOutingInvite({
+        fromUserId: identity.id,
+        toUserId: companion.id,
+        target,
         message: message.trim(),
-        status: "pending",
-        createdAt: Date.now(),
-      })),
-      ...current,
-    ]);
+        stop: { address: companion.address, lat: companion.lat, lng: companion.lng },
+      });
+    }
     toast.success(
       companions.length === 1
         ? `Convite enviado para ${companions[0].name.split(" ")[0]}.`
         : `${companions.length} convites enviados.`,
     );
-    setAccepted(companions);
   };
 
-  const orderedRoute = accepted.length > 0 ? orderCompanionsByRoute(accepted) : [];
+  const openRide = () => {
+    const search = getOutingRideSearch(identity.id, target.id);
+    if (!search) return;
+    navigate({ to: "/ride/request", search });
+    onClose();
+  };
 
   return (
     <div
@@ -320,7 +347,7 @@ function InviteTogetherSheet({
             <X className="h-4 w-4" />
           </button>
         </div>
-        {accepted.length === 0 ? (
+        {!showStatus ? (
           <>
             <label className="mt-5 block text-xs font-semibold">
               Quem você quer convidar?{" "}
@@ -337,6 +364,7 @@ function InviteTogetherSheet({
                   <li key={person.id}>
                     <button
                       type="button"
+                      data-outing-person={person.id}
                       onClick={() => togglePerson(person.id)}
                       disabled={readsOnly}
                       aria-pressed={selected}
@@ -387,6 +415,7 @@ function InviteTogetherSheet({
 
             <button
               type="button"
+              data-outing-send="true"
               onClick={sendInvite}
               disabled={selectedIds.length === 0}
               className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant disabled:cursor-not-allowed disabled:opacity-50"
@@ -399,27 +428,50 @@ function InviteTogetherSheet({
             <div className="rounded-2xl bg-primary/10 p-4">
               <div className="flex items-center gap-2 text-sm font-bold text-primary">
                 <Check className="h-4 w-4" />
-                Convites enviados — aguardando respostas
+                {rideAvailable
+                  ? "Convite aceito"
+                  : allDeclined
+                    ? "Convite recusado"
+                    : "Convite enviado"}
               </div>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                Cada pessoa decide individualmente. A rota usará apenas os amigos que aceitarem.
+                {rideAvailable
+                  ? "A corrida já pode continuar com o fluxo de viagem do Connexy."
+                  : allDeclined
+                    ? "Nenhuma corrida foi liberada para este convite."
+                    : "Aguardando resposta. A corrida só fica disponível depois do aceite."}
               </p>
             </div>
 
             <ul className="rounded-2xl border border-border bg-surface p-3 text-xs">
-              {accepted.map((companion) => (
-                <li key={companion.id} className="flex items-center justify-between py-1.5">
-                  <span className="font-medium">{companion.name}</span>
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                    Pendente
-                  </span>
-                </li>
-              ))}
+              {outgoing.map((invite) => {
+                const person = people.find((item) => item.id === invite.personId);
+                const label =
+                  invite.status === OutingInviteStatus.ACCEPTED
+                    ? "Aceito"
+                    : invite.status === OutingInviteStatus.DECLINED
+                      ? "Recusado"
+                      : "Pendente";
+                const tone =
+                  invite.status === OutingInviteStatus.ACCEPTED
+                    ? "bg-success/15 text-success"
+                    : invite.status === OutingInviteStatus.DECLINED
+                      ? "bg-secondary text-muted-foreground"
+                      : "bg-amber-100 text-amber-800";
+                return (
+                  <li key={invite.id} className="flex items-center justify-between py-1.5">
+                    <span className="font-medium">{person?.name ?? invite.personId}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>
+                      {label}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="rounded-2xl bg-secondary/60 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Rota planejada
+                Prévia da rota após os aceites
               </p>
               <ul className="mt-2 space-y-1.5 text-xs">
                 <li className="flex items-center gap-2">
@@ -440,27 +492,32 @@ function InviteTogetherSheet({
               </ul>
             </div>
 
-            <button
-              type="button"
-              disabled
-              onClick={() =>
-                navigate({
-                  to: "/ride/request",
-                  search: {
-                    destinationId: target.id,
-                    destinationName: target.title,
-                    destinationAddress: target.address ?? null,
-                    destinationLat: target.latitude ?? null,
-                    destinationLng: target.longitude ?? null,
-                    companions: JSON.stringify([]),
-                    source: "invite",
-                  },
-                })
-              }
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <CarFront className="h-4 w-4" /> Aguardando aceites
-            </button>
+            {rideAvailable ? (
+              <button
+                type="button"
+                data-outing-ride-cta="available"
+                onClick={openRide}
+                className="flex h-11 w-full items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+              >
+                Corrida disponível
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-outing-ride-cta="waiting"
+                onClick={onClose}
+                className="flex h-11 w-full items-center justify-center rounded-full border-2 border-border text-sm font-bold transition hover:bg-secondary"
+              >
+                {allDeclined ? "Convite recusado" : "Convite enviado"}
+              </button>
+            )}
+            <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+              {rideAvailable
+                ? "A corrida usa o fluxo de viagem já existente."
+                : allDeclined
+                  ? "A corrida não fica disponível depois da recusa."
+                  : "Aguardando resposta. A corrida só fica disponível depois do aceite."}
+            </p>
           </div>
         )}
       </div>
@@ -473,15 +530,18 @@ function ActionButton({
   label,
   active = false,
   onClick,
+  dataOutingOpen = false,
 }: {
   icon: LucideIcon;
   label: string;
   active?: boolean;
   onClick: () => void;
+  dataOutingOpen?: boolean;
 }) {
   return (
     <button
       type="button"
+      data-outing-open={dataOutingOpen ? "true" : undefined}
       onClick={onClick}
       className={cn(
         "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl bg-secondary px-2 py-2 text-[10px] font-semibold transition active:scale-[0.97]",

@@ -138,7 +138,7 @@ export function createReelMarkerData(
     id: reel.reelId,
     lat: reel.locationLat,
     lng: reel.locationLng,
-    title: `${reel.authorName} • Reel`,
+    title: `${reel.authorName} • Agora`,
     subtitle: reel.locationName ?? reel.category,
     distanceMeters: haversineDistance(userLat, userLng, reel.locationLat, reel.locationLng),
   };
@@ -155,7 +155,7 @@ export function generateReelFeedText(reel: ReelIntegrationData): { text: string;
   }
 
   return {
-    text: `${reel.authorName} postou um reel${locationSuffix}`,
+    text: `${reel.authorName} publicou no Agora${locationSuffix}`,
     emoji: "🎬",
   };
 }
@@ -173,7 +173,7 @@ export function generateReelNotification(
   if (isFollowing) {
     return {
       title: `🎬 ${reel.authorName}`,
-      body: `postou um novo reel${reel.locationName ? ` em ${reel.locationName}` : ""}`,
+      body: `publicou no Agora${reel.locationName ? ` em ${reel.locationName}` : ""}`,
       priority: "MEDIUM",
     };
   }
@@ -182,8 +182,8 @@ export function generateReelNotification(
     const distance = haversineDistance(userLat, userLng, reel.locationLat, reel.locationLng);
     if (distance < 2000) {
       return {
-        title: `📍 Reel próximo`,
-        body: `Reel de ${reel.authorName} em ${reel.locationName ?? "localização próxima"}`,
+        title: `📍 Agora por perto`,
+        body: `Agora de ${reel.authorName} em ${reel.locationName ?? "localização próxima"}`,
         priority: "LOW",
       };
     }

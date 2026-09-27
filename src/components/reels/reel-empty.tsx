@@ -14,10 +14,10 @@ export function ReelEmpty({ message, onCreate }: ReelEmptyProps) {
       </div>
       <div className="text-center">
         <p className="text-base font-display font-semibold text-foreground">
-          {message ?? "Nenhum reel disponível"}
+          {message ?? "Nada no Agora"}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Volta mais tarde ou cria o teu próprio reel.
+          Volta mais tarde ou publica o teu momento no Agora.
         </p>
       </div>
       {onCreate && (
@@ -29,7 +29,7 @@ export function ReelEmpty({ message, onCreate }: ReelEmptyProps) {
           )}
         >
           <Plus className="h-4 w-4" />
-          Criar reel
+          Criar no Agora
         </button>
       )}
     </div>

@@ -259,7 +259,7 @@ export const LIVE_EVENT_META: Record<
     label: "Momento compartilhado",
     category: "social",
   },
-  [LiveEventType.REEL_CREATED]: { emoji: "▶", label: "Reel publicado", category: "content" },
+  [LiveEventType.REEL_CREATED]: { emoji: "▶", label: "Publicado no Agora", category: "content" },
   [LiveEventType.EVENT_CREATED]: { emoji: "🎉", label: "Evento criado", category: "social" },
   [LiveEventType.PLACE_CREATED]: { emoji: "📍", label: "Local cadastrado", category: "business" },
   [LiveEventType.OFFER_CREATED]: { emoji: "🏷", label: "Oferta publicada", category: "business" },

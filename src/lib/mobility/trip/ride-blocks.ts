@@ -61,14 +61,15 @@ let state: RideBlockState = loadState();
 const listeners = new Set<() => void>();
 
 function persistAndNotify(next: RideBlockState): void {
-  state = next;
   try {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     }
-  } catch {
-    /* fallback silencioso */
+  } catch (error) {
+    console.warn("[mobility] falha ao persistir o bloqueio local.", error);
+    throw new Error("Não foi possível salvar o bloqueio da corrida.");
   }
+  state = next;
   listeners.forEach((listener) => listener());
 }
 

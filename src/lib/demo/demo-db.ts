@@ -1,40 +1,35 @@
-import { demoStorageKey } from "./demo-config";
+import { demoStorageKey, DEMO_DB_EVENT } from "./demo-config";
+import {
+  clearLocalChat,
+  ensureLocalChatLoaded,
+  ensureLocalConversation,
+  getLocalChatMessages,
+  putLocalChatMessage,
+  touchLocalConversation,
+} from "@/lib/chat/local-chat-persistence";
+import type { StoredMessage } from "@/lib/persistence/domain/chat-entities";
+import { currentUser } from "@/lib/mock-data";
+import { getDemoIdentity } from "./demo-identity";
 
 /*
  * Local demo "database" persisted to localStorage under `connexy:demo:`.
  *
  * Holds connections, pending connection requests, direct conversations and
- * messages. Pure state + pub/sub so the UI can refresh live without Supabase
+ * groups. Pure state + pub/sub so the UI can refresh live without Supabase
  * or Realtime. Never mixed with production data.
+ *
+ * Fase 1C-2: MENSAGENS deixaram de ser gravadas neste "banco" de
+ * localStorage. Elas agora são persistidas em IndexedDB (store
+ * `messages`) através de `MessageRepository`, exposto por
+ * `local-chat-persistence`. O array `messages` legado permanece no
+ * blob apenas como dados preservados (migrados de forma idempotente),
+ * sem novos escritos — sem dual-write.
  */
 
-export interface DemoMessage {
-  id: string;
-  conversationId: string;
-  /** conversationId doubles as the peer user id in a direct conversation. */
-  from: "me" | "them";
-  senderId?: string;
-  senderName?: string;
-  text: string;
-  at: number;
-  /** The locally supported subset intentionally excludes audio: recording needs MediaRecorder. */
-  kind?: "text" | "event" | "location" | "image" | "video";
-  payload?: {
-    id?: string;
-    title?: string;
-    cover?: string;
-    location?: string;
-    dateText?: string;
-    proximity?: string;
-    route?: string;
-    routeType?: "event" | "place";
-    dataUrl?: string;
-    mimeType?: string;
-    fileName?: string;
-    width?: number;
-    height?: number;
-  };
-}
+/** Mensagem local usada pela camada demo — formato idêntico ao
+ * `StoredMessage` persistido em IndexedDB (Fase 1C-2). O nome legado
+ * é mantido para não quebrar consumidores existentes. */
+export type DemoMessage = StoredMessage;
 
 export type DemoInvitationStatus = "pending" | "accepted" | "declined" | "cancelled";
 
@@ -56,16 +51,24 @@ export interface DemoGroup {
 }
 
 export interface DemoConnection {
-  /** peer user id */
-  userId: string;
+  userAId: string;
+  userBId: string;
+  conversationId: string;
   connectedAt: number;
 }
 
 export interface DemoRequest {
   id: string;
   fromUserId: string;
+  toUserId: string;
   message: string;
   status: "pending" | "accepted" | "declined";
+  createdAt: number;
+}
+
+export interface DemoFollow {
+  followerId: string;
+  followeeId: string;
   createdAt: number;
 }
 
@@ -74,13 +77,87 @@ type DemoDB = {
   requests: DemoRequest[];
   messages: DemoMessage[];
   groups: DemoGroup[];
+  follows: DemoFollow[];
 };
 
 const DB_KEY = demoStorageKey("db");
 const DUPLICATE_SEND_WINDOW_MS = 1000;
 
+export function demoSocialStorageKey(): string {
+  return DB_KEY;
+}
+
 function defaultDB(): DemoDB {
-  return { connections: [], requests: [], messages: [], groups: [] };
+  return { connections: [], requests: [], messages: [], groups: [], follows: [] };
+}
+
+function directConversationId(userAId: string, userBId: string): string {
+  return `demo-direct-${[userAId, userBId].sort().join("--")}`;
+}
+
+function normalizeConnection(value: unknown): DemoConnection | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.userAId === "string" &&
+    typeof record.userBId === "string" &&
+    typeof record.conversationId === "string" &&
+    typeof record.connectedAt === "number"
+  ) {
+    return record as unknown as DemoConnection;
+  }
+
+  // Legacy records were global and stored only the peer of the default demo user.
+  if (typeof record.userId === "string" && typeof record.connectedAt === "number") {
+    return {
+      userAId: currentUser.id,
+      userBId: record.userId,
+      conversationId: record.userId,
+      connectedAt: record.connectedAt,
+    };
+  }
+  return null;
+}
+
+function normalizeFollow(value: unknown): DemoFollow | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.followerId !== "string" ||
+    typeof record.followeeId !== "string" ||
+    typeof record.createdAt !== "number"
+  ) {
+    return null;
+  }
+  return {
+    followerId: record.followerId,
+    followeeId: record.followeeId,
+    createdAt: record.createdAt,
+  };
+}
+
+function normalizeRequest(value: unknown): DemoRequest | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.fromUserId !== "string" ||
+    typeof record.status !== "string" ||
+    typeof record.createdAt !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    id: record.id,
+    fromUserId: record.fromUserId,
+    // Legacy requests were rendered as incoming to the default demo identity.
+    toUserId: typeof record.toUserId === "string" ? record.toUserId : currentUser.id,
+    message: typeof record.message === "string" ? record.message : "",
+    status:
+      record.status === "accepted" || record.status === "declined" ? record.status : "pending",
+    createdAt: record.createdAt,
+  };
 }
 
 function read(): DemoDB {
@@ -90,15 +167,19 @@ function read(): DemoDB {
     if (!raw) return defaultDB();
     const parsed = JSON.parse(raw) as Partial<DemoDB>;
     return {
-      connections: Array.isArray(parsed.connections) ? parsed.connections : [],
+      connections: Array.isArray(parsed.connections)
+        ? parsed.connections
+            .map(normalizeConnection)
+            .filter((item): item is DemoConnection => !!item)
+        : [],
       requests: Array.isArray(parsed.requests)
-        ? parsed.requests.map((request) => ({
-            ...request,
-            message: typeof request.message === "string" ? request.message : "",
-          }))
+        ? parsed.requests.map(normalizeRequest).filter((item): item is DemoRequest => !!item)
         : [],
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
       groups: Array.isArray(parsed.groups) ? parsed.groups : [],
+      follows: Array.isArray(parsed.follows)
+        ? parsed.follows.map(normalizeFollow).filter((item): item is DemoFollow => item != null)
+        : [],
     };
   } catch {
     return defaultDB();
@@ -114,9 +195,11 @@ function write(db: DemoDB): void {
   }
 }
 
-/** Wipes every demo record (used by "reiniciar demonstração"). */
+/** Wipes every demo record (used by "reiniciar demonstração").
+ *  Também limpa as stores locais de Conversas/Mensagens (IndexedDB). */
 export function resetDemoData(): void {
   write(defaultDB());
+  void clearLocalChat();
   emitChange();
 }
 
@@ -126,6 +209,10 @@ type Listener = () => void;
 const listeners = new Set<Listener>();
 
 export function subscribeDemoDB(listener: Listener): () => void {
+  if (typeof window !== "undefined") {
+    window.addEventListener(DEMO_DB_EVENT, listener);
+    return () => window.removeEventListener(DEMO_DB_EVENT, listener);
+  }
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
@@ -133,39 +220,117 @@ export function subscribeDemoDB(listener: Listener): () => void {
 function emitChange(): void {
   for (const l of listeners) l();
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("connexy:demo:db"));
+    window.dispatchEvent(new CustomEvent(DEMO_DB_EVENT));
   }
 }
 
 /* ─── Connections ─────────────────────────────────────────── */
 
-export function isConnected(userId: string): boolean {
-  return read().connections.some((c) => c.userId === userId);
+function connectionIncludes(connection: DemoConnection, userId: string): boolean {
+  return connection.userAId === userId || connection.userBId === userId;
 }
 
-export function getConnectionsCount(): number {
-  return read().connections.length;
+export function getConnectionPeerId(connection: DemoConnection, userId: string): string | null {
+  if (connection.userAId === userId) return connection.userBId;
+  if (connection.userBId === userId) return connection.userAId;
+  return null;
 }
 
-/** Creates a direct connection and conversation with the peer. */
-export function connectUser(userId: string): void {
-  const db = read();
-  const pendingRequest = db.requests.find(
-    (request) => request.fromUserId === userId && request.status === "pending",
+export function getConnectionsForUser(userId: string): DemoConnection[] {
+  return read()
+    .connections.filter((connection) => connectionIncludes(connection, userId))
+    .sort((a, b) => b.connectedAt - a.connectedAt);
+}
+
+export function getConnectionBetween(userId: string, peerUserId: string): DemoConnection | null {
+  return (
+    read().connections.find(
+      (connection) =>
+        connectionIncludes(connection, userId) && connectionIncludes(connection, peerUserId),
+    ) ?? null
   );
-  if (pendingRequest) pendingRequest.status = "accepted";
-  if (!db.connections.some((connection) => connection.userId === userId)) {
-    db.connections.push({ userId, connectedAt: Date.now() });
+}
+
+export function getConnectionByConversationId(
+  conversationId: string,
+  userId?: string,
+): DemoConnection | null {
+  return (
+    read().connections.find(
+      (connection) =>
+        connection.conversationId === conversationId &&
+        (!userId || connectionIncludes(connection, userId)),
+    ) ?? null
+  );
+}
+
+export function isConnected(peerUserId: string, userId = getDemoIdentity().id): boolean {
+  return getConnectionBetween(userId, peerUserId) != null;
+}
+
+export function getConnectionsCount(userId = getDemoIdentity().id): number {
+  return getConnectionsForUser(userId).length;
+}
+
+export function isFollowing(followeeId: string, followerId = getDemoIdentity().id): boolean {
+  if (!followeeId || !followerId || followeeId === followerId) return false;
+  return read().follows.some(
+    (follow) => follow.followerId === followerId && follow.followeeId === followeeId,
+  );
+}
+
+export function listFollowees(followerId = getDemoIdentity().id): string[] {
+  return read()
+    .follows.filter((follow) => follow.followerId === followerId)
+    .sort((left, right) => right.createdAt - left.createdAt)
+    .map((follow) => follow.followeeId);
+}
+
+export function toggleFollow(followeeId: string, followerId = getDemoIdentity().id): boolean {
+  if (!followeeId || !followerId || followeeId === followerId) return false;
+  const db = read();
+  const existingIndex = db.follows.findIndex(
+    (follow) => follow.followerId === followerId && follow.followeeId === followeeId,
+  );
+  if (existingIndex >= 0) {
+    db.follows.splice(existingIndex, 1);
+    write(db);
+    emitChange();
+    return false;
   }
+  db.follows.push({ followerId, followeeId, createdAt: Date.now() });
   write(db);
   emitChange();
+  return true;
 }
 
 /* ─── Requests ────────────────────────────────────────────── */
 
-export function sendRequest(fromUserId: string, message = ""): DemoRequest {
+export function sendRequest(fromUserId: string, toUserId: string, message = ""): DemoRequest {
+  if (!fromUserId || !toUserId || fromUserId === toUserId) {
+    throw new Error("Remetente e destinatário da solicitação são inválidos.");
+  }
   const db = read();
-  const existing = db.requests.find((r) => r.fromUserId === fromUserId && r.status === "pending");
+  const connected = db.connections.some(
+    (connection) =>
+      connectionIncludes(connection, fromUserId) && connectionIncludes(connection, toUserId),
+  );
+  if (connected) {
+    const accepted = db.requests.find(
+      (request) =>
+        request.fromUserId === fromUserId &&
+        request.toUserId === toUserId &&
+        request.status === "accepted",
+    );
+    if (accepted) return accepted;
+    throw new Error("Estas identidades já estão conectadas.");
+  }
+  const existing = db.requests.find(
+    (request) =>
+      request.fromUserId === fromUserId &&
+      request.toUserId === toUserId &&
+      request.status === "pending",
+  );
   const normalizedMessage = message.trim();
   if (existing) {
     if (normalizedMessage && existing.message !== normalizedMessage) {
@@ -175,9 +340,23 @@ export function sendRequest(fromUserId: string, message = ""): DemoRequest {
     }
     return existing;
   }
+
+  const previous = db.requests.find(
+    (request) => request.fromUserId === fromUserId && request.toUserId === toUserId,
+  );
+  if (previous) {
+    previous.message = normalizedMessage;
+    previous.status = "pending";
+    previous.createdAt = Date.now();
+    write(db);
+    emitChange();
+    return previous;
+  }
+
   const request: DemoRequest = {
-    id: `demo-req-${Date.now()}`,
+    id: `demo-req-${fromUserId}--${toUserId}`,
     fromUserId,
+    toUserId,
     message: normalizedMessage,
     status: "pending",
     createdAt: Date.now(),
@@ -188,25 +367,114 @@ export function sendRequest(fromUserId: string, message = ""): DemoRequest {
   return request;
 }
 
-export function hasPendingRequest(fromUserId: string): DemoRequest | null {
-  return read().requests.find((r) => r.fromUserId === fromUserId && r.status === "pending") ?? null;
+export function getOutgoingPendingRequest(
+  fromUserId: string,
+  toUserId: string,
+): DemoRequest | null {
+  return (
+    read().requests.find(
+      (request) =>
+        request.fromUserId === fromUserId &&
+        request.toUserId === toUserId &&
+        request.status === "pending",
+    ) ?? null
+  );
 }
 
-export function getPendingRequests(): DemoRequest[] {
+export function getRequestBetween(fromUserId: string, toUserId: string): DemoRequest | null {
+  return (
+    read().requests.find(
+      (request) => request.fromUserId === fromUserId && request.toUserId === toUserId,
+    ) ?? null
+  );
+}
+
+export function getIncomingPendingRequest(
+  fromUserId: string,
+  toUserId: string,
+): DemoRequest | null {
+  return getOutgoingPendingRequest(fromUserId, toUserId);
+}
+
+export function getPendingRequests(toUserId = getDemoIdentity().id): DemoRequest[] {
   return read()
-    .requests.filter((request) => request.status === "pending")
+    .requests.filter((request) => request.toUserId === toUserId && request.status === "pending")
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 
-export function declineRequest(fromUserId: string): void {
+export function declineRequest(fromUserId: string, toUserId: string): void {
   const db = read();
   const pendingRequest = db.requests.find(
-    (request) => request.fromUserId === fromUserId && request.status === "pending",
+    (request) =>
+      request.fromUserId === fromUserId &&
+      request.toUserId === toUserId &&
+      request.status === "pending",
   );
   if (!pendingRequest) return;
   pendingRequest.status = "declined";
   write(db);
   emitChange();
+}
+
+export async function acceptRequest(fromUserId: string, toUserId: string): Promise<DemoConnection> {
+  const db = read();
+  const pendingRequest = db.requests.find(
+    (request) =>
+      request.fromUserId === fromUserId &&
+      request.toUserId === toUserId &&
+      request.status === "pending",
+  );
+  const existing = db.connections.find(
+    (connection) =>
+      connectionIncludes(connection, fromUserId) && connectionIncludes(connection, toUserId),
+  );
+  if (existing) {
+    if (pendingRequest) {
+      pendingRequest.status = "accepted";
+      write(db);
+      emitChange();
+    }
+    await ensureLocalConversation(existing.conversationId);
+    return existing;
+  }
+  if (!pendingRequest) throw new Error("Nenhuma solicitação pendente encontrada.");
+
+  const connection: DemoConnection = {
+    userAId: fromUserId,
+    userBId: toUserId,
+    conversationId: directConversationId(fromUserId, toUserId),
+    connectedAt: Date.now(),
+  };
+  await ensureLocalConversation(connection.conversationId);
+  pendingRequest.status = "accepted";
+  db.connections.push(connection);
+  write(db);
+  emitChange();
+  return connection;
+}
+
+/** Compatibility entry point for existing local callers. */
+export async function connectUser(
+  peerUserId: string,
+  userId = getDemoIdentity().id,
+): Promise<DemoConnection> {
+  const existing = getConnectionBetween(userId, peerUserId);
+  if (existing) {
+    await ensureLocalConversation(existing.conversationId);
+    return existing;
+  }
+  const db = read();
+  const connection: DemoConnection = {
+    userAId: userId,
+    userBId: peerUserId,
+    conversationId: directConversationId(userId, peerUserId),
+    connectedAt: Date.now(),
+  };
+  await ensureLocalConversation(connection.conversationId);
+  db.connections.push(connection);
+  write(db);
+  emitChange();
+  return connection;
 }
 
 /* ─── Derived group conversations ───────────────────────── */
@@ -246,10 +514,18 @@ export function createDemoGroup(
   name?: string,
 ): DemoGroup {
   const db = read();
-  // A direct conversation id is the peer id in demo mode. They receive an explicit
-  // group invite too; they are never silently promoted from the direct thread.
-  const uniqueInvitees = [...new Set([sourceConversationId, ...invitedUserIds])].filter(
-    (id) => id && id !== creatorId,
+  const sourceConnection = db.connections.find(
+    (connection) =>
+      connection.conversationId === sourceConversationId &&
+      connectionIncludes(connection, creatorId),
+  );
+  const sourcePeerId = sourceConnection
+    ? getConnectionPeerId(sourceConnection, creatorId)
+    : sourceConversationId;
+  // The direct peer receives an explicit group invite; they are never silently
+  // promoted from the originating direct thread.
+  const uniqueInvitees = [...new Set([sourcePeerId, ...invitedUserIds])].filter(
+    (id): id is string => typeof id === "string" && Boolean(id) && id !== creatorId,
   );
   const now = Date.now();
   const group: DemoGroup = {
@@ -321,16 +597,28 @@ function collapseMessages(messages: DemoMessage[]): DemoMessage[] {
 }
 
 export function getMessages(conversationId: string): DemoMessage[] {
-  return collapseMessages(
-    read()
-      .messages.filter((m) => m.conversationId === conversationId)
-      .sort((a, b) => a.at - b.at),
-  );
+  // Garante que a migração one-time e o load do IndexedDB foi disparado
+  // (a leitura síncrona é servida pelo cache de local-chat-persistence).
+  void ensureLocalChatLoaded();
+  return collapseMessages(getLocalChatMessages(conversationId));
 }
 
 export function getConversationLastMessage(conversationId: string): DemoMessage | null {
   const all = getMessages(conversationId);
   return all[all.length - 1] ?? null;
+}
+
+/** Persiste a mensagem em IndexedDB (única fonte) e atualiza o agregado da conversa. */
+function persistLocalMessage(conversationId: string, message: DemoMessage): void {
+  // O cache síncrono é atualizado antes do await; a gravação no IndexedDB
+  // acontece em background. Falhas não quebram a UI (console mantém visibilidade).
+  void putLocalChatMessage(message).catch((error) =>
+    console.warn("[connexy] falha ao persistir mensagem local", error),
+  );
+  void touchLocalConversation(conversationId, message).catch((error) =>
+    console.warn("[connexy] falha ao atualizar conversa local", error),
+  );
+  emitChange();
 }
 
 export function sendLocalMessage(
@@ -339,9 +627,8 @@ export function sendLocalMessage(
   text: string,
   sender?: { id: string; name: string },
 ): DemoMessage {
-  const db = read();
   const now = Date.now();
-  const duplicate = [...db.messages]
+  const duplicate = [...getLocalChatMessages(conversationId)]
     .reverse()
     .find(
       (message) =>
@@ -361,13 +648,11 @@ export function sendLocalMessage(
     text,
     at: now,
   };
-  db.messages.push(message);
-  write(db);
-  emitChange();
+  persistLocalMessage(conversationId, message);
   return message;
 }
 
-/** Stores only small media previews. Large files stay out of localStorage by design. */
+/** Stores only small media previews. Large files stay out by design (data-URL). */
 export function sendLocalMediaMessage(
   conversationId: string,
   kind: "image" | "video",
@@ -376,7 +661,6 @@ export function sendLocalMediaMessage(
   fileName: string,
   sender?: { id: string; name: string },
 ): DemoMessage {
-  const db = read();
   const now = Date.now();
   const message: DemoMessage = {
     id: `demo-media-${now}-${Math.random().toString(36).slice(2, 7)}`,
@@ -389,9 +673,7 @@ export function sendLocalMediaMessage(
     kind,
     payload: { dataUrl, mimeType, fileName },
   };
-  db.messages.push(message);
-  write(db);
-  emitChange();
+  persistLocalMessage(conversationId, message);
   return message;
 }
 
@@ -409,12 +691,12 @@ export function sendSharedContentMessage(
     route?: string;
   },
   text?: string,
+  sender?: { id: string; name: string },
 ): DemoMessage {
-  const db = read();
   const now = Date.now();
   const kind: DemoMessage["kind"] = payload.type === "place" ? "location" : "event";
   const signal = `${payload.type}:${payload.id}:${conversationId}:${from}`;
-  const duplicate = [...db.messages]
+  const duplicate = [...getLocalChatMessages(conversationId)]
     .reverse()
     .find(
       (message) =>
@@ -430,6 +712,8 @@ export function sendSharedContentMessage(
     id: `demo-shared-${signal}-${now}`,
     conversationId,
     from,
+    senderId: sender?.id,
+    senderName: sender?.name,
     text: text?.trim() || payload.title,
     at: now,
     kind,
@@ -444,8 +728,6 @@ export function sendSharedContentMessage(
       routeType: payload.type,
     },
   };
-  db.messages.push(message);
-  write(db);
-  emitChange();
+  persistLocalMessage(conversationId, message);
   return message;
 }

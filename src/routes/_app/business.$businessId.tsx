@@ -5,13 +5,16 @@ import { NotFoundState } from "@/components/navigation/not-found";
 import { BusinessDetails } from "@/components/marketplace/business-details";
 import { CouponList } from "@/components/marketplace/coupon-list";
 import { FollowBusinessButton } from "@/components/marketplace/follow-business-button";
+import { FavoriteBusinessButton } from "@/components/marketplace/favorite-business-button";
 import {
   DetailActionBar,
   PromotionRedeemCard,
   RecentReviewSection,
 } from "@/components/marketplace/local-engagement";
+import { isDetailSaved, toggleSavedDetail } from "@/lib/marketplace/saved-details";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
-import { CarFront, MapPinned, Share2, Users } from "lucide-react";
+import { CalendarDays, CarFront, MapPinned, Share2, Users } from "lucide-react";
+import { isBusinessReservable } from "@/lib/reservations/reservable";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import type { Business } from "@/lib/marketplace/business-types";
@@ -19,6 +22,7 @@ import { MOCK_COUPONS, getBusinessById } from "@/lib/marketplace/mock-businesses
 import { engineBusinessById } from "@/lib/engine/engine-detail";
 
 export const Route = createFileRoute("/_app/business/$businessId")({
+  ssr: false,
   head: ({ params }) => ({
     meta: [{ title: `Empresa — Connexy` }],
   }),
@@ -41,7 +45,11 @@ export const Route = createFileRoute("/_app/business/$businessId")({
 function BusinessDetailPage() {
   const initialBusiness = Route.useLoaderData() as Business;
   const nav = useNavigate();
-  const [business, setBusiness] = useState<Business>(initialBusiness);
+  const [isFavorite, setIsFavorite] = useState(() => isDetailSaved(initialBusiness.id));
+  const [business, setBusiness] = useState<Business>(() => ({
+    ...initialBusiness,
+    isFavorite: isDetailSaved(initialBusiness.id),
+  }));
   const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
 
   const filteredCoupons = useMemo(
@@ -53,7 +61,10 @@ function BusinessDetailPage() {
     business.promotions[0];
 
   function handleFavorite() {
-    setBusiness((prev) => ({ ...prev, isFavorite: !prev.isFavorite }));
+    const nextSaved = toggleSavedDetail(business.id);
+    setIsFavorite(nextSaved);
+    setBusiness((prev) => ({ ...prev, isFavorite: nextSaved }));
+    toast.success(nextSaved ? "Salvo nos seus itens." : "Removido dos itens salvos.");
   }
 
   function handleFollow() {
@@ -104,6 +115,7 @@ function BusinessDetailPage() {
           <h1 className="font-display font-bold text-base truncate">{business.name}</h1>
         </div>
         <FollowBusinessButton isFollowing={business.isFollowing} onToggle={handleFollow} />
+        <FavoriteBusinessButton isFavorite={isFavorite} onToggle={handleFavorite} />
         <button
           onClick={handleShare}
           aria-label="Compartilhar"
@@ -115,7 +127,7 @@ function BusinessDetailPage() {
 
       <div className="flex-1 px-5 pb-4 overflow-y-auto no-scrollbar">
         <BusinessDetails
-          business={business}
+          business={{ ...business, isFavorite }}
           onShare={handleShare}
           onFavorite={handleFavorite}
           onSave={handleSave}
@@ -128,6 +140,8 @@ function BusinessDetailPage() {
             targetId={business.id}
             title={business.name}
             phone={business.phone ?? "+551140000000"}
+            saved={isFavorite}
+            onToggleSaved={handleFavorite}
             outing={{
               id: business.id,
               title: business.name,
@@ -184,6 +198,16 @@ function BusinessDetailPage() {
       </div>
 
       <div className="px-5 pb-4 space-y-2">
+        {isBusinessReservable(business) && (
+          <Link
+            to="/reserva/$resourceId"
+            params={{ resourceId: business.id }}
+            search={{ type: "business" }}
+            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary py-3.5 text-sm font-semibold text-primary transition hover:bg-primary/5 active:scale-[0.98]"
+          >
+            <CalendarDays className="h-4 w-4" /> Reservar
+          </Link>
+        )}
         <Link
           to="/ride/request"
           search={{

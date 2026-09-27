@@ -3,6 +3,11 @@ import { z } from "zod";
 import { RideFlow } from "@/components/mobility/ride/ride-flow";
 import { parseCompanions, buildCompanionStops, type RideSearch } from "@/lib/mobility/ride-search";
 import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
+import { RideBlockedPanel } from "@/components/mobility/ride-blocked-panel";
+import { useDemoIdentity } from "@/lib/demo/demo-identity";
+import { useRideBlock } from "@/hooks/use-ride-block";
+import { useTrip } from "@/hooks/use-trip";
+import { isTerminal } from "@/lib/mobility/trip/trip-machine";
 
 export const Route = createFileRoute("/_app/ride/")({
   head: () => ({ meta: [{ title: "Solicitar viagem — Connexy" }] }),
@@ -25,6 +30,13 @@ export const Route = createFileRoute("/_app/ride/")({
 function RideIndexPage() {
   const nav = useNavigate();
   const search = Route.useSearch() as RideSearch;
+  const identity = useDemoIdentity();
+  const block = useRideBlock(identity.id);
+  const trip = useTrip();
+
+  if (block && (!trip || isTerminal(trip.status))) {
+    return <RideBlockedPanel block={block} />;
+  }
 
   const destination =
     search.destinationAddress || search.destinationName
@@ -45,6 +57,7 @@ function RideIndexPage() {
       initialStops={stops}
       source={search.source}
       companionLabel={search.source === "invite" ? "Ir juntos" : undefined}
+      seedInitial
       onBackToHome={() => nav({ to: "/home" })}
     />
   );

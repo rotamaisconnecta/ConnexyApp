@@ -55,6 +55,8 @@ import {
   getTrip,
 } from "@/lib/mobility/trip/trip-store";
 import { cancelPassengerTrip } from "@/lib/mobility/dispatch/dispatcher";
+import { tripPaymentStatus } from "@/lib/mobility/payment";
+import { toast } from "sonner";
 
 const BUSCANDO_MESSAGES = [
   "Procurando motorista mais próximo",
@@ -300,18 +302,6 @@ export function RideFlow({
     patchTrip({ stops: [...stops, newStop] });
   }, [stops]);
 
-  const handleAddSuggestion = useCallback(
-    (label: string, address: string) => {
-      const newStop = createStop(
-        { lat: -23.55, lng: -46.64, label: address },
-        label,
-        stops.length + 1,
-      );
-      patchTrip({ stops: [...stops, newStop] });
-    },
-    [stops],
-  );
-
   const handleRemoveStop = useCallback(
     (id: string) => {
       patchTrip({ stops: removeStop(trip?.stops ?? [], id) });
@@ -366,17 +356,25 @@ export function RideFlow({
   }, []);
 
   const handleSendRating = useCallback(() => {
+    if (trip && tripPaymentStatus(trip) === "pending") {
+      toast.error("Aguarde o motorista registrar o pagamento.");
+      return;
+    }
     completeTrip({
       stars: ratingStars,
       tags: ratingTags,
       comment: ratingComment,
       createdAt: new Date().toISOString(),
     });
-  }, [ratingStars, ratingTags, ratingComment]);
+  }, [trip, ratingStars, ratingTags, ratingComment]);
 
   const handleSkipRating = useCallback(() => {
+    if (trip && tripPaymentStatus(trip) === "pending") {
+      toast.error("Aguarde o motorista registrar o pagamento.");
+      return;
+    }
     completeTrip();
-  }, []);
+  }, [trip]);
 
   const handleGoHome = useCallback(() => {
     const status = trip?.status;
@@ -415,7 +413,6 @@ export function RideFlow({
             destination={destination}
             stops={stops}
             onAddStop={handleAddStop}
-            onAddSuggestion={handleAddSuggestion}
             onRemoveStop={handleRemoveStop}
             onEditStop={handleEditStop}
             onMoveStops={handleMoveStops}

@@ -1,7 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Ban, Bell, BellOff, ChevronDown, Loader2, User, Users, Video } from "lucide-react";
+import {
+  Ban,
+  Bell,
+  BellOff,
+  ChevronDown,
+  Loader2,
+  Pin,
+  PinOff,
+  User,
+  Users,
+  Video,
+} from "lucide-react";
 import { toast } from "sonner";
 import { StatusBar } from "@/components/phone-frame";
 import { ChatHeader } from "./chat-header";
@@ -14,16 +25,37 @@ import { ChatRepository } from "@/repositories/chat.repository";
 import { UserRepository } from "@/repositories/user.repository";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
-import { people } from "@/lib/mock-data";
+import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
+import { getSchemaAConversations } from "@/lib/chat/schema-a-conversations";
+import { currentUser, people } from "@/lib/mock-data";
 import {
   createDemoGroup,
+  getConnectionByConversationId,
+  getConnectionPeerId,
   getDemoGroup,
   leaveDemoGroup,
   respondToDemoGroupInvite,
+  subscribeDemoDB,
   type DemoGroup,
 } from "@/lib/demo/demo-db";
-import { triggerDemoCallFeedback } from "@/lib/chat/demo-call";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import {
+  ensureLocalConversation,
+  getLocalConversation,
+  setLocalConversationPinned,
+} from "@/lib/chat/local-chat-persistence";
+import { isPinnedForUser } from "@/lib/chat/conversation-list-state";
+import {
+  connectDemoCall,
+  finishDemoCall,
+  getDemoCallSession,
+  startDemoCall,
+  subscribeDemoCall,
+  triggerDemoCallFeedback,
+  type DemoCallMedia,
+} from "@/lib/chat/demo-call";
 import { GroupInviteSheet } from "./group-invite-sheet";
+import { DemoCallOverlay } from "./demo-call-overlay";
 import type {
   AttachmentAction,
   ChatMessage,
@@ -41,6 +73,8 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const { user } = useAuth();
   const { isOnline } = usePresenceContext();
 
+  const remoteChat = isRemoteConversationsEnabled();
+  const [remotePinned, setRemotePinned] = useState(false);
   const [participant, setParticipant] = useState<ConversationParticipant | null>(null);
   const [group, setGroup] = useState<DemoGroup | null>(null);
   const [participantLoading, setParticipantLoading] = useState(true);
@@ -62,28 +96,57 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   });
 
   useEffect(() => {
-    if (isPublicSupabaseConfigured() || !conversationId) {
-      setGroup(null);
+    if (remoteChat || isPublicSupabaseConfigured() || !conversationId) {
+      if (!remoteChat) setGroup(null);
       return;
     }
     setGroup(getDemoGroup(conversationId));
-  }, [conversationId]);
+  }, [conversationId, remoteChat]);
 
   // Resolve the other participant from conversation_participants
   useEffect(() => {
+    if (remoteChat && conversationId) {
+      let active = true;
+      void (async () => {
+        try {
+          const thread = await getSchemaAConversations().getThread(conversationId);
+          if (!active) return;
+          setRemotePinned(thread?.pinned ?? false);
+          const name = thread?.conversation.name?.trim() || "Conversa";
+          setParticipant({
+            id: thread?.peerId ?? "",
+            name,
+            photo: "",
+            online: false,
+          });
+        } catch {
+          if (active) setParticipant({ id: "", name: "Conversa", photo: "", online: false });
+        } finally {
+          if (active) setParticipantLoading(false);
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }
     if (!isPublicSupabaseConfigured() && conversationId && user?.id) {
+      void ensureLocalConversation(conversationId);
       const demoGroup = getDemoGroup(conversationId);
       if (demoGroup) {
         setParticipant({ id: demoGroup.id, name: demoGroup.name, photo: "", online: true });
         setParticipantLoading(false);
         return;
       }
-      const mock = people.find((p) => p.id === conversationId);
+      const connection = getConnectionByConversationId(conversationId, user.id);
+      const peerId = connection ? getConnectionPeerId(connection, user.id) : conversationId;
+      const mock =
+        people.find((person) => person.id === peerId) ??
+        (peerId === currentUser.id ? currentUser : null);
       setParticipant({
-        id: conversationId,
+        id: peerId ?? conversationId,
         name: mock?.name ?? "Conversa",
         photo: mock?.photo ?? "",
-        online: mock?.online ?? false,
+        online: mock && "online" in mock ? mock.online : Boolean(mock),
       });
       setParticipantLoading(false);
       return;
@@ -118,7 +181,9 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     return () => {
       active = false;
     };
-  }, [conversationId, user?.id, isOnline]);
+  }, [conversationId, user?.id, isOnline, remoteChat]);
+
+  const demoCall = useSyncExternalStore(subscribeDemoCall, getDemoCallSession, getDemoCallSession);
 
   const [showSearch, setShowSearch] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -131,6 +196,22 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   } | null>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const [muted, setMuted] = useState(false);
+  const [pinTick, setPinTick] = useState(0);
+
+  useEffect(() => {
+    if (isPublicSupabaseConfigured() || !conversationId) return;
+    return subscribeDemoDB(() => setPinTick((tick) => tick + 1));
+  }, [conversationId]);
+
+  const isPinned = useMemo(() => {
+    void pinTick;
+    if (!conversationId) return false;
+    if (remoteChat) return remotePinned;
+    return isPinnedForUser(
+      getLocalConversation(conversationId)?.pinnedByUserIds,
+      getDemoIdentity().id,
+    );
+  }, [conversationId, pinTick, remoteChat, remotePinned]);
   const [shareDraft, setShareDraft] = useState<{
     id: string;
     kind: "event" | "place";
@@ -375,6 +456,39 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const pendingGroupInvite = group?.participants.find(
     (item) => item.userId === user?.id && item.status === "pending",
   );
+  const activeCall =
+    demoCall && conversationId && demoCall.conversationId === conversationId ? demoCall : null;
+
+  function callSender(): { id: string; name: string } {
+    const id = user?.id ?? "";
+    const name = typeof user?.user_metadata?.name === "string" ? user.user_metadata.name : id;
+    return { id, name };
+  }
+
+  function beginDemoCall(media: DemoCallMedia) {
+    if (
+      group ||
+      isPublicSupabaseConfigured() ||
+      !conversationId ||
+      !user?.id ||
+      !activeParticipant.id ||
+      activeParticipant.id === user.id
+    ) {
+      triggerDemoCallFeedback((message) => toast.info(message));
+      return;
+    }
+    if (demoCall && demoCall.conversationId !== conversationId) {
+      triggerDemoCallFeedback((message) => toast.info(message));
+      return;
+    }
+    const started = startDemoCall({
+      conversationId,
+      callerId: user.id,
+      calleeId: activeParticipant.id,
+      media,
+    });
+    if (!started) triggerDemoCallFeedback((message) => toast.info(message));
+  }
 
   return (
     <main className="relative flex h-full min-h-0 flex-1 flex-col">
@@ -388,8 +502,8 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             : undefined
         }
         onBack={handleBack}
-        onCall={() => triggerDemoCallFeedback((message) => toast.info(message))}
-        onVideoCall={() => toast.info("Videocall em breve")}
+        onCall={() => beginDemoCall("voice")}
+        onVideoCall={() => beginDemoCall("video")}
         onSearch={() => setShowSearch((value) => !value)}
         onMenu={() => setMenuOpen(true)}
       />
@@ -708,11 +822,36 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
               />
             )}
             <MenuItem
+              icon={isPinned ? PinOff : Pin}
+              label={isPinned ? "Desafixar conversa" : "Fixar conversa"}
+              active={isPinned}
+              onClick={() => {
+                if (!conversationId) return;
+                if (remoteChat) {
+                  const next = !isPinned;
+                  void getSchemaAConversations()
+                    .setPinned(conversationId, next)
+                    .then(() => setRemotePinned(next))
+                    .catch((error: unknown) => {
+                      toast.error(
+                        error instanceof Error ? error.message : "Não foi possível fixar.",
+                      );
+                    });
+                  setMenuOpen(false);
+                  toast.success(isPinned ? "Conversa desafixada" : "Conversa fixada");
+                  return;
+                }
+                void setLocalConversationPinned(conversationId, getDemoIdentity().id, !isPinned);
+                setMenuOpen(false);
+                toast.success(isPinned ? "Conversa desafixada" : "Conversa fixada");
+              }}
+            />
+            <MenuItem
               icon={Video}
               label="Videocall"
               onClick={() => {
                 setMenuOpen(false);
-                toast.info("Videocall em breve");
+                beginDemoCall("video");
               }}
             />
             <MenuItem
@@ -736,6 +875,16 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             />
           </motion.div>
         </motion.div>
+      )}
+
+      {activeCall && (
+        <DemoCallOverlay
+          call={activeCall}
+          peerName={activeParticipant.name}
+          onAccept={() => connectDemoCall(activeCall.id)}
+          onDecline={() => finishDemoCall("declined", callSender())}
+          onHangup={() => finishDemoCall("ended", callSender())}
+        />
       )}
     </main>
   );

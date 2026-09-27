@@ -113,7 +113,9 @@ export function ReelShareSheet({ reelId, open, onClose }: ReelShareSheetProps) {
             className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-surface p-6 pb-10"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-display font-semibold text-foreground">Partilhar reel</h3>
+              <h3 className="text-lg font-display font-semibold text-foreground">
+                Partilhar no Agora
+              </h3>
               <button
                 onClick={onClose}
                 className="h-8 w-8 grid place-items-center rounded-full bg-secondary"
@@ -141,7 +143,7 @@ export function ReelShareSheet({ reelId, open, onClose }: ReelShareSheetProps) {
                 );
               })}
             </div>
-            <p className="mt-6 text-center text-xs text-muted-foreground">Reel: {reelId}</p>
+            <p className="mt-6 text-center text-xs text-muted-foreground">Agora: {reelId}</p>
           </motion.div>
         </>
       )}

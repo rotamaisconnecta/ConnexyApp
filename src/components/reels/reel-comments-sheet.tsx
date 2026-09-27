@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import type { ReelComment } from "@/lib/reels/reel-types";
@@ -10,7 +10,8 @@ interface ReelCommentsSheetProps {
   open: boolean;
   onClose: () => void;
   comments: ReelComment[];
-  onAddComment: (text: string) => void;
+  onAddComment: (text: string) => Promise<boolean> | boolean;
+  onReply: (parentId: string, text: string) => Promise<boolean> | boolean;
   onLikeComment: (id: string) => void;
 }
 
@@ -20,14 +21,32 @@ export function ReelCommentsSheet({
   onClose,
   comments,
   onAddComment,
+  onReply,
   onLikeComment,
 }: ReelCommentsSheetProps) {
   const [text, setText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<ReelComment | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit() {
-    if (!text.trim()) return;
-    onAddComment(text.trim());
+  useEffect(() => {
     setText("");
+    setReplyingTo(null);
+  }, [reelId, open]);
+
+  async function handleSubmit() {
+    if (!text.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const saved = replyingTo
+        ? await onReply(replyingTo.id, text.trim())
+        : await onAddComment(text.trim());
+      if (saved) {
+        setText("");
+        setReplyingTo(null);
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -38,7 +57,7 @@ export function ReelCommentsSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-40 bg-black/60"
+            className="absolute inset-0 z-[60] bg-black/60"
             onClick={onClose}
           />
           <motion.div
@@ -46,7 +65,7 @@ export function ReelCommentsSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 260 }}
-            className="absolute inset-x-0 bottom-0 z-50 rounded-t-3xl bg-surface max-h-[75%] flex flex-col shadow-elegant"
+            className="absolute inset-x-0 bottom-0 z-[70] rounded-t-3xl bg-surface max-h-[75%] flex flex-col shadow-elegant"
           >
             <div className="pt-2 pb-1 flex justify-center">
               <div className="h-1 w-10 rounded-full bg-border" />
@@ -69,12 +88,34 @@ export function ReelCommentsSheet({
                 </p>
               ) : (
                 comments.map((c) => (
-                  <ReelCommentItem key={c.id} comment={c} onLike={onLikeComment} />
+                  <ReelCommentItem
+                    key={c.id}
+                    comment={c}
+                    onLike={onLikeComment}
+                    onReply={setReplyingTo}
+                  />
                 ))
               )}
             </div>
             <div className="p-3 border-t border-border">
-              <ReelCommentInput value={text} onChange={setText} onSubmit={handleSubmit} />
+              {replyingTo && (
+                <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="flex-1 truncate">Respondendo a {replyingTo.authorName}</span>
+                  <button
+                    onClick={() => setReplyingTo(null)}
+                    className="h-6 w-6 grid place-items-center rounded-full bg-secondary"
+                    aria-label="Cancelar resposta"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              <ReelCommentInput
+                value={text}
+                onChange={setText}
+                onSubmit={handleSubmit}
+                placeholder={replyingTo ? `Responder a ${replyingTo.authorName}…` : undefined}
+              />
             </div>
           </motion.div>
         </>

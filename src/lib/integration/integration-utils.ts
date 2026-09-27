@@ -189,7 +189,7 @@ export function isWithinRadius(
 export function getTargetLabel(target: IntegrationTargetValue): string {
   const labels: Record<IntegrationTargetValue, string> = {
     FEED: "Feed",
-    REELS: "Reels",
+    REELS: "Agora",
     MARKETPLACE: "Marketplace",
     CHAT: "Chat",
     RIDE: "Corrida",
@@ -213,7 +213,7 @@ export function getMarkerTypeLabel(type: MapMarkerTypeValue): string {
     EVENT: "Evento",
     BUSINESS: "Comércio",
     OFFER: "Oferta",
-    REEL: "Reel",
+    REEL: "Agora",
     MOMENT: "Momento",
     PLACE: "Local",
   };

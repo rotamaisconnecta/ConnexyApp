@@ -5,8 +5,10 @@ import {
   getConnectionsCount,
   getDemoGroupsForUser,
   getDemoGroupInvitesForUser,
+  getOutgoingPendingRequest,
   getPendingRequests,
   isConnected,
+  isFollowing,
   resetDemoData,
   sendLocalMessage,
   subscribeDemoDB,
@@ -22,31 +24,58 @@ function useDemoVersion(): number {
 }
 
 /** Reactive count of local demo connections. */
-export function useDemoConnectionsCount(): number {
+export function useDemoConnectionsCount(userId?: string): number {
   const version = useDemoVersion();
 
   void version;
-  const [count, setCount] = useState(getConnectionsCount);
-  useEffect(() => setCount(getConnectionsCount()), [version]);
+  const [count, setCount] = useState(() => getConnectionsCount(userId));
+  useEffect(() => setCount(getConnectionsCount(userId)), [version, userId]);
   return count;
 }
 
 /** Reactive "is this peer connected?" flag. */
-export function useDemoIsConnected(userId: string): boolean {
+export function useDemoIsConnected(peerUserId: string, userId?: string): boolean {
   const version = useDemoVersion();
 
   void version;
-  const [connected, setConnected] = useState(isConnected(userId));
-  useEffect(() => setConnected(isConnected(userId)), [version, userId]);
+  const [connected, setConnected] = useState(() => isConnected(peerUserId, userId));
+  useEffect(() => setConnected(isConnected(peerUserId, userId)), [version, peerUserId, userId]);
   return connected;
 }
 
-/** Reactive list of pending local conversation requests. */
-export function useDemoPendingRequests(): DemoRequest[] {
+/** Reactive follow state for a demo identity. */
+export function useDemoIsFollowing(followeeId: string, followerId?: string): boolean {
   const version = useDemoVersion();
-  const [requests, setRequests] = useState<DemoRequest[]>(getPendingRequests);
-  useEffect(() => setRequests(getPendingRequests()), [version]);
+  void version;
+  const [following, setFollowing] = useState(() => isFollowing(followeeId, followerId));
+  useEffect(
+    () => setFollowing(isFollowing(followeeId, followerId)),
+    [version, followeeId, followerId],
+  );
+  return following;
+}
+
+/** Reactive list of pending local conversation requests. */
+export function useDemoPendingRequests(toUserId?: string): DemoRequest[] {
+  const version = useDemoVersion();
+  const [requests, setRequests] = useState<DemoRequest[]>(() => getPendingRequests(toUserId));
+  useEffect(() => setRequests(getPendingRequests(toUserId)), [version, toUserId]);
   return requests;
+}
+
+export function useDemoOutgoingRequest(
+  fromUserId: string | undefined,
+  toUserId: string,
+): DemoRequest | null {
+  const version = useDemoVersion();
+  const [request, setRequest] = useState<DemoRequest | null>(() =>
+    fromUserId ? getOutgoingPendingRequest(fromUserId, toUserId) : null,
+  );
+  useEffect(
+    () => setRequest(fromUserId ? getOutgoingPendingRequest(fromUserId, toUserId) : null),
+    [version, fromUserId, toUserId],
+  );
+  return request;
 }
 
 export function useDemoGroups(userId: string): DemoGroup[] {

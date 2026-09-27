@@ -19,11 +19,12 @@ import {
   onDispatchEvent,
   releaseTripDrivers,
   requestRide,
+  restoreAssignment,
   setDriverStatus,
   toTripDriver,
 } from "./dispatcher-store";
 import type { DispatchMeta, DispatchRequest } from "./dispatch-types";
-import { currentUser } from "@/lib/mock-data";
+import { getDemoIdentities, getDemoIdentity } from "@/lib/demo/demo-identity";
 import {
   cancelTrip,
   getTrip,
@@ -31,7 +32,7 @@ import {
   subscribe as subscribeTrip,
   transition,
 } from "../trip/trip-store";
-import type { Trip } from "../trip/trip-types";
+import type { Trip, TripStatus } from "../trip/trip-types";
 
 /* ─── Configuração da política demo ──────────────────────── */
 
@@ -99,9 +100,11 @@ function armAutoAccept(tripId: string): void {
 /* ─── Snapshot da Trip entregue ao dispatcher ────────────── */
 
 function buildDispatchRequest(trip: Trip): DispatchRequest {
+  const passenger =
+    getDemoIdentities().find((identity) => identity.id === trip.userId) ?? getDemoIdentity();
   const meta: DispatchMeta = {
-    passengerName: currentUser.name,
-    passengerPhoto: currentUser.photo,
+    passengerName: passenger.name,
+    passengerPhoto: passenger.photo,
     passengerRating: 4.9,
   };
   return {
@@ -126,6 +129,22 @@ function buildDispatchRequest(trip: Trip): DispatchRequest {
     },
     meta,
   };
+}
+
+const DRIVER_ASSIGNED_STATUSES = new Set<TripStatus>([
+  "encontrado",
+  "chegando",
+  "chegou",
+  "emviagem",
+  "parada",
+  "chegada",
+  "avaliacao",
+]);
+
+const DRIVER_BUSY_STATUSES = new Set<TripStatus>(["emviagem", "parada", "chegada", "avaliacao"]);
+
+function fleetStatusForTrip(status: TripStatus): "accepted" | "busy" {
+  return DRIVER_BUSY_STATUSES.has(status) ? "busy" : "accepted";
 }
 
 /* ─── Inscrição nos eventos do dispatcher ────────────────── */
@@ -156,35 +175,44 @@ onDispatchEvent((event) => {
 });
 
 /* ─── Observação do Trip store ─────────────────────────────
-   A Trip entra em "buscando" → dispatcher recebe a solicitação.
-   Cancelada → solicitação é removida do dispatcher.
-   Concluída → motorista é liberado para novas ofertas. */
+   A Trip é a autoridade. O dispatcher deriva o estado operacional
+   (oferta em "buscando", atribuição quando há motorista, liberação
+   no terminal). Idempotente para sobreviver a reload e a módulos
+   carregados depois da Trip. */
 
-subscribeTrip(() => {
+export function hydrateDispatcherFromTrip(): void {
   const trip = getTrip();
   if (!trip) return;
   switch (trip.status) {
     case "buscando":
       requestRide(trip.id, buildDispatchRequest(trip));
-      break;
+      return;
     case "cancelada":
       cancelRequest(trip.id);
-      break;
+      return;
     case "conclusao":
       releaseTripDrivers(trip.id);
-      break;
+      return;
     default:
-      break;
+      if (trip.driver?.id && DRIVER_ASSIGNED_STATUSES.has(trip.status)) {
+        restoreAssignment(
+          trip.id,
+          trip.driver.id,
+          buildDispatchRequest(trip),
+          fleetStatusForTrip(trip.status),
+        );
+      }
   }
+}
+
+subscribeTrip(() => {
+  hydrateDispatcherFromTrip();
 });
 
-/* ─── Recuperar Trip em busca após reload ────────────────── */
+/* ─── Recuperar Trip após reload ─────────────────────────── */
 
 (function init(): void {
-  const trip = getTrip();
-  if (trip && trip.status === "buscando") {
-    requestRide(trip.id, buildDispatchRequest(trip));
-  }
+  hydrateDispatcherFromTrip();
 })();
 
 /* ─── API para o app ───────────────────────────────────────

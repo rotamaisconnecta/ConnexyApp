@@ -6,7 +6,8 @@
 
 import { UserRole, RoleMode, UserRolesState } from "./roles-types";
 
-const STORAGE_KEY = "connexy_roles";
+export const ROLES_STORAGE_KEY = "connexy_roles";
+const STORAGE_KEY = ROLES_STORAGE_KEY;
 
 const DEFAULT_STATE: UserRolesState = {
   roles: [UserRole.USER],

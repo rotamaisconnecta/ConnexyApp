@@ -42,6 +42,7 @@ interface CreatePostFormProps {
   authorName: string;
   authorPhoto: string;
   authorHandle: string;
+  initialCategory?: PostCategoryValue;
   onPublish: (draft: PostDraft) => void;
 }
 
@@ -49,10 +50,12 @@ export function CreatePostForm({
   authorName,
   authorPhoto,
   authorHandle,
+  initialCategory,
   onPublish,
 }: CreatePostFormProps) {
   const [draft, setDraft] = useState<PostDraft>(() => ({
     ...INITIAL_DRAFT,
+    category: initialCategory ?? null,
     media: [],
     interests: [],
     hashtags: [],

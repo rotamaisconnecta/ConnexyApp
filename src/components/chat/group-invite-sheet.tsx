@@ -24,7 +24,10 @@ export function GroupInviteSheet({
   const [confirming, setConfirming] = useState(false);
   const [name, setName] = useState(`Grupo com ${sourceName}`);
   const candidates = useMemo(
-    () => people.filter((person) => person.id !== currentUserId && isConnected(person.id)),
+    () =>
+      people.filter(
+        (person) => person.id !== currentUserId && isConnected(person.id, currentUserId),
+      ),
     [currentUserId],
   );
   const filtered = candidates.filter((person) =>

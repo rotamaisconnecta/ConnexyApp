@@ -13,46 +13,102 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getReelById } from "@/lib/reels/reel-feed";
-import type { Reel } from "@/lib/reels/reel-types";
+import type { Reel, ReelComment } from "@/lib/reels/reel-types";
 import { formatReelCount, formatRelativeTime, getCategoryEmoji } from "@/lib/reels/reel-utils";
 import { ReelUser } from "@/components/reels/reel-user";
 import { ReelLocation } from "@/components/reels/reel-location";
 import { ReelMusic } from "@/components/reels/reel-music";
 import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
 import { ReelShareSheet } from "@/components/reels/reel-share-sheet";
+import { getStoredSoundPref, setStoredSoundPref } from "@/lib/reels/reel-local-storage";
 import {
-  toggleReelLike,
-  getStoredSoundPref,
-  setStoredSoundPref,
-} from "@/lib/reels/reel-local-storage";
+  addPersistedReelComment,
+  getPersistedReelComments,
+  getPersistedReelInteractionState,
+  togglePersistedCommentLike,
+  togglePersistedReelLike,
+} from "@/lib/reels/persisted-reels-reader";
 import { getReelContext, type ReelContextTarget } from "@/lib/reels/reel-context";
+import { useDemoIdentity } from "@/lib/demo/demo-identity";
+import { toast } from "sonner";
+import { subscribeDemoDB, toggleFollow } from "@/lib/demo/demo-db";
+import { subscribeSavedDetails, toggleSavedDetail } from "@/lib/marketplace/saved-details";
+import { ReelFollowButton } from "@/components/reels/reel-follow-button";
+import { ReelConnectButton } from "@/components/reels/reel-connect-button";
+import {
+  applyReelSocialState,
+  getReelConnectStatus,
+  getReelDirectConversationId,
+} from "@/lib/reels/reel-social-state";
 
 export const Route = createFileRoute("/_app/reels/$reelId")({
-  head: () => ({ meta: [{ title: "Reel — Connexy" }] }),
+  head: () => ({ meta: [{ title: "Agora — Connexy" }] }),
   component: ReelDetailPage,
 });
 
 function ReelDetailPage() {
   const navigate = useNavigate();
   const { reelId } = Route.useParams();
+  const identity = useDemoIdentity();
   const [reel, setReel] = useState<Reel | null>(null);
+  const [comments, setComments] = useState<ReelComment[]>([]);
   const [muted, setMuted] = useState<boolean>(() => getStoredSoundPref());
   const [paused, setPaused] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [socialVersion, setSocialVersion] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTap = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
-    getReelById(reelId).then((found) => {
-      if (!cancelled) setReel(found);
-    });
+    Promise.all([
+      getReelById(reelId),
+      getPersistedReelInteractionState(reelId, identity.id),
+      getPersistedReelComments(reelId),
+    ])
+      .then(([found, interaction, persistedComments]) => {
+        if (cancelled) return;
+        setComments(persistedComments);
+        setReel(
+          found
+            ? applyReelSocialState(
+                {
+                  ...found,
+                  likedByMe: interaction.likedByMe,
+                  stats: {
+                    ...found.stats,
+                    likes: found.stats.likes + interaction.likeCount,
+                    comments: found.stats.comments + interaction.commentCount,
+                  },
+                },
+                identity.id,
+              )
+            : null,
+        );
+      })
+      .catch((error) => {
+        console.warn(`[reels] falha ao carregar Reel "${reelId}".`, error);
+        toast.error("Não foi possível carregar este item do Agora.");
+      });
     return () => {
       cancelled = true;
     };
-  }, [reelId]);
+  }, [reelId, identity.id]);
+
+  useEffect(() => {
+    const unsubSaved = subscribeSavedDetails(() => setSocialVersion((current) => current + 1));
+    const unsubDemo = subscribeDemoDB(() => setSocialVersion((current) => current + 1));
+    return () => {
+      unsubSaved();
+      unsubDemo();
+    };
+  }, []);
+
+  useEffect(() => {
+    setReel((prev) => (prev ? applyReelSocialState(prev, identity.id) : prev));
+  }, [socialVersion, identity.id]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -87,31 +143,89 @@ function ReelDetailPage() {
     }, 290);
   }
 
-  function handleToggleLike() {
+  async function handleToggleLike() {
     if (!reel) return;
-    const next = toggleReelLike(reel.id);
-    setReel((prev) =>
-      prev
-        ? {
-            ...prev,
-            likedByMe: next,
-            stats: { ...prev.stats, likes: prev.stats.likes + (next ? 1 : -1) },
-          }
-        : prev,
-    );
+    try {
+      const next = await togglePersistedReelLike(reel.id, identity.id);
+      setReel((prev) =>
+        prev
+          ? {
+              ...prev,
+              likedByMe: next.likedByMe,
+              stats: {
+                ...prev.stats,
+                likes: prev.stats.likes + (next.likedByMe ? 1 : -1),
+              },
+            }
+          : prev,
+      );
+    } catch (error) {
+      console.warn(`[reels] falha ao alternar Like de "${reel.id}".`, error);
+      toast.error("Não foi possível atualizar a curtida.");
+    }
+  }
+
+  async function reloadComments() {
+    setComments(await getPersistedReelComments(reelId));
+  }
+
+  async function addComment(text: string, parentId?: string): Promise<boolean> {
+    try {
+      const created = await addPersistedReelComment({
+        reelId,
+        parentId,
+        text,
+        author: { id: identity.id, name: identity.name, photoUrl: identity.photo },
+      });
+      if (!created) return false;
+      await reloadComments();
+      setReel((prev) =>
+        prev ? { ...prev, stats: { ...prev.stats, comments: prev.stats.comments + 1 } } : prev,
+      );
+      return true;
+    } catch (error) {
+      console.warn(`[reels] falha ao comentar em "${reelId}".`, error);
+      toast.error(parentId ? "Não foi possível salvar a resposta." : "Não foi possível comentar.");
+      return false;
+    }
+  }
+
+  async function handleLikeComment(commentId: string) {
+    try {
+      await togglePersistedCommentLike(reelId, commentId);
+      await reloadComments();
+    } catch (error) {
+      console.warn(`[reels] falha ao curtir comentário "${commentId}".`, error);
+      toast.error("Não foi possível atualizar o comentário.");
+    }
   }
 
   function handleToggleSave() {
     if (!reel) return;
-    setReel((prev) =>
-      prev
-        ? {
-            ...prev,
-            savedByMe: !prev.savedByMe,
-            stats: { ...prev.stats, saves: prev.stats.saves + (prev.savedByMe ? -1 : 1) },
-          }
-        : prev,
-    );
+    toggleSavedDetail(reel.id);
+  }
+
+  function handleToggleFollow() {
+    if (!reel || reel.author.id === identity.id) return;
+    toggleFollow(reel.author.id, identity.id);
+  }
+
+  function handleConnect() {
+    if (!reel) return;
+    const status = getReelConnectStatus(reel.author.id, identity.id);
+    if (status === "unavailable" || status === "pending") return;
+    if (status === "connected") {
+      const conversationId = getReelDirectConversationId(reel.author.id, identity.id);
+      if (conversationId) {
+        navigate({ to: "/chat/$conversationId", params: { conversationId } });
+      }
+      return;
+    }
+    navigate({
+      to: "/solicitacao/$id",
+      params: { id: reel.author.id },
+      search: { mode: "send" },
+    });
   }
 
   function handleOpenContext(target: ReelContextTarget) {
@@ -138,7 +252,7 @@ function ReelDetailPage() {
   if (!reel) {
     return (
       <div className="absolute inset-0 bg-black grid place-items-center text-white">
-        Reel não encontrado
+        Não encontrado no Agora
       </div>
     );
   }
@@ -226,6 +340,15 @@ function ReelDetailPage() {
           author={reel.author}
           onOpenProfile={() => handleOpenContext(getReelContext(reel).authorTarget)}
         />
+        {reel.author.id !== identity.id ? (
+          <div className="mt-2 flex items-center gap-2">
+            <ReelFollowButton following={reel.author.isFollowing} onToggle={handleToggleFollow} />
+            <ReelConnectButton
+              status={getReelConnectStatus(reel.author.id, identity.id)}
+              onConnect={handleConnect}
+            />
+          </div>
+        ) : null}
         {reel.caption && (
           <p className="mt-2 text-white text-[13px] leading-snug max-w-[86%] line-clamp-3 drop-shadow">
             {reel.caption}
@@ -334,9 +457,10 @@ function ReelDetailPage() {
         reelId={reel.id}
         open={commentsOpen}
         onClose={() => setCommentsOpen(false)}
-        comments={[]}
-        onAddComment={() => {}}
-        onLikeComment={() => {}}
+        comments={comments}
+        onAddComment={(text) => addComment(text)}
+        onReply={(parentId, text) => addComment(text, parentId)}
+        onLikeComment={handleLikeComment}
       />
 
       <ReelShareSheet reelId={reel.id} open={shareOpen} onClose={() => setShareOpen(false)} />

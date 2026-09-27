@@ -11,15 +11,8 @@ import { Calendar, CarFront, MapPinned, Share2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { Business, BusinessEvent } from "@/lib/marketplace/business-types";
-import { EventStatus } from "@/lib/marketplace/business-types";
-import {
-  MOCK_EVENTS,
-  MOCK_EXTRA_EVENTS,
-  MOCK_BUSINESSES,
-  getEventById,
-} from "@/lib/marketplace/mock-businesses";
-import { HOME_EVENTS, type HomeEvent } from "@/lib/feed/home-premium";
-import { allEngineEvents } from "@/lib/engine/engine-detail";
+import { getBusinessById } from "@/lib/marketplace/mock-businesses";
+import { listLocalEvents, resolveLocalEventById } from "@/lib/marketplace/local-event-lookup";
 import {
   getEventStatusLabel,
   getEventStatusBgColor,
@@ -30,11 +23,12 @@ import {
 } from "@/lib/marketplace/event-utils";
 
 export const Route = createFileRoute("/_app/event/$eventId")({
+  ssr: false,
   head: ({ params }) => ({
     meta: [{ title: "Evento — Connexy" }],
   }),
   loader: ({ params }) => {
-    const event = ALL_EVENTS.find((e) => e.id === params.eventId);
+    const event = resolveLocalEventById(params.eventId);
     if (!event) throw notFound();
     return event;
   },
@@ -49,75 +43,21 @@ export const Route = createFileRoute("/_app/event/$eventId")({
   component: EventDetailPage,
 });
 
-const MONTH_ABBR: Record<string, number> = {
-  Jan: 0,
-  Fev: 1,
-  Mar: 2,
-  Abr: 3,
-  Mai: 4,
-  Jun: 5,
-  Jul: 6,
-  Ago: 7,
-  Set: 8,
-  Out: 9,
-  Nov: 10,
-  Dez: 11,
-};
-
-function parseHomeEventDate(dateLabel: string, time: string): Date {
-  const now = new Date();
-  const [h, m] = time.split(":").map(Number);
-  if (dateLabel === "Hoje") {
-    const d = new Date(now);
-    d.setHours(h, m, 0, 0);
-    return d;
-  }
-  const match = dateLabel.match(/(\d{1,2}) ([A-Za-z]{3})/);
-  if (match) {
-    const day = Number(match[1]);
-    const month = MONTH_ABBR[match[2]] ?? 0;
-    return new Date(now.getFullYear(), month, day, h, m);
-  }
-  return new Date(now);
-}
-
-function homeEventToBusinessEvent(e: HomeEvent): BusinessEvent {
-  const startDate = parseHomeEventDate(e.date, e.time);
-  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-  return {
-    id: e.id,
-    businessId: "",
-    title: e.name,
-    description: `${e.category ?? "Evento"} perto de você. ${e.location}.`,
-    photo: e.banner,
-    startDate,
-    endDate,
-    location: e.location,
-    status: e.date === "Hoje" ? EventStatus.ONGOING : EventStatus.UPCOMING,
-    attendeesCount: e.participants,
-    isFeatured: false,
-  };
-}
-
-const ALL_EVENTS: BusinessEvent[] = [
-  ...MOCK_EVENTS,
-  ...MOCK_EXTRA_EVENTS,
-  ...HOME_EVENTS.map(homeEventToBusinessEvent),
-  ...allEngineEvents(),
-];
-
 function EventDetailPage() {
   const event = Route.useLoaderData() as BusinessEvent;
   const nav = useNavigate();
   const [isAttending, setIsAttending] = useState(false);
 
   const hostBusiness = useMemo<Business | undefined>(
-    () => (event.businessId ? MOCK_BUSINESSES.find((b) => b.id === event.businessId) : undefined),
+    () => (event.businessId ? getBusinessById(event.businessId) : undefined),
     [event.businessId],
   );
 
   const relatedEvents = useMemo(
-    () => ALL_EVENTS.filter((e) => e.id !== event.id).slice(0, 4),
+    () =>
+      listLocalEvents()
+        .filter((e) => e.id !== event.id)
+        .slice(0, 4),
     [event.id],
   );
 

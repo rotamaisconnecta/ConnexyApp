@@ -8,7 +8,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { profileOnboardingForGuard } from "@/lib/profile/profile-status";
 import { isDemoMode } from "@/lib/demo/demo-config";
+import { isRemoteProfileEnabled } from "@/lib/profile/schema-a-profile-flag";
+import { getSchemaAProfile } from "@/lib/profile/schema-a-profile";
 import { clearDemoSignup } from "@/lib/demo/demo-auth";
+import {
+  applyDemoOnboardingInterests,
+  getDemoOwnProfile,
+  hasStoredDemoOwnProfile,
+} from "@/lib/demo/demo-own-profile";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { toast } from "sonner";
 
@@ -38,12 +45,10 @@ function Interests() {
       cancelled = true;
     };
   }, [nav]);
-  const [selected, setSelected] = useState<string[]>([
-    "Viagens",
-    "Socializar",
-    "Eventos",
-    "Música",
-  ]);
+  const storedInterests = hasStoredDemoOwnProfile() ? getDemoOwnProfile().interests : [];
+  const [selected, setSelected] = useState<string[]>(
+    storedInterests.length > 0 ? storedInterests : ["Viagens", "Socializar", "Eventos", "Música"],
+  );
   const [customInterests, setCustomInterests] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -75,6 +80,34 @@ function Interests() {
 
   async function finish() {
     if (selected.length < 3 || saving) return;
+    if (isDemoMode()) {
+      setSaving(true);
+      try {
+        applyDemoOnboardingInterests(selected);
+        clearDemoSignup();
+        nav({ to: "/home" });
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Não foi possível salvar seus interesses.",
+        );
+        setSaving(false);
+      }
+      return;
+    }
+    if (isRemoteProfileEnabled()) {
+      setSaving(true);
+      try {
+        const current = await getSchemaAProfile().loadOwn();
+        await getSchemaAProfile().saveOwn({ ...current, interests: selected });
+        nav({ to: "/home" });
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Não foi possível salvar seus interesses.",
+        );
+        setSaving(false);
+      }
+      return;
+    }
     if (configured && user) {
       setSaving(true);
       try {
@@ -87,7 +120,6 @@ function Interests() {
         return;
       }
     }
-    if (isDemoMode()) clearDemoSignup();
     nav({ to: "/home" });
   }
 

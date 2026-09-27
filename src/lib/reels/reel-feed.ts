@@ -1,7 +1,7 @@
 /* =========================================================
    reel-feed.ts — Feed unificado de Reels (Fase 3B).
-   Combina os reels publicados localmente (IndexedDB +
-   metadata) com os mocks do ecossistema, sem ids duplicados
+   Combina os reels publicados localmente no repository
+   canônico com os mocks do ecossistema, sem ids duplicados
    e com os publicados recém-primeiro. Futuramente poderá
    também incluir reels vindos do Supabase.
 ========================================================= */
@@ -9,14 +9,11 @@
 import type { Reel } from "./reel-types";
 import { extractHashtags } from "./reel-utils";
 import { MOCK_REELS, findReelById } from "./reel-mocks";
-import {
-  getStoredPublishedReels,
-  isReelLiked,
-  type StoredPublishedReel,
-} from "./reel-local-storage";
+import type { StoredReel } from "@/lib/persistence/domain/reels-entities";
+import { getPersistedReels } from "./persisted-reels-reader";
 import { getReelVideoUrl, getReelPosterUrl } from "./reel-local-media-db";
 
-function hydrateContext(stored: StoredPublishedReel) {
+function hydrateContext(stored: StoredReel) {
   const context = stored.context;
   if (!context) return { location: null, business: null, event: null };
   for (const mock of MOCK_REELS) {
@@ -37,7 +34,7 @@ function hydrateContext(stored: StoredPublishedReel) {
 }
 
 export function buildPublishedReel(
-  stored: StoredPublishedReel,
+  stored: StoredReel,
   videoUrl: string,
   posterUrl: string | null,
 ): Reel {
@@ -71,16 +68,19 @@ export function buildPublishedReel(
 }
 
 export async function getPublishedReels(): Promise<Reel[]> {
-  const stored = getStoredPublishedReels();
+  const stored = await getPersistedReels();
   const reels: Reel[] = [];
   for (const item of stored) {
     try {
       const videoUrl = await getReelVideoUrl(item.id);
-      if (!videoUrl) continue;
+      if (!videoUrl) {
+        console.warn(`[reels] Reel persistido "${item.id}" não possui mídia local.`);
+        continue;
+      }
       const posterUrl = await getReelPosterUrl(item.id);
       reels.push(buildPublishedReel(item, videoUrl, posterUrl));
-    } catch {
-      // mídia indisponível (ex.: IndexedDB bloqueado) — pula esse reel
+    } catch (error) {
+      console.warn(`[reels] mídia local indisponível para "${item.id}".`, error);
     }
   }
   return reels;
@@ -100,8 +100,7 @@ export async function getReelFeed(): Promise<Reel[]> {
 
 export async function getReelById(reelId: string): Promise<Reel | null> {
   const mock = findReelById(reelId);
-  if (mock) return { ...mock, likedByMe: isReelLiked(reelId) };
+  if (mock) return mock;
   const published = await getPublishedReels();
-  const reel = published.find((r) => r.id === reelId);
-  return reel ? { ...reel, likedByMe: isReelLiked(reelId) } : null;
+  return published.find((reel) => reel.id === reelId) ?? null;
 }

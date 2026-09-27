@@ -9,10 +9,10 @@
 
 import type { GeoLocation } from "../ride-types";
 import type { RouteStop } from "../route-utils";
-import { estimateRouteDistance, estimateRouteDuration } from "../route-utils";
+import { estimateRouteDistance, estimateRouteDuration, limitRouteStops } from "../route-utils";
 import { canTransition, isCancellable, isTerminal } from "./trip-machine";
 import type { Trip, TripDriver, TripRating, TripStatus } from "./trip-types";
-import { registerRideBlock } from "./ride-blocks";
+import { isRideBlocked, registerRideBlock } from "./ride-blocks";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
 
 const STORAGE_KEY = "connexy_demo_trip";
@@ -141,7 +141,6 @@ let state: TripStoreState = loadState();
 const listeners = new Set<() => void>();
 
 function persistAndNotify(next: TripStoreState): void {
-  state = next;
   try {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(
@@ -149,10 +148,19 @@ function persistAndNotify(next: TripStoreState): void {
         JSON.stringify({ trip: next.trip, history: next.history }),
       );
     }
-  } catch {
-    /* fallback silencioso (ex.: storage indisponível) */
+  } catch (error) {
+    console.warn("[mobility] falha ao persistir a Trip local.", error);
+    throw new Error("Não foi possível salvar o estado da corrida.");
   }
+  state = next;
   listeners.forEach((listener) => listener());
+}
+
+function archiveTerminalTrip(history: Trip[], trip: Trip | null): Trip[] {
+  if (!trip || !isTerminal(trip.status)) return history;
+  const existingIndex = history.findIndex((item) => item.id === trip.id);
+  if (existingIndex < 0) return [...history, trip];
+  return history.map((item, index) => (index === existingIndex ? trip : item));
 }
 
 /* ─── Leitura / inscrição (useSyncExternalStore) ─────────── */
@@ -196,10 +204,18 @@ export interface TripSeed {
 
 export function createTrip(seed: TripSeed): Trip {
   const current = state.trip;
-  if (current && !isTerminal(current.status)) return current;
-
+  const userId = seed.userId ?? getDemoIdentity().id;
+  if (current && !isTerminal(current.status)) {
+    if (current.userId && current.userId !== userId) {
+      throw new Error("Existe uma corrida ativa para outra identidade.");
+    }
+    return current;
+  }
+  if (isRideBlocked(userId)) {
+    throw new Error("Usuário bloqueado por uma corrida não paga.");
+  }
   const destination = seed.destination ?? null;
-  const stops = seed.stops ?? [];
+  const stops = limitRouteStops(seed.stops ?? []);
   const routeMeta = computeRouteMeta(seed.origin, stops, destination);
 
   const trip: Trip = {
@@ -218,7 +234,7 @@ export function createTrip(seed: TripSeed): Trip {
     estimatedFare: 0,
     finalFare: null,
     paymentConfirmed: false,
-    userId: seed.userId ?? getDemoIdentity().id,
+    userId,
     currentStopIndex: 0,
     rating: null,
     source: seed.source ?? null,
@@ -229,7 +245,7 @@ export function createTrip(seed: TripSeed): Trip {
     cancelledAt: null,
   };
 
-  persistAndNotify({ trip, history: state.history });
+  persistAndNotify({ trip, history: archiveTerminalTrip(state.history, current) });
   return trip;
 }
 
@@ -250,7 +266,10 @@ export function transition(to: TripStatus, data?: Partial<Trip>): Trip | null {
     cancelledAt: to === "cancelada" ? now : current.cancelledAt,
   };
 
-  persistAndNotify({ ...state, trip: next });
+  persistAndNotify({
+    trip: next,
+    history: isTerminal(next.status) ? archiveTerminalTrip(state.history, next) : state.history,
+  });
   return next;
 }
 
@@ -259,7 +278,11 @@ export function transition(to: TripStatus, data?: Partial<Trip>): Trip | null {
 export function patchTrip(patch: Partial<Trip>): Trip | null {
   const current = state.trip;
   if (!current) return null;
-  const next = { ...current, ...patch };
+  const next = {
+    ...current,
+    ...patch,
+    ...(patch.stops ? { stops: limitRouteStops(patch.stops) } : {}),
+  };
   persistAndNotify({ ...state, trip: next });
   return next;
 }
@@ -284,8 +307,8 @@ export function cancelTrip(): Trip | null {
 export function completeTrip(rating?: TripRating): Trip | null {
   const current = state.trip;
   if (!current) return null;
-  const next = current.status === "avaliacao" || current.status === "chegada" ? current : null;
-  if (!next) return current;
+  if (current.status !== "avaliacao") return current;
+  if (!current.paymentConfirmed && current.paymentIssue !== "user_not_paid") return current;
   return transition("conclusao", {
     finalFare: current.finalFare ?? current.estimatedFare,
     rating: rating ?? current.rating,
@@ -335,7 +358,7 @@ export function resetTrip(): void {
   const current = state.trip;
   persistAndNotify({
     trip: null,
-    history: current ? [...state.history, current] : state.history,
+    history: archiveTerminalTrip(state.history, current),
   });
 }
 

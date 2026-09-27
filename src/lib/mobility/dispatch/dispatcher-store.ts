@@ -372,6 +372,58 @@ function offerToNext(tripId: string): void {
   pushEvent("DRIVER_OFFERED", tripId, next.id);
 }
 
+/* ─── Restaurar atribuição a partir da Trip (reload) ───────
+   A Trip é a autoridade. Recria a entrada assigned sem emitir
+   DRIVER_ASSIGNED, para não re-disparar markDriverFound. */
+
+export function restoreAssignment(
+  tripId: string,
+  driverId: string,
+  request: DispatchRequest,
+  fleetStatus: Extract<DispatchDriverStatus, "accepted" | "busy">,
+): void {
+  if (!tripId || !driverId) return;
+  const existing = getEntry(tripId);
+  const driver = getDriverById(driverId);
+  if (driver && driver.status !== fleetStatus) {
+    updateFleetStatus(driverId, fleetStatus);
+  }
+
+  const assigned: DispatchEntry = {
+    tripId,
+    status: "assigned",
+    assigningDriverId: null,
+    offeredDriverIds: existing?.offeredDriverIds.includes(driverId)
+      ? existing.offeredDriverIds
+      : [...(existing?.offeredDriverIds ?? []), driverId],
+    declinedDriverIds: existing?.declinedDriverIds ?? [],
+    assignedDriverId: driverId,
+    offer: existing?.offer ?? null,
+    request: existing?.request ?? request,
+    requestedAt: existing?.requestedAt ?? new Date().toISOString(),
+  };
+
+  if (
+    existing &&
+    existing.status === "assigned" &&
+    existing.assignedDriverId === driverId &&
+    driver?.status === fleetStatus
+  ) {
+    if (existing.request == null && request) {
+      touchEntry(tripId, () => assigned);
+    }
+    return;
+  }
+
+  if (existing) {
+    touchEntry(tripId, () => assigned);
+    return;
+  }
+
+  state = { ...state, entries: [...state.entries, assigned] };
+  notify();
+}
+
 /* ─── Liberar motorista após fim da Trip (conclusao) ─────── */
 
 export function releaseTripDrivers(tripId: string): void {

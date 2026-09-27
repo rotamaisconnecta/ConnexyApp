@@ -12,12 +12,15 @@
 import type { ReelAuthor, ReelCategoryValue, ReelComment } from "./reel-types";
 import { currentUser } from "@/lib/mock-data";
 
-const LIKES_KEY = "connexy:reels:likes:v1";
-const COMMENTS_KEY = "connexy:reels:comments:v1";
+/** Exportado para a migração 1C-3C-B utilizar a mesma fonte literal. */
+export const LIKES_KEY = "connexy:reels:likes:v1";
+/** Exportado para a migração 1C-3C-C utilizar a mesma fonte literal. */
+export const COMMENTS_KEY = "connexy:reels:comments:v1";
 const SOUND_KEY = "connexy:reels:sound:v1";
-const PUBLISHED_KEY = "connexy:reels:published:v1";
+/** Exportado para a migração 1C-3C utilizar a mesma fonte literal. */
+export const PUBLISHED_KEY = "connexy:reels:published:v1";
 
-const MAX_COMMENT_LENGTH = 280;
+export const MAX_REEL_COMMENT_LENGTH = 280;
 
 function safeGet(key: string): string | null {
   try {
@@ -105,7 +108,7 @@ export function normalizeCommentText(text: string): string {
 export function addReelComment(reelId: string, text: string): ReelComment | null {
   const clean = normalizeCommentText(text);
   if (!clean) return null;
-  if (clean.length > MAX_COMMENT_LENGTH) return null;
+  if (clean.length > MAX_REEL_COMMENT_LENGTH) return null;
 
   const comment: ReelComment = {
     id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

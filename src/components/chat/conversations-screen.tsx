@@ -2,28 +2,50 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-import { Check, Loader2, MessagesSquare, Search, SlidersHorizontal, Users, X } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  MessagesSquare,
+  Pin,
+  PinOff,
+  Search,
+  SlidersHorizontal,
+  Users,
+  X,
+} from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { ConversationRow } from "./conversation-row";
 import { ContinueCard } from "./continue-card";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { ChatService } from "@/services/chat.service";
-import { UserRepository } from "@/repositories/user.repository";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
-import { getDemoIdentities, setDemoIdentity, useDemoIdentity } from "@/lib/demo/demo-identity";
-import { subscribeDemoDB, isConnected, getConversationLastMessage } from "@/lib/demo/demo-db";
-import { useDemoGroupInvites, useDemoGroups, useDemoPendingRequests } from "@/lib/demo/use-demo-db";
-import { respondToDemoGroupInvite } from "@/lib/demo/demo-db";
+import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
+import { getSchemaAConversations } from "@/lib/chat/schema-a-conversations";
+import {
+  getDemoIdentities,
+  getDemoIdentity,
+  setDemoIdentity,
+  useDemoIdentity,
+} from "@/lib/demo/demo-identity";
+import { subscribeDemoDB, respondToDemoGroupInvite } from "@/lib/demo/demo-db";
+import { useDemoGroupInvites, useDemoPendingRequests } from "@/lib/demo/use-demo-db";
 import { people } from "@/lib/mock-data";
 import {
-  MOCK_CONVERSATIONS,
+  listFunctionalDemoConversations,
+  resolveDemoCatalogPerson,
+} from "@/lib/chat/functional-conversation-list";
+import { isListGesture } from "@/lib/chat/conversation-list-state";
+import {
+  markLocalListGestureHandled,
+  setLocalConversationPinned,
+} from "@/lib/chat/local-chat-persistence";
+import {
+  LastMessageType,
   NextGesture,
   searchMockConversations,
   sortMockConversations,
   ThreadIcon,
-  LastMessageType,
   type MockConversation,
 } from "@/lib/chat/mock-conversations";
 import type { ConversationRow as ConversationRowDB } from "@/types/database/tables";
@@ -54,76 +76,75 @@ export function ConversationsScreen() {
   const [realLoading, setRealLoading] = useState(false);
   const [realError, setRealError] = useState<string | null>(null);
 
-  const [mockConversations, setMockConversations] = useState<MockConversation[]>(() =>
-    MOCK_CONVERSATIONS.map((c) => ({ ...c, updatedAt: new Date(c.updatedAt.getTime()) })),
-  );
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"active" | "requests">("active");
   const [filterOpen, setFilterOpen] = useState(false);
   const [onlyOnline, setOnlyOnline] = useState(false);
   const [onlyNearby, setOnlyNearby] = useState(false);
-  const pendingRequests = useDemoPendingRequests();
-  const demoGroups = useDemoGroups(user?.id ?? "");
+  const [listTick, setListTick] = useState(0);
+  const [menuConversationId, setMenuConversationId] = useState<string | null>(null);
+  const pendingRequests = useDemoPendingRequests(user?.id);
   const groupInvites = useDemoGroupInvites(user?.id ?? "");
 
-  // In demo mode, merge locally-created connections into the conversation list.
   const demo = isDemoMode();
-  useEffect(() => {
-    if (!demo) return;
-    const sync = () => {
-      setMockConversations((prev) => {
-        const byId = new Map(prev.map((conversation) => [conversation.id, conversation]));
-        for (const person of people.filter((item) => isConnected(item.id))) {
-          if (!byId.has(person.id)) {
-            const last = getConversationLastMessage(person.id);
-            byId.set(person.id, {
-              id: person.id,
-              participant: { id: person.id, name: person.name, photo: person.photo },
-              initials: person.name.slice(0, 2).toUpperCase(),
-              isOnline: person.online,
-              proximityMeters: person.distanceMeters,
-              currentThread: "Conexão local",
-              threadIcon: ThreadIcon.COFFEE,
-              lastMessage: last?.text ?? "Vocês estão conectados",
-              lastMessageType: LastMessageType.TEXT,
-              updatedAt: new Date(last?.at ?? Date.now()),
-              unreadCount: last && last.from === "them" ? 1 : 0,
-              isMuted: false,
-              isPinned: false,
-              sharedInterest: person.interests[0],
-            });
-          }
-        }
-        let changed = false;
-        const next = [...byId.values()].map((conversation) => {
-          const last = getConversationLastMessage(conversation.id);
-          if (!last) return conversation;
-          if (
-            conversation.lastMessage === last.text &&
-            conversation.updatedAt.getTime() === last.at
-          ) {
-            return conversation;
-          }
-          changed = true;
-          return {
-            ...conversation,
-            lastMessage: last.text,
-            lastMessageType: LastMessageType.TEXT,
-            updatedAt: new Date(last.at),
-            unreadCount: last.from === "them" ? 1 : 0,
-          };
-        });
-        const added = next.length !== prev.length;
-        return added || changed ? next : prev;
-      });
-    };
-    sync();
-    return subscribeDemoDB(sync);
-  }, [demo]);
+  const remote = isRemoteConversationsEnabled();
+  const [remoteItems, setRemoteItems] = useState<MockConversation[]>([]);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
 
-  // Load real conversations when Supabase is configured
   useEffect(() => {
-    if (!configured || !user?.id) return;
+    if (!demo || !user?.id) return;
+    return subscribeDemoDB(() => setListTick((tick) => tick + 1));
+  }, [demo, user?.id]);
+
+  useEffect(() => {
+    if (!remote) return;
+    let active = true;
+    void (async () => {
+      setRemoteLoading(true);
+      setRemoteError(null);
+      try {
+        const threads = await getSchemaAConversations().listThreads();
+        if (!active) return;
+        setRemoteItems(
+          threads.map((thread) => {
+            const name = thread.conversation.name?.trim() || "Conversa";
+            return {
+              id: thread.conversation.id,
+              participant: {
+                id: thread.peerId ?? thread.conversation.id,
+                name,
+              },
+              initials: name.slice(0, 2).toUpperCase(),
+              isOnline: false,
+              currentThread: "Conversa",
+              threadIcon: ThreadIcon.COFFEE,
+              lastMessage: thread.conversation.lastMessageText ?? "",
+              lastMessageType: LastMessageType.TEXT,
+              updatedAt: new Date(thread.conversation.updatedAt),
+              unreadCount: thread.unread ? 1 : 0,
+              isMuted: false,
+              isPinned: thread.pinned,
+            } satisfies MockConversation;
+          }),
+        );
+      } catch (err) {
+        if (active) {
+          setRemoteError(err instanceof Error ? err.message : "Erro ao carregar conversas");
+          setRemoteItems([]);
+        }
+      } finally {
+        if (active) setRemoteLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [remote, user?.id, listTick]);
+
+  // Load real conversations when Supabase is configured (legacy path, not Schema A)
+  useEffect(() => {
+    if (remote || !configured || !user?.id) return;
     let active = true;
     (async () => {
       setRealLoading(true);
@@ -158,42 +179,22 @@ export function ConversationsScreen() {
     return () => {
       active = false;
     };
-  }, [configured, user?.id]);
+  }, [configured, remote, user?.id]);
 
-  const demoConversationItems = useMemo<MockConversation[]>(
-    () => [
-      ...mockConversations,
-      ...demoGroups.map((group) => {
-        const accepted = group.participants.filter(
-          (participant) => participant.status === "accepted",
-        );
-        const last = getConversationLastMessage(group.id);
-        return {
-          id: group.id,
-          participant: { id: group.id, name: group.name },
-          initials: group.name.slice(0, 2).toUpperCase(),
-          isOnline: true,
-          currentThread: `${accepted.length} participante${accepted.length === 1 ? "" : "s"}`,
-          threadIcon: ThreadIcon.EVENT,
-          lastMessage: last?.text ?? "Grupo criado — aguardando convites",
-          lastMessageType: LastMessageType.TEXT,
-          updatedAt: new Date(last?.at ?? group.createdAt),
-          unreadCount: 0,
-          isMuted: false,
-          isPinned: false,
-        };
-      }),
-    ],
-    [mockConversations, demoGroups],
-  );
-  const conversations = configured ? realConversations : demoConversationItems;
+  const demoConversationItems = useMemo<MockConversation[]>(() => {
+    if (!demo || !user?.id) return [];
+    void listTick;
+    return listFunctionalDemoConversations(user.id);
+  }, [demo, user?.id, listTick]);
+  const mockRows = remote ? remoteItems : demoConversationItems;
+  const useLegacyConfigured = configured && !remote && !demo;
   const sorted = useMemo(() => {
-    if (configured) return realConversations;
-    return sortMockConversations(demoConversationItems);
-  }, [configured, realConversations, demoConversationItems]);
+    if (useLegacyConfigured) return realConversations;
+    return sortMockConversations(mockRows);
+  }, [useLegacyConfigured, realConversations, mockRows]);
 
   const filtered = useMemo(() => {
-    if (configured) {
+    if (useLegacyConfigured) {
       const items = sorted.filter((conversation) => {
         const person = people.find((item) => item.id === conversation.participant.id);
         if (onlyOnline && person && !person.online) return false;
@@ -209,16 +210,18 @@ export function ConversationsScreen() {
       if (onlyOnline && person && !person.online) return false;
       return !(onlyNearby && person && person.distanceMeters > 2000);
     });
-  }, [configured, sorted, query, onlyOnline, onlyNearby]);
+  }, [useLegacyConfigured, sorted, query, onlyOnline, onlyNearby]);
 
   const continueItems = useMemo(
     () =>
       query.trim()
         ? []
-        : configured
+        : useLegacyConfigured
           ? []
-          : (sorted as MockConversation[]).filter((c) => c.nextGesture).slice(0, 2),
-    [sorted, query, configured],
+          : (sorted as MockConversation[])
+              .filter((conversation) => isListGesture(conversation.nextGesture))
+              .slice(0, 2),
+    [sorted, query, useLegacyConfigured],
   );
 
   const hasQuery = query.trim().length > 0;
@@ -226,7 +229,7 @@ export function ConversationsScreen() {
   const filteredRequests = useMemo(
     () =>
       pendingRequests.filter((request) => {
-        const person = people.find((item) => item.id === request.fromUserId);
+        const person = resolveDemoCatalogPerson(request.fromUserId);
         if (!person) return false;
         if (onlyOnline && !person.online) return false;
         if (onlyNearby && person.distanceMeters > 2000) return false;
@@ -241,14 +244,44 @@ export function ConversationsScreen() {
   }
 
   function handleGesture(conversation: MockConversation) {
-    if (conversation.nextGesture === NextGesture.CONFIRM) {
-      setMockConversations((prev) =>
-        prev.map((c) => (c.id === conversation.id ? { ...c, nextGesture: undefined } : c)),
-      );
-      toast.success("Horário confirmado");
+    if (isListGesture(conversation.nextGesture)) {
+      void markLocalListGestureHandled(conversation.id);
+      if (conversation.nextGesture === NextGesture.LISTEN) {
+        toast.success("Áudio reproduzido");
+        return;
+      }
+      if (conversation.nextGesture === NextGesture.CONFIRM) {
+        toast.success("Horário confirmado");
+        return;
+      }
+      toast.success("Conversa retomada");
       return;
     }
     openConversation(conversation.id);
+  }
+
+  const listLoading = remote ? remoteLoading : useLegacyConfigured && realLoading;
+  const listError = remote ? remoteError : useLegacyConfigured ? realError : null;
+  const conversations = useLegacyConfigured ? realConversations : mockRows;
+
+  function handleTogglePin(conversation: MockConversation) {
+    const nextPinned = !conversation.isPinned;
+    if (remote) {
+      void getSchemaAConversations()
+        .setPinned(conversation.id, nextPinned)
+        .then(() => setListTick((tick) => tick + 1))
+        .catch((error: unknown) => {
+          toast.error(error instanceof Error ? error.message : "Não foi possível fixar.");
+        });
+      setMenuConversationId(null);
+      toast.success(nextPinned ? "Conversa fixada" : "Conversa desafixada");
+      return;
+    }
+    const identityId = getDemoIdentity().id;
+    if (!identityId) return;
+    void setLocalConversationPinned(conversation.id, identityId, nextPinned);
+    setMenuConversationId(null);
+    toast.success(nextPinned ? "Conversa fixada" : "Conversa desafixada");
   }
 
   return (
@@ -389,22 +422,26 @@ export function ConversationsScreen() {
 
       <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         {/* Loading state (real only) */}
-        {configured && realLoading && (
+        {listLoading && (
           <div className="flex justify-center py-12">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
         )}
 
         {/* Error state (real only) */}
-        {configured && realError && !realLoading && (
+        {Boolean(listError) && !listLoading && (
           <div className="px-8 py-16 text-center">
-            <p className="text-sm text-muted-foreground">{realError}</p>
+            <p className="text-sm text-muted-foreground">{listError}</p>
             <button
               type="button"
               onClick={() => {
+                if (remote) {
+                  setRemoteError(null);
+                  setListTick((tick) => tick + 1);
+                  return;
+                }
                 setRealError(null);
                 setRealLoading(true);
-                // Trigger re-fetch by updating state
                 setRealConversations([]);
               }}
               className="mt-3 text-sm text-primary font-semibold"
@@ -415,7 +452,7 @@ export function ConversationsScreen() {
         )}
 
         {/* Empty state */}
-        {!realLoading && !realError && activeTab === "active" && conversations.length === 0 && (
+        {!listLoading && !listError && activeTab === "active" && conversations.length === 0 && (
           <div className="px-8 pt-24 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-brand shadow-elegant">
               <MessagesSquare className="h-7 w-7 text-white" strokeWidth={2.1} />
@@ -437,8 +474,8 @@ export function ConversationsScreen() {
         )}
 
         {/* Search empty */}
-        {!realLoading &&
-          !realError &&
+        {!listLoading &&
+          !listError &&
           activeTab === "active" &&
           (hasQuery || filtersActive) &&
           filtered.length === 0 &&
@@ -455,7 +492,7 @@ export function ConversationsScreen() {
           )}
 
         {/* Conversation list */}
-        {!realLoading && !realError && activeTab === "active" && filtered.length > 0 && (
+        {!listLoading && !listError && activeTab === "active" && filtered.length > 0 && (
           <>
             {continueItems.length > 0 && (
               <motion.section
@@ -494,7 +531,7 @@ export function ConversationsScreen() {
                 animate="visible"
                 className="mt-1"
               >
-                {configured
+                {useLegacyConfigured
                   ? (filtered as RealConversation[]).map((conversation) => (
                       <RealConversationRow
                         key={conversation.id}
@@ -507,7 +544,7 @@ export function ConversationsScreen() {
                         key={conversation.id}
                         conversation={conversation}
                         onGesture={handleGesture}
-                        onMenu={() => undefined}
+                        onMenu={(item) => setMenuConversationId(item.id)}
                       />
                     ))}
               </motion.div>
@@ -515,7 +552,7 @@ export function ConversationsScreen() {
           </>
         )}
 
-        {!realLoading && !realError && activeTab === "requests" && (
+        {!listLoading && !listError && activeTab === "requests" && (
           <section className="mt-5 px-5">
             {filteredRequests.length > 0 || groupInvites.length > 0 ? (
               <div className="space-y-2.5">
@@ -575,7 +612,7 @@ export function ConversationsScreen() {
                   );
                 })}
                 {filteredRequests.map((request) => {
-                  const person = people.find((item) => item.id === request.fromUserId);
+                  const person = resolveDemoCatalogPerson(request.fromUserId);
                   if (!person) return null;
                   return (
                     <button
@@ -623,6 +660,41 @@ export function ConversationsScreen() {
           </section>
         )}
       </div>
+
+      {menuConversationId && (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            aria-label="Fechar opções da conversa"
+            className="absolute inset-0 bg-black/20"
+            onClick={() => setMenuConversationId(null)}
+          />
+          <div
+            role="menu"
+            aria-label="Opções da conversa"
+            className="absolute right-4 top-[7.5rem] w-52 overflow-hidden rounded-2xl border border-border bg-surface p-1 shadow-elevated"
+          >
+            {(filtered as MockConversation[])
+              .filter((conversation) => conversation.id === menuConversationId)
+              .map((conversation) => (
+                <button
+                  key={conversation.id}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleTogglePin(conversation)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold hover:bg-accent/50"
+                >
+                  {conversation.isPinned ? (
+                    <PinOff className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Pin className="h-4 w-4 text-primary" />
+                  )}
+                  {conversation.isPinned ? "Desafixar conversa" : "Fixar conversa"}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

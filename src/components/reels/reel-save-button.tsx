@@ -11,6 +11,7 @@ export function ReelSaveButton({ saved, onToggle }: ReelSaveButtonProps) {
     <button
       onClick={onToggle}
       className="h-11 w-11 grid place-items-center rounded-full active:scale-90 transition-transform"
+      data-reel-save={saved ? "saved" : "unsaved"}
       aria-label={saved ? "Remover guarda" : "Guardar"}
     >
       <Bookmark

@@ -1,583 +1,57 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import {
-  Store,
-  Calendar,
-  MapPin,
-  Tag,
-  Car,
-  ChevronRight,
-  Eye,
-  Heart,
-  MapPinned,
-  MessageSquare,
-  Users,
-  Star,
-  Clock,
-  BarChart3,
-  Settings,
-  Trash2,
-  PauseCircle,
-  Copy,
-  X,
-  type LucideIcon,
-} from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
-import { Colors, Radius, Shadows } from "@/theme";
+import { Colors } from "@/theme";
 import { currentUser } from "@/lib/mock-data";
-import WizardBase from "@/components/my-connexy/wizard-base";
-import type { WizardStep } from "@/components/my-connexy/wizard-base";
-import { UploadMedia } from "@/components/upload";
+import { LOCAL_CATALOG_DISCLAIMER } from "@/lib/catalog/local-catalog";
 
 export const Route = createFileRoute("/_app/my-connexy")({
   head: () => ({ meta: [{ title: "Meu Connexy — Central" }] }),
   component: MyConnexyPage,
 });
 
-/* ─── Types ──────────────────────────────────────────── */
-
-interface StatItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  value: string;
-  change: string;
-  positive: boolean;
-}
-
-interface ActivityItem {
-  id: string;
-  type: "post" | "event" | "offer" | "ride";
-  text: string;
-  time: string;
-  icon: string;
-}
-
-type WizardType = "negocio" | "evento" | "local" | "oferta" | "publicacao" | null;
-
-/* ─── Data ───────────────────────────────────────────── */
-
-const STATS: StatItem[] = [
-  { id: "views", label: "Visualizações", icon: Eye, value: "2.4k", change: "+12%", positive: true },
-  { id: "likes", label: "Curtidas", icon: Heart, value: "847", change: "+8%", positive: true },
-  { id: "visits", label: "Visitas", icon: MapPinned, value: "156", change: "+23%", positive: true },
+const QUICK_ACTIONS = [
   {
-    id: "messages",
-    label: "Mensagens",
-    icon: MessageSquare,
-    value: "43",
-    change: "-5%",
-    positive: false,
+    label: "Criar Negócio",
+    emoji: "🏢",
+    gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
+    to: "/create/place-business",
   },
   {
-    id: "followers",
-    label: "Seguidores",
-    icon: Users,
-    value: "189",
-    change: "+15%",
-    positive: true,
+    label: "Criar Evento",
+    emoji: "📅",
+    gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
+    to: "/create/event",
   },
-  { id: "rating", label: "Avaliação", icon: Star, value: "4.8", change: "+0.2", positive: true },
-];
-
-const ACTIVITIES: ActivityItem[] = [
-  { id: "a1", type: "post", text: "Nova publicação no feed", time: "há 2 h", icon: "📝" },
-  { id: "a2", type: "offer", text: "Promoção de fim de semana criada", time: "há 5 h", icon: "🏷️" },
   {
-    id: "a3",
-    type: "event",
-    text: "Evento atualizado: Sunset no Parque",
-    time: "ontem",
-    icon: "📅",
+    label: "Criar Local",
+    emoji: "📍",
+    gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
+    to: "/create/place",
   },
-  { id: "a4", type: "ride", text: "Corrida finalizada — R$ 24,50", time: "ontem", icon: "🚗" },
   {
-    id: "a5",
-    type: "post",
-    text: "Reel publicado: 2.3k visualizações",
-    time: "há 3 d",
-    icon: "🎬",
+    label: "Nova Oferta",
+    emoji: "🏷️",
+    gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+    to: "/create/offer",
   },
-];
+] as const;
 
-/* ─── Wizard Step Creators ────────────────────────────── */
-
-function negocioSteps(): WizardStep[] {
-  return [
-    {
-      id: "nome",
-      title: "Qual o nome do seu negócio?",
-      content: <FormField label="Nome" placeholder="Ex: Minha Empresa" />,
-    },
-    {
-      id: "categoria",
-      title: "Selecione a categoria",
-      content: (
-        <CategoryPicker
-          categories={["Restaurante", "Café", "Loja", "Serviço", "Evento", "Outro"]}
-        />
-      ),
-    },
-    {
-      id: "endereco",
-      title: "Onde fica seu negócio?",
-      content: <FormField label="Endereço" placeholder="Rua, número, bairro" />,
-    },
-    { id: "fotos", title: "Adicione fotos do negócio", content: <PhotoUploader /> },
-    {
-      id: "horario",
-      title: "Horário de funcionamento",
-      content: <FormField label="Horário" placeholder="Ex: Seg-Sex 09:00-18:00" />,
-    },
-    {
-      id: "contato",
-      title: "Informações de contato",
-      content: (
-        <div className="space-y-3">
-          <FormField label="Telefone" placeholder="(11) 99999-9999" />
-          <FormField label="Instagram" placeholder="@seudominio" />
-        </div>
-      ),
-    },
-    {
-      id: "preview",
-      title: "Pré-visualização",
-      content: <PreviewCard title="Meu Negócio" subtitle="Restaurante • 200m" />,
-    },
-  ];
-}
-
-function eventSteps(): WizardStep[] {
-  return [
-    {
-      id: "nome",
-      title: "Nome do evento",
-      content: <FormField label="Nome" placeholder="Ex: Sunset no Parque" />,
-    },
-    {
-      id: "data",
-      title: "Data do evento",
-      content: <FormField label="Data" placeholder="DD/MM/AAAA" />,
-    },
-    { id: "hora", title: "Horário", content: <FormField label="Hora" placeholder="HH:MM" /> },
-    {
-      id: "categoria",
-      title: "Categoria do evento",
-      content: (
-        <CategoryPicker
-          categories={["Festa", "Show", "Workshop", "Esporte", "Cultural", "Outro"]}
-        />
-      ),
-    },
-    { id: "banner", title: "Banner do evento", content: <PhotoUploader /> },
-    {
-      id: "descricao",
-      title: "Descrição",
-      content: <FormField label="Descrição" placeholder="Descreva seu evento..." multiline />,
-    },
-  ];
-}
-
-function localSteps(): WizardStep[] {
-  return [
-    {
-      id: "nome",
-      title: "Nome do local",
-      content: <FormField label="Nome" placeholder="Ex: Café Central" />,
-    },
-    {
-      id: "categoria",
-      title: "Categoria",
-      content: (
-        <CategoryPicker
-          categories={["Restaurante", "Café", "Loja", "Parque", "Cultural", "Outro"]}
-        />
-      ),
-    },
-    {
-      id: "localizacao",
-      title: "Localização",
-      content: <FormField label="Endereço" placeholder="Rua, número, bairro" />,
-    },
-    { id: "fotos", title: "Fotos do local", content: <PhotoUploader /> },
-    {
-      id: "descricao",
-      title: "Descrição",
-      content: <FormField label="Descrição" placeholder="Descreva seu local..." multiline />,
-    },
-  ];
-}
-
-function offerSteps(): WizardStep[] {
-  return [
-    {
-      id: "titulo",
-      title: "Título da oferta",
-      content: <FormField label="Título" placeholder="Ex: 20% OFF em todos os cafés" />,
-    },
-    { id: "imagem", title: "Imagem da oferta", content: <PhotoUploader /> },
-    {
-      id: "preco",
-      title: "Preço",
-      content: <FormField label="Preço" placeholder="R$ 0,00" type="number" />,
-    },
-    {
-      id: "desconto",
-      title: "Desconto",
-      content: <FormField label="Desconto" placeholder="Ex: 20%" />,
-    },
-    {
-      id: "descricao",
-      title: "Descrição",
-      content: <FormField label="Descrição" placeholder="Detalhes da oferta..." multiline />,
-    },
-  ];
-}
-
-function publicacaoSteps(): WizardStep[] {
-  return [
-    {
-      id: "tipo",
-      title: "O que deseja publicar?",
-      content: <CategoryPicker categories={["Texto", "Foto", "Vídeo", "Reel"]} />,
-    },
-    {
-      id: "conteudo",
-      title: "Escreva sua publicação",
-      content: <FormField label="Conteúdo" placeholder="O que está acontecendo?" multiline />,
-    },
-    { id: "midia", title: "Adicione mídia", content: <PhotoUploader /> },
-  ];
-}
-
-/* ─── Sub-components ─────────────────────────────────── */
-
-function FormField({
-  label,
-  placeholder,
-  multiline,
-  type,
-}: {
-  label: string;
-  placeholder: string;
-  multiline?: boolean;
-  type?: string;
-}) {
-  const Tag = multiline ? "textarea" : "input";
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{label}</label>
-      <Tag
-        type={type ?? "text"}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-        style={{ resize: multiline ? "vertical" : "none", minHeight: multiline ? 100 : undefined }}
-      />
-    </div>
-  );
-}
-
-function CategoryPicker({ categories }: { categories: string[] }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {categories.map((cat) => (
-        <button
-          key={cat}
-          onClick={() => setSelected(cat)}
-          className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
-            selected === cat
-              ? "bg-primary text-white shadow-md"
-              : "bg-surface border border-border hover:border-primary/30"
-          }`}
-        >
-          {cat}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function PhotoUploader() {
-  return (
-    <UploadMedia
-      mode="photo"
-      multiple
-      maxFiles={5}
-      label="Adicione até 5 fotos"
-      className="rounded-2xl border border-border bg-surface p-3"
-    />
-  );
-}
-
-function PreviewCard({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="rounded-2xl overflow-hidden border border-border shadow-soft">
-      <div className="h-32 bg-gradient-to-br from-primary/20 to-primary/5 grid place-items-center">
-        <Store size={32} className="text-primary/40" />
-      </div>
-      <div className="p-4">
-        <h4 className="font-bold text-sm">{title}</h4>
-        <p className="text-xs text-muted-foreground">{subtitle}</p>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Management Panels ──────────────────────────────── */
-
-function PanelNegocios({ onClose }: { onClose: () => void }) {
-  return (
-    <PanelShell
-      title="Meus Negócios"
-      emoji="🏢"
-      gradient="linear-gradient(135deg, #F59E0B, #D97706)"
-      onClose={onClose}
-    >
-      <div className="space-y-3">
-        <PanelCard label="Café Central" subtitle="Restaurantes • 200m" stats="1.2k visitas" />
-        <div className="flex gap-2 mt-4">
-          <PanelAction icon={Settings} label="Editar" />
-          <PanelAction icon={BarChart3} label="Estatísticas" />
-          <PanelAction icon={Tag} label="Promoções" />
-          <PanelAction icon={Trash2} label="Excluir" danger />
-        </div>
-      </div>
-    </PanelShell>
-  );
-}
-
-function PanelEventos({ onClose }: { onClose: () => void }) {
-  return (
-    <PanelShell
-      title="Meus Eventos"
-      emoji="📅"
-      gradient="linear-gradient(135deg, #EC4899, #DB2777)"
-      onClose={onClose}
-    >
-      <div className="space-y-3">
-        <PanelCard label="Sunset no Parque" subtitle="Evento • 16:00 hoje" stats="48 confirmados" />
-        <div className="flex gap-2 mt-4">
-          <PanelAction icon={Users} label="Participantes" />
-          <PanelAction icon={MapPinned} label="Mapa" />
-          <PanelAction icon={Tag} label="Ingressos" />
-          <PanelAction icon={Settings} label="Editar" />
-        </div>
-      </div>
-    </PanelShell>
-  );
-}
-
-function PanelLocais({ onClose }: { onClose: () => void }) {
-  return (
-    <PanelShell
-      title="Meus Locais"
-      emoji="📍"
-      gradient="linear-gradient(135deg, #3B82F6, #2563EB)"
-      onClose={onClose}
-    >
-      <div className="space-y-3">
-        <PanelCard label="Café Central" subtitle="Cafés • 200m" stats="4.6 ⭐ (1.2k)" />
-        <div className="flex gap-2 mt-4">
-          <PanelAction icon={MapPinned} label="Mapa" />
-          <PanelAction icon={Settings} label="Editar" />
-          <PanelAction icon={Trash2} label="Excluir" danger />
-        </div>
-      </div>
-    </PanelShell>
-  );
-}
-
-function PanelPromocoes({ onClose }: { onClose: () => void }) {
-  return (
-    <PanelShell
-      title="Minhas Promoções"
-      emoji="🏷️"
-      gradient="linear-gradient(135deg, #8B5CF6, #7C3AED)"
-      onClose={onClose}
-    >
-      <div className="space-y-3">
-        <PanelCard
-          label="20% OFF em cafés"
-          subtitle="Válido até 30/08"
-          stats="32 resgates"
-          status="active"
-        />
-        <PanelCard
-          label="Combo duplo R$39"
-          subtitle="Válido até 15/09"
-          stats="18 resgates"
-          status="paused"
-        />
-        <div className="flex gap-2 mt-4">
-          <PanelAction icon={Settings} label="Ativar" />
-          <PanelAction icon={PauseCircle} label="Pausar" />
-          <PanelAction icon={Copy} label="Duplicar" />
-          <PanelAction icon={Trash2} label="Excluir" danger />
-        </div>
-      </div>
-    </PanelShell>
-  );
-}
-
-function PanelMobilidade({ onClose }: { onClose: () => void }) {
-  return (
-    <PanelShell
-      title="Mobilidade"
-      emoji="🚗"
-      gradient="linear-gradient(135deg, #22C55E, #16A34A)"
-      onClose={onClose}
-    >
-      <div className="space-y-3">
-        <PanelCard label="Corridas realizadas" subtitle="Últimos 7 dias" stats="23 corridas" />
-        <PanelCard label="Ganhos da semana" subtitle="Líquido" stats="R$ 487,00" />
-        <div className="flex gap-2 mt-4">
-          <PanelAction icon={Car} label="Corridas" />
-          <PanelAction icon={BarChart3} label="Ganhos" />
-          <PanelAction icon={Clock} label="Histórico" />
-          <PanelAction icon={Star} label="Avaliações" />
-        </div>
-      </div>
-    </PanelShell>
-  );
-}
-
-/* ─── Panel shell ────────────────────────────────────── */
-
-function PanelShell({
-  title,
-  emoji,
-  gradient,
-  onClose,
-  children,
-}: {
-  title: string;
-  emoji: string;
-  gradient: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-    >
-      <motion.div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
-        initial={{ y: "100%", opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: "100%", opacity: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="relative w-full sm:max-w-lg max-h-[85vh] overflow-y-auto"
-        style={{
-          borderRadius: `${Radius.lg} ${Radius.lg} 0 0`,
-          backgroundColor: Colors.background,
-          boxShadow: Shadows.large,
-        }}
-      >
-        <div className="px-6 pt-5 pb-4 text-white" style={{ background: gradient }}>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-2xl">{emoji}</span>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/20 grid place-items-center hover:bg-white/30 transition-colors"
-            >
-              <X size={16} />
-            </button>
-          </div>
-          <h2 className="text-lg font-bold">{title}</h2>
-        </div>
-        <div className="px-6 py-5">{children}</div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function PanelCard({
-  label,
-  subtitle,
-  stats,
-  status,
-}: {
-  label: string;
-  subtitle: string;
-  stats: string;
-  status?: "active" | "paused";
-}) {
-  return (
-    <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface border border-border shadow-soft">
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold">{label}</div>
-        <div className="text-[11px] text-muted-foreground">{subtitle}</div>
-      </div>
-      <div className="text-right">
-        <div className="text-xs font-bold">{stats}</div>
-        {status && (
-          <span
-            className={`text-[10px] font-semibold ${status === "active" ? "text-success" : "text-muted-foreground"}`}
-          >
-            {status === "active" ? "Ativo" : "Pausado"}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function PanelAction({
-  icon: Icon,
-  label,
-  danger,
-}: {
-  icon: LucideIcon;
-  label: string;
-  danger?: boolean;
-}) {
-  return (
-    <button className="flex flex-1 flex-col items-center gap-1 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/30 transition-colors">
-      <Icon size={16} className={danger ? "text-danger" : "text-primary"} />
-      <span
-        className={`text-[10px] font-semibold ${danger ? "text-danger" : "text-muted-foreground"}`}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
-/* ─── Main Page ──────────────────────────────────────── */
+const animatedItem = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.04, duration: 0.3, ease: "easeOut" as const },
+  }),
+};
 
 function MyConnexyPage() {
-  const [activeWizard, setActiveWizard] = useState<WizardType>(null);
-
-  function handleWizardComplete() {
-    setActiveWizard(null);
-    window.dispatchEvent(new Event("roleChanged"));
-  }
-
-  function openWizard(type: WizardType) {
-    setActiveWizard(type);
-  }
-
-  const animatedItem = {
-    hidden: { opacity: 0, y: 16 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.04, duration: 0.3, ease: "easeOut" as const },
-    }),
-  };
-
   return (
     <div className="flex-1 min-h-0">
       <StatusBar />
 
-      {/* ─── Scrollable content ─── */}
       <div className="h-full overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+7rem)]">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -598,170 +72,52 @@ function MyConnexyPage() {
                 <span className="min-w-0 text-xs text-muted-foreground truncate">
                   {currentUser.name}
                 </span>
-                <span className="text-muted-foreground">•</span>
-                <span className="min-w-0 text-xs text-muted-foreground truncate">São Paulo</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
-                  Nível 4
-                </span>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Ações Rápidas */}
         <section className="mb-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Ações rápidas
           </h2>
+          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+            {LOCAL_CATALOG_DISCLAIMER}
+          </p>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                label: "Criar Negócio",
-                emoji: "🏢",
-                gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
-                wizard: "negocio" as WizardType,
-              },
-              {
-                label: "Criar Evento",
-                emoji: "📅",
-                gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
-                wizard: "evento" as WizardType,
-              },
-              {
-                label: "Criar Local",
-                emoji: "📍",
-                gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
-                wizard: "local" as WizardType,
-              },
-              {
-                label: "Nova Oferta",
-                emoji: "🏷️",
-                gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
-                wizard: "oferta" as WizardType,
-              },
-            ].map((action, i) => (
-              <motion.button
+            {QUICK_ACTIONS.map((action, i) => (
+              <motion.div
                 key={action.label}
                 custom={i}
                 variants={animatedItem}
                 initial="hidden"
                 animate="visible"
                 whileTap={{ scale: 0.97 }}
-                onClick={() => openWizard(action.wizard)}
-                className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
-                style={{ background: action.gradient }}
               >
-                <span className="text-2xl shrink-0">{action.emoji}</span>
-                <span className="min-w-0 flex-1 text-sm font-bold leading-tight">
-                  {action.label}
-                </span>
-              </motion.button>
+                <Link
+                  to={action.to}
+                  aria-label={action.label}
+                  className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
+                  style={{ background: action.gradient }}
+                >
+                  <span className="text-2xl shrink-0">{action.emoji}</span>
+                  <span className="min-w-0 flex-1 text-sm font-bold leading-tight">
+                    {action.label}
+                  </span>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </section>
 
-        {/* Estatísticas */}
         <section className="mb-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Estatísticas
           </h2>
-          <div className="grid grid-cols-2 gap-2.5 min-[400px]:grid-cols-3">
-            {STATS.map((stat, i) => (
-              <motion.div
-                key={stat.id}
-                custom={i}
-                variants={animatedItem}
-                initial="hidden"
-                animate="visible"
-                className="min-w-0 rounded-2xl bg-surface border border-border p-3 shadow-soft"
-              >
-                <stat.icon size={14} className="text-primary mb-1.5" />
-                <div className="text-sm font-bold">{stat.value}</div>
-                <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                  <span
-                    className={`text-[10px] font-semibold ${stat.positive ? "text-success" : "text-danger"}`}
-                  >
-                    {stat.change}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground">{stat.label}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Estatísticas de cadastro ainda não estão disponíveis no MVP local.
+          </p>
         </section>
-
-        {/* Atividades Recentes */}
-        <section className="mb-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Atividade recente
-          </h2>
-          <div className="space-y-2">
-            {ACTIVITIES.map((act, i) => (
-              <motion.div
-                key={act.id}
-                custom={i}
-                variants={animatedItem}
-                initial="hidden"
-                animate="visible"
-                className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border shadow-soft"
-              >
-                <span className="text-lg">{act.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold truncate">{act.text}</div>
-                  <div className="text-[10px] text-muted-foreground">{act.time}</div>
-                </div>
-                <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Wizard Overlays */}
-        <WizardBase
-          open={activeWizard === "negocio"}
-          onClose={() => setActiveWizard(null)}
-          title="Criar Negócio"
-          icon="🏢"
-          gradient="linear-gradient(135deg, #F59E0B, #D97706)"
-          steps={negocioSteps()}
-          onComplete={handleWizardComplete}
-        />
-        <WizardBase
-          open={activeWizard === "evento"}
-          onClose={() => setActiveWizard(null)}
-          title="Criar Evento"
-          icon="📅"
-          gradient="linear-gradient(135deg, #EC4899, #DB2777)"
-          steps={eventSteps()}
-          onComplete={handleWizardComplete}
-        />
-        <WizardBase
-          open={activeWizard === "local"}
-          onClose={() => setActiveWizard(null)}
-          title="Criar Local"
-          icon="📍"
-          gradient="linear-gradient(135deg, #3B82F6, #2563EB)"
-          steps={localSteps()}
-          onComplete={handleWizardComplete}
-        />
-        <WizardBase
-          open={activeWizard === "oferta"}
-          onClose={() => setActiveWizard(null)}
-          title="Nova Oferta"
-          icon="🏷️"
-          gradient="linear-gradient(135deg, #8B5CF6, #7C3AED)"
-          steps={offerSteps()}
-          onComplete={handleWizardComplete}
-        />
-        <WizardBase
-          open={activeWizard === "publicacao"}
-          onClose={() => setActiveWizard(null)}
-          title="Nova Publicação"
-          icon="📝"
-          gradient="linear-gradient(135deg, #6C3BFF, #4B21D6)"
-          steps={publicacaoSteps()}
-          onComplete={handleWizardComplete}
-        />
       </div>
     </div>
   );

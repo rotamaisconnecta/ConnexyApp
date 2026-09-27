@@ -8,10 +8,11 @@ import { OfferCarousel } from "@/components/marketplace/offer-carousel";
 import { LoadingMarketplace } from "@/components/marketplace/loading-marketplace";
 import { EmptyMarketplace } from "@/components/marketplace/empty-marketplace";
 import { BackButton } from "@/components/navigation/back-button";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { MarketplaceFilters } from "@/lib/marketplace/business-types";
 import { SortOption } from "@/lib/marketplace/business-types";
-import { MOCK_BUSINESSES } from "@/lib/marketplace/mock-businesses";
+import { getAllBusinesses } from "@/lib/marketplace/mock-businesses";
+import { subscribeLocalCatalog } from "@/lib/catalog/local-catalog";
 import { filterBusinesses, DEFAULT_FILTERS } from "@/lib/marketplace/business-filter";
 import { sortBusinesses } from "@/lib/marketplace/business-ranking";
 
@@ -28,16 +29,24 @@ function MarketplacePage() {
     sortBy: SortOption.NEAREST,
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [catalogTick, setCatalogTick] = useState(0);
+
+  useEffect(() => subscribeLocalCatalog(() => setCatalogTick((tick) => tick + 1)), []);
+
+  const businesses = useMemo(() => {
+    void catalogTick;
+    return getAllBusinesses();
+  }, [catalogTick]);
 
   const filteredBusinesses = useMemo(() => {
-    const result = filterBusinesses(MOCK_BUSINESSES, {
+    const result = filterBusinesses(businesses, {
       ...filters,
       searchQuery: search,
     });
     return sortBusinesses(result, filters.sortBy);
-  }, [filters, search]);
+  }, [businesses, filters, search]);
 
-  const allPromotions = MOCK_BUSINESSES.flatMap((b) => b.promotions);
+  const allPromotions = businesses.flatMap((b) => b.promotions);
 
   function handleSelectBusiness(id: string) {
     nav({ to: "/business/$businessId", params: { businessId: id } });
@@ -61,7 +70,7 @@ function MarketplacePage() {
       </div>
 
       <div className="flex-1 px-5 pb-4 space-y-4 overflow-y-auto no-scrollbar">
-        <SearchBar value={search} onChange={setSearch} businesses={MOCK_BUSINESSES} />
+        <SearchBar value={search} onChange={setSearch} businesses={businesses} />
 
         <CategoryFilter
           selected={filters.categories}

@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import type { GeoLocation } from "./ride-types";
-import { createStop, orderStopsForRoute, type RouteStop } from "./route-utils";
+import { createStop, limitRouteStops, orderStopsForRoute, type RouteStop } from "./route-utils";
 
 export const rideSearchSchema = z.object({
   destinationId: z.string().optional().nullable(),
@@ -52,12 +52,17 @@ export function parseCompanions(raw: string | null | undefined): CompanionStopIn
   }
 }
 
-export function buildCompanionStops(origin: GeoLocation, companions: CompanionStopInput[]): RouteStop[] {
-  const stops = companions.map((companion, index) =>
-    createStop(
-      { lat: companion.lat, lng: companion.lng, label: companion.address },
-      `${companion.name.split(" ")[0]} — ${companion.address}`,
-      index + 1,
+export function buildCompanionStops(
+  origin: GeoLocation,
+  companions: CompanionStopInput[],
+): RouteStop[] {
+  const stops = limitRouteStops(
+    companions.map((companion, index) =>
+      createStop(
+        { lat: companion.lat, lng: companion.lng, label: companion.address },
+        `${companion.name.split(" ")[0]} — ${companion.address}`,
+        index + 1,
+      ),
     ),
   );
   return orderStopsForRoute(origin, stops);
