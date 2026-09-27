@@ -19,6 +19,7 @@ import { ChatHeader } from "./chat-header";
 import { ChatSearch } from "./chat-search";
 import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
+import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import { useAuth } from "@/hooks/use-auth";
 import { useChat } from "@/hooks/api/use-chat";
 import { ChatRepository } from "@/repositories/chat.repository";
@@ -616,6 +617,10 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
           {newMessagesCount === 1 ? "Nova mensagem" : `${newMessagesCount} novas mensagens`}
         </button>
       )}
+
+      <div className="px-3 pb-1.5">
+        <ConnexyAiAssistant mode="conversations" label="Sugerir próximo passo" />
+      </div>
 
       <MessageInput
         placeholder="Digite uma mensagem"

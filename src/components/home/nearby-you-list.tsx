@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  getHomeDiscoveryNavigation,
   hasMoreNearby,
   listHomeDiscoveryItems,
   NEARBY_PAGE_SIZE,
@@ -67,14 +68,41 @@ export function NearbyYouList() {
 }
 
 function NearbyRow({ item }: { item: HomeDiscoveryItem }) {
+  const nav = useNavigate();
+  const target = getHomeDiscoveryNavigation(item);
+
+  if (!target) {
+    return (
+      <li className="flex items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-2.5 shadow-soft">
+        <img src={item.image} alt="" className="h-14 w-14 shrink-0 rounded-[14px] object-cover" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-sm font-bold">{item.title}</p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.subtitle}</p>
+        </div>
+        <span className="shrink-0 text-[10px] font-semibold text-primary">
+          {item.distanceLabel}
+        </span>
+      </li>
+    );
+  }
+
   return (
-    <li className="flex items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-2.5 shadow-soft">
-      <img src={item.image} alt="" className="h-14 w-14 shrink-0 rounded-[14px] object-cover" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-sm font-bold">{item.title}</p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.subtitle}</p>
-      </div>
-      <span className="shrink-0 text-[10px] font-semibold text-primary">{item.distanceLabel}</span>
+    <li>
+      <button
+        type="button"
+        onClick={() => nav(target)}
+        aria-label={`Ver ${item.title}`}
+        className="flex w-full items-center gap-3 rounded-[18px] border border-border/50 bg-surface p-2.5 text-left shadow-soft transition-shadow hover:shadow-elevated active:scale-[0.99]"
+      >
+        <img src={item.image} alt="" className="h-14 w-14 shrink-0 rounded-[14px] object-cover" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-sm font-bold">{item.title}</p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{item.subtitle}</p>
+        </div>
+        <span className="shrink-0 text-[10px] font-semibold text-primary">
+          {item.distanceLabel}
+        </span>
+      </button>
     </li>
   );
 }

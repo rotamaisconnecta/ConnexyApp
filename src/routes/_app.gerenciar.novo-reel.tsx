@@ -5,6 +5,7 @@ import { BackButton } from "@/components/navigation/back-button";
 import { UploadMedia } from "@/components/upload";
 import { MediaFile, formatFileSize } from "@/lib/upload";
 import { StatusBar } from "@/components/phone-frame";
+import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import { toast } from "sonner";
 import {
   REEL_MAX_CAPTION_LENGTH,
@@ -300,6 +301,7 @@ function NovoReel() {
           <p className="text-right text-[11px] text-muted-foreground">
             {caption.length}/{REEL_MAX_CAPTION_LENGTH}
           </p>
+          <ConnexyAiAssistant mode="media" label="Ideias para a legenda" />
         </section>
 
         <section className="rounded-3xl bg-surface border border-border p-4 space-y-3 shadow-soft">

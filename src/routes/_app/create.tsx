@@ -23,6 +23,8 @@ interface CreatePanelItem {
   route: string;
   requiredRole: UserRole | null;
   lockedReason: string;
+  /** Sobrescreve o rótulo padrão "Criar {title}" quando a ação não é uma criação. */
+  label?: string;
 }
 
 const CREATE_PANEL: CreatePanelItem[] = [
@@ -31,24 +33,6 @@ const CREATE_PANEL: CreatePanelItem[] = [
     emoji: "📷",
     title: "Foto",
     description: "Compartilhe uma foto com o mundo",
-    route: CANONICAL_POST_PUBLISH_ROUTE,
-    requiredRole: null,
-    lockedReason: "",
-  },
-  {
-    id: "video",
-    emoji: "🎥",
-    title: "Vídeo",
-    description: "Grave ou envie um vídeo",
-    route: CANONICAL_POST_PUBLISH_ROUTE,
-    requiredRole: null,
-    lockedReason: "",
-  },
-  {
-    id: "text",
-    emoji: "📝",
-    title: "Texto",
-    description: "Compartilhe uma ideia ou pensamento",
     route: CANONICAL_POST_PUBLISH_ROUTE,
     requiredRole: null,
     lockedReason: "",
@@ -90,10 +74,10 @@ const CREATE_PANEL: CreatePanelItem[] = [
     lockedReason: "",
   },
   {
-    id: "offer",
-    emoji: "💰",
-    title: "Oferta",
-    description: "Publique uma oferta no catálogo local",
+    id: "marketplace",
+    emoji: "🛍️",
+    title: "Marketplace",
+    description: "Publique um produto ou oferta à venda",
     route: "/create/offer",
     requiredRole: null,
     lockedReason: "",
@@ -104,6 +88,16 @@ const CREATE_PANEL: CreatePanelItem[] = [
     title: "Agora",
     description: "Crie vídeos curtos e criativos",
     route: CANONICAL_REEL_PUBLISH_ROUTE,
+    requiredRole: null,
+    lockedReason: "",
+  },
+  {
+    id: "own-profile",
+    emoji: "👤",
+    title: "Perfil",
+    label: "Meu Perfil",
+    description: "Veja e edite o seu próprio perfil",
+    route: "/perfil",
     requiredRole: null,
     lockedReason: "",
   },
@@ -198,7 +192,7 @@ function CreatePage() {
                     whileHover={{ scale: locked ? 1.0 : 1.02 }}
                     whileTap={{ scale: locked ? 0.98 : 0.97 }}
                     onClick={() => open(item)}
-                    aria-label={`Criar ${item.title}`}
+                    aria-label={item.label ?? `Criar ${item.title}`}
                     className="flex items-center gap-4 rounded-[24px] border border-border bg-surface p-4 text-left shadow-soft outline-none transition-shadow hover:shadow-elevated focus-visible:ring-2 focus-visible:ring-primary/50"
                     style={{ opacity: locked ? 0.6 : 1 }}
                   >
@@ -207,7 +201,9 @@ function CreatePage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-display font-bold text-sm">Criar {item.title}</span>
+                        <span className="font-display font-bold text-sm">
+                          {item.label ?? `Criar ${item.title}`}
+                        </span>
                         {locked && <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                       </div>
                       <div className="mt-0.5 text-xs text-muted-foreground leading-snug">

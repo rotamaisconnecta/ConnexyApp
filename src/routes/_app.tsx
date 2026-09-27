@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import {
   createFileRoute,
   Outlet,
-  useMatch,
   useNavigate,
   useRouterState,
   redirect,
@@ -18,12 +17,10 @@ import { PresenceProvider } from "@/providers/presence/presence-context";
 import { requireAuth } from "@/lib/auth/route-guard";
 import { profileCompletionForGuard } from "@/lib/profile/profile-status";
 import { Loader2 } from "lucide-react";
-import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import {
   APP_SCROLL_PADDING_BOTTOM,
   BOTTOM_NAV_HEIGHT,
   isAppBottomNavVisible,
-  isRideFlowPath,
   resetGlobalShellScroll,
   routeOwnsScroll as routeOwnsInternalScroll,
 } from "@/lib/shell/app-shell";
@@ -47,16 +44,6 @@ function AppLayout() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  const conversationMatch = useMatch({
-    from: "/_app/chat/$conversationId",
-    shouldThrow: false,
-  });
-  const requestMatch = useMatch({
-    from: "/_app/solicitacao/$id",
-    shouldThrow: false,
-  });
-  const conversationOpen = Boolean(conversationMatch);
-  const requestOpen = Boolean(requestMatch);
   const profileEditorOpen = useRouterState({
     select: (state) => {
       if (state.location.pathname !== "/perfil") return false;
@@ -64,8 +51,6 @@ function AppLayout() {
       return search.edit === true || search.edit === "true";
     },
   });
-  const rideFlowOpen = isRideFlowPath(pathname);
-  const immersiveContentOpen = requestOpen || profileEditorOpen || rideFlowOpen;
   const routeOwnsScroll = routeOwnsInternalScroll(pathname);
 
   const { isDriverMode } = useDriverMode();
@@ -117,7 +102,6 @@ function AppLayout() {
               >
                 {isDriverMode && socialRouteOpen ? <DriverModeSocialBlock /> : <Outlet />}
               </div>
-              {!immersiveContentOpen && !conversationOpen && <ConnexyAiAssistant />}
               {isAppBottomNavVisible(pathname) && <BottomNav />}
             </div>
           </PresenceProvider>

@@ -5,6 +5,8 @@ import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import ModeSwitcher from "@/components/roles/ModeSwitcher";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
+import { FeedNearbyPeople } from "@/components/feed/FeedNearbyPeople";
+import { buildNearbyPeople } from "@/lib/feed/home-premium";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
 import { ConnexyPulse } from "@/components/home/ConnexyPulse";
 import { HomeActionHub } from "@/components/home/HomeActionHub";
@@ -154,6 +156,10 @@ function Home() {
           </p>
         </div>
       </section>
+
+      <div className="mt-6">
+        <FeedNearbyPeople data={buildNearbyPeople()} />
+      </div>
 
       <ConnexyPulse />
 

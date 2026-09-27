@@ -22,7 +22,28 @@ export type HomeDiscoveryItem = {
   image: string;
   distanceMeters: number;
   distanceLabel: string;
+  /** Id do recurso na rota de detalhe (sem o prefixo de `kind`). */
+  detailId?: string;
 };
+
+export type HomeDiscoveryDetailTarget =
+  | { to: "/local/$id"; params: { id: string } }
+  | { to: "/business/$businessId"; params: { businessId: string } }
+  | { to: "/event/$eventId"; params: { eventId: string } }
+  | { to: "/marketplace"; params?: never; search?: never };
+
+/** Rota de detalhe do item. Ofertas abrem no negócio que as hospeda. */
+export function getHomeDiscoveryNavigation(
+  item: HomeDiscoveryItem,
+): HomeDiscoveryDetailTarget | null {
+  const id = item.detailId ?? item.id.split(":").slice(1).join(":");
+  if (!id) return null;
+  if (item.kind === "place") return { to: "/local/$id", params: { id } };
+  if (item.kind === "business") return { to: "/business/$businessId", params: { businessId: id } };
+  if (item.kind === "event") return { to: "/event/$eventId", params: { eventId: id } };
+  if (!item.detailId) return null;
+  return { to: "/business/$businessId", params: { businessId: id } };
+}
 
 const KIND_LABEL: Record<HomeDiscoveryKind, string> = {
   place: "Local",
@@ -40,6 +61,7 @@ function item(
   image: string | undefined,
   distanceMeters: number,
   extra?: string,
+  detailId?: string,
 ): HomeDiscoveryItem {
   const kindLabel = KIND_LABEL[kind];
   return {
@@ -50,6 +72,7 @@ function item(
     image: image || FALLBACK_IMAGE,
     distanceMeters,
     distanceLabel: formatDistance(distanceMeters),
+    detailId,
   };
 }
 
@@ -69,7 +92,15 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
 
   for (const place of mergeCatalogPlaces(places)) {
     discovered.push(
-      item("place", place.id, place.name, place.cover, place.distanceMeters, place.category),
+      item(
+        "place",
+        place.id,
+        place.name,
+        place.cover,
+        place.distanceMeters,
+        place.category,
+        place.id,
+      ),
     );
   }
 
@@ -83,6 +114,7 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         business.photos.find((photo) => photo.isPrimary)?.url ?? business.photos[0]?.url,
         business.distanceMeters,
         business.category,
+        business.id,
       ),
     );
     for (const promotion of business.promotions) {
@@ -95,6 +127,7 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
           business.photos[0]?.url,
           business.distanceMeters,
           business.name,
+          business.id,
         ),
       );
     }
@@ -110,13 +143,22 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         event.photo ?? host?.photos[0]?.url,
         host?.distanceMeters ?? 1500,
         event.location ?? host?.name,
+        event.id,
       ),
     );
   }
 
   for (const event of HOME_EVENTS) {
     discovered.push(
-      item("event", event.id, event.name, event.banner, event.distanceMeters, event.location),
+      item(
+        "event",
+        event.id,
+        event.name,
+        event.banner,
+        event.distanceMeters,
+        event.location,
+        event.id,
+      ),
     );
   }
 
@@ -130,6 +172,7 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         host?.photos[0]?.url,
         host?.distanceMeters ?? 2000,
         host?.name,
+        offer.businessId,
       ),
     );
   }

@@ -2,10 +2,14 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Check, Copy, MessageCircleHeart, Sparkles, WandSparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-type AssistantMode = "media" | "invite" | "conversations";
+export type ConnexyAiAssistantMode = "media" | "invite" | "conversations";
 
-const prompts: Record<AssistantMode, { label: string; title: string; helper: string; initial: string }> = {
+const prompts: Record<
+  ConnexyAiAssistantMode,
+  { label: string; title: string; helper: string; initial: string }
+> = {
   media: {
     label: "Criar mídia",
     title: "Ideia para sua mídia",
@@ -26,7 +30,7 @@ const prompts: Record<AssistantMode, { label: string; title: string; helper: str
   },
 };
 
-function suggestionFor(mode: AssistantMode, value: string): string {
+function suggestionFor(mode: ConnexyAiAssistantMode, value: string): string {
   const context = value.trim() || "este momento";
   if (mode === "media") {
     return `Sugestão de legenda: “${context}. Mais um lugar que vale guardar — quem topa descobrir comigo?”`;
@@ -37,13 +41,31 @@ function suggestionFor(mode: AssistantMode, value: string): string {
   return `Resumo: a conversa está em um tom leve sobre ${context.toLocaleLowerCase("pt-BR")}. Próximo passo sugerido: confirmar um horário e enviar o convite para ir junto.`;
 }
 
-export function ConnexyAiAssistant() {
+interface ConnexyAiAssistantProps {
+  /** Fluxo onde o gatilho está montado; define o modo inicial do assistente. */
+  mode: ConnexyAiAssistantMode;
+  label?: string;
+  className?: string;
+}
+
+export function ConnexyAiAssistant({
+  mode: flowMode,
+  label = "Assistente Connexy",
+  className,
+}: ConnexyAiAssistantProps) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<AssistantMode>("media");
-  const [input, setInput] = useState(prompts.media.initial);
+  const [mode, setMode] = useState(flowMode);
+  const [input, setInput] = useState(prompts[flowMode].initial);
   const [result, setResult] = useState("");
 
-  const selectMode = (next: AssistantMode) => {
+  const openAssistant = () => {
+    setMode(flowMode);
+    setInput(prompts[flowMode].initial);
+    setResult("");
+    setOpen(true);
+  };
+
+  const selectMode = (next: ConnexyAiAssistantMode) => {
     setMode(next);
     setInput(prompts[next].initial);
     setResult("");
@@ -65,11 +87,15 @@ export function ConnexyAiAssistant() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openAssistant}
         aria-label="Abrir assistente Connexy IA"
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-4 z-40 grid h-12 w-12 place-items-center rounded-full bg-gradient-brand text-white shadow-elevated transition-transform active:scale-95"
+        className={cn(
+          "inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/15 active:scale-[0.98]",
+          className,
+        )}
       >
-        <Sparkles className="h-5 w-5" />
+        <Sparkles className="h-3.5 w-3.5" />
+        {label}
       </button>
 
       <AnimatePresence>
@@ -99,44 +125,67 @@ export function ConnexyAiAssistant() {
                   </span>
                   <div>
                     <p className="text-sm font-bold">Assistente Connexy</p>
-                    <p className="text-[11px] text-muted-foreground">Ideias úteis, sempre editáveis por você.</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Ideias úteis, sempre editáveis por você.
+                    </p>
                   </div>
                 </div>
-                <button type="button" onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-secondary" aria-label="Fechar assistente">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-secondary"
+                  aria-label="Fechar assistente"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-2">
-                {(Object.keys(prompts) as AssistantMode[]).map((item) => (
+                {(Object.keys(prompts) as ConnexyAiAssistantMode[]).map((item) => (
                   <button
                     key={item}
                     type="button"
                     onClick={() => selectMode(item)}
                     className={`min-h-16 rounded-2xl px-2 text-[10px] font-semibold transition ${mode === item ? "bg-primary text-white shadow-soft" : "bg-secondary text-foreground"}`}
                   >
-                    {item === "media" ? <WandSparkles className="mx-auto mb-1 h-4 w-4" /> : item === "invite" ? <MessageCircleHeart className="mx-auto mb-1 h-4 w-4" /> : <Check className="mx-auto mb-1 h-4 w-4" />}
+                    {item === "media" ? (
+                      <WandSparkles className="mx-auto mb-1 h-4 w-4" />
+                    ) : item === "invite" ? (
+                      <MessageCircleHeart className="mx-auto mb-1 h-4 w-4" />
+                    ) : (
+                      <Check className="mx-auto mb-1 h-4 w-4" />
+                    )}
                     {prompts[item].label}
                   </button>
                 ))}
               </div>
 
               <h2 className="mt-5 font-display text-lg font-bold">{prompts[mode].title}</h2>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{prompts[mode].helper}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {prompts[mode].helper}
+              </p>
               <textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 rows={3}
                 className="mt-4 w-full resize-none rounded-2xl bg-secondary px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               />
-              <button type="button" onClick={generate} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant">
+              <button
+                type="button"
+                onClick={generate}
+                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
+              >
                 <Sparkles className="h-4 w-4" /> Criar sugestão
               </button>
 
               {result && (
                 <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
                   <p className="text-sm leading-relaxed">{result}</p>
-                  <button type="button" onClick={() => void copyResult()} className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary">
+                  <button
+                    type="button"
+                    onClick={() => void copyResult()}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary"
+                  >
                     <Copy className="h-3.5 w-3.5" /> Copiar e personalizar
                   </button>
                 </div>

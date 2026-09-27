@@ -10,6 +10,7 @@ import type { NearbyProfile } from "@/types/phase-13b";
 const PEOPLE_CARD_WIDTH = { mobile: 160, tablet: 168, desktop: 176 } as const;
 const PEOPLE_CARD_HEIGHT = 252;
 const MAX_AFFINITY_CHIPS = 3;
+const NEARBY_PEOPLE_LIMIT = 10;
 
 const PROXIMITY_TIER_LABELS: Record<string, string> = {
   very_close: "Muito perto",
@@ -45,7 +46,9 @@ interface FeedNearbyPeopleProps {
 }
 
 export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
-  const people = profiles ? profiles.map(profileToFeedPerson) : (data?.people ?? []);
+  const source = profiles ? profiles.map(profileToFeedPerson) : (data?.people ?? []);
+  // A proximidade já vem ordenada pela fonte; o limite fixa o tamanho do carrossel.
+  const people = source.slice(0, NEARBY_PEOPLE_LIMIT);
 
   if (people.length === 0) {
     return (
@@ -75,10 +78,11 @@ export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
           </p>
         </div>
         <Link
-          to="/pessoas"
+          to="/discover"
+          search={{ filter: "people" }}
           className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
         >
-          Ver tudo <ArrowRight className="h-3.5 w-3.5" />
+          Ver mais <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 

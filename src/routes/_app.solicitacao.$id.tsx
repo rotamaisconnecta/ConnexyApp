@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
+import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import { toast } from "sonner";
 import { Check, Loader2, MessageCircle, Send, UserRound, X } from "lucide-react";
 import { motion } from "framer-motion";
@@ -598,6 +599,9 @@ function Solicitacao() {
                 >
                   {invitationMessage.length}/240
                 </p>
+                <div className="mt-3">
+                  <ConnexyAiAssistant mode="invite" label="Sugerir minha mensagem" />
+                </div>
               </div>
             ))}
 

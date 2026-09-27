@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Repeat2, X } from "lucide-react";
 import { sectionFade } from "@/components/profile/animations";
+import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import { MediaUploader } from "@/components/post/media-uploader";
 import { PostTextEditor } from "@/components/post/post-text-editor";
 import { CategorySelector } from "@/components/post/category-selector";
@@ -138,6 +139,9 @@ export function CreatePostForm({
       <motion.div variants={sectionFade(1)} initial="hidden" animate="visible">
         <SectionTitle>Texto</SectionTitle>
         <PostTextEditor value={draft.text} onChange={(v: string) => update("text", v)} />
+        <div className="mt-3">
+          <ConnexyAiAssistant mode="media" label="Ideias para a legenda" />
+        </div>
       </motion.div>
 
       <motion.div variants={sectionFade(2)} initial="hidden" animate="visible">
