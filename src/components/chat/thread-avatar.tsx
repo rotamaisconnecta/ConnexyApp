@@ -12,8 +12,8 @@ export function ThreadAvatar({ conversation, className }: ThreadAvatarProps) {
   const photo = conversation.participant.photo;
 
   return (
-    <div className={cn("relative shrink-0", className)}>
-      <Avatar className="h-12 w-12 rounded-2xl">
+    <div className="relative shrink-0">
+      <Avatar className={cn("h-14 w-14 rounded-2xl", className)}>
         {photo && <AvatarImage src={photo} alt={`Foto de ${conversation.participant.name}`} />}
         <AvatarFallback className="rounded-2xl bg-gradient-brand text-sm font-bold text-white">
           {conversation.initials}

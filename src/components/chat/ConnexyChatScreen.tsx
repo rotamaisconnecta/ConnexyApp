@@ -5,6 +5,7 @@ import {
   Ban,
   Bell,
   BellOff,
+  CheckSquare,
   ChevronDown,
   Loader2,
   Pin,
@@ -19,12 +20,15 @@ import { ChatHeader } from "./chat-header";
 import { ChatSearch } from "./chat-search";
 import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
+import { FileMessage } from "./file-message";
 import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import { useAuth } from "@/hooks/use-auth";
 import { useChat } from "@/hooks/api/use-chat";
 import { ChatRepository } from "@/repositories/chat.repository";
 import { UserRepository } from "@/repositories/user.repository";
 import { usePresenceContext } from "@/providers/presence/presence-context";
+import { usePresence } from "@/providers/presence/presence-provider";
+import { listShareableCheckins } from "@/lib/chat/shareable-checkins";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
 import { getSchemaAConversations } from "@/lib/chat/schema-a-conversations";
@@ -39,7 +43,7 @@ import {
   subscribeDemoDB,
   type DemoGroup,
 } from "@/lib/demo/demo-db";
-import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { getDemoIdentity, useDemoIdentity } from "@/lib/demo/demo-identity";
 import {
   ensureLocalConversation,
   getLocalConversation,
@@ -56,13 +60,42 @@ import {
   type DemoCallMedia,
 } from "@/lib/chat/demo-call";
 import { GroupInviteSheet } from "./group-invite-sheet";
+import { LocationShareSheet } from "./location-share-sheet";
+import { CheckinShareSheet } from "./checkin-share-sheet";
 import { DemoCallOverlay } from "./demo-call-overlay";
+import { ChatConfirmDialog } from "./chat-confirm-dialog";
+import { CameraCapture } from "@/components/media/camera-capture";
+import { LocalMediaFrame } from "@/components/media/local-media-frame";
+import { MediaViewer } from "@/components/system/media-viewer";
+import { ReelRecorder, type RecordedClip } from "@/components/media/reel-recorder";
+import { visibleMediaCaption } from "@/lib/chat/visible-media-caption";
+import { CHAT_VIDEO_MAX_DURATION_SECONDS } from "@/lib/chat/chat-limits";
+import { isDurationWithinLimit, readVideoDurationSeconds } from "@/lib/media/media-duration";
+import type { VoiceClip } from "./voice-recorder";
 import type {
   AttachmentAction,
   ChatMessage,
   ConversationParticipant,
-  QuickReaction,
 } from "@/lib/chat/chat-types";
+import { MessageKind } from "@/lib/chat/chat-types";
+import {
+  batchDeleteDescription,
+  batchDeleteTitle,
+  isChatMessageSelectable,
+  singleDeleteCopy,
+  partialDeleteMessage,
+} from "@/lib/chat/chat-selection";
+import {
+  beginOwnMessageSelection,
+  toggleOwnMessageSelection,
+} from "@/lib/chat/message-long-press";
+import {
+  copyableTextForMessages,
+  downloadChatMessage,
+  isDownloadableChatMedia,
+  isOpenableChatMedia,
+  openChatDocument,
+} from "@/lib/chat/chat-message-actions";
 import type { ProfileRow } from "@/types/database/tables";
 
 interface ConnexyChatScreenProps {
@@ -73,6 +106,8 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const router = useRouter();
   const { user } = useAuth();
   const { isOnline } = usePresenceContext();
+  const { checkins } = usePresence();
+  const demoIdentity = useDemoIdentity();
 
   const remoteChat = isRemoteConversationsEnabled();
   const [remotePinned, setRemotePinned] = useState(false);
@@ -88,6 +123,8 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
     sendMessage,
     sendSharedContent,
     sendMedia,
+    sendLocation,
+    deleteMessages,
     loadMore,
     retry,
     subscriptionStatus,
@@ -189,15 +226,35 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   const [showSearch, setShowSearch] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [groupInviteOpen, setGroupInviteOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [videoRecorderOpen, setVideoRecorderOpen] = useState(false);
+  const [voiceNonce, setVoiceNonce] = useState(0);
   const [mediaDraft, setMediaDraft] = useState<{
-    kind: "image" | "video";
-    dataUrl: string;
+    kind: "image" | "video" | "file";
+    blob: Blob;
+    previewUrl: string;
     mimeType: string;
     fileName: string;
+    durationSec?: number;
   } | null>(null);
+  const [locationShareOpen, setLocationShareOpen] = useState(false);
+  const [checkinShareOpen, setCheckinShareOpen] = useState(false);
+  const [fileSending, setFileSending] = useState(false);
   const mediaInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [muted, setMuted] = useState(false);
   const [pinTick, setPinTick] = useState(0);
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [composerInsert, setComposerInsert] = useState<{ token: number; text: string } | null>(
+    null,
+  );
+  const [pendingDelete, setPendingDelete] = useState<{
+    ids: string[];
+    title: string;
+    description: string;
+  } | null>(null);
+  const [viewingMessage, setViewingMessage] = useState<ChatMessage | null>(null);
 
   useEffect(() => {
     if (isPublicSupabaseConfigured() || !conversationId) return;
@@ -213,6 +270,19 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
       getDemoIdentity().id,
     );
   }, [conversationId, pinTick, remoteChat, remotePinned]);
+
+  const selectedMessages = useMemo(
+    () => messages.filter((item) => selectedIds.includes(item.id)),
+    [messages, selectedIds],
+  );
+  const canDeleteSelected = selectedMessages.length > 0 && selectedMessages.every((item) => isChatMessageSelectable(item.from));
+  const canDownloadSelected =
+    selectedMessages.length > 0 && selectedMessages.every((item) => isDownloadableChatMedia(item));
+  const canCopySelected = copyableTextForMessages(selectedMessages).length > 0;
+  const shareableCheckins = useMemo(
+    () => listShareableCheckins(checkins, demoIdentity.id),
+    [checkins, demoIdentity.id],
+  );
   const [shareDraft, setShareDraft] = useState<{
     id: string;
     kind: "event" | "place";
@@ -232,6 +302,10 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   useEffect(() => {
     prevMessagesRef.current = [];
     setNewMessagesCount(0);
+    setSelecting(false);
+    setSelectedIds([]);
+    setPendingDelete(null);
+    setViewingMessage(null);
     setStickToBottom(true);
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -293,104 +367,260 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   }
 
   const handleBack = useCallback(() => {
+    if (selecting) {
+      setSelecting(false);
+      setSelectedIds([]);
+      return;
+    }
     router.navigate({ to: "/chat" });
-  }, [router]);
+  }, [router, selecting]);
 
   function handleSendText(text: string) {
     void sendMessage(text);
   }
 
+  function exitSelection() {
+    setSelecting(false);
+    setSelectedIds([]);
+  }
+
+  function enterSelection(messageId?: string) {
+    setViewingMessage(null);
+    setSelecting(true);
+    if (!messageId) {
+      setSelectedIds([]);
+      return;
+    }
+    setSelectedIds((current) => beginOwnMessageSelection(current, messageId));
+  }
+
+  function handleOpenMedia(message: ChatMessage) {
+    if (selecting) return;
+    if (!isOpenableChatMedia(message)) return;
+    setViewingMessage(message);
+  }
+
+  async function handleOpenDocument(message: ChatMessage) {
+    if (selecting) return;
+    try {
+      await openChatDocument(message);
+    } catch {
+      toast.error("Não foi possível abrir este documento.");
+    }
+  }
+
+  function toggleSelected(messageId: string) {
+    const target = messages.find((item) => item.id === messageId);
+    if (!target || !isChatMessageSelectable(target.from)) return;
+    setViewingMessage(null);
+    setSelecting(true);
+    setSelectedIds((current) => toggleOwnMessageSelection(current, messageId));
+  }
+
+  function requestDeleteMessages(items: ChatMessage[]) {
+    const own = items.filter((item) => isChatMessageSelectable(item.from));
+    if (own.length === 0) return;
+    if (own.length === 1) {
+      const kind =
+        own[0].kind === MessageKind.IMAGE
+          ? "image"
+          : own[0].kind === MessageKind.VIDEO
+            ? "video"
+            : own[0].kind === MessageKind.FILE
+              ? "file"
+              : "text";
+      const copy = singleDeleteCopy(kind);
+      setPendingDelete({ ids: own.map((item) => item.id), ...copy });
+      return;
+    }
+    setPendingDelete({
+      ids: own.map((item) => item.id),
+      title: batchDeleteTitle(own.length),
+      description: batchDeleteDescription(own.length),
+    });
+  }
+
+  async function confirmPendingDelete() {
+    if (!pendingDelete) return;
+    const ids = pendingDelete.ids;
+    setPendingDelete(null);
+    const result = await deleteMessages(ids);
+    if (result.deletedIds.length === 0 && result.failed.length > 0) {
+      toast.error("A exclusão não foi concluída.");
+      return;
+    }
+    if (result.failed.length > 0) {
+      toast.error(partialDeleteMessage(result.deletedIds.length, result.failed.length));
+      setSelectedIds((current) => current.filter((id) => !result.deletedIds.includes(id)));
+      return;
+    }
+    toast.success(
+      result.deletedIds.length === 1 ? "Item excluído." : `${result.deletedIds.length} itens excluídos.`,
+    );
+    exitSelection();
+  }
+
+  async function handleDownloadMessage(message: ChatMessage) {
+    try {
+      await downloadChatMessage(message);
+      toast.success(message.kind === MessageKind.TEXT ? "Texto exportado." : "Mídia baixada.");
+    } catch {
+      toast.error("Não foi possível baixar agora.");
+    }
+  }
+
+  async function handleDownloadSelected() {
+    const selected = messages.filter(
+      (item) => selectedIds.includes(item.id) && isDownloadableChatMedia(item),
+    );
+    if (selected.length === 0) return;
+    for (const item of selected) {
+      await handleDownloadMessage(item);
+    }
+  }
+
+  async function handleCopySelected() {
+    const text = copyableTextForMessages(selectedMessages);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copiado");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  }
+
   function handleOpenAttachment(kind: AttachmentAction) {
-    if (kind === "image" || kind === "video" || kind === "camera") {
-      if (kind === "camera" && !navigator.mediaDevices?.getUserMedia) {
-        toast.error("A câmera não é suportada neste navegador. Use a galeria.");
-        return;
-      }
-      if (kind === "camera") {
-        void navigator.mediaDevices
-          .getUserMedia({ video: true })
-          .then((stream) => {
-            stream.getTracks().forEach((track) => track.stop());
-            mediaInputRef.current?.setAttribute("capture", "environment");
-            mediaInputRef.current?.click();
-          })
-          .catch(() =>
-            toast.error(
-              "Permissão de câmera negada. Você pode tentar novamente ou usar a galeria.",
-            ),
-          );
-        return;
-      }
+    if (kind === "camera") {
+      setCameraOpen(true);
+      return;
+    }
+    if (kind === "video") {
+      setVideoRecorderOpen(true);
+      return;
+    }
+    if (kind === "image") {
       mediaInputRef.current?.removeAttribute("capture");
-      mediaInputRef.current?.setAttribute("accept", kind === "image" ? "image/*" : "video/*");
+      mediaInputRef.current?.setAttribute("accept", "image/*");
       mediaInputRef.current?.click();
       return;
     }
+    if (kind === "file") {
+      fileInputRef.current?.removeAttribute("capture");
+      fileInputRef.current?.removeAttribute("accept");
+      fileInputRef.current?.click();
+      return;
+    }
+    if (kind === "location") {
+      setLocationShareOpen(true);
+      return;
+    }
     if (kind === "audio") {
-      toast.info("Gravação de áudio ainda não está disponível neste modo demo.");
+      setVoiceNonce((value) => value + 1);
       return;
     }
     if (kind !== "share-content") return;
-    const options = [
-      {
-        id: "evt-1",
-        kind: "event" as const,
-        title: "Noite de Jazz",
-        cover: "https://picsum.photos/seed/jazz-night/800/500",
-        location: "Salão principal",
-        dateText: "Sáb • 20:00",
-        proximity: "Evento popular",
-        route: "/event/evt-1",
-      },
-      {
-        id: "cafe-central",
-        kind: "place" as const,
-        title: "Café Central",
-        cover: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1200",
-        location: "Av. Paulista, 1500",
-        proximity: "420m de você",
-        route: "/local/cafe-central",
-      },
-      {
-        id: "vinil-store",
-        kind: "place" as const,
-        title: "Vinil Store",
-        cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200",
-        location: "Rua Augusta, 1544",
-        proximity: "1,2 km de você",
-        route: "/local/vinil-store",
-      },
-    ];
-    const draft = options[0];
-    setShareDraft(draft);
+    setCheckinShareOpen(true);
   }
 
-  function handleMediaFile(file: File | undefined) {
+  async function handleMediaFile(file: File | undefined) {
     if (!file) return;
     const kind = file.type.startsWith("video/")
       ? "video"
       : file.type.startsWith("image/")
         ? "image"
-        : null;
-    if (!kind) {
-      toast.error("Escolha uma imagem ou vídeo válido.");
-      return;
+        : "file";
+    let durationSec: number | undefined;
+    if (kind === "video") {
+      const metadataSec = await readVideoDurationSeconds(file);
+      if (metadataSec == null || !isDurationWithinLimit(metadataSec, CHAT_VIDEO_MAX_DURATION_SECONDS)) {
+        toast.error(`Vídeo deve ter até ${CHAT_VIDEO_MAX_DURATION_SECONDS}s`);
+        return;
+      }
+      durationSec = Math.round(metadataSec);
     }
-    // Base64 costs extra bytes; keep a conservative limit so demo storage remains reliable.
-    if (file.size > 1_500_000) {
-      toast.error("Este arquivo é grande para o modo demo. Escolha um arquivo de até 1,5 MB.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onerror = () => toast.error("Não foi possível ler este arquivo.");
-    reader.onload = () =>
-      setMediaDraft({
-        kind,
-        dataUrl: String(reader.result),
-        mimeType: file.type,
-        fileName: file.name,
+    const previewUrl = URL.createObjectURL(file);
+    setMediaDraft({
+      kind,
+      blob: file,
+      previewUrl,
+      mimeType: file.type || (kind === "image" ? "image/jpeg" : kind === "video" ? "video/webm" : "application/octet-stream"),
+      fileName: file.name,
+      durationSec,
+    });
+  }
+
+  async function sendDraftMedia() {
+    if (!mediaDraft) return;
+    setFileSending(true);
+    try {
+      await sendMedia({
+        kind: mediaDraft.kind,
+        blob: mediaDraft.blob,
+        mimeType: mediaDraft.mimeType,
+        fileName: mediaDraft.fileName,
+        durationSec: mediaDraft.durationSec,
       });
-    reader.readAsDataURL(file);
+      URL.revokeObjectURL(mediaDraft.previewUrl);
+      setMediaDraft(null);
+    } catch {
+      toast.error(
+        mediaDraft.kind === "file"
+          ? "Não foi possível enviar o arquivo."
+          : "Não foi possível salvar a mídia neste dispositivo.",
+      );
+    } finally {
+      setFileSending(false);
+    }
+  }
+
+  async function handleSendVoice(clip: VoiceClip) {
+    setVoiceNonce(0);
+    try {
+      await sendMedia({
+        kind: "audio",
+        blob: clip.blob,
+        mimeType: clip.mimeType,
+        fileName: `audio-${Date.now()}.${clip.mimeType.includes("mp4") ? "m4a" : "webm"}`,
+        durationSec: clip.durationSec,
+      });
+    } catch (error) {
+      toast.error("Não foi possível salvar o áudio neste dispositivo.");
+      throw error;
+    }
+  }
+
+  async function handleRecordedVideo(clip: RecordedClip) {
+    setVideoRecorderOpen(false);
+    if (!isDurationWithinLimit(clip.durationSec, CHAT_VIDEO_MAX_DURATION_SECONDS)) {
+      toast.error(`Vídeo deve ter até ${CHAT_VIDEO_MAX_DURATION_SECONDS}s`);
+      return;
+    }
+    try {
+      await sendMedia({
+        kind: "video",
+        blob: clip.blob,
+        mimeType: clip.mimeType,
+        fileName: clip.fileName,
+        durationSec: clip.durationSec,
+      });
+    } catch {
+      toast.error("Não foi possível salvar o vídeo neste dispositivo.");
+    }
+  }
+
+  async function handleCameraCapture(blob: Blob, fileName: string) {
+    setCameraOpen(false);
+    try {
+      await sendMedia({
+        kind: "image",
+        blob,
+        mimeType: blob.type || "image/jpeg",
+        fileName,
+      });
+    } catch {
+      toast.error("Não foi possível salvar a foto neste dispositivo.");
+    }
   }
 
   function handleCreateGroup(ids: string[], name: string) {
@@ -437,7 +667,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
 
   if (participantLoading) {
     return (
-      <main className="relative flex-1 flex flex-col h-full min-h-0">
+      <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-x-hidden bg-[#F6F3FF]">
         <StatusBar />
         <div className="flex-1 grid place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -492,7 +722,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   }
 
   return (
-    <main className="relative flex h-full min-h-0 flex-1 flex-col">
+    <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-x-hidden bg-[#F6F3FF]">
       <StatusBar />
 
       <ChatHeader
@@ -507,6 +737,15 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         onVideoCall={() => beginDemoCall("video")}
         onSearch={() => setShowSearch((value) => !value)}
         onMenu={() => setMenuOpen(true)}
+        selecting={selecting}
+        selectedCount={selectedIds.length}
+        onCancelSelection={exitSelection}
+        onCopySelected={() => void handleCopySelected()}
+        onDeleteSelected={() => requestDeleteMessages(selectedMessages)}
+        onDownloadSelected={() => void handleDownloadSelected()}
+        canCopySelected={canCopySelected}
+        canDeleteSelected={canDeleteSelected}
+        canDownloadSelected={canDownloadSelected}
       />
 
       {showSearch && (
@@ -555,7 +794,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         ref={scrollRef}
         data-chat-thread
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto no-scrollbar min-h-0"
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto scroll-smooth no-scrollbar"
       >
         {isLoading && messages.length === 0 ? (
           <div className="flex-1 grid place-items-center py-12">
@@ -596,6 +835,14 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
               participantPhoto={activeParticipant.photo}
               isGroup={Boolean(group)}
               onOpenSharedContent={handleOpenSharedContent}
+              selecting={selecting}
+              selectedIds={new Set(selectedIds)}
+              onToggleSelect={toggleSelected}
+              onEnterSelection={(messageId) => enterSelection(messageId)}
+              onRequestDelete={(message) => requestDeleteMessages([message])}
+              onDownload={(message) => void handleDownloadMessage(message)}
+              onOpenMedia={handleOpenMedia}
+              onOpenDocument={(message) => void handleOpenDocument(message)}
             />
           </>
         )}
@@ -611,25 +858,102 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             setNewMessagesCount(0);
           }}
           aria-label="Ir para as novas mensagens"
-          className="absolute bottom-16 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-elevated"
+          className="absolute bottom-[7.25rem] left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-elevated"
         >
           <ChevronDown className="h-3.5 w-3.5" />
           {newMessagesCount === 1 ? "Nova mensagem" : `${newMessagesCount} novas mensagens`}
         </button>
       )}
 
-      <div className="px-3 pb-1.5">
-        <ConnexyAiAssistant mode="conversations" label="Sugerir próximo passo" />
+      <div className="flex justify-start px-4 pb-1.5 pl-[42px] pt-0.5">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+        >
+          <ConnexyAiAssistant
+            mode="conversations"
+            label="Sugerir próximo passo"
+            className="w-fit bg-primary/[0.09] px-3.5 py-1.5 text-[11px] font-semibold"
+            onInsertSuggestion={(text) => {
+              setComposerInsert({ token: Date.now(), text });
+            }}
+          />
+        </motion.div>
       </div>
 
+      {viewingMessage && isOpenableChatMedia(viewingMessage) ? (
+        <ChatThreadMediaViewer
+          message={viewingMessage}
+          isOpen={!selecting}
+          onClose={() => setViewingMessage(null)}
+          onDownload={() => void handleDownloadMessage(viewingMessage)}
+          onDelete={
+            viewingMessage.from === "me"
+              ? () => {
+                  const target = viewingMessage;
+                  setViewingMessage(null);
+                  requestDeleteMessages([target]);
+                }
+              : undefined
+          }
+        />
+      ) : null}
+
       <MessageInput
-        placeholder="Digite uma mensagem"
+        placeholder="Digite uma mensagem..."
         onSendText={handleSendText}
+        onSendVoice={handleSendVoice}
         onOpenAttachment={handleOpenAttachment}
-        disabled={isLoading || !conversationId}
+        onCapturePhoto={() => setCameraOpen(true)}
+        onRecordVideo={() => setVideoRecorderOpen(true)}
+        disabled={isLoading || !conversationId || selecting}
+        forceRecording={voiceNonce}
+        insertRequest={composerInsert}
+        onInsertRequestHandled={() => setComposerInsert(null)}
+      />
+      <LocationShareSheet
+        open={locationShareOpen}
+        onClose={() => setLocationShareOpen(false)}
+        onConfirm={(input) => {
+          try {
+            sendLocation(input);
+            setLocationShareOpen(false);
+          } catch {
+            toast.error("Não foi possível enviar a localização.");
+          }
+        }}
+      />
+      <CheckinShareSheet
+        open={checkinShareOpen}
+        items={shareableCheckins}
+        onClose={() => setCheckinShareOpen(false)}
+        onShare={(item) => {
+          setCheckinShareOpen(false);
+          setShareDraft({
+            id: item.id,
+            kind: item.kind,
+            title: item.title,
+            cover: item.cover,
+            location: item.location,
+            dateText: item.dateText,
+            proximity: item.proximity,
+            route: item.route,
+          });
+        }}
       />
       <input
         ref={mediaInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          handleMediaFile(event.target.files?.[0]);
+          event.target.value = "";
+        }}
+      />
+      <input
+        ref={fileInputRef}
         type="file"
         className="hidden"
         onChange={(event) => {
@@ -645,7 +969,10 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
               <h2 className="text-sm font-bold">Prévia do anexo</h2>
               <button
                 type="button"
-                onClick={() => setMediaDraft(null)}
+                onClick={() => {
+                  if (mediaDraft) URL.revokeObjectURL(mediaDraft.previewUrl);
+                  setMediaDraft(null);
+                }}
                 className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold"
               >
                 Cancelar
@@ -653,35 +980,56 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
             </div>
             {mediaDraft.kind === "image" ? (
               <img
-                src={mediaDraft.dataUrl}
+                src={mediaDraft.previewUrl}
                 alt="Prévia"
                 className="mt-3 max-h-72 w-full rounded-2xl object-cover"
               />
-            ) : (
+            ) : mediaDraft.kind === "video" ? (
               <video
-                src={mediaDraft.dataUrl}
+                src={mediaDraft.previewUrl}
                 controls
                 className="mt-3 max-h-72 w-full rounded-2xl"
               />
+            ) : (
+              <div className="mt-3 rounded-2xl bg-secondary/40 p-3">
+                <FileMessage
+                  fileName={mediaDraft.fileName}
+                  fileSize={mediaDraft.blob.size}
+                  mimeType={mediaDraft.mimeType}
+                  sending={fileSending}
+                />
+              </div>
             )}
             <button
               type="button"
-              onClick={() => {
-                sendMedia(
-                  mediaDraft.kind,
-                  mediaDraft.dataUrl,
-                  mediaDraft.mimeType,
-                  mediaDraft.fileName,
-                );
-                setMediaDraft(null);
-              }}
-              className="mt-4 h-11 w-full rounded-full bg-gradient-brand text-sm font-bold text-white"
+              onClick={() => void sendDraftMedia()}
+              disabled={fileSending}
+              className="mt-4 h-11 w-full rounded-full bg-gradient-brand text-sm font-bold text-white disabled:opacity-60"
             >
-              Enviar
+              {fileSending ? "Enviando…" : "Enviar"}
             </button>
           </div>
         </div>
       )}
+
+      {cameraOpen ? (
+        <CameraCapture
+          title="Tirar foto"
+          confirmLabel="Enviar"
+          onCancel={() => setCameraOpen(false)}
+          onCapture={(blob, fileName) => void handleCameraCapture(blob, fileName)}
+        />
+      ) : null}
+
+      {videoRecorderOpen ? (
+        <ReelRecorder
+          title="Vídeo"
+          confirmLabel="Enviar"
+          maxDurationSec={CHAT_VIDEO_MAX_DURATION_SECONDS}
+          onCancel={() => setVideoRecorderOpen(false)}
+          onUse={(clip) => void handleRecordedVideo(clip)}
+        />
+      ) : null}
 
       {groupInviteOpen && conversationId && user?.id && !group && (
         <GroupInviteSheet
@@ -852,6 +1200,14 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
               }}
             />
             <MenuItem
+              icon={CheckSquare}
+              label="Selecionar mensagens"
+              onClick={() => {
+                setMenuOpen(false);
+                enterSelection();
+              }}
+            />
+            <MenuItem
               icon={Video}
               label="Videocall"
               onClick={() => {
@@ -891,6 +1247,14 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
           onHangup={() => finishDemoCall("ended", callSender())}
         />
       )}
+
+      <ChatConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={pendingDelete?.title ?? ""}
+        description={pendingDelete?.description ?? ""}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => void confirmPendingDelete()}
+      />
     </main>
   );
 }
@@ -928,5 +1292,40 @@ function MenuItem({
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{label}</span>
     </button>
+  );
+}
+
+function ChatThreadMediaViewer({
+  message,
+  isOpen,
+  onClose,
+  onDownload,
+  onDelete,
+}: {
+  message: Extract<ChatMessage, { kind: typeof MessageKind.IMAGE | typeof MessageKind.VIDEO }>;
+  isOpen: boolean;
+  onClose: () => void;
+  onDownload: () => void | Promise<void>;
+  onDelete?: () => void;
+}) {
+  const caption =
+    message.kind === MessageKind.IMAGE ? visibleMediaCaption(message.caption) : undefined;
+
+  return (
+    <LocalMediaFrame mediaId={message.mediaId} fallbackUrl={message.url}>
+      {(url) => (
+        <MediaViewer
+          isOpen={isOpen}
+          onClose={onClose}
+          src={url ?? ""}
+          type={message.kind === MessageKind.VIDEO ? "video" : "image"}
+          alt={caption ?? (message.kind === MessageKind.VIDEO ? "Vídeo" : "Foto")}
+          title={message.kind === MessageKind.VIDEO ? "Vídeo" : "Foto"}
+          variant="chat"
+          onDownload={onDownload}
+          onDelete={onDelete}
+        />
+      )}
+    </LocalMediaFrame>
   );
 }

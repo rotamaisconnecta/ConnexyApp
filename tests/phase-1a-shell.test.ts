@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   isAppBottomNavVisible,
+  resetAppRouteScroll,
   resetGlobalShellScroll,
   routeOwnsScroll,
 } from "../src/lib/shell/app-shell";
@@ -32,6 +33,7 @@ describe("Phase 1A shell navigation", () => {
     expect(routeOwnsScroll("/chat/abc")).toBe(true);
     expect(routeOwnsScroll("/solicitacao/42")).toBe(true);
     expect(routeOwnsScroll("/ride/active")).toBe(true);
+    expect(routeOwnsScroll("/destino")).toBe(true);
     expect(routeOwnsScroll("/create/photo")).toBe(true);
     expect(routeOwnsScroll("/home")).toBe(false);
     expect(routeOwnsScroll("/profile")).toBe(false);
@@ -58,5 +60,35 @@ describe("Phase 1A shell navigation", () => {
 
     expect(globalTop).toBe(0);
     expect(threadTop).toBe(640);
+  });
+
+  test("resets nested page scrollers but never the chat thread", () => {
+    const nested = { top: 240, thread: 510 };
+    const root = {
+      hasAttribute: () => false,
+      scrollTo: ({ top }: ScrollToOptions) => {
+        nested.top = top === 0 ? 0 : nested.top;
+      },
+      querySelectorAll: () => [
+        {
+          hasAttribute: (name: string) => name === "data-chat-thread",
+          closest: () => null,
+          scrollTo: ({ top }: ScrollToOptions) => {
+            if (top === 0) nested.thread = 0;
+          },
+        },
+        {
+          hasAttribute: () => false,
+          closest: () => null,
+          scrollTo: ({ top }: ScrollToOptions) => {
+            if (top === 0) nested.top = 0;
+          },
+        },
+      ],
+    } as unknown as HTMLElement;
+
+    resetAppRouteScroll(root);
+    expect(nested.top).toBe(0);
+    expect(nested.thread).toBe(510);
   });
 });

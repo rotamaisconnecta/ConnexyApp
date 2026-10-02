@@ -94,6 +94,7 @@ export interface Trip {
   pickupLabel: string;
   pickupPoint: string;
   category: RideCategory;
+  acceptedCategories?: RideCategory[];
   paymentMethod: PaymentOption;
   driver: TripDriver | null;
   distanceMeters: number;

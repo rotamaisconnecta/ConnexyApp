@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { Bell, UserRound } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
-import ModeSwitcher from "@/components/roles/ModeSwitcher";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
+import { TypeScale } from "@/theme/typography";
 import { FeedNearbyPeople } from "@/components/feed/FeedNearbyPeople";
 import { buildNearbyPeople } from "@/lib/feed/home-premium";
 import { LocalSponsoredFeed } from "@/components/ads/LocalSponsoredFeed";
@@ -103,10 +103,9 @@ function Home() {
   return (
     <div className="flex-1 bg-background">
       <StatusBar />
-      <ModeSwitcher />
 
       <header className="flex items-center justify-between px-5 pb-2 pt-3 md:pt-1">
-        <BrandLogo variant="full" size="md" />
+        <BrandLogo variant="full" size="md" className="w-32" />
         <div className="flex items-center gap-2">
           <Link
             to="/perfil"
@@ -123,7 +122,7 @@ function Home() {
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand text-white ring-2 ring-background shadow-soft">
                 {initials ? (
-                  <span className="text-xs font-bold">{initials}</span>
+                  <span className="text-xs font-semibold">{initials}</span>
                 ) : (
                   <UserRound className="h-[18px] w-[18px]" />
                 )}
@@ -137,7 +136,7 @@ function Home() {
           >
             <Bell className="h-[18px] w-[18px]" strokeWidth={1.9} />
             {pendingRequestCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-semibold leading-none text-white">
                 {pendingRequestCount > 9 ? "9+" : pendingRequestCount}
               </span>
             )}
@@ -147,11 +146,11 @@ function Home() {
 
       <section className="px-5 pb-1 pt-5">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-muted-foreground">{formatToday()}</p>
-          <h1 className="mt-1 font-display text-[28px] font-bold leading-[1.08] tracking-[-0.025em]">
+          <p className={`font-medium text-muted-foreground ${TypeScale.meta}`}>{formatToday()}</p>
+          <h1 className={`mt-1 font-display font-semibold ${TypeScale.pageTitle}`}>
             {greeting()}, {firstName}.
           </h1>
-          <p className="mt-2 max-w-[270px] text-sm leading-relaxed text-muted-foreground">
+          <p className={`mt-2 max-w-[270px] text-muted-foreground ${TypeScale.body}`}>
             Tudo o que importa ao seu redor.
           </p>
         </div>
@@ -161,9 +160,9 @@ function Home() {
         <FeedNearbyPeople data={buildNearbyPeople()} />
       </div>
 
-      <ConnexyPulse />
-
       <HomeActionHub />
+
+      <ConnexyPulse />
 
       <div className="mt-8">
         <HomePremiumFeed />

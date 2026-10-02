@@ -410,7 +410,7 @@ function ReelsPage() {
       </div>
 
       {filteredReels.length > 1 && (
-        <div className="absolute left-4 right-4 bottom-3 z-20 flex gap-1 pointer-events-none">
+        <div className="pointer-events-none absolute left-4 right-4 z-20 flex gap-1 bottom-[calc(var(--bottom-nav-height,4.75rem)+0.35rem)]">
           {filteredReels.map((_, i) => (
             <div key={i} className="flex-1 h-0.5 rounded-full bg-white/20 overflow-hidden">
               <motion.div
@@ -426,7 +426,7 @@ function ReelsPage() {
 
       <Link
         to="/gerenciar/novo-reel"
-        className="absolute right-4 bottom-8 z-30 h-14 w-14 grid place-items-center rounded-full bg-gradient-brand text-white shadow-lg active:scale-95 transition"
+        className="absolute right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-gradient-brand text-white shadow-lg transition active:scale-95 bottom-[calc(var(--bottom-nav-height,4.75rem)+0.75rem)]"
         aria-label="Criar no Agora"
       >
         <Plus className="h-6 w-6" />

@@ -1,4 +1,4 @@
-import { places } from "@/lib/mock-data";
+import { currentUser, places } from "@/lib/mock-data";
 import {
   CatalogKind,
   listCatalogByKind,
@@ -7,10 +7,18 @@ import {
 } from "@/lib/catalog/local-catalog";
 import { getAllBusinesses, MOCK_EVENTS } from "@/lib/marketplace/mock-businesses";
 import { HOME_EVENTS } from "@/lib/feed/home-premium";
+import { parseHomeEventDate } from "@/lib/marketplace/local-event-lookup";
 import { formatDistance, sortByDistanceMeters } from "@/lib/proximity";
+import {
+  isBusinessOpenAt,
+  isPlaceOpenAt,
+  pulseMetaLine,
+  rankPulseItems,
+} from "@/lib/home/pulse-relevance";
 
 export const NEARBY_PAGE_SIZE = 5;
-export const CONNECT_PULSE_LIMIT = 10;
+export const CONNECT_PULSE_LIMIT = 5;
+const EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
 
 export type HomeDiscoveryKind = "place" | "business" | "event" | "offer";
 
@@ -24,6 +32,18 @@ export type HomeDiscoveryItem = {
   distanceLabel: string;
   /** Id do recurso na rota de detalhe (sem o prefixo de `kind`). */
   detailId?: string;
+  /** Texto já existente na entidade — sem conteúdo inventado. */
+  summary?: string;
+  whenLabel?: string;
+  whereLabel?: string;
+  category?: string;
+  openNow?: boolean;
+  isActiveOffer?: boolean;
+  startAt?: number;
+  endAt?: number;
+  createdAt?: number;
+  tags?: string[];
+  favorite?: boolean;
 };
 
 export type HomeDiscoveryDetailTarget =
@@ -62,6 +82,8 @@ function item(
   distanceMeters: number,
   extra?: string,
   detailId?: string,
+  summary?: string,
+  extras?: Partial<HomeDiscoveryItem>,
 ): HomeDiscoveryItem {
   const kindLabel = KIND_LABEL[kind];
   return {
@@ -73,6 +95,8 @@ function item(
     distanceMeters,
     distanceLabel: formatDistance(distanceMeters),
     detailId,
+    summary: summary?.trim() || undefined,
+    ...extras,
   };
 }
 
@@ -87,10 +111,13 @@ function uniqueById(items: HomeDiscoveryItem[]): HomeDiscoveryItem[] {
   return unique;
 }
 
-export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
+const favoriteIds = new Set(currentUser.favoritePlaceIds ?? []);
+
+export function listHomeDiscoveryItems(now: Date = new Date()): HomeDiscoveryItem[] {
   const discovered: HomeDiscoveryItem[] = [];
 
   for (const place of mergeCatalogPlaces(places)) {
+    const openNow = isPlaceOpenAt(place.hours, now);
     discovered.push(
       item(
         "place",
@@ -100,21 +127,41 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         place.distanceMeters,
         place.category,
         place.id,
+        place.description,
+        {
+          whenLabel: place.hours || undefined,
+          whereLabel: place.address,
+          category: place.category,
+          openNow,
+          tags: [place.category],
+          favorite: favoriteIds.has(place.id),
+        },
       ),
     );
   }
 
   const businesses = getAllBusinesses();
   for (const business of businesses) {
+    const openNow = isBusinessOpenAt(business, now);
+    const photo = business.photos.find((entry) => entry.isPrimary)?.url ?? business.photos[0]?.url;
     discovered.push(
       item(
         "business",
         business.id,
         business.name,
-        business.photos.find((photo) => photo.isPrimary)?.url ?? business.photos[0]?.url,
+        photo,
         business.distanceMeters,
         business.category,
         business.id,
+        business.description,
+        {
+          whenLabel: openNow ? "Aberto agora" : undefined,
+          whereLabel: business.address || business.location.label,
+          category: business.category,
+          openNow,
+          tags: business.tags,
+          createdAt: business.createdAt.getTime(),
+        },
       ),
     );
     for (const promotion of business.promotions) {
@@ -124,10 +171,19 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
           "offer",
           promotion.id,
           promotion.title,
-          business.photos[0]?.url,
+          photo,
           business.distanceMeters,
           business.name,
           business.id,
+          promotion.description,
+          {
+            whenLabel: "Disponível agora",
+            whereLabel: business.name,
+            category: business.category,
+            openNow,
+            isActiveOffer: true,
+            tags: business.tags,
+          },
         ),
       );
     }
@@ -144,11 +200,20 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         host?.distanceMeters ?? 1500,
         event.location ?? host?.name,
         event.id,
+        event.description,
+        {
+          whenLabel: undefined,
+          whereLabel: event.location ?? host?.name,
+          category: event.title,
+          startAt: event.startDate.getTime(),
+          endAt: event.endDate.getTime(),
+        },
       ),
     );
   }
 
   for (const event of HOME_EVENTS) {
+    const start = parseHomeEventDate(event.date, event.time, now);
     discovered.push(
       item(
         "event",
@@ -158,6 +223,14 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         event.distanceMeters,
         event.location,
         event.id,
+        undefined,
+        {
+          whenLabel: [event.date, event.time].filter(Boolean).join(" · "),
+          whereLabel: event.location,
+          category: event.category,
+          startAt: start.getTime(),
+          endAt: start.getTime() + EVENT_DURATION_MS,
+        },
       ),
     );
   }
@@ -173,6 +246,14 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
         host?.distanceMeters ?? 2000,
         host?.name,
         offer.businessId,
+        offer.description,
+        {
+          whenLabel: "Disponível agora",
+          whereLabel: host?.name,
+          category: host?.category,
+          isActiveOffer: true,
+          openNow: host ? isBusinessOpenAt(host, now) : false,
+        },
       ),
     );
   }
@@ -180,22 +261,37 @@ export function listHomeDiscoveryItems(): HomeDiscoveryItem[] {
   return sortByDistanceMeters(uniqueById(discovered));
 }
 
-export function listConnectPulseItems(): HomeDiscoveryItem[] {
-  const all = listHomeDiscoveryItems().filter((entry) => Boolean(entry.image));
-  const byKind: HomeDiscoveryKind[] = ["event", "business", "place", "offer"];
-  const buckets = new Map<HomeDiscoveryKind, HomeDiscoveryItem[]>(
-    byKind.map((kind) => [kind, all.filter((entry) => entry.kind === kind)]),
-  );
-  const mixed: HomeDiscoveryItem[] = [];
-  let index = 0;
-  while (mixed.length < CONNECT_PULSE_LIMIT) {
-    const kind = byKind[index % byKind.length];
-    const next = buckets.get(kind)?.shift();
-    if (next) mixed.push(next);
-    index += 1;
-    if (index > CONNECT_PULSE_LIMIT * byKind.length) break;
+function listConnectPulseFeatured(now: Date = new Date()): HomeDiscoveryItem[] {
+  const all = listHomeDiscoveryItems(now).filter((entry) => Boolean(entry.image));
+  const ranked = rankPulseItems(all, now).slice(0, CONNECT_PULSE_LIMIT);
+  return ranked.length > 0 ? ranked : all.slice(0, CONNECT_PULSE_LIMIT);
+}
+
+export { listConnectPulseFeatured, KIND_LABEL as HOME_DISCOVERY_KIND_LABEL };
+
+/** Resto do catálogo após o mix contextual — sem seção própria na Home. */
+export function listNearbyYouItems(now: Date = new Date()): HomeDiscoveryItem[] {
+  const featuredIds = new Set(listConnectPulseFeatured(now).map((entry) => entry.id));
+  return listHomeDiscoveryItems(now).filter((entry) => !featuredIds.has(entry.id));
+}
+
+/** Descoberta unificada: relevância do momento + itens próximos restantes. */
+export function listConnectPulseItems(now: Date = new Date()): HomeDiscoveryItem[] {
+  const featured = listConnectPulseFeatured(now);
+  const remainder = listNearbyYouItems(now).filter((entry) => Boolean(entry.image));
+  const absorbed = paginateNearby(remainder, NEARBY_PAGE_SIZE);
+  const combined = uniqueById([...featured, ...absorbed]);
+  const present = new Set(combined.map((entry) => entry.kind));
+  const extras: HomeDiscoveryItem[] = [];
+  for (const kind of ["event", "business"] as const) {
+    if (present.has(kind)) continue;
+    const extra = rankPulseItems(
+      remainder.filter((entry) => entry.kind === kind),
+      now,
+    )[0];
+    if (extra) extras.push(extra);
   }
-  return mixed.length > 0 ? mixed : all.slice(0, CONNECT_PULSE_LIMIT);
+  return uniqueById([...combined, ...extras]);
 }
 
 export function paginateNearby(
@@ -208,3 +304,5 @@ export function paginateNearby(
 export function hasMoreNearby(total: number, limit: number): boolean {
   return limit < total;
 }
+
+export { pulseMetaLine };

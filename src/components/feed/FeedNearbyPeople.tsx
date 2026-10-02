@@ -4,11 +4,12 @@ import { ArrowRight } from "lucide-react";
 import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import { formatPersonDistance } from "@/lib/proximity";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
+import { TypeScale } from "@/theme/typography";
 import type { NearbyPeopleSectionData } from "@/lib/feed/feed-types";
 import type { NearbyProfile } from "@/types/phase-13b";
 
-const PEOPLE_CARD_WIDTH = { mobile: 160, tablet: 168, desktop: 176 } as const;
-const PEOPLE_CARD_HEIGHT = 252;
+const PEOPLE_CARD_HEIGHT = 268;
+const PEOPLE_CARD_WIDTH_CLASS = "w-[146px] min-w-[146px]";
 const MAX_AFFINITY_CHIPS = 3;
 const NEARBY_PEOPLE_LIMIT = 10;
 
@@ -36,6 +37,7 @@ function profileToFeedPerson(profile: NearbyProfile): NearbyPeopleSectionData["p
     distanceMeters,
     interests: profile.common_interests,
     online: false,
+    headline: profile.headline ?? undefined,
     commonalities: labels.length > 0 ? { labels, total: labels.length } : undefined,
   };
 }
@@ -47,13 +49,14 @@ interface FeedNearbyPeopleProps {
 
 export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
   const source = profiles ? profiles.map(profileToFeedPerson) : (data?.people ?? []);
-  // A proximidade já vem ordenada pela fonte; o limite fixa o tamanho do carrossel.
   const people = source.slice(0, NEARBY_PEOPLE_LIMIT);
 
   if (people.length === 0) {
     return (
-      <div className="px-6 py-6 text-center">
-        <p className="text-xs text-muted-foreground">Nenhuma pessoa nova nas proximidades agora.</p>
+      <div className="px-5 py-6 text-center">
+        <p className={`${TypeScale.caption} text-muted-foreground`}>
+          Nenhuma pessoa nova nas proximidades agora.
+        </p>
       </div>
     );
   }
@@ -65,135 +68,108 @@ export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
               👥
             </span>
-            <h3 className="font-display text-base font-bold truncate">Pessoas Próximas</h3>
+            <h3 className={`truncate font-display font-semibold ${TypeScale.subsectionTitle}`}>
+              Pessoas Próximas
+            </h3>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className={`mt-0.5 text-muted-foreground ${TypeScale.caption}`}>
             Conheça pessoas que compartilham seus interesses
           </p>
         </div>
         <Link
           to="/discover"
           search={{ filter: "people" }}
-          className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
+          className={`flex shrink-0 items-center gap-0.5 font-semibold text-primary transition-all duration-200 hover:gap-1 ${TypeScale.label}`}
         >
           Ver mais <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
       <PremiumCarousel
-        section="people"
+        section="people-compact"
         items={people}
-        cardWidths={PEOPLE_CARD_WIDTH}
         cardHeight={PEOPLE_CARD_HEIGHT}
+        cardSize="min"
+        itemClassName={PEOPLE_CARD_WIDTH_CLASS}
+        scrollerClassName="gap-3 pl-5 pr-5"
         renderCard={(person) => {
-          const affinityLabels = person.commonalities?.labels ?? [];
+          const affinityLabels = person.commonalities?.labels?.length
+            ? person.commonalities.labels
+            : person.interests;
           const visibleLabels = affinityLabels.slice(0, MAX_AFFINITY_CHIPS);
-          const extraAffinities = person.commonalities
-            ? Math.max(0, person.commonalities.total - visibleLabels.length)
-            : 0;
+          const nameLine = person.age != null ? `${person.name}, ${person.age}` : person.name;
 
           return (
-            <article
-              className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-border/50 bg-surface transition-all duration-300 hover:shadow-xl"
-              style={
-                person.online
-                  ? {
-                      border: "2px solid",
-                      borderImage: "linear-gradient(135deg, #a855f7, #ec4899) 1",
-                    }
-                  : undefined
-              }
-            >
+            <article className="relative flex min-h-[268px] flex-col rounded-2xl border border-border/50 bg-surface">
               <Link
                 to="/perfil/$id"
                 params={{ id: person.id }}
                 aria-label={`Ver perfil de ${person.name}`}
-                className="flex min-h-0 flex-1 flex-col"
+                className="flex min-h-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
-                <div className="relative w-full shrink-0" style={{ height: 112 }}>
+                <div className="relative h-[96px] w-full shrink-0 overflow-hidden rounded-t-2xl">
                   {person.photo ? (
                     <img
                       src={person.photo}
                       alt={person.name}
                       loading="lazy"
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-primary">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                      <span className="text-xl font-semibold text-primary">
                         {person.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                  <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-gray-800 shadow-soft">
-                    {person.distance}
-                  </span>
-                  {person.compatibility != null ? (
+                  <span className="absolute bottom-1.5 left-1.5 inline-flex max-w-[calc(100%-12px)] items-center gap-1 rounded-full bg-black/45 px-1.5 py-0.5">
                     <span
-                      aria-label={`Compatibilidade de ${person.compatibility}%`}
-                      className="absolute top-2 right-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-pink-600 shadow-soft"
-                    >
-                      {person.compatibility}%
-                    </span>
-                  ) : (
-                    <span className="absolute top-2 right-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] text-muted-foreground shadow-soft">
-                      Complete seus interesses para descobrir a afinidade.
-                    </span>
-                  )}
-                </div>
-                <div className="flex min-h-0 flex-1 flex-col gap-1 px-3 pt-2 pb-2">
-                  <div className="flex items-center gap-1">
-                    <span className="font-display font-bold text-[13px] truncate">
-                      {person.name}
-                    </span>
-                    {person.age != null && (
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {person.age} anos
-                      </span>
-                    )}
-                  </div>
-                  {visibleLabels.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {visibleLabels.map((label) => (
-                        <span
-                          key={label}
-                          className="max-w-full truncate rounded-full bg-secondary px-2 py-0.5 text-[10px] text-foreground"
-                        >
-                          {label}
-                        </span>
-                      ))}
-                      {extraAffinities > 0 && (
-                        <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          +{extraAffinities}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="mt-auto flex items-center gap-1">
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${person.online ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${person.online ? "bg-green-400" : "bg-white/50"}`}
                     />
-                    <span
-                      className={`text-[10px] font-medium ${person.online ? "text-green-600" : "text-gray-400"}`}
-                    >
+                    <span className="text-[10px] font-medium leading-none text-white">
                       {person.online ? "Online" : "Offline"}
                     </span>
-                  </div>
+                  </span>
+                  {person.distance ? (
+                    <span className="absolute right-1.5 top-1.5 max-w-[calc(100%-12px)] rounded-full bg-black/45 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white">
+                      {person.distance}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="flex min-h-0 flex-1 flex-col px-2.5 pt-1.5">
+                  <p className="text-[14px] font-semibold leading-[1.25] tracking-tight">
+                    {nameLine}
+                  </p>
+                  {person.headline ? (
+                    <p className="mt-0.5 text-[12px] font-normal leading-[1.3] text-muted-foreground">
+                      {person.headline}
+                    </p>
+                  ) : null}
+                  {visibleLabels.length > 0 ? (
+                    <p className="mt-0.5 text-[11px] font-normal leading-[1.35] text-muted-foreground/80">
+                      Interesses: {visibleLabels.join(" · ")}
+                    </p>
+                  ) : null}
+                  {person.compatibility != null ? (
+                    <p className="mt-1 text-[12px] font-semibold leading-none text-primary">
+                      Compatibilidade {person.compatibility}%
+                    </p>
+                  ) : null}
                 </div>
               </Link>
-              <div className="px-3 pb-2.5">
+              <div className="shrink-0 px-1.5 pb-1.5 pt-1">
                 <ConversationInviteButton
                   personId={person.id}
                   personName={person.name}
                   variant="compact"
-                  className="h-8 w-full text-[11px]"
+                  className="h-7 w-full min-w-0 gap-0.5 overflow-hidden px-1 text-[11px] leading-none [&_svg]:h-3 [&_svg]:w-3"
                 />
               </div>
             </article>

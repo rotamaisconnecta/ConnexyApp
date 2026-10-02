@@ -31,6 +31,7 @@ import {
 import { subscribeDemoDB, respondToDemoGroupInvite } from "@/lib/demo/demo-db";
 import { useDemoGroupInvites, useDemoPendingRequests } from "@/lib/demo/use-demo-db";
 import { people } from "@/lib/mock-data";
+import { TypeScale } from "@/theme/typography";
 import {
   listFunctionalDemoConversations,
   resolveDemoCatalogPerson,
@@ -285,27 +286,27 @@ export function ConversationsScreen() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
       <StatusBar />
 
       <motion.header
         initial={reducedMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="shrink-0 px-5 pt-1"
+        className="min-w-0 shrink-0 overflow-x-hidden px-4 pt-1 min-[360px]:px-5"
       >
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight">
-              Conversas
-            </h1>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">Conexões que continuam</p>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className={`font-display font-bold ${TypeScale.pageTitle}`}>Conversas</h1>
+            <p className={`mt-0.5 text-muted-foreground ${TypeScale.caption}`}>
+              Conexões que continuam
+            </p>
           </div>
           <button
             type="button"
             onClick={() => setFilterOpen((open) => !open)}
             aria-label="Filtrar pessoas"
-            className={`grid h-10 w-10 place-items-center rounded-full border transition active:scale-95 ${
+            className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border transition active:scale-95 ${
               filtersActive
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-surface text-muted-foreground"
@@ -316,12 +317,12 @@ export function ConversationsScreen() {
         </div>
 
         {isDemoMode() && (
-          <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-[11px] text-muted-foreground">
-            <span className="font-semibold text-primary">Simulação demo</span>
+          <label className="mt-3 flex min-w-0 items-center gap-2 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-[11px] text-muted-foreground">
+            <span className="shrink-0 font-semibold text-primary">Simulação demo</span>
             <select
               value={demoIdentity.id}
               onChange={(event) => setDemoIdentity(event.target.value)}
-              className="max-w-[65%] rounded-lg border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground outline-none"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground outline-none"
               aria-label="Alternar identidade demo"
             >
               {getDemoIdentities().map((identity) => (
@@ -361,7 +362,7 @@ export function ConversationsScreen() {
           </button>
         </div>
 
-        <div className="relative mt-4">
+        <div className="relative mt-4 min-w-0">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -369,7 +370,7 @@ export function ConversationsScreen() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar pessoa ou assunto"
             aria-label="Buscar pessoa ou assunto"
-            className="h-11 w-full rounded-2xl border border-border bg-surface pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground shadow-soft outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-ring/30"
+            className="h-11 w-full min-w-0 max-w-full rounded-2xl border border-border bg-surface pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground shadow-soft outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-ring/30"
           />
           {hasQuery && (
             <button
@@ -420,7 +421,7 @@ export function ConversationsScreen() {
         )}
       </motion.header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
+      <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar pb-8">
         {/* Loading state (real only) */}
         {listLoading && (
           <div className="flex justify-center py-12">
@@ -453,7 +454,7 @@ export function ConversationsScreen() {
 
         {/* Empty state */}
         {!listLoading && !listError && activeTab === "active" && conversations.length === 0 && (
-          <div className="px-8 pt-24 text-center">
+          <div className="px-8 pt-10 pb-6 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-brand shadow-elegant">
               <MessagesSquare className="h-7 w-7 text-white" strokeWidth={2.1} />
             </div>

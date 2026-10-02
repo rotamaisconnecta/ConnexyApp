@@ -24,6 +24,7 @@ import {
   toTripDriver,
 } from "./dispatcher-store";
 import type { DispatchMeta, DispatchRequest } from "./dispatch-types";
+import { estimateDemoFare } from "../demo-fare";
 import { getDemoIdentities, getDemoIdentity } from "@/lib/demo/demo-identity";
 import {
   cancelTrip,
@@ -126,6 +127,10 @@ function buildDispatchRequest(trip: Trip): DispatchRequest {
       estimatedFare: trip.estimatedFare,
       paymentMethod: trip.paymentMethod,
       category: trip.category,
+      acceptedCategories:
+        trip.acceptedCategories && trip.acceptedCategories.length > 0
+          ? trip.acceptedCategories
+          : [trip.category],
     },
     meta,
   };
@@ -165,7 +170,15 @@ onDispatchEvent((event) => {
       const driver = getAssignedDriver(event.tripId);
       const trip = getTrip();
       if (driver && trip && trip.id === event.tripId && trip.status === "buscando") {
-        markDriverFound(toTripDriver(driver));
+        markDriverFound(toTripDriver(driver), {
+          category: driver.category,
+          estimatedFare: estimateDemoFare(
+            driver.category,
+            trip.distanceMeters,
+            trip.durationMinutes,
+            trip.stops.length,
+          ),
+        });
       }
       break;
     }

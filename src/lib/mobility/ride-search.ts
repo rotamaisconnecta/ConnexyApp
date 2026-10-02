@@ -62,6 +62,7 @@ export function buildCompanionStops(
         { lat: companion.lat, lng: companion.lng, label: companion.address },
         `${companion.name.split(" ")[0]} — ${companion.address}`,
         index + 1,
+        companion.id,
       ),
     ),
   );

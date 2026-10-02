@@ -1,40 +1,65 @@
-import { FileText, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FileText, Loader2 } from "lucide-react";
 import { formatFileSize } from "@/lib/chat/chat-format";
 
 interface FileMessageProps {
   fileName: string;
   fileSize: number;
   mimeType: string;
+  sending?: boolean;
+  selecting?: boolean;
+  onOpen?: () => void;
 }
 
-const MIME_ICONS: Record<string, string> = {
-  "application/pdf": "📕",
-  "application/zip": "📦",
-  "application/json": "📋",
-  "text/plain": "📝",
-  "text/csv": "📊",
-};
+function fileExtension(fileName: string, mimeType: string): string | undefined {
+  const fromName = fileName.includes(".") ? fileName.split(".").pop() : undefined;
+  if (fromName && fromName.length <= 8) return fromName.toUpperCase();
+  const subtype = mimeType.split("/")[1];
+  return subtype && subtype !== "octet-stream" ? subtype.toUpperCase() : undefined;
+}
 
-export function FileMessage({ fileName, fileSize, mimeType }: FileMessageProps) {
-  const icon = MIME_ICONS[mimeType] ?? "📄";
+export function FileMessage({
+  fileName,
+  fileSize,
+  mimeType,
+  sending = false,
+  selecting = false,
+  onOpen,
+}: FileMessageProps) {
+  const extension = fileExtension(fileName, mimeType);
+  const body = (
+    <>
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{fileName}</p>
+        <p className="text-[10px] text-muted-foreground">
+          {[extension, fileSize > 0 ? formatFileSize(fileSize) : null, sending ? "Enviando…" : null]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      </div>
+    </>
+  );
 
-  return (
-    <div className="flex min-w-0 w-full items-center gap-3">
-      <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-lg shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{fileName}</p>
-        <p className="text-[10px] text-muted-foreground">{formatFileSize(fileSize)}</p>
-      </div>
+  if (onOpen && !sending) {
+    return (
       <button
         type="button"
-        className="h-8 w-8 rounded-lg grid place-items-center hover:bg-accent transition-colors shrink-0"
-        aria-label={`Baixar ${fileName}`}
+        onClick={(event) => {
+          if (selecting) {
+            event.preventDefault();
+            return;
+          }
+          onOpen();
+        }}
+        className="flex min-w-0 w-full items-center gap-3 text-left"
+        aria-label={selecting ? "Selecionar documento" : `Abrir ${fileName}`}
       >
-        <Download className="h-4 w-4 text-muted-foreground" />
+        {body}
       </button>
-    </div>
-  );
+    );
+  }
+
+  return <div className="flex min-w-0 w-full items-center gap-3">{body}</div>;
 }

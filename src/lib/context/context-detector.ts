@@ -18,13 +18,15 @@ import {
 
 /* ─── detectPeriod ──────────────────────────────────────── */
 
-export function detectPeriod(): ContextPeriodValue {
-  const hour = new Date().getHours();
-
+export function periodFromHour(hour: number): ContextPeriodValue {
   if (hour >= 6 && hour < 12) return ContextPeriod.MORNING;
   if (hour >= 12 && hour < 18) return ContextPeriod.AFTERNOON;
   if (hour >= 18 && hour < 22) return ContextPeriod.EVENING;
   return ContextPeriod.NIGHT;
+}
+
+export function detectPeriod(now: Date = new Date()): ContextPeriodValue {
+  return periodFromHour(now.getHours());
 }
 
 /* ─── detectWeather ─────────────────────────────────────── */

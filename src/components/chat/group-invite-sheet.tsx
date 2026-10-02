@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Check, Search, Users, X } from "lucide-react";
 import { people } from "@/lib/mock-data";
-import { isConnected } from "@/lib/demo/demo-db";
+import { listConversationInviteCandidates, canInviteToConversation } from "@/lib/chat/conversation-invite-candidates";
 
 interface GroupInviteSheetProps {
   sourceConversationId: string;
@@ -24,20 +24,19 @@ export function GroupInviteSheet({
   const [confirming, setConfirming] = useState(false);
   const [name, setName] = useState(`Grupo com ${sourceName}`);
   const candidates = useMemo(
-    () =>
-      people.filter(
-        (person) => person.id !== currentUserId && isConnected(person.id, currentUserId),
-      ),
-    [currentUserId],
+    () => listConversationInviteCandidates(sourceConversationId, currentUserId),
+    [sourceConversationId, currentUserId],
   );
   const filtered = candidates.filter((person) =>
     person.name.toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR")),
   );
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    if (!canInviteToConversation(sourceConversationId, currentUserId, id)) return;
     setSelected((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  };
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   createFileRoute,
   Outlet,
@@ -21,7 +21,7 @@ import {
   APP_SCROLL_PADDING_BOTTOM,
   BOTTOM_NAV_HEIGHT,
   isAppBottomNavVisible,
-  resetGlobalShellScroll,
+  resetAppRouteScroll,
   routeOwnsScroll as routeOwnsInternalScroll,
 } from "@/lib/shell/app-shell";
 
@@ -43,6 +43,7 @@ function AppLayout() {
   const nav = useNavigate();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const locationHref = useRouterState({ select: (state) => state.location.href });
 
   const profileEditorOpen = useRouterState({
     select: (state) => {
@@ -69,9 +70,19 @@ function AppLayout() {
     restoreModeOnBoot();
   }, []);
 
-  useEffect(() => {
-    resetGlobalShellScroll(scrollAreaRef.current);
-  }, [pathname, profileEditorOpen, routeOwnsScroll]);
+  useLayoutEffect(() => {
+    const reset = () => resetAppRouteScroll(scrollAreaRef.current);
+    reset();
+    const frame = window.requestAnimationFrame(() => {
+      reset();
+      window.requestAnimationFrame(reset);
+    });
+    const timeout = window.setTimeout(reset, 50);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [locationHref, profileEditorOpen, routeOwnsScroll]);
 
   if (loading || !user) {
     return (

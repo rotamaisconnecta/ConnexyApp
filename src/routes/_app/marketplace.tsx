@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
 import { SearchBar } from "@/components/marketplace/search-bar";
 import { CategoryFilter } from "@/components/marketplace/category-filter";
@@ -8,6 +8,7 @@ import { OfferCarousel } from "@/components/marketplace/offer-carousel";
 import { LoadingMarketplace } from "@/components/marketplace/loading-marketplace";
 import { EmptyMarketplace } from "@/components/marketplace/empty-marketplace";
 import { BackButton } from "@/components/navigation/back-button";
+import { Plus } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import type { MarketplaceFilters } from "@/lib/marketplace/business-types";
 import { SortOption } from "@/lib/marketplace/business-types";
@@ -61,12 +62,19 @@ function MarketplacePage() {
           fallbackTo="/home"
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
         />
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <h1 className="font-display font-bold text-base">Marketplace</h1>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] leading-snug text-muted-foreground">
             Descubra empresas e promoções perto de você
           </p>
         </div>
+        <Link
+          to="/create/offer"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-3.5 py-2 text-[12px] font-semibold text-primary-foreground shadow-soft"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Vender algo
+        </Link>
       </div>
 
       <div className="flex-1 px-5 pb-4 space-y-4 overflow-y-auto no-scrollbar">
@@ -129,8 +137,8 @@ function MarketplacePage() {
                   />
                 )}
                 <div className="min-w-0 flex-1 space-y-1">
-                  <h3 className="font-semibold text-sm truncate">{b.name}</h3>
-                  <p className="text-[11px] text-muted-foreground line-clamp-1">{b.description}</p>
+                  <h3 className="font-semibold text-sm leading-snug">{b.name}</h3>
+                  <p className="text-[11px] leading-snug text-muted-foreground">{b.description}</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-amber font-medium">★ {b.rating.average}</span>
                     <span className="text-[10px] text-muted-foreground">

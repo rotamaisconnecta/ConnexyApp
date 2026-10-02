@@ -18,7 +18,7 @@ export function OfferCard({ promotion, onSelect }: OfferCardProps) {
       onClick={() => onSelect?.(promotion.id)}
       aria-label={`Ver promoção ${promotion.title}`}
       className={cn(
-        "w-56 shrink-0 rounded-2xl border p-3 text-left transition-all active:scale-[0.98]",
+        "w-[86%] min-w-[86%] shrink-0 rounded-2xl border p-4 text-left transition-all active:scale-[0.98]",
         getPromotionColor(promotion.discountType),
       )}
     >
@@ -27,8 +27,8 @@ export function OfferCard({ promotion, onSelect }: OfferCardProps) {
           <span className="text-lg font-bold">
             {getDiscountLabel(promotion.discountType, promotion.discountValue)}
           </span>
-          <h3 className="text-xs font-semibold leading-tight truncate">{promotion.title}</h3>
-          <p className="text-[10px] opacity-70 line-clamp-2">{promotion.description}</p>
+          <h3 className="text-xs font-semibold leading-snug">{promotion.title}</h3>
+          <p className="text-[10px] leading-snug opacity-70">{promotion.description}</p>
         </div>
       </div>
 

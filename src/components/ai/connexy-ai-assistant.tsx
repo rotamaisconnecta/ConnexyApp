@@ -46,12 +46,14 @@ interface ConnexyAiAssistantProps {
   mode: ConnexyAiAssistantMode;
   label?: string;
   className?: string;
+  onInsertSuggestion?: (text: string) => void;
 }
 
 export function ConnexyAiAssistant({
   mode: flowMode,
   label = "Assistente Connexy",
   className,
+  onInsertSuggestion,
 }: ConnexyAiAssistantProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState(flowMode);
@@ -83,6 +85,16 @@ export function ConnexyAiAssistant({
     }
   };
 
+  const copyAndEdit = () => {
+    if (!result) return;
+    if (onInsertSuggestion) {
+      onInsertSuggestion(result);
+      setOpen(false);
+      return;
+    }
+    void copyResult();
+  };
+
   return (
     <>
       <button
@@ -90,7 +102,7 @@ export function ConnexyAiAssistant({
         onClick={openAssistant}
         aria-label="Abrir assistente Connexy IA"
         className={cn(
-          "inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/15 active:scale-[0.98]",
+          "inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-2 text-[12px] font-semibold text-primary shadow-[0_8px_20px_rgba(108,59,255,0.08)] transition-transform hover:bg-primary/15 active:scale-[0.98]",
           className,
         )}
       >
@@ -183,10 +195,10 @@ export function ConnexyAiAssistant({
                   <p className="text-sm leading-relaxed">{result}</p>
                   <button
                     type="button"
-                    onClick={() => void copyResult()}
+                    onClick={copyAndEdit}
                     className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary"
                   >
-                    <Copy className="h-3.5 w-3.5" /> Copiar e personalizar
+                    <Copy className="h-3.5 w-3.5" /> Copiar e editar
                   </button>
                 </div>
               )}

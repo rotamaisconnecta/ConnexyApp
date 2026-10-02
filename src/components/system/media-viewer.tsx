@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft,
@@ -7,6 +8,7 @@ import {
   Heart,
   Repeat2,
   Share2,
+  Trash2,
   X,
   ZoomIn,
   type LucideIcon,
@@ -28,6 +30,9 @@ interface MediaViewerProps {
   onRepost?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onDownload?: () => void | Promise<void>;
+  onDelete?: () => void;
+  variant?: "publication" | "chat";
 }
 
 export function MediaViewer({
@@ -44,8 +49,22 @@ export function MediaViewer({
   onRepost,
   isFavorite = false,
   onToggleFavorite,
+  onDownload,
+  onDelete,
+  variant = "publication",
 }: MediaViewerProps) {
   const [scale, setScale] = useState(1);
+  const sentinelRef = useRef<HTMLSpanElement>(null);
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  const contained = variant === "chat";
+
+  useLayoutEffect(() => {
+    if (!contained) return;
+    const node =
+      sentinelRef.current?.closest("[data-phone-stage]") ??
+      sentinelRef.current?.closest("main");
+    if (node instanceof HTMLElement) setHost(node);
+  }, [contained, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -88,10 +107,19 @@ export function MediaViewer({
   }, [src, title]);
 
   const downloadMedia = useCallback(async () => {
+    if (onDownload) {
+      await onDownload();
+      return;
+    }
+    if (variant === "chat") {
+      toast.error("Não foi possível baixar esta mídia.");
+      return;
+    }
     try {
       const response = await fetch(src);
       if (!response.ok) throw new Error("download failed");
       const blob = await response.blob();
+      if (!blob.size) throw new Error("empty-media");
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = objectUrl;
@@ -105,9 +133,9 @@ export function MediaViewer({
       window.open(src, "_blank", "noopener,noreferrer");
       toast("A imagem foi aberta para você salvá-la.");
     }
-  }, [src]);
+  }, [onDownload, src, variant]);
 
-  return (
+  const overlay = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -118,14 +146,17 @@ export function MediaViewer({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] flex flex-col bg-[#08080b]/[0.97] text-white backdrop-blur-xl"
+          className={cn(
+            "flex flex-col bg-[#08080b]/[0.97] text-white backdrop-blur-xl",
+            contained ? "absolute inset-0 z-[120]" : "fixed inset-0 z-[100]",
+          )}
         >
           <header className="relative z-20 flex shrink-0 items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
             <button
               type="button"
               onClick={onClose}
               className="grid h-10 w-10 place-items-center rounded-full bg-white/10 transition active:scale-95"
-              aria-label="Fechar imagem"
+              aria-label="Fechar"
             >
               <X className="h-5 w-5" />
             </button>
@@ -137,14 +168,18 @@ export function MediaViewer({
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={toggleZoom}
-              className="grid h-10 w-10 place-items-center rounded-full bg-white/10 transition active:scale-95"
-              aria-label={scale === 1 ? "Ampliar imagem" : "Reduzir imagem"}
-            >
-              <ZoomIn className="h-5 w-5" />
-            </button>
+            {type === "image" ? (
+              <button
+                type="button"
+                onClick={toggleZoom}
+                className="grid h-10 w-10 place-items-center rounded-full bg-white/10 transition active:scale-95"
+                aria-label={scale === 1 ? "Ampliar imagem" : "Reduzir imagem"}
+              >
+                <ZoomIn className="h-5 w-5" />
+              </button>
+            ) : (
+              <span className="h-10 w-10" aria-hidden />
+            )}
           </header>
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -161,17 +196,22 @@ export function MediaViewer({
 
             <motion.div
               className="flex h-full w-full items-center justify-center overflow-auto p-4"
-              onClick={toggleZoom}
+              onClick={type === "image" ? toggleZoom : undefined}
               style={{
                 cursor: type === "image" ? (scale === 1 ? "zoom-in" : "zoom-out") : "default",
               }}
             >
-              {type === "video" ? (
+              {!src ? (
+                <p className="px-6 text-center text-sm text-white/70">Mídia indisponível</p>
+              ) : type === "video" ? (
                 <video
                   src={src}
                   className="max-h-full max-w-full rounded-2xl object-contain shadow-2xl"
                   controls
+                  autoPlay
                   playsInline
+                  onClick={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
                 />
               ) : (
                 <img
@@ -200,21 +240,37 @@ export function MediaViewer({
           </div>
 
           <footer className="relative z-20 shrink-0 border-t border-white/10 bg-black/30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-2xl">
-            <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
-              <ViewerAction icon={Repeat2} label="Republicar" action={onRepost} />
-              <ViewerAction icon={Share2} label="Compartilhar" action={shareMedia} />
-              <ViewerAction icon={Download} label="Baixar" action={downloadMedia} />
-              <ViewerAction
-                icon={Heart}
-                label={isFavorite ? "Salva" : "Salvar"}
-                action={onToggleFavorite}
-                active={isFavorite}
-              />
-            </div>
+            {variant === "chat" ? (
+              <div className={cn("mx-auto grid max-w-md gap-2", onDelete ? "grid-cols-2" : "grid-cols-1")}>
+                <ViewerAction icon={Download} label="Baixar" action={downloadMedia} />
+                {onDelete ? <ViewerAction icon={Trash2} label="Excluir" action={onDelete} /> : null}
+              </div>
+            ) : (
+              <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
+                <ViewerAction icon={Repeat2} label="Republicar" action={onRepost} />
+                <ViewerAction icon={Share2} label="Compartilhar" action={shareMedia} />
+                <ViewerAction icon={Download} label="Baixar" action={downloadMedia} />
+                <ViewerAction
+                  icon={Heart}
+                  label={isFavorite ? "Salva" : "Salvar"}
+                  action={onToggleFavorite}
+                  active={isFavorite}
+                />
+              </div>
+            )}
           </footer>
         </motion.div>
       )}
     </AnimatePresence>
+  );
+
+  if (!contained) return overlay;
+
+  return (
+    <>
+      <span ref={sentinelRef} hidden />
+      {host ? createPortal(overlay, host) : isOpen ? overlay : null}
+    </>
   );
 }
 

@@ -11,6 +11,7 @@ import { Calendar, CarFront, MapPinned, Share2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { Business, BusinessEvent } from "@/lib/marketplace/business-types";
+import { buildRideRequestSearch } from "@/lib/mobility/ride-request-context";
 import { getBusinessById } from "@/lib/marketplace/mock-businesses";
 import { listLocalEvents, resolveLocalEventById } from "@/lib/marketplace/local-event-lookup";
 import {
@@ -248,13 +249,13 @@ function EventDetailPage() {
       <div className="space-y-2 px-5 pb-4">
         <Link
           to="/ride/request"
-          search={{
-            destinationName: event.title,
-            destinationAddress: event.location ?? null,
-            destinationLat: hostBusiness?.location.lat ?? null,
-            destinationLng: hostBusiness?.location.lng ?? null,
+          search={buildRideRequestSearch({
+            name: event.title,
+            address: event.location ?? hostBusiness?.address ?? null,
+            lat: hostBusiness?.location.lat ?? null,
+            lng: hostBusiness?.location.lng ?? null,
             source: "event",
-          }}
+          })}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition active:scale-[0.98]"
         >
           <CarFront className="h-4 w-4 shrink-0" /> Pedir corrida pelo Connexy

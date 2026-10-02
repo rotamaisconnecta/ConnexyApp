@@ -11,6 +11,7 @@ interface UploadSourcesProps {
   onFiles: (files: FileList) => void;
   disabled?: boolean;
   className?: string;
+  onLivePhoto?: () => void;
 }
 
 interface SourceOption {
@@ -132,6 +133,7 @@ export function UploadSources({
   onFiles,
   disabled,
   className,
+  onLivePhoto,
 }: UploadSourcesProps) {
   const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
   const options = getOptions(mode, multiple ?? false);
@@ -139,10 +141,14 @@ export function UploadSources({
   const handleClick = useCallback(
     (option: SourceOption) => {
       if (disabled) return;
+      if (option.id === "take-photo" && onLivePhoto) {
+        onLivePhoto();
+        return;
+      }
       void requestPermission(!!option.audio);
       inputsRef.current[option.id]?.click();
     },
-    [disabled],
+    [disabled, onLivePhoto],
   );
 
   return (

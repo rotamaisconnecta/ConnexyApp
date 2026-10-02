@@ -33,7 +33,7 @@ export const HomePremiumFeed = memo(function HomePremiumFeed() {
         <PremiumSection index={1}>
           <FeedNearbyEvents
             data={buildEventsUpcoming()}
-            title="Próximos eventos"
+            title="Eventos próximos"
             section="events-upcoming"
           />
         </PremiumSection>

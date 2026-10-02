@@ -12,6 +12,7 @@ import {
   type SponsoredAction,
 } from "@/lib/ads/mock-sponsored-content";
 import { resolveSponsoredRoute } from "@/lib/navigation/detail-routes";
+import { HomeSectionHeading } from "@/components/home/home-section-heading";
 
 export function LocalSponsoredFeed() {
   const nav = useNavigate();
@@ -33,8 +34,7 @@ export function LocalSponsoredFeed() {
         lat: ad.latitude,
         lng: ad.longitude,
       }),
-    }))
-      .sort((a, b) => a.liveDistanceMeters - b.liveDistanceMeters);
+    })).sort((a, b) => a.liveDistanceMeters - b.liveDistanceMeters);
     const withinRadius = ranked.filter((ad) => ad.liveDistanceMeters <= 2_000);
 
     // A experiência não fica vazia: fora do raio, mostramos os patrocinados mais próximos.
@@ -57,29 +57,26 @@ export function LocalSponsoredFeed() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="mb-4 px-6">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm" aria-hidden>
-            🏷️
-          </span>
-          <h3 className="font-display text-base font-bold truncate">Descobertas locais</h3>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          Patrocinados em até 2 km da sua localização
-        </p>
+      <div className="mb-4 px-5">
+        <HomeSectionHeading
+          as="h3"
+          emoji="🏷️"
+          title="Destaques da região"
+          subtitle="Patrocinados em até 2 km da sua localização"
+        />
       </div>
 
       <SwipeCarousel
-        ariaLabel="Descobertas locais"
+        ariaLabel="Destaques da região"
         hintLabel="Deslize para ver mais ofertas"
-        className="gap-4"
+        className="gap-3 pl-5 snap-x snap-mandatory"
       >
         {nearbyAds.map((ad) => (
           <article
             key={ad.id}
-            className="w-[272px] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
+            className="min-w-[86%] w-[86%] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
           >
-            <div className="relative h-28">
+            <div className="relative aspect-[16/10]">
               {ad.cover ? (
                 <img
                   src={ad.cover}
@@ -92,7 +89,7 @@ export function LocalSponsoredFeed() {
                   {ad.emoji ?? "🛍️"}
                 </div>
               )}
-              <span className="absolute top-2.5 left-2.5 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-bold text-gray-800 shadow-soft">
+              <span className="absolute top-2.5 left-2.5 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-semibold text-gray-800 shadow-soft">
                 Patrocinado
               </span>
               <span className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
@@ -105,7 +102,7 @@ export function LocalSponsoredFeed() {
               <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
                 {ad.category}
               </div>
-              <h4 className="font-display text-sm font-bold leading-snug">{ad.title}</h4>
+              <h4 className="font-display text-sm font-semibold leading-snug">{ad.title}</h4>
               {ad.subtitle && (
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{ad.subtitle}</p>
               )}

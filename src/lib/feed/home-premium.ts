@@ -6,7 +6,7 @@
 ========================================================= */
 
 import { people, places, compatibilityScore, currentUser } from "@/lib/mock-data";
-import { formatDistance, sortByDistanceMeters } from "@/lib/proximity";
+import { formatDistance, formatHomePersonProximity, sortByDistanceMeters } from "@/lib/proximity";
 import { getCommonalities, shouldShowNearbyPerson } from "./commonalities";
 import type { PersonCommonalities } from "./commonalities";
 import type {
@@ -311,10 +311,11 @@ export function buildNearbyPeople(): NearbyPeopleSectionData {
         photo: p.photo,
         age: p.age,
         compatibility: compatibilityScore(p),
-        distance: formatDistance(p.distanceMeters),
+        distance: formatHomePersonProximity(p.distanceMeters),
         distanceMeters: p.distanceMeters,
         interests: p.interests,
         online: p.online,
+        headline: p.headline,
         commonalities: getCommonalities(p),
       })),
     ),
@@ -336,6 +337,7 @@ export function buildNearbyPlaces(): NearbyPlacesSectionData {
         distanceMeters: p.distanceMeters,
         open: p.hours.startsWith("Aberto") || p.hours.includes("Hoje"),
         hours: p.hours,
+        description: p.description,
       })),
     ),
   };
@@ -565,14 +567,14 @@ function peopleToCards(): PremiumCard[] {
       id: `person-${p.id}`,
       kind: "person" as const,
       title: p.name,
-      subtitle: p.interests.slice(0, 2).join(", "),
+      subtitle: p.headline,
       photo: p.photo,
       route: `/perfil/${p.id}`,
       distance: formatDistance(p.distanceMeters),
       distanceMeters: p.distanceMeters,
       compatibility: compatibilityScore(p),
       online: p.online,
-      category: "Pessoas",
+      category: p.interests.slice(0, 3).join(" · ") || "Pessoas",
       commonalities: getCommonalities(p),
     }));
 }
@@ -582,13 +584,14 @@ function eventsToCards(): PremiumCard[] {
     id: `event-${e.id}`,
     kind: "event" as PremiumCardKind,
     title: e.name,
-    subtitle: `${e.date} às ${e.time}`,
+    subtitle: e.location,
     photo: e.banner,
     route: `/event/${e.id}`,
     distance: formatDistance(e.distanceMeters),
     distanceMeters: e.distanceMeters,
     people: e.participants,
     category: e.category ?? "Eventos",
+    hours: `${e.date} · ${e.time}`,
   }));
 }
 

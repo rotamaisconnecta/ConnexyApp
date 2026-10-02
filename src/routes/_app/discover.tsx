@@ -4,7 +4,13 @@ import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { Users, Calendar, Building2, MapPin, Map as MapIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser, places, people as mockPeople } from "@/lib/mock-data";
+import {
+  currentUser,
+  places,
+  people as mockPeople,
+  compatibilityScore,
+  sharedInterestPercent,
+} from "@/lib/mock-data";
 import {
   CatalogKind,
   listCatalogByKind,
@@ -15,8 +21,17 @@ import { usePresence } from "@/providers/presence/presence-provider";
 import { formatPersonDistance } from "@/lib/proximity";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { useDiscovery } from "@/hooks/api/use-discovery";
+import { TypeScale } from "@/theme/typography";
 import { getDiscoverItemNavigation } from "@/lib/discovery/discover-navigation";
 import type { NearbyProfile } from "@/types/phase-13b";
+import { NearbyExploreFilterButton } from "@/components/discover/nearby-explore-filter-sheet";
+import { NearbyMapItemCard } from "@/components/discover/nearby-map-item-card";
+import {
+  applyNearbyExploreFilters,
+  cloneNearbyFilters,
+  DEFAULT_NEARBY_FILTERS,
+  type NearbyExploreFilterState,
+} from "@/lib/discover/nearby-explore-filters";
 
 const searchSchema = z.object({
   filter: z.enum(["places", "people"]).optional(),
@@ -46,6 +61,9 @@ function DiscoverPage() {
   const [activeFilter, setActiveFilter] = useState<MapFilter>("todos");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [catalogTick, setCatalogTick] = useState(0);
+  const [exploreFilters, setExploreFilters] = useState<NearbyExploreFilterState>(() =>
+    cloneNearbyFilters(DEFAULT_NEARBY_FILTERS),
+  );
   useEffect(() => subscribeLocalCatalog(() => setCatalogTick((tick) => tick + 1)), []);
 
   const { checkins, placeUpdates } = usePresence();
@@ -78,6 +96,19 @@ function DiscoverPage() {
     return mergeCatalogPlaces(places);
   }, [catalogTick]);
 
+  const placeCategories = useMemo(
+    () => [...new Set(nearbyPlaces.map((place) => place.category).filter(Boolean))],
+    [nearbyPlaces],
+  );
+  const eventCategories = useMemo(
+    () => [...new Set(["Eventos", ...placeCategories.filter((category) => /evento/i.test(category))])],
+    [placeCategories],
+  );
+  const businessCategories = useMemo(
+    () => [...new Set(nearbyPlaces.map((place) => place.category).filter((category) => category !== "Eventos"))],
+    [nearbyPlaces],
+  );
+
   const mapItems = useMemo(() => {
     const items: Array<{
       id: string;
@@ -89,7 +120,18 @@ function DiscoverPage() {
       icon: string;
       color: string;
       subtitle: string;
+      description?: string;
       targetId?: string;
+      interestPercent?: number;
+      compatibilityPercent?: number;
+      age?: number;
+      interests?: string[];
+      category?: string;
+      hours?: string;
+      startAt?: string;
+      endAt?: string;
+      hasOffer?: boolean;
+      rating?: number;
     }> = [];
 
     if (activeFilter === "todos" || activeFilter === "pessoas") {
@@ -100,6 +142,15 @@ function DiscoverPage() {
             distanceMeters: (p.distance_km ?? 0) * 1000,
             photo: p.photo_url ?? undefined,
             interests: p.common_interests ?? [],
+            age: p.age ?? undefined,
+            headline: p.headline ?? undefined,
+            interestPercent:
+              currentUser.interests.length > 0
+                ? Math.round(
+                    ((p.common_interests?.length ?? 0) / currentUser.interests.length) * 100,
+                  )
+                : undefined,
+            compatibilityPercent: p.compatibility_score ?? undefined,
           }))
         : mockPeople.slice(0, 7).map((person) => ({
             id: person.id,
@@ -107,6 +158,10 @@ function DiscoverPage() {
             distanceMeters: person.distanceMeters,
             photo: person.photo,
             interests: person.interests,
+            age: person.age,
+            headline: person.headline,
+            interestPercent: sharedInterestPercent(person) ?? undefined,
+            compatibilityPercent: compatibilityScore(person),
           }));
 
       profilesToUse.forEach((p) => {
@@ -120,7 +175,12 @@ function DiscoverPage() {
           icon: "👤",
           color: "bg-blue-100 border-blue-200",
           subtitle: p.interests.slice(0, 2).join(", "),
+          description: p.headline,
           targetId: p.id,
+          interestPercent: p.interestPercent,
+          compatibilityPercent: p.compatibilityPercent,
+          age: p.age,
+          interests: p.interests,
         });
       });
 
@@ -134,7 +194,8 @@ function DiscoverPage() {
           photo: record.userPhoto,
           icon: "📍",
           color: "bg-emerald-100 border-emerald-200",
-          subtitle: `📍 presente em ${record.targetName}`,
+          subtitle: `Presente em ${record.targetName}`,
+          description: `Presente em ${record.targetName}`,
           targetId: record.userId,
         });
       });
@@ -152,12 +213,18 @@ function DiscoverPage() {
             p.distanceMeters < 1000
               ? `${p.distanceMeters}m`
               : `${(p.distanceMeters / 1000).toFixed(1)}km`,
+          photo: p.cover,
           icon: "📍",
           color: "bg-purple-100 border-purple-200",
           subtitle:
             update && update.checkinCount > 0
               ? `${p.category} • ${update.checkinCount} presentes${update.anonymousCount > 0 ? ` • 🙈 ${update.anonymousCount} anônimos` : ""}`
               : p.category,
+          description: p.description,
+          category: p.category,
+          hours: p.hours,
+          rating: p.rating,
+          hasOffer: Boolean(p.promo),
         });
       });
     }
@@ -170,10 +237,13 @@ function DiscoverPage() {
           type: "negocios",
           distanceMeters: 0,
           distanceLabel: "perto",
+          photo: business.cover,
           icon: "🏪",
           color: "bg-amber-100 border-amber-200",
           subtitle: business.category,
+          description: business.description,
           targetId: business.id,
+          category: business.category,
         });
       });
       nearbyPlaces.slice(0, 6).forEach((p) => {
@@ -187,12 +257,18 @@ function DiscoverPage() {
             p.distanceMeters < 1000
               ? `${p.distanceMeters}m`
               : `${(p.distanceMeters / 1000).toFixed(1)}km`,
+          photo: p.cover,
           icon: "🏪",
           color: "bg-amber-100 border-amber-200",
           subtitle:
             update && update.checkinCount > 0
               ? `${p.rating} ★ • ${update.checkinCount} presentes`
-              : `${p.rating} ★`,
+              : `${p.category}${p.promo ? ` • ${p.promo}` : ""}`,
+          description: p.description,
+          category: p.category,
+          hours: p.hours,
+          rating: p.rating,
+          hasOffer: Boolean(p.promo),
         });
       });
     }
@@ -205,10 +281,16 @@ function DiscoverPage() {
           type: "eventos",
           distanceMeters: 0,
           distanceLabel: "perto",
+          photo: event.photo,
           icon: "🎉",
           color: "bg-pink-100 border-pink-200",
           subtitle: event.location,
+          description: event.description,
           targetId: event.id,
+          category: "Eventos",
+          startAt: event.startAt,
+          endAt: event.endAt,
+          hours: event.startAt,
         });
       });
       nearbyPlaces
@@ -223,30 +305,50 @@ function DiscoverPage() {
               p.distanceMeters < 1000
                 ? `${p.distanceMeters}m`
                 : `${(p.distanceMeters / 1000).toFixed(1)}km`,
+            photo: p.cover,
             icon: "🎉",
             color: "bg-pink-100 border-pink-200",
             subtitle: p.hours,
+            description: p.description,
             targetId: p.id,
+            category: p.category,
+            hours: p.hours,
           });
         });
     }
 
-    return items.sort((a, b) => a.distanceMeters - b.distanceMeters);
-  }, [activeFilter, nearbyPlaces, placeUpdates, presencePeople, nearbyProfiles]);
+    return applyNearbyExploreFilters(
+      items.sort((a, b) => a.distanceMeters - b.distanceMeters),
+      exploreFilters,
+      activeFilter,
+    );
+  }, [activeFilter, nearbyPlaces, placeUpdates, presencePeople, nearbyProfiles, exploreFilters]);
 
   return (
     <div className="flex-1">
       <StatusBar />
 
       <header className="px-5 pt-1 pb-3">
-        <h1 className="font-display font-bold text-lg">Explorar por perto</h1>
-        <p className="text-xs text-muted-foreground">
-          {currentUser.interests[0] ?? ""} · Próximo a você
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className={`font-display font-bold ${TypeScale.screenTitle}`}>Explorar por perto</h1>
+            <p className={`text-muted-foreground ${TypeScale.caption}`}>
+              {currentUser.interests[0] ?? ""} · Próximo a você
+            </p>
+          </div>
+          <NearbyExploreFilterButton
+            kind={activeFilter}
+            filters={exploreFilters}
+            onApply={setExploreFilters}
+            placeCategories={placeCategories}
+            eventCategories={eventCategories}
+            businessCategories={businessCategories}
+          />
+        </div>
       </header>
 
       <div className="sticky top-0 z-10 bg-background px-4 pb-3">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pr-4">
           {FILTERS.map((filter) => {
             const Icon = filter.icon;
             const isActive = activeFilter === filter.id;
@@ -270,6 +372,7 @@ function DiscoverPage() {
               </button>
             );
           })}
+          <span aria-hidden className="w-4 shrink-0" />
         </div>
       </div>
 
@@ -343,47 +446,26 @@ function DiscoverPage() {
 
       <div className="px-4 mt-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold">
+          <h3 className={`font-bold ${TypeScale.subsectionTitle}`}>
             {activeFilter === "todos"
               ? "Próximo a você"
               : FILTERS.find((f) => f.id === activeFilter)?.label}
           </h3>
-          <span className="text-[11px] text-muted-foreground">{mapItems.length} encontrados</span>
+          <span className={`text-muted-foreground ${TypeScale.caption}`}>
+            {mapItems.length} encontrados
+          </span>
         </div>
         <div className="space-y-2">
           {mapItems.slice(0, 10).map((item) => (
-            <button
+            <NearbyMapItemCard
               key={item.id}
-              type="button"
-              onClick={() => {
+              item={item}
+              onSelect={() => {
                 const target = getDiscoverItemNavigation(item);
                 if (!target) return;
                 navigate(target);
               }}
-              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border hover:bg-accent/50 transition-colors text-left"
-            >
-              <div
-                className={cn(
-                  "h-10 w-10 rounded-full flex items-center justify-center text-sm shrink-0",
-                  item.color,
-                )}
-              >
-                {item.photo ? (
-                  <img
-                    src={item.photo}
-                    alt=""
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  item.icon
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{item.name}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{item.subtitle}</div>
-              </div>
-              <div className="text-[10px] text-muted-foreground shrink-0">{item.distanceLabel}</div>
-            </button>
+            />
           ))}
         </div>
       </div>

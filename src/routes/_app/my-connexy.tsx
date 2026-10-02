@@ -13,24 +13,28 @@ export const Route = createFileRoute("/_app/my-connexy")({
 const QUICK_ACTIONS = [
   {
     label: "Criar Negócio",
+    description: "Cadastre um estabelecimento neste dispositivo para vitrine e ofertas locais.",
     emoji: "🏢",
     gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
     to: "/create/place-business",
   },
   {
     label: "Criar Evento",
+    description: "Marque data, local e detalhes de um evento no catálogo local.",
     emoji: "📅",
     gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
     to: "/create/event",
   },
   {
     label: "Criar Local",
+    description: "Adicione um lugar para ele aparecer nas descobertas perto de você.",
     emoji: "📍",
     gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
     to: "/create/place",
   },
   {
     label: "Nova Oferta",
+    description: "Publique uma promoção ligada a um negócio já cadastrado aqui.",
     emoji: "🏷️",
     gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
     to: "/create/offer",
@@ -97,12 +101,17 @@ function MyConnexyPage() {
                 <Link
                   to={action.to}
                   aria-label={action.label}
-                  className="flex items-center gap-3 p-4 rounded-2xl text-white shadow-floating"
+                  className="flex min-h-[7.5rem] flex-col justify-between gap-3 rounded-2xl p-4 text-white shadow-floating"
                   style={{ background: action.gradient }}
                 >
-                  <span className="text-2xl shrink-0">{action.emoji}</span>
-                  <span className="min-w-0 flex-1 text-sm font-bold leading-tight">
-                    {action.label}
+                  <span className="text-2xl">{action.emoji}</span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold leading-tight">
+                      {action.label}
+                    </span>
+                    <span className="mt-1 line-clamp-3 block text-[13px] font-normal leading-snug text-white/90">
+                      {action.description}
+                    </span>
                   </span>
                 </Link>
               </motion.div>

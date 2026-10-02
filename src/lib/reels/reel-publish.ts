@@ -26,12 +26,14 @@ import {
 import type { ReelContextRef, ReelPersistence } from "./reel-local-storage";
 import { savePersistedReel } from "./persisted-reels-reader";
 import { buildPublishedReel } from "./reel-feed";
+import { extractHashtags } from "./reel-utils";
 import {
   REEL_ALLOWED_EXTENSIONS,
   REEL_ALLOWED_MIME_TYPES,
   REEL_MAX_DURATION_SECONDS,
   REEL_MAX_FILE_SIZE,
 } from "./reel-limits";
+import { isDurationWithinLimit } from "@/lib/media/media-duration";
 
 export type { ReelPersistence } from "./reel-local-storage";
 
@@ -41,6 +43,9 @@ export interface ReelPublishInput {
   context: ReelContextRef | null;
   posterBlob: Blob | null;
   durationS: number;
+  mediaId?: string;
+  category?: ReelCategoryValue;
+  hashtags?: string[];
 }
 
 export interface ReelPublishResult {
@@ -60,7 +65,7 @@ export function validateReelVideo(
     if (!REEL_ALLOWED_EXTENSIONS.includes(ext)) return "type";
   }
   if (file.size > REEL_MAX_FILE_SIZE) return "size";
-  if (!durationS || durationS > REEL_MAX_DURATION_SECONDS) return "duration";
+  if (!isDurationWithinLimit(durationS, REEL_MAX_DURATION_SECONDS)) return "duration";
   return null;
 }
 
@@ -147,9 +152,23 @@ async function publishToSupabase(input: ReelPublishInput, reelId: string): Promi
   if (iErr) throw iErr;
 }
 
+function mergeCaptionHashtags(caption: string, tags: string[] | undefined): string {
+  const extra = (tags ?? [])
+    .map((tag) => tag.trim().replace(/^#/, ""))
+    .filter(Boolean);
+  if (extra.length === 0) return caption;
+  const existing = new Set(extractHashtags(caption).map((tag) => tag.toLowerCase()));
+  const suffix = extra
+    .filter((tag) => !existing.has(tag.toLowerCase()))
+    .map((tag) => `#${tag}`)
+    .join(" ");
+  if (!suffix) return caption;
+  return caption ? `${caption} ${suffix}` : suffix;
+}
+
 export async function publishReel(input: ReelPublishInput): Promise<ReelPublishResult> {
   const reelId = generateReelId();
-  const caption = input.caption.trim();
+  const caption = mergeCaptionHashtags(input.caption.trim(), input.hashtags);
   const createdAt = new Date().toISOString();
   const author = buildReelAuthorFromCurrentUser();
 
@@ -169,12 +188,13 @@ export async function publishReel(input: ReelPublishInput): Promise<ReelPublishR
     posterBlob: input.posterBlob,
     posterType: input.posterBlob ? "image/jpeg" : null,
     storedAt: createdAt,
+    durationMs: Math.round(input.durationS * 1000),
   });
 
   const storedReel = {
     id: reelId,
     caption,
-    category: categoryForContext(input.context),
+    category: input.category ?? categoryForContext(input.context),
     author,
     context: input.context,
     durationS: input.durationS,

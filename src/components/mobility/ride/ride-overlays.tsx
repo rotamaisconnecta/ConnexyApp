@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Car,
+  Check,
   Info,
   LifeBuoy,
   MapPin,
@@ -11,6 +12,7 @@ import {
   Share2,
   ShieldCheck,
   Smartphone,
+  Users,
   Wallet,
 } from "lucide-react";
 import { DEMO_DESTINATIONS, type DriverMock, destinationToGeo } from "./ride-data";
@@ -28,6 +30,10 @@ import { PaymentMethodSelector } from "../payment-method-selector";
 import { paymentMethodLabel } from "@/lib/mobility/payment";
 import type { PaymentOption } from "./ride-flow-types";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
+import type { RideOccupancy } from "@/lib/mobility/ride-occupancy";
+import type { RideFriendCandidate } from "@/lib/mobility/ride-companions";
+import { OutingInviteStatus, type OutingInvite } from "@/lib/marketplace/outing-invites";
+import { people } from "@/lib/mock-data";
 
 function RowIcon({
   label,
@@ -151,6 +157,9 @@ export function AlterarOverlay({
   onPayment,
   onDetails,
   onCancelRide,
+  onPickFriend,
+  pickFriendDisabled,
+  pickFriendHint,
 }: {
   open: boolean;
   onClose: () => void;
@@ -159,10 +168,35 @@ export function AlterarOverlay({
   onPayment: () => void;
   onDetails: () => void;
   onCancelRide: () => void;
+  onPickFriend?: () => void;
+  pickFriendDisabled?: boolean;
+  pickFriendHint?: string;
 }) {
   return (
     <RideOverlaySheet open={open} onClose={onClose} title="Alterar viagem">
       <div className="divide-y divide-zinc-100">
+        {onPickFriend && (
+          <button
+            type="button"
+            onClick={() => {
+              if (pickFriendDisabled) return;
+              onClose();
+              onPickFriend();
+            }}
+            disabled={pickFriendDisabled}
+            className="flex w-full items-center gap-3 py-3.5 text-left disabled:opacity-45"
+          >
+            <span className="grid h-9 w-9 shrink-0 grid-cols-1 place-items-center rounded-full bg-zinc-100">
+              <Users className="h-4 w-4 text-[#111111]" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold text-[#111111]">Pegar amigo</span>
+              <span className="block text-[11px] text-zinc-500">
+                {pickFriendHint ?? "Adicionar um passageiro"}
+              </span>
+            </span>
+          </button>
+        )}
         <RowIcon
           label="Adicionar parada"
           icon={MapPinPlus}
@@ -558,5 +592,153 @@ export function RouteStopsSheet({
         ))}
       </div>
     </RideOverlaySheet>
+  );
+}
+
+/* ─── Pegar amigo ────────────────────────────────────────── */
+
+export function PickFriendOverlay({
+  open,
+  onClose,
+  occupancy,
+  candidates,
+  invites,
+  stopLimitReached,
+  onInvite,
+  onCancelInvite,
+  onRespond,
+}: {
+  open: boolean;
+  onClose: () => void;
+  occupancy: RideOccupancy;
+  candidates: RideFriendCandidate[];
+  invites: OutingInvite[];
+  stopLimitReached: boolean;
+  onInvite: (friendId: string, asDestination: boolean) => void;
+  onCancelInvite: (inviteId: string) => void;
+  onRespond: (inviteId: string, friendId: string, accepted: boolean) => void;
+}) {
+  return (
+    <RideOverlaySheet open={open} onClose={onClose} title="Pegar amigo" full>
+      <div className="rounded-[18px] bg-zinc-50 px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+          Passageiros
+        </p>
+        <p className="mt-0.5 text-[15px] font-extrabold text-[#111111]">{occupancy.passengerLabel}</p>
+        <p className="mt-0.5 text-[12px] font-medium text-zinc-500">{occupancy.vacancyLabel}</p>
+      </div>
+
+      {invites.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {invites.map((invite) => {
+            const person = people.find((item) => item.id === invite.personId);
+            const pending = invite.status === OutingInviteStatus.PENDING;
+            return (
+              <li key={invite.id} className="rounded-[18px] border border-zinc-100 px-3 py-2.5">
+                <p className="text-[13px] font-bold text-[#111111]">
+                  {person?.name ?? invite.personId}
+                </p>
+                <p className="text-[11px] font-medium text-zinc-400">
+                  {pending
+                    ? "Solicitação pendente · reserva uma vaga"
+                    : invite.asDestination
+                      ? "Aceito · destino final"
+                      : "Aceito · parada da corrida"}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {pending ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onRespond(invite.id, invite.personId, true)}
+                        className="h-8 rounded-full px-3 text-[11px] font-bold text-white"
+                        style={{ background: RIDE_LILAC }}
+                      >
+                        Simular aceite
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRespond(invite.id, invite.personId, false)}
+                        className="h-8 rounded-full bg-zinc-100 px-3 text-[11px] font-bold text-zinc-600"
+                      >
+                        Simular recusa
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onCancelInvite(invite.id)}
+                      className="h-8 rounded-full bg-zinc-100 px-3 text-[11px] font-bold text-zinc-600"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {occupancy.atLimit ? (
+        <p className="mt-4 text-center text-[12px] font-semibold text-zinc-500">
+          Capacidade máxima atingida
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {candidates.map((friend) => (
+            <FriendInviteRow
+              key={friend.id}
+              friend={friend}
+              destinationOnly={stopLimitReached}
+              onInvite={onInvite}
+            />
+          ))}
+        </ul>
+      )}
+    </RideOverlaySheet>
+  );
+}
+
+function FriendInviteRow({
+  friend,
+  destinationOnly,
+  onInvite,
+}: {
+  friend: RideFriendCandidate;
+  destinationOnly: boolean;
+  onInvite: (friendId: string, asDestination: boolean) => void;
+}) {
+  return (
+    <li className="rounded-[18px] border border-zinc-100 px-3 py-2.5">
+      <div className="flex items-center gap-3">
+        <img src={friend.photo} alt="" className="h-11 w-11 rounded-full object-cover" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-bold text-[#111111]">{friend.name}</p>
+          <p className="truncate text-[11px] font-medium text-zinc-400">{friend.address}</p>
+        </div>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {!destinationOnly && (
+          <button
+            type="button"
+            onClick={() => onInvite(friend.id, false)}
+            className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold text-white"
+            style={{ background: RIDE_LILAC }}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Convidar
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onInvite(friend.id, true)}
+          className="flex h-9 items-center gap-1.5 rounded-full bg-zinc-100 px-3 text-[11px] font-bold text-zinc-700"
+        >
+          <Check className="h-3.5 w-3.5" />
+          Usar como destino final
+        </button>
+      </div>
+    </li>
   );
 }

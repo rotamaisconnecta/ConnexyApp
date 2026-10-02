@@ -16,6 +16,7 @@ import { PlaceStatusMeta } from "@/lib/integration/integration-types";
 import { usePresence } from "@/providers/presence/presence-provider";
 import { CalendarDays, Star, Users, MapPinned, CarFront } from "lucide-react";
 import { isPlaceReservable } from "@/lib/reservations/reservable";
+import { buildRideRequestSearch } from "@/lib/mobility/ride-request-context";
 
 export const Route = createFileRoute("/_app/local/$id")({
   ssr: false,
@@ -153,14 +154,14 @@ function LocalDetail() {
         )}
         <Link
           to="/ride/request"
-          search={{
-            destinationId: p.id,
-            destinationName: p.name,
-            destinationAddress: p.address ?? null,
-            destinationLat: p.lat ?? null,
-            destinationLng: p.lng ?? null,
+          search={buildRideRequestSearch({
+            id: p.id,
+            name: p.name,
+            address: p.address ?? null,
+            lat: p.lat ?? null,
+            lng: p.lng ?? null,
             source: "local",
-          }}
+          })}
           className="flex items-center justify-center gap-2 w-full rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition-all hover:shadow-xl active:scale-[0.98]"
         >
           <CarFront className="h-4 w-4 shrink-0" />

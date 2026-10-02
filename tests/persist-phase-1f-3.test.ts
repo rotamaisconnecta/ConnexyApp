@@ -84,7 +84,7 @@ describe("Fase 1F-3 — Create Hub tipos restantes", () => {
     expect(CREATE_MOMENT_REDIRECT_TO).toBe("/create-post");
     expect(typeof CreateMomentRoute.options.loader).toBe("function");
     const hub = await source("src/routes/_app/create.tsx");
-    expect(hub).toContain('route: "/create/moment"');
+    expect(hub).not.toContain('route: "/create/moment"');
     const contents = await source("src/routes/_app/create/moment.tsx");
     expect(contents).toContain("redirect");
     expect(contents).toContain("CANONICAL_MOMENT_CATEGORY");
@@ -98,6 +98,11 @@ describe("Fase 1F-3 — Create Hub tipos restantes", () => {
     expect(CREATE_RIDE_REDIRECT_TO).toBe("/ride/request");
     expect(typeof CreateRideRoute.options.loader).toBe("function");
     expect(RideRequestRoute.options.component).toBeDefined();
+    const hub = await source("src/routes/_app/create.tsx");
+    expect(hub).toContain("Pedir corrida");
+    expect(hub).toContain("CANONICAL_RIDE_CREATE_ROUTE");
+    expect(hub).not.toContain("Passageiro");
+    expect(hub).not.toContain("Motorista");
     const contents = await source("src/routes/_app/create/ride.tsx");
     expect(contents).toContain("redirect");
     expect(contents).not.toContain("usePublisherForm");

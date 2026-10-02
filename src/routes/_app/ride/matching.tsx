@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { RideFlow } from "@/components/mobility/ride/ride-flow";
 import { rideSearchSchema } from "@/lib/mobility/ride-search";
-import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
 import { getTrip } from "@/lib/mobility/trip/trip-store";
 import { isTerminal } from "@/lib/mobility/trip/trip-machine";
 
@@ -26,7 +25,8 @@ function MatchingPage() {
 
   return (
     <RideFlow
-      origin={DEMO_ORIGIN}
+      origin={trip.origin}
+      destination={trip.destination}
       source={trip.source ?? undefined}
       companionLabel={trip.companionLabel ?? undefined}
     />

@@ -2,10 +2,10 @@ import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Star, MapPin, Clock } from "lucide-react";
 import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
+import { HomeSectionHeading } from "@/components/home/home-section-heading";
 import type { NearbyPlacesSectionData } from "@/lib/feed/feed-types";
 
-const PLACE_CARD_WIDTH = { mobile: 216, tablet: 224, desktop: 232 } as const;
-const PLACE_CARD_HEIGHT = 240;
+const PLACE_CARD_HEIGHT = 348;
 
 interface FeedNearbyPlacesProps {
   data: NearbyPlacesSectionData;
@@ -19,40 +19,37 @@ export function FeedNearbyPlaces({ data }: FeedNearbyPlacesProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm" aria-hidden>
-              📍
-            </span>
-            <h3 className="font-display text-base font-bold truncate">Locais Próximos</h3>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Lugares para conhecer perto de você
-          </p>
-        </div>
-        <Link
-          to="/discover"
-          search={{ filter: "places" }}
-          className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
-        >
-          Ver tudo <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+      <div className="mb-4 px-5">
+        <HomeSectionHeading
+          as="h3"
+          emoji="📍"
+          title="Locais próximos"
+          subtitle="Lugares para conhecer perto de você"
+          action={
+            <Link
+              to="/discover"
+              search={{ filter: "places" }}
+              className="shrink-0 text-xs font-semibold text-primary flex items-center gap-0.5 transition-all duration-200 hover:gap-1"
+            >
+              Ver tudo <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        />
       </div>
 
       <PremiumCarousel
         section="places"
         items={data.places}
-        cardWidths={PLACE_CARD_WIDTH}
         cardHeight={PLACE_CARD_HEIGHT}
+        cardSize="min"
         renderCard={(place) => (
           <Link
             to="/local/$id"
             params={{ id: place.id }}
-            className="block rounded-[20px] overflow-hidden h-full transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
+            className="block min-h-[inherit] rounded-[20px] transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
           >
-            <div className="bg-surface h-full flex flex-col border border-border/50 rounded-[20px] overflow-hidden">
-              <div className="relative w-full shrink-0" style={{ height: 112 }}>
+            <div className="flex min-h-[inherit] flex-col rounded-[20px] border border-border/50 bg-surface">
+              <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-t-[20px]">
                 <img
                   src={place.photo}
                   alt={place.name}
@@ -71,19 +68,26 @@ export function FeedNearbyPlaces({ data }: FeedNearbyPlacesProps) {
                   {place.distance}
                 </span>
               </div>
-              <div className="flex flex-1 flex-col gap-0.5 px-4 py-2.5 min-h-0">
-                <div className="flex items-center justify-between gap-1.5">
-                  <span className="font-display font-bold text-[13px] truncate">{place.name}</span>
+              <div className="flex flex-1 flex-col gap-0.5 px-4 py-2.5">
+                <div className="flex items-start justify-between gap-1.5">
+                  <span className="font-display text-[13px] font-semibold leading-snug">
+                    {place.name}
+                  </span>
                   <span
                     className={`text-[10px] font-medium shrink-0 ${place.open ? "text-green-600" : "text-red-500"}`}
                   >
                     {place.open ? "Aberto" : "Fechado"}
                   </span>
                 </div>
-                <span className="text-[11px] text-muted-foreground truncate">{place.category}</span>
+                <span className="text-[11px] leading-snug text-muted-foreground">{place.category}</span>
+                {place.description ? (
+                  <span className="text-[11px] leading-snug text-muted-foreground">
+                    {place.description}
+                  </span>
+                ) : null}
                 {place.hours && (
-                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
+                  <span className="flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
+                    <Clock className="mt-0.5 h-3 w-3 shrink-0" />
                     {place.hours}
                   </span>
                 )}

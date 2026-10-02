@@ -43,6 +43,8 @@ export type OutingInvite = {
   stopAddress?: string;
   stopLat?: number;
   stopLng?: number;
+  tripId?: string;
+  asDestination?: boolean;
 };
 
 export type OutingInviteInput = {
@@ -51,6 +53,8 @@ export type OutingInviteInput = {
   target: OutingInviteTarget;
   message: string;
   stop?: OutingInviteStop;
+  tripId?: string;
+  asDestination?: boolean;
 };
 
 function readRaw(): unknown[] {
@@ -103,6 +107,8 @@ function normalizeInvite(value: unknown): OutingInvite | null {
     stopAddress: typeof record.stopAddress === "string" ? record.stopAddress : undefined,
     stopLat: typeof record.stopLat === "number" ? record.stopLat : undefined,
     stopLng: typeof record.stopLng === "number" ? record.stopLng : undefined,
+    tripId: typeof record.tripId === "string" ? record.tripId : undefined,
+    asDestination: record.asDestination === true,
   };
 }
 
@@ -189,6 +195,8 @@ export function sendOutingInvite(input: OutingInviteInput): OutingInvite {
     stopAddress: input.stop?.address,
     stopLat: input.stop?.lat,
     stopLng: input.stop?.lng,
+    tripId: input.tripId,
+    asDestination: input.asDestination === true,
   };
   writeInvites([next, ...invites.filter((invite) => invite.id !== next.id)]);
   return next;
@@ -209,6 +217,30 @@ export function respondToOutingInvite(
   const updated: OutingInvite = { ...invite, status: nextStatus, respondedAt: Date.now() };
   writeInvites(invites.map((item) => (item.id === inviteId ? updated : item)));
   return updated;
+}
+
+export function cancelOutingInvite(inviteId: string, actorId: string): OutingInvite | null {
+  const invites = listOutingInvites();
+  const invite = invites.find((item) => item.id === inviteId);
+  if (!invite || invite.fromUserId !== actorId) return invite ?? null;
+  if (invite.status === OutingInviteStatus.DECLINED) return invite;
+  const updated: OutingInvite = {
+    ...invite,
+    status: OutingInviteStatus.DECLINED,
+    respondedAt: Date.now(),
+  };
+  writeInvites(invites.map((item) => (item.id === inviteId ? updated : item)));
+  return updated;
+}
+
+export function listReservedOutingInvites(fromUserId: string, tripId?: string, targetId?: string): OutingInvite[] {
+  return listOutgoingOutingInvites(fromUserId, targetId).filter((invite) => {
+    if (invite.status !== OutingInviteStatus.PENDING && invite.status !== OutingInviteStatus.ACCEPTED) {
+      return false;
+    }
+    if (tripId) return invite.tripId === tripId;
+    return true;
+  });
 }
 
 export function isOutingRideAvailable(fromUserId: string, targetId?: string): boolean {

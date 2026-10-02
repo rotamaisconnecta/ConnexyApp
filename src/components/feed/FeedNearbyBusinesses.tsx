@@ -16,7 +16,7 @@ export function FeedNearbyBusinesses({ data }: FeedNearbyBusinessesProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>

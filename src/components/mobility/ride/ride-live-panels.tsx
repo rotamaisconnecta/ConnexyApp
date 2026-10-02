@@ -1,19 +1,35 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import {
   Banknote,
   Car,
   Check,
+  ChevronDown,
   ChevronRight,
+  Clock3,
+  FileText,
+  LocateFixed,
   MapPin,
   MessageCircle,
   Phone,
+  Route,
   Share2,
   ShieldCheck,
   Smartphone,
   Star,
   Users,
 } from "lucide-react";
+import { formatRouteDistance } from "@/lib/mobility/route-utils";
+import { SwipeCarousel } from "@/components/system/swipe-carousel";
+import {
+  CONNECT_PULSE_LIMIT,
+  getHomeDiscoveryNavigation,
+  HOME_DISCOVERY_KIND_LABEL,
+  listConnectPulseFeatured,
+  type HomeDiscoveryItem,
+} from "@/lib/home/home-discovery";
+import { vehicleImageForName } from "@/lib/mobility/vehicle-visual";
 import type { PaymentOption } from "./ride-flow-types";
 import {
   PlateBadge,
@@ -117,6 +133,9 @@ export function DriverPanel({
   onSafety,
   onShare,
   onCancel,
+  onPickFriend,
+  pickFriendDisabled,
+  pickFriendHint,
 }: {
   state: "encontrado" | "chegando" | "chegou";
   driver: DriverMock;
@@ -130,6 +149,9 @@ export function DriverPanel({
   onSafety: () => void;
   onShare: () => void;
   onCancel: () => void;
+  onPickFriend?: () => void;
+  pickFriendDisabled?: boolean;
+  pickFriendHint?: string;
 }) {
   const arrived = state === "chegou";
   const approaching = state === "chegando";
@@ -271,7 +293,16 @@ export function DriverPanel({
         </div>
 
         {!arrived && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-2">
+            {onPickFriend && (
+              <SecondaryCTA onClick={onPickFriend} disabled={pickFriendDisabled}>
+                <Users className="h-4 w-4" />
+                Pegar amigo
+              </SecondaryCTA>
+            )}
+            {pickFriendHint && (
+              <p className="text-center text-[11px] font-medium text-zinc-400">{pickFriendHint}</p>
+            )}
             <SecondaryCTA onClick={onShare}>
               <Share2 className="h-4 w-4" />
               Compartilhar viagem
@@ -291,80 +322,350 @@ export function DriverPanel({
   );
 }
 
-/* ─── Tela 09 — Viagem em andamento ──────────────────────── */
+/* ─── Tela 09 — Corrida em andamento ─────────────────────── */
+
+function formatArrivalClock(etaMinutes: number) {
+  const at = new Date(Date.now() + Math.max(0, etaMinutes) * 60_000);
+  return at.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatRating(value: number) {
+  return value.toFixed(1).replace(".", ",");
+}
+
+function formatRouteDurationLabel(minutes: number) {
+  return `${Math.max(0, Math.round(minutes))} min`;
+}
 
 export function ActiveRidePanel({
   driver,
   destination,
   stopLabel,
   etaMinutes,
+  distanceMeters,
   fare,
   payment,
   onSafety,
   onShare,
-  onRoute,
-  onMore,
+  onDetails,
+  onRecenter,
+  onPickFriend,
+  pickFriendDisabled,
+  pickFriendHint,
 }: {
   driver: DriverMock;
   destination: GeoLocation;
   stopLabel?: string;
   etaMinutes: number;
+  distanceMeters: number;
   fare: number;
   payment: PaymentOption;
   onSafety: () => void;
   onShare: () => void;
-  onRoute: () => void;
-  onMore: () => void;
+  onDetails: () => void;
+  onRecenter: () => void;
+  onPickFriend?: () => void;
+  pickFriendDisabled?: boolean;
+  pickFriendHint?: string;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const [socialActive, setSocialActive] = useState(false);
+  const vehicleImage = vehicleImageForName(driver.vehicle.name);
+  const discoveries = useMemo(
+    () => listConnectPulseFeatured().slice(0, CONNECT_PULSE_LIMIT),
+    [],
+  );
+  const stats = [
+    {
+      icon: Clock3,
+      label: "Chegada em",
+      value: formatRouteDurationLabel(etaMinutes),
+      hint: `às ${formatArrivalClock(etaMinutes)}`,
+    },
+    {
+      icon: Route,
+      label: "Distância",
+      value: formatRouteDistance(distanceMeters || 0),
+      hint: "Restante",
+    },
+    {
+      icon: Banknote,
+      label: "Valor da corrida",
+      value: formatPrice(fare),
+      hint: paymentMethodLabel(payment),
+    },
+    {
+      icon: Users,
+      label: "Modo Social",
+      value: socialActive ? "Ativo" : "Inativo",
+      hint: socialActive ? "Ver perfis" : "Ativar",
+    },
+  ] as const;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-30 flex flex-col overflow-hidden">
+      <p className="sr-only">
+        Destino {destination.label}
+        {stopLabel ? ` · Próxima parada ${stopLabel}` : ""}
+      </p>
+      <div className="relative min-h-[34%] flex-1">
+        <header className="pointer-events-auto absolute inset-x-3 top-[max(0.4rem,env(safe-area-inset-top,0px))] z-10 md:inset-x-4 md:top-3">
+          <div className="rounded-[28px] bg-white px-3 pb-3 pt-3 shadow-[0_12px_32px_rgba(17,17,17,0.08)]">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setExpanded((value) => !value)}
+                aria-label={expanded ? "Recolher detalhes da corrida" : "Expandir detalhes da corrida"}
+                aria-expanded={expanded}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#6D28D9] shadow-[0_6px_16px_rgba(17,17,17,0.08)]"
+              >
+                <ChevronDown
+                  className={`h-[18px] w-[18px] transition-transform ${expanded ? "" : "rotate-180"}`}
+                  strokeWidth={2.2}
+                />
+              </button>
+              <div className="min-w-0 flex-1 pr-10 text-center">
+                <h2 className="text-[16px] font-extrabold tracking-tight text-[#111111]">
+                  Corrida em andamento
+                </h2>
+                <p className="text-[12px] font-medium text-zinc-400">Aproveite sua viagem!</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-4 gap-1">
+              {stats.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="min-w-0 rounded-[18px] px-1 py-1 text-center">
+                    <span
+                      className="mx-auto grid h-7 w-7 place-items-center rounded-full"
+                      style={{ background: "rgba(168,85,247,0.12)", color: RIDE_LILAC }}
+                    >
+                      <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
+                    </span>
+                    <span className="mt-1 block truncate text-[9px] font-medium text-zinc-400">
+                      {item.label}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] font-extrabold text-[#111111]">
+                      {item.value}
+                    </span>
+                    <span className="block truncate text-[9px] font-medium text-zinc-400">
+                      {item.hint}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </header>
+
+        <button
+          type="button"
+          onClick={onRecenter}
+          aria-label="Centralizar no mapa"
+          className="pointer-events-auto absolute bottom-3 right-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-white text-[#6D28D9] shadow-[0_8px_20px_rgba(17,17,17,0.1)] md:right-4"
+        >
+          <LocateFixed className="h-4 w-4" strokeWidth={2.2} />
+        </button>
+      </div>
+
+      <section
+        className={`pointer-events-auto flex min-h-0 shrink-0 flex-col overflow-hidden rounded-t-[28px] bg-white/95 shadow-[0_-16px_40px_rgba(17,17,17,0.08)] backdrop-blur-md ${
+          expanded ? "h-[min(32%,13.75rem)]" : ""
+        }`}
+      >
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-zinc-200" aria-hidden />
+        <div
+          className={`${
+            expanded ? "min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y no-scrollbar" : ""
+          }`}
+        >
+          <div className={expanded ? "flex min-h-full flex-col px-4 pb-1 pt-2.5" : "px-4 pb-3 pt-2.5"}>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-zinc-400">Motorista</p>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-zinc-400">Veículo</p>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="relative shrink-0">
+                  <img
+                    src={driver.photo}
+                    alt={`Foto de ${driver.name}`}
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                  />
+                  <span className="absolute -bottom-0.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-white px-1 py-px text-[8px] font-bold text-[#111111] shadow-[0_4px_10px_rgba(17,17,17,0.08)]">
+                    <Star className="h-2 w-2 fill-[#EAB308] text-[#EAB308]" />
+                    {formatRating(driver.rating)}
+                  </span>
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-extrabold tracking-tight text-[#111111]">
+                    {driver.name}
+                  </p>
+                  <p className="truncate text-[10px] font-medium text-zinc-400">
+                    {driver.verified ? "Motorista parceiro" : "Motorista"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <img
+                  src={vehicleImage}
+                  alt={driver.vehicle.name}
+                  className="h-9 w-[3.25rem] shrink-0 rounded-[10px] object-cover object-center"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-[12px] font-bold text-[#111111]">{driver.vehicle.name}</p>
+                  <p className="truncate text-[10px] font-medium text-zinc-500">
+                    {driver.vehicle.color ? `${driver.vehicle.color} · ` : null}
+                    <span className="font-extrabold tracking-[0.06em]" style={{ color: RIDE_PURPLE }}>
+                      {driver.vehicle.plate}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {expanded && (
+              <div className="mt-auto flex flex-col items-center pb-1 pt-2">
+                <ChevronDown className="h-4 w-4 text-zinc-300" strokeWidth={2.4} aria-hidden />
+                <span className="sr-only">Há mais informações abaixo.</span>
+              </div>
+            )}
+          </div>
+
+          {expanded && (
+            <>
+              <div className="px-4 pb-2">
+                <ActiveRideMenuRow
+                  icon={FileText}
+                  title="Detalhes da corrida"
+                  subtitle="Informações da viagem"
+                  onClick={onDetails}
+                />
+                <ActiveRideMenuRow
+                  icon={Share2}
+                  title="Compartilhar corrida"
+                  subtitle="Avise alguém"
+                  onClick={onShare}
+                />
+                <ActiveRideMenuRow
+                  icon={ShieldCheck}
+                  title="Segurança"
+                  subtitle="Ajuda e SOS"
+                  onClick={onSafety}
+                />
+                {onPickFriend && (
+                  <ActiveRideMenuRow
+                    icon={Users}
+                    title="Pegar amigo"
+                    subtitle={pickFriendHint ?? "Adicionar um passageiro"}
+                    onClick={onPickFriend}
+                    disabled={pickFriendDisabled}
+                  />
+                )}
+                <ActiveRideMenuRow
+                  icon={Users}
+                  title="Conecta durante a viagem"
+                  subtitle={socialActive ? "Modo Social ativo" : "Conecte-se no trajeto"}
+                  onClick={() => setSocialActive((value) => !value)}
+                />
+              </div>
+
+              {discoveries.length > 0 && (
+                <div className="pb-3 pt-0.5">
+                  <p className="px-4 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+                    Durante a viagem
+                  </p>
+                  <SwipeCarousel
+                    ariaLabel="Conteúdos durante a viagem"
+                    hintLabel="Deslize para ver mais"
+                    autoplay
+                    autoplayMs={4500}
+                    className="gap-2 pl-4 pr-8"
+                  >
+                    {discoveries.map((item) => (
+                      <RideDiscoveryCard key={item.id} item={item} />
+                    ))}
+                  </SwipeCarousel>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ActiveRideMenuRow({
+  icon: Icon,
+  title,
+  subtitle,
+  onClick,
+  disabled,
+}: {
+  icon: typeof FileText;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
-    <RideSheet>
-      <div className="px-5 pb-3 pt-3">
-        <div className="flex items-center justify-between">
-          <p className="truncate text-[14px] font-bold text-[#111111]">
-            {stopLabel ?? destination.label}
-          </p>
-          <span className="shrink-0 pl-3 text-[15px] font-extrabold text-[#111111]">
-            {etaMinutes} min
-          </span>
-        </div>
-        <div className="mt-1 flex items-center gap-1.5">
-          <span
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ background: RIDE_LILAC }}
-            aria-hidden
-          />
-          <p className="truncate text-[11px]" style={{ color: RIDE_MUTED }}>
-            {driver.vehicle.name} {driver.vehicle.color.toLowerCase()} · {driver.name}
-          </p>
-        </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex w-full items-center gap-3 rounded-[18px] py-2 text-left disabled:opacity-45"
+    >
+      <span
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
+        style={{ background: "rgba(168,85,247,0.12)", color: RIDE_LILAC }}
+      >
+        <Icon className="h-4 w-4" strokeWidth={2.2} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-bold text-[#111111]">{title}</span>
+        <span className="block text-[11px] font-medium text-zinc-400">{subtitle}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300" strokeWidth={2.2} />
+    </button>
+  );
+}
 
-        <div className="mt-3 flex items-center justify-between rounded-[16px] bg-zinc-50 px-4 py-2.5">
-          <span className="text-[12px] font-semibold text-zinc-600">Pagamento</span>
-          <span className="text-[12px] font-bold text-[#111111]">
-            {paymentMethodLabel(payment)} · {formatPrice(fare)}
-          </span>
-        </div>
-
-        <div className="mt-3 grid grid-cols-4 gap-2">
-          {[
-            { label: "Segurança", icon: ShieldCheck, action: onSafety },
-            { label: "Compartilhar", icon: Share2, action: onShare },
-            { label: "Rota", icon: MapPin, action: onRoute },
-            { label: "Mais", icon: ChevronRight, action: onMore },
-          ].map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={item.action}
-              className="flex min-w-0 flex-col items-center gap-1.5 rounded-[16px] bg-zinc-50 py-3 text-zinc-800 transition-colors hover:bg-zinc-100"
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="text-[10px] font-semibold">{item.label}</span>
-            </button>
-          ))}
-        </div>
+function RideDiscoveryCard({ item }: { item: HomeDiscoveryItem }) {
+  const target = getHomeDiscoveryNavigation(item);
+  const className =
+    "relative flex h-[3.25rem] w-[78%] shrink-0 snap-start items-center overflow-hidden rounded-[16px] border border-zinc-100 bg-white/90 shadow-[0_8px_20px_rgba(17,17,17,0.06)] backdrop-blur-sm";
+  const body = (
+    <>
+      <div className="relative h-full w-[3.5rem] shrink-0 overflow-hidden">
+        <img src={item.image} alt="" className="h-full w-full object-cover" />
       </div>
-    </RideSheet>
+      <div className="min-w-0 flex-1 px-2.5 py-1">
+        <span className="block truncate text-[8px] font-semibold uppercase tracking-[0.08em] text-zinc-400">
+          {HOME_DISCOVERY_KIND_LABEL[item.kind]}
+        </span>
+        <p className="truncate text-[12px] font-bold leading-tight text-[#111111]">{item.title}</p>
+        <p className="truncate text-[10px] font-medium text-zinc-400">
+          {item.subtitle}
+          {item.distanceLabel ? ` · ${item.distanceLabel}` : ""}
+        </p>
+      </div>
+    </>
+  );
+
+  if (!target) {
+    return <article className={className}>{body}</article>;
+  }
+  if (target.to === "/marketplace") {
+    return (
+      <Link to="/marketplace" aria-label={`Ver ${item.title}`} className={className}>
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <Link to={target.to} params={target.params} aria-label={`Ver ${item.title}`} className={className}>
+      {body}
+    </Link>
   );
 }
 

@@ -10,6 +10,8 @@ import {
 import type { StoredMessage } from "@/lib/persistence/domain/chat-entities";
 import { currentUser } from "@/lib/mock-data";
 import { getDemoIdentity } from "./demo-identity";
+import { resetDemoPostComments } from "./demo-post-comments";
+import { clearAllLocalMedia } from "@/lib/media/local-media-storage";
 
 /*
  * Local demo "database" persisted to localStorage under `connexy:demo:`.
@@ -200,6 +202,8 @@ function write(db: DemoDB): void {
 export function resetDemoData(): void {
   write(defaultDB());
   void clearLocalChat();
+  resetDemoPostComments();
+  void clearAllLocalMedia();
   emitChange();
 }
 
@@ -483,6 +487,10 @@ export function getDemoGroup(groupId: string): DemoGroup | null {
   return read().groups.find((group) => group.id === groupId) ?? null;
 }
 
+export function listDemoGroupsBySource(sourceConversationId: string): DemoGroup[] {
+  return read().groups.filter((group) => group.sourceConversationId === sourceConversationId);
+}
+
 export function getDemoGroupsForUser(userId: string): DemoGroup[] {
   return read()
     .groups.filter((group) =>
@@ -527,6 +535,20 @@ export function createDemoGroup(
   const uniqueInvitees = [...new Set([sourcePeerId, ...invitedUserIds])].filter(
     (id): id is string => typeof id === "string" && Boolean(id) && id !== creatorId,
   );
+  const alreadyInvited = new Set(
+    db.groups
+      .filter((group) => group.sourceConversationId === sourceConversationId)
+      .flatMap((group) =>
+        group.participants
+          .filter((participant) => participant.status === "pending" || participant.status === "accepted")
+          .map((participant) => participant.userId),
+      ),
+  );
+  const invitees = uniqueInvitees.filter((id) => !alreadyInvited.has(id));
+  if (invitees.length === 0) {
+    const existing = db.groups.find((group) => group.sourceConversationId === sourceConversationId);
+    if (existing) return existing;
+  }
   const now = Date.now();
   const group: DemoGroup = {
     id: `demo-group-${now}-${Math.random().toString(36).slice(2, 7)}`,
@@ -536,7 +558,7 @@ export function createDemoGroup(
     createdAt: now,
     participants: [
       { userId: creatorId, status: "accepted", invitedAt: now, respondedAt: now },
-      ...uniqueInvitees.map((userId) => ({ userId, status: "pending" as const, invitedAt: now })),
+      ...invitees.map((userId) => ({ userId, status: "pending" as const, invitedAt: now })),
     ],
   };
   db.groups.push(group);
@@ -652,13 +674,18 @@ export function sendLocalMessage(
   return message;
 }
 
-/** Stores only small media previews. Large files stay out by design (data-URL). */
+/** Persiste metadados da mídia. O Blob fica no OPFS (ou fallback); dataUrl é legado. */
 export function sendLocalMediaMessage(
   conversationId: string,
-  kind: "image" | "video",
-  dataUrl: string,
-  mimeType: string,
-  fileName: string,
+  kind: "image" | "video" | "audio" | "file",
+  input: {
+    mimeType: string;
+    fileName: string;
+    mediaId?: string;
+    dataUrl?: string;
+    durationSec?: number;
+    fileSize?: number;
+  },
   sender?: { id: string; name: string },
 ): DemoMessage {
   const now = Date.now();
@@ -668,10 +695,50 @@ export function sendLocalMediaMessage(
     from: "me",
     senderId: sender?.id,
     senderName: sender?.name,
-    text: fileName,
+    text:
+      kind === "image"
+        ? "Foto"
+        : kind === "video"
+          ? "Vídeo"
+          : kind === "file"
+            ? input.fileName
+            : "Áudio",
     at: now,
     kind,
-    payload: { dataUrl, mimeType, fileName },
+    payload: {
+      mediaId: input.mediaId,
+      dataUrl: input.dataUrl,
+      mimeType: input.mimeType,
+      fileName: input.fileName,
+      durationSec: input.durationSec,
+      fileSize: input.fileSize,
+    },
+  };
+  persistLocalMessage(conversationId, message);
+  return message;
+}
+
+export function sendLocationMessage(
+  conversationId: string,
+  input: { label: string; proximity: string; lat: number; lng: number },
+  sender?: { id: string; name: string },
+): DemoMessage {
+  const now = Date.now();
+  const message: DemoMessage = {
+    id: `demo-loc-${now}-${Math.random().toString(36).slice(2, 7)}`,
+    conversationId,
+    from: "me",
+    senderId: sender?.id,
+    senderName: sender?.name,
+    text: input.label,
+    at: now,
+    kind: "location",
+    payload: {
+      title: input.label,
+      proximity: input.proximity,
+      lat: input.lat,
+      lng: input.lng,
+    },
   };
   persistLocalMessage(conversationId, message);
   return message;

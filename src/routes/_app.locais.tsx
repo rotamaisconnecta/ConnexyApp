@@ -44,7 +44,7 @@ function Locais() {
         </div>
       </div>
 
-      <div className="mt-3 px-5 flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar pl-5 pr-5">
         {filters.map((x) => (
           <button
             key={x}
@@ -58,6 +58,7 @@ function Locais() {
             {x}
           </button>
         ))}
+        <span aria-hidden className="w-5 shrink-0" />
       </div>
 
       <div className="mt-4 px-5">

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { RideFlow } from "@/components/mobility/ride/ride-flow";
 import { RideBlockedPanel } from "@/components/mobility/ride-blocked-panel";
 import { rideSearchSchema, parseCompanions, buildCompanionStops } from "@/lib/mobility/ride-search";
-import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
+import { destinationFromRideSearch, resolveRideOrigin } from "@/lib/mobility/ride-request-context";
 import { useDemoIdentity } from "@/lib/demo/demo-identity";
 import { useRideBlock } from "@/hooks/use-ride-block";
 import { useTrip } from "@/hooks/use-trip";
@@ -24,21 +24,14 @@ function RideRequestConfirmPage() {
     return <RideBlockedPanel block={block} />;
   }
 
-  const destination =
-    search.destinationAddress || search.destinationName
-      ? {
-          lat: search.destinationLat ?? -23.58,
-          lng: search.destinationLng ?? -46.65,
-          label: search.destinationAddress || search.destinationName || "",
-        }
-      : null;
-
+  const origin = resolveRideOrigin();
+  const destination = destinationFromRideSearch(search);
   const companions = parseCompanions(search.companions);
-  const companionStops = companions.length > 0 ? buildCompanionStops(DEMO_ORIGIN, companions) : [];
+  const companionStops = origin && companions.length > 0 ? buildCompanionStops(origin, companions) : [];
 
   return (
     <RideFlow
-      origin={DEMO_ORIGIN}
+      origin={origin}
       destination={destination}
       initialStops={companionStops}
       source={search.source}

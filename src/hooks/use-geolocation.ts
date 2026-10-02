@@ -11,7 +11,7 @@ interface GeolocationState {
   error: string | null;
 }
 
-export function useGeolocation(options?: { enableHighAccuracy?: boolean }) {
+export function useGeolocation(options?: { enableHighAccuracy?: boolean; maximumAge?: number }) {
   const [state, setState] = useState<GeolocationState>({
     latitude: null,
     longitude: null,
@@ -67,10 +67,10 @@ export function useGeolocation(options?: { enableHighAccuracy?: boolean }) {
       {
         enableHighAccuracy: options?.enableHighAccuracy ?? true,
         timeout: 15000,
-        maximumAge: 60000,
+        maximumAge: options?.maximumAge ?? 60000,
       },
     );
-  }, [options?.enableHighAccuracy]);
+  }, [options?.enableHighAccuracy, options?.maximumAge]);
 
   return { ...state, request };
 }

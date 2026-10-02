@@ -10,9 +10,9 @@ import { listLocalInboxItems, type LocalInboxItem } from "@/lib/notifications/lo
 import { useDemoGroupInvites, useDemoPendingRequests } from "@/lib/demo/use-demo-db";
 import {
   OutingInviteStatus,
-  respondToOutingInvite,
   useOutingInviteVersion,
 } from "@/lib/marketplace/outing-invites";
+import { respondToRideFriendInvite } from "@/lib/mobility/ride-companions";
 
 const tabs = ["Todas", "Social", "Viagens", "Promoções"] as const;
 
@@ -188,7 +188,7 @@ function Notifs() {
                         type="button"
                         data-outing-accept={item.inviteId}
                         onClick={() =>
-                          user?.id && respondToOutingInvite(item.inviteId, user.id, true)
+                          user?.id && respondToRideFriendInvite(item.inviteId, user.id, true)
                         }
                         className="h-8 rounded-full bg-gradient-brand px-3 text-[11px] font-bold text-white"
                       >
@@ -198,7 +198,7 @@ function Notifs() {
                         type="button"
                         data-outing-decline={item.inviteId}
                         onClick={() =>
-                          user?.id && respondToOutingInvite(item.inviteId, user.id, false)
+                          user?.id && respondToRideFriendInvite(item.inviteId, user.id, false)
                         }
                         className="h-8 rounded-full border border-border px-3 text-[11px] font-bold"
                       >

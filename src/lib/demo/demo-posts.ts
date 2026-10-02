@@ -14,6 +14,7 @@ import { demoStorageKey } from "./demo-config";
 export interface DemoPostMedia {
   preview: string;
   type: "image" | "video";
+  mediaId?: string;
 }
 
 export interface DemoPost {
@@ -28,6 +29,8 @@ export interface DemoPost {
   privacy: string;
   locationLabel: string | null;
   hashtags: string[];
+  mentions?: Array<{ id: string; name: string; photo?: string }>;
+  interests?: string[];
   createdAt: number;
 }
 

@@ -38,6 +38,10 @@ export function isTerminal(status: TripStatus): boolean {
   return status === "conclusao" || status === "cancelada";
 }
 
+export function isPlanning(status: TripStatus): boolean {
+  return status === "solicitar" || status === "rota" || status === "embarque" || status === "categoria";
+}
+
 /* ─── Cancelamento permitido ─────────────────────────────── */
 
 export function isCancellable(status: TripStatus): boolean {

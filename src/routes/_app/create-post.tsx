@@ -9,7 +9,8 @@ import { currentUser } from "@/lib/mock-data";
 import { useDemoOwnProfile } from "@/lib/demo/demo-own-profile";
 import { saveDemoPost, type DemoPost, type DemoPostMedia } from "@/lib/demo/demo-posts";
 import { CANONICAL_MOMENT_CATEGORY } from "@/lib/create/create-hub-destinations";
-import { compressImage, readFileAsDataURL } from "@/lib/upload/upload-utils";
+import { compressImage } from "@/lib/upload/upload-utils";
+import { saveLocalMedia } from "@/lib/media/local-media-storage";
 
 const searchSchema = z.object({
   from: z.enum(["bio"]).optional(),
@@ -25,18 +26,20 @@ export const Route = createFileRoute("/_app/create-post")({
 async function buildPersistedMedia(draft: PostDraft): Promise<DemoPostMedia[]> {
   const persisted: DemoPostMedia[] = [];
   for (const media of draft.media) {
-    if (media.type === "image") {
-      const source = await compressImage(media.file).catch(() => media.file);
-      persisted.push({
-        preview: String(await readFileAsDataURL(source)),
-        type: "image",
-      });
-    } else {
-      persisted.push({
-        preview: String(await readFileAsDataURL(media.file)),
-        type: "video",
-      });
-    }
+    const source =
+      media.type === "image" ? await compressImage(media.file).catch(() => media.file) : media.file;
+    const record = await saveLocalMedia({
+      kind: "photo",
+      scope: "post",
+      blob: source,
+      mimeType: source.type || (media.type === "video" ? "video/webm" : "image/jpeg"),
+      fileName: source.name || media.file.name,
+    });
+    persisted.push({
+      preview: "",
+      type: media.type,
+      mediaId: record.id,
+    });
   }
   return persisted;
 }
@@ -78,6 +81,12 @@ function CreatePostPage() {
       privacy: draft.privacy,
       locationLabel: draft.location?.name.trim() || null,
       hashtags: draft.hashtags,
+      mentions: draft.mentions.map((mention) => ({
+        id: mention.id,
+        name: mention.name,
+        photo: mention.photo,
+      })),
+      interests: draft.interests.map((interest) => interest.label),
       createdAt: Date.now(),
     };
 

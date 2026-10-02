@@ -321,8 +321,14 @@ describe("Fase 1H-4 — Corrida e regressão de fonte", () => {
     expect(panels).not.toContain("STOP_SUGGESTIONS");
     expect(panels).not.toContain("Padaria Bella Paulista");
     expect(panels).not.toContain("onAddSuggestion");
-    expect(panels).toContain("originLabel");
+    expect(panels).toContain("onEditOrigin");
     expect(panels).toContain("destination");
+    expect(panels).toContain("RideItineraryCard");
+    const itinerary = await readFile(
+      join(projectRoot, "src/components/mobility/ride/ride-itinerary.tsx"),
+      "utf8",
+    );
+    expect(itinerary).toContain("Adicionar parada");
     expect(flow).toContain("RideMap");
     expect(flow).not.toContain("handleAddSuggestion");
     expect(data).not.toContain("STOP_SUGGESTIONS");

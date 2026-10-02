@@ -5,8 +5,8 @@
 
 export { Colors } from "./colors";
 export { Gradients } from "./gradients";
-export { Typography } from "./typography";
-export { Spacing } from "./spacing";
+export { Typography, TypeScale } from "./typography";
+export { Spacing, CarouselRhythm } from "./spacing";
 export { Radius } from "./radius";
 export { Shadows } from "./shadows";
 export { Animations } from "./animations";

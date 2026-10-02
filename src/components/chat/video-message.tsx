@@ -1,55 +1,55 @@
-import { useState } from "react";
 import { Play } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { formatAudioDuration } from "@/lib/chat/chat-format";
 
 interface VideoMessageProps {
   url: string;
   thumbnail?: string;
   durationSec?: number;
+  selecting?: boolean;
+  onOpenMedia?: () => void;
 }
 
-export function VideoMessage({ url, thumbnail, durationSec }: VideoMessageProps) {
-  const [playing, setPlaying] = useState(false);
-
-  if (playing) {
-    return (
-      <video
-        src={url}
-        controls
-        autoPlay
-        className="w-full rounded-2xl"
-        onEnded={() => setPlaying(false)}
-      />
-    );
-  }
-
+export function VideoMessage({
+  url,
+  thumbnail,
+  durationSec,
+  selecting = false,
+  onOpenMedia,
+}: VideoMessageProps) {
   return (
     <button
       type="button"
-      onClick={() => setPlaying(true)}
-      className="relative w-full rounded-2xl overflow-hidden group"
-      aria-label="Reproduzir vídeo"
+      onClick={(event) => {
+        if (selecting) {
+          event.preventDefault();
+          return;
+        }
+        onOpenMedia?.();
+      }}
+      className="group relative w-full overflow-hidden rounded-[24px] shadow-[0_12px_28px_rgba(24,24,43,0.06)]"
+      aria-label={selecting ? "Selecionar vídeo" : "Abrir vídeo"}
     >
       {thumbnail ? (
-        <img src={thumbnail} alt="" className="w-full aspect-video object-cover" />
+        <img src={thumbnail} alt="" className="pointer-events-none aspect-video w-full object-cover" />
       ) : (
-        <div className="w-full aspect-video bg-muted grid place-items-center">
-          <span className="text-3xl">🎬</span>
-        </div>
+        <video
+          src={url}
+          className="pointer-events-none aspect-video w-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+        />
       )}
-
-      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors grid place-items-center">
-        <div className="h-12 w-12 rounded-full bg-white/90 grid place-items-center shadow-elegant">
-          <Play className="h-5 w-5 text-foreground ml-0.5" />
+      <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/20 transition-colors group-hover:bg-black/30">
+        <div className="grid h-12 w-12 place-items-center rounded-full bg-white/90 shadow-elegant">
+          <Play className="ml-0.5 h-5 w-5 text-foreground" />
         </div>
       </div>
-
-      {durationSec && (
-        <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-mono rounded-full px-2 py-0.5">
+      {durationSec ? (
+        <span className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/70 px-2 py-0.5 font-mono text-[10px] text-white">
           {formatAudioDuration(durationSec)}
         </span>
-      )}
+      ) : null}
     </button>
   );
 }

@@ -60,7 +60,8 @@ export type AdaptedMessage = {
 const LOCAL_KIND: ReadonlySet<string> = new Set(Object.values(StoredMessageKind));
 
 export function toRemoteMessageKind(kind: StoredMessageKindValue | undefined): MessageKind {
-  return kind ?? "text";
+  if (!kind || kind === StoredMessageKind.FILE) return "text";
+  return kind;
 }
 
 export function toStoredMessageKind(kind: string): StoredMessageKindValue | null {
@@ -187,8 +188,10 @@ function payloadToJson(payload: StoredMessagePayload): Json {
   if (payload.route !== undefined) json.route = payload.route;
   if (payload.routeType !== undefined) json.routeType = payload.routeType;
   if (payload.dataUrl !== undefined) json.dataUrl = payload.dataUrl;
+  if (payload.mediaId !== undefined) json.mediaId = payload.mediaId;
   if (payload.mimeType !== undefined) json.mimeType = payload.mimeType;
   if (payload.fileName !== undefined) json.fileName = payload.fileName;
+  if (payload.durationSec !== undefined) json.durationSec = payload.durationSec;
   if (payload.width !== undefined) json.width = payload.width;
   if (payload.height !== undefined) json.height = payload.height;
   return json;
@@ -208,8 +211,10 @@ function payloadFromJson(value: Json | null): StoredMessagePayload | null {
   if (record.routeType === "event" || record.routeType === "place")
     payload.routeType = record.routeType;
   if (typeof record.dataUrl === "string") payload.dataUrl = record.dataUrl;
+  if (typeof record.mediaId === "string") payload.mediaId = record.mediaId;
   if (typeof record.mimeType === "string") payload.mimeType = record.mimeType;
   if (typeof record.fileName === "string") payload.fileName = record.fileName;
+  if (typeof record.durationSec === "number") payload.durationSec = record.durationSec;
   if (typeof record.width === "number") payload.width = record.width;
   if (typeof record.height === "number") payload.height = record.height;
   return payload;

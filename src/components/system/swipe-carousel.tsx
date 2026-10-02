@@ -10,6 +10,8 @@ interface SwipeCarouselProps {
   hintLabel?: string;
   scrollRef?: React.Ref<HTMLDivElement>;
   onScroll?: (event: UIEvent<HTMLDivElement>) => void;
+  autoplay?: boolean;
+  autoplayMs?: number;
 }
 
 export function SwipeCarousel({
@@ -20,6 +22,8 @@ export function SwipeCarousel({
   hintLabel = "Deslize para ver mais",
   scrollRef,
   onScroll,
+  autoplay = false,
+  autoplayMs = 4500,
 }: SwipeCarouselProps) {
   const innerRef = useRef<HTMLDivElement>(null);
   const seenRef = useRef(
@@ -68,6 +72,38 @@ export function SwipeCarousel({
   }, [showHint]);
 
   const reduced = prefersReducedMotion();
+
+  useEffect(() => {
+    if (!autoplay || reduced) return;
+    const element = innerRef.current;
+    if (!element) return;
+    let timer: number | null = null;
+    const tick = () => {
+      const max = element.scrollWidth - element.clientWidth;
+      if (max <= 1) return;
+      const first = element.firstElementChild as HTMLElement | null;
+      const styles = window.getComputedStyle(element);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap || "8") || 8;
+      const step = first ? first.offsetWidth + gap : Math.max(120, element.clientWidth * 0.72);
+      const next = element.scrollLeft + step;
+      element.scrollTo({
+        left: next >= max - 8 ? 0 : next,
+        behavior: "smooth",
+      });
+    };
+    const start = () => {
+      if (timer != null) window.clearInterval(timer);
+      timer = window.setInterval(tick, Math.max(4000, autoplayMs));
+    };
+    start();
+    element.addEventListener("pointerdown", start);
+    element.addEventListener("touchstart", start, { passive: true });
+    return () => {
+      if (timer != null) window.clearInterval(timer);
+      element.removeEventListener("pointerdown", start);
+      element.removeEventListener("touchstart", start);
+    };
+  }, [autoplay, autoplayMs, reduced, children]);
 
   return (
     <div className="relative">

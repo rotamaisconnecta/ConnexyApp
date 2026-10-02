@@ -3,9 +3,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { MORE_MENU_LABELS } from "../src/lib/navigation/more-menu";
 import {
+  getHomeDiscoveryNavigation,
   hasMoreNearby,
   listConnectPulseItems,
   listHomeDiscoveryItems,
+  listNearbyYouItems,
   NEARBY_PAGE_SIZE,
   paginateNearby,
 } from "../src/lib/home/home-discovery";
@@ -92,7 +94,7 @@ beforeEach(() => {
   setDemoIdentity(A);
 });
 
-describe("Fase 1H-2 — Connect Pulse e Perto de você", () => {
+describe("Fase 1H-2 — Connexy Pulse unificado", () => {
   test("Pulse projeta catálogo e fixtures sem criar store paralelo", () => {
     const items = listConnectPulseItems();
     const kinds = new Set(items.map((item) => item.kind));
@@ -100,10 +102,11 @@ describe("Fase 1H-2 — Connect Pulse e Perto de você", () => {
     expect(kinds.has("business")).toBe(true);
     expect(kinds.has("event")).toBe(true);
     expect(items.every((item) => item.image.length > 0)).toBe(true);
+    expect(items.every((item) => getHomeDiscoveryNavigation(item) != null)).toBe(true);
     expect(window.localStorage.getItem("connexy:demo:pulse")).toBeNull();
   });
 
-  test("Perto de você pagina 5 em 5 sem duplicar e usa a fonte existente", () => {
+  test("paginação do catálogo existente continua 5 em 5 sem duplicar", () => {
     const all = listHomeDiscoveryItems();
     expect(all.length).toBeGreaterThan(NEARBY_PAGE_SIZE);
     const first = paginateNearby(all, NEARBY_PAGE_SIZE);
@@ -118,7 +121,17 @@ describe("Fase 1H-2 — Connect Pulse e Perto de você", () => {
     );
   });
 
-  test("menu Mais permanece intacto e o Pulse não navega", async () => {
+  test("Pulse absorve o catálogo próximo sem duplicar itens", () => {
+    const pulse = listConnectPulseItems();
+    const nearby = listNearbyYouItems().filter((item) => Boolean(item.image));
+    const pulseIds = pulse.map((item) => item.id);
+    expect(new Set(pulseIds).size).toBe(pulseIds.length);
+    expect(nearby.slice(0, NEARBY_PAGE_SIZE).every((item) => pulseIds.includes(item.id))).toBe(
+      true,
+    );
+  });
+
+  test("Home não renderiza seção independente Perto de você e o Pulse navega", async () => {
     expect([...MORE_MENU_LABELS]).toEqual([
       "Locais",
       "Eventos",
@@ -128,14 +141,21 @@ describe("Fase 1H-2 — Connect Pulse e Perto de você", () => {
       "Gerenciar",
     ]);
     const pulse = await source("src/components/home/ConnexyPulse.tsx");
-    expect(pulse).toContain("Connect Pulse");
+    expect(pulse).toContain("Connexy Pulse");
+    expect(pulse).toContain("Tudo o que importa ao seu redor.");
+    expect(pulse).not.toContain("Connect Pulse");
+    expect(pulse).not.toContain("Perto de você");
+    expect(pulse).not.toContain("NearbyYouList");
+    expect(pulse).toContain("getHomeDiscoveryNavigation");
+    expect(pulse).toContain("aria-label");
     expect(pulse).not.toContain('to="/perfil/$id"');
-    expect(pulse).not.toContain('to="/event/$eventId"');
-    expect(pulse).not.toContain('to="/business/$businessId"');
-    const nearby = await source("src/components/home/nearby-you-list.tsx");
-    expect(nearby).toContain("Ver mais");
-    expect(nearby).toContain('to="/locais"');
-    expect(nearby).toContain("NEARBY_PAGE_SIZE");
+    expect(pulse).not.toContain('href="#"');
+    const home = await source("src/routes/_app.home.tsx");
+    expect(home).toContain("ConnexyPulse");
+    expect(home).toContain("FeedNearbyPeople");
+    expect(home).toContain("HomeActionHub");
+    expect(home).not.toContain("NearbyYouList");
+    expect(home).not.toContain("perto-de-voce-title");
   });
 });
 

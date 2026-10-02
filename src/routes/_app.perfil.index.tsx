@@ -27,6 +27,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
 import { MediaViewer } from "@/components/system/media-viewer";
+import { DemoPostDetail } from "@/components/post/demo-post-detail";
+import { LocalMediaFrame } from "@/components/media/local-media-frame";
 import { type DemoOwnProfile, type ProfileVisibility } from "@/lib/demo/demo-own-profile";
 import { useOwnProfileController } from "@/lib/profile/use-own-profile";
 import { currentUser, findPlace, people } from "@/lib/mock-data";
@@ -119,7 +121,7 @@ async function optimizeProfileImage(file: File, kind: "photo" | "cover"): Promis
 }
 
 type UpdateProfile = <K extends keyof DemoOwnProfile>(key: K, value: DemoOwnProfile[K]) => void;
-type PublicationTab = "Tudo" | "Fotos" | "Momentos";
+type PublicationTab = "Tudo" | "Fotos";
 type AddressKey = keyof DemoOwnProfile["privateAddresses"];
 type VisibilityKey = keyof DemoOwnProfile["visibility"];
 
@@ -213,6 +215,7 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
   const navigate = useNavigate();
   const [publicationTab, setPublicationTab] = useState<PublicationTab>("Tudo");
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [savedMedia, setSavedMedia] = useState<Set<string>>(getSavedProfileMedia);
   const demoPosts = useDemoPosts();
   const places = [
@@ -233,25 +236,21 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
   }, [places]);
 
   const visibleGallery =
-    publicationTab === "Tudo"
-      ? gallery
-      : publicationTab === "Fotos"
-        ? gallery.filter((_, index) => index % 2 === 0)
-        : gallery.filter((_, index) => index % 2 === 1);
+    publicationTab === "Tudo" ? gallery : gallery.filter((_, index) => index % 2 === 0);
   const selectedMedia =
     selectedMediaIndex == null ? null : (visibleGallery[selectedMediaIndex] ?? null);
 
   const visibleDemoPosts = useMemo(() => {
     if (publicationTab === "Fotos")
       return demoPosts.filter((post) => post.media.some((media) => media.type === "image"));
-    if (publicationTab === "Momentos")
-      return demoPosts.filter((post) => post.category === "MOMENT");
     return demoPosts;
   }, [publicationTab, demoPosts]);
+  const selectedPost = visibleDemoPosts.find((post) => post.id === selectedPostId) ?? null;
 
   const changePublicationTab = (tab: PublicationTab) => {
     setPublicationTab(tab);
     setSelectedMediaIndex(null);
+    setSelectedPostId(null);
   };
 
   const repostMedia = (source: string) => {
@@ -424,7 +423,7 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
 
       <Section title="Publicações">
         <div className="-mt-9 mb-3 ml-auto flex w-fit items-center gap-1 rounded-full bg-secondary/70 p-1">
-          {(["Tudo", "Fotos", "Momentos"] as PublicationTab[]).map((tab) => (
+          {(["Tudo", "Fotos"] as PublicationTab[]).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -442,7 +441,7 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
         {visibleDemoPosts.length > 0 && (
           <div className="mb-1.5 grid grid-cols-4 gap-1.5">
             {visibleDemoPosts.map((post) => (
-              <DemoPostTile key={post.id} post={post} />
+              <DemoPostTile key={post.id} post={post} onOpen={() => setSelectedPostId(post.id)} />
             ))}
           </div>
         )}
@@ -525,6 +524,10 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
           })}
         </div>
       </Section>
+
+      {selectedPost ? (
+        <DemoPostDetail post={selectedPost} onClose={() => setSelectedPostId(null)} />
+      ) : null}
 
       {selectedMedia && selectedMediaIndex != null && (
         <MediaViewer
@@ -959,31 +962,43 @@ function Stat({
   );
 }
 
-function DemoPostTile({ post }: { post: DemoPost }) {
+function DemoPostTile({ post, onOpen }: { post: DemoPost; onOpen: () => void }) {
   const media = post.media[0];
   if (media?.type === "image") {
     return (
-      <div
-        aria-label={`Publicação de ${post.authorName}`}
-        className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Abrir publicação de ${post.authorName}`}
+        className="relative aspect-square overflow-hidden rounded-xl bg-muted transition active:scale-[0.97]"
       >
-        <img
-          src={media.preview}
-          alt={post.text || `Publicação de ${post.authorName}`}
-          className="h-full w-full object-cover"
-        />
-      </div>
+        <LocalMediaFrame mediaId={media.mediaId} fallbackUrl={media.preview}>
+          {(url) => (
+            <img
+              src={url ?? undefined}
+              alt={post.text || `Publicação de ${post.authorName}`}
+              className="h-full w-full object-cover"
+            />
+          )}
+        </LocalMediaFrame>
+      </button>
     );
   }
 
   if (media?.type === "video") {
     return (
-      <div
-        aria-label={`Publicação em vídeo de ${post.authorName}`}
-        className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Abrir publicação em vídeo de ${post.authorName}`}
+        className="relative aspect-square overflow-hidden rounded-xl bg-muted transition active:scale-[0.97]"
       >
-        <video src={media.preview} muted playsInline className="h-full w-full object-cover" />
-      </div>
+        <LocalMediaFrame mediaId={media.mediaId} fallbackUrl={media.preview}>
+          {(url) => (
+            <video src={url ?? undefined} muted playsInline className="h-full w-full object-cover" />
+          )}
+        </LocalMediaFrame>
+      </button>
     );
   }
 
@@ -992,9 +1007,11 @@ function DemoPostTile({ post }: { post: DemoPost }) {
     : null;
 
   return (
-    <div
-      aria-label={`Publicação: ${post.text}`}
-      className="relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-gradient-brand/85 p-2 text-white"
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Abrir publicação: ${post.text || "texto"}`}
+      className="relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-gradient-brand/85 p-2 text-white transition active:scale-[0.97]"
     >
       <div className="min-w-0">
         <p className="text-center text-base leading-none">{categoryMeta?.emoji ?? "💬"}</p>
@@ -1002,7 +1019,7 @@ function DemoPostTile({ post }: { post: DemoPost }) {
           {post.text || categoryMeta?.label || "Publicação"}
         </p>
       </div>
-    </div>
+    </button>
   );
 }
 

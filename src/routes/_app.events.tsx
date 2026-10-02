@@ -49,9 +49,11 @@ function EventCard({ event }: { event: HomeEvent }) {
         )}
       </div>
       <div className="p-3.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-display text-sm font-bold">{event.name}</span>
-          <span className="shrink-0 text-[11px] font-semibold text-primary">{event.date}</span>
+        <div className="min-w-0">
+          <span className="block min-w-0 line-clamp-2 font-display text-sm font-bold leading-snug">
+            {event.name}
+          </span>
+          <span className="mt-0.5 block text-[11px] font-semibold text-primary">{event.date}</span>
         </div>
         <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
           <Calendar className="h-3 w-3 shrink-0" />

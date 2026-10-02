@@ -26,8 +26,7 @@ const MONTH_ABBR: Record<string, number> = {
   Dez: 11,
 };
 
-function parseHomeEventDate(dateLabel: string, time: string): Date {
-  const now = new Date();
+export function parseHomeEventDate(dateLabel: string, time: string, now: Date = new Date()): Date {
   const [h, m] = time.split(":").map(Number);
   if (dateLabel === "Hoje") {
     const d = new Date(now);

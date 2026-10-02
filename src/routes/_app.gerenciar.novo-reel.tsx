@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, MapPin, Music, X, Send, CheckCircle2, Film } from "lucide-react";
+import { Loader2, MapPin, Music, Plus, X, Send, CheckCircle2, Film } from "lucide-react";
 import { BackButton } from "@/components/navigation/back-button";
-import { UploadMedia } from "@/components/upload";
-import { MediaFile, formatFileSize } from "@/lib/upload";
+import { createMediaFile, formatFileSize, type MediaFile } from "@/lib/upload";
 import { StatusBar } from "@/components/phone-frame";
 import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
 import { toast } from "sonner";
+import { ReelRecorder, type RecordedClip } from "@/components/media/reel-recorder";
+import { HashtagInput } from "@/components/post/hashtag-input";
 import {
   REEL_MAX_CAPTION_LENGTH,
   REEL_MAX_DURATION_SECONDS,
@@ -20,7 +21,17 @@ import {
 } from "@/lib/reels/reel-publish";
 import type { ReelContextType } from "@/lib/reels/reel-local-storage";
 import { MOCK_REELS } from "@/lib/reels/reel-mocks";
-import { formatDuration } from "@/lib/reels/reel-utils";
+import { ReelCategory, type ReelCategoryValue } from "@/lib/reels/reel-types";
+import {
+  formatExactDurationLabel,
+  readVideoDurationSeconds,
+  resolveMediaDurationSeconds,
+} from "@/lib/media/media-duration";
+import {
+  clearReelDraft,
+  persistReelDraftClip,
+  restoreReelDraftFile,
+} from "@/lib/reels/reel-draft";
 
 export const Route = createFileRoute("/_app/gerenciar/novo-reel")({
   head: () => ({ meta: [{ title: "Novo no Agora — Connexy" }] }),
@@ -43,11 +54,21 @@ interface ContextOption {
   emoji: string;
 }
 
-const CONTEXT_TYPES: { tipo: ReelContextType; label: string; emoji: string }[] = [
-  { tipo: "local", label: "Local", emoji: "📍" },
-  { tipo: "negocio", label: "Negócio", emoji: "🏢" },
-  { tipo: "oferta", label: "Oferta", emoji: "🏷️" },
-  { tipo: "evento", label: "Evento", emoji: "🎉" },
+const CONTEXT_CHIPS: { id: string; label: string; category: ReelCategoryValue; tipo?: ReelContextType }[] = [
+  { id: "now", label: "Acontecendo agora", category: ReelCategory.MOMENT },
+  { id: "place", label: "Lugar", category: ReelCategory.PLACE, tipo: "local" },
+  { id: "event", label: "Evento", category: ReelCategory.EVENT, tipo: "evento" },
+  { id: "people", label: "Pessoas", category: ReelCategory.PERSON },
+  { id: "discover", label: "Descoberta", category: ReelCategory.NETWORKING },
+  { id: "experience", label: "Experiência", category: ReelCategory.MOMENT },
+  { id: "food", label: "Comida", category: ReelCategory.PLACE },
+  { id: "music", label: "Música", category: ReelCategory.MOMENT },
+  { id: "travel", label: "Viagem", category: ReelCategory.TRAVEL },
+  { id: "sport", label: "Esporte", category: ReelCategory.MOMENT },
+  { id: "work", label: "Trabalho", category: ReelCategory.NETWORKING },
+  { id: "business", label: "Negócio", category: ReelCategory.BUSINESS, tipo: "negocio" },
+  { id: "offer", label: "Oferta", category: ReelCategory.OFFER, tipo: "oferta" },
+  { id: "other", label: "Outro", category: ReelCategory.MOMENT },
 ];
 
 function buildContextOptions(): ContextOption[] {
@@ -88,15 +109,22 @@ function NovoReel() {
   const [media, setMedia] = useState<MediaFile[]>([]);
   const [posterBlob, setPosterBlob] = useState<Blob | null>(null);
   const [durationS, setDurationS] = useState(0);
+  const [mediaId, setMediaId] = useState<string | null>(null);
+  const [durationLocked, setDurationLocked] = useState(false);
   const [caption, setCaption] = useState("");
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [chipId, setChipId] = useState<string | null>(null);
   const [context, setContext] = useState<{ tipo: ReelContextType; id: string } | null>(null);
   const [publishState, setPublishState] = useState<ReelPublishState>("idle");
+  const [processingPercent, setProcessingPercent] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const videoFile = media[0]?.file ?? null;
   const videoUrl = media[0]?.preview ?? null;
   const contextOptions = useMemo(buildContextOptions, []);
+  const selectedChip = CONTEXT_CHIPS.find((chip) => chip.id === chipId) ?? null;
   const selectedContext = context
     ? (contextOptions.find((o) => o.tipo === context.tipo && o.id === context.id) ?? null)
     : null;
@@ -104,7 +132,8 @@ function NovoReel() {
     publishState === "validating" ||
     publishState === "uploading" ||
     publishState === "saving" ||
-    publishState === "saving_local";
+    publishState === "saving_local" ||
+    processingPercent != null;
 
   useEffect(() => {
     previewUrlRef.current = videoUrl;
@@ -113,6 +142,21 @@ function NovoReel() {
   useEffect(() => {
     return () => {
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void restoreReelDraftFile().then((restored) => {
+      if (!active || !restored) return;
+      const created = createMediaFile(restored.file);
+      setMedia([created]);
+      setMediaId(restored.draft.mediaId);
+      setDurationS(restored.draft.durationSec);
+      setDurationLocked(true);
+    });
+    return () => {
+      active = false;
     };
   }, []);
 
@@ -125,34 +169,83 @@ function NovoReel() {
     setMedia([]);
     setPosterBlob(null);
     setDurationS(0);
+    setMediaId(null);
+    setDurationLocked(false);
+    setProcessingPercent(null);
+    clearReelDraft();
   }
 
-  function handleFilesChange(files: MediaFile[]) {
-    if (files.length === 0) {
-      clearSelection();
-      return;
+  async function persistClip(file: File, recordedSec: number, metadataSec?: number | null) {
+    setProcessingPercent(12);
+    try {
+      const draft = await persistReelDraftClip({
+        blob: file,
+        mimeType: file.type || "video/webm",
+        fileName: file.name,
+        recordedSec,
+        metadataSec,
+        maxSeconds: REEL_MAX_DURATION_SECONDS,
+        onProgress: setProcessingPercent,
+      });
+      setMediaId(draft.mediaId);
+      setDurationS(draft.durationSec);
+      setDurationLocked(true);
+    } catch {
+      toast.error("Não foi possível salvar o vídeo neste dispositivo.");
+    } finally {
+      setProcessingPercent(null);
     }
-    const file = files[0].file;
-    const error = validateReelVideo(file, 0);
-    if (error === "type" || error === "size") {
-      toast.error(validationMessage(error));
-      clearSelection();
-      return;
-    }
-    setMedia(files);
+  }
+
+  function applyFile(file: File, recordedSec: number, lock: boolean) {
+    const created = createMediaFile(file);
+    setMedia([created]);
     setPosterBlob(null);
-    setDurationS(0);
+    const duration = resolveMediaDurationSeconds({
+      recordedSec,
+      metadataSec: null,
+      maxSeconds: REEL_MAX_DURATION_SECONDS,
+    });
+    setDurationS(duration);
+    setDurationLocked(lock);
+    void persistClip(file, recordedSec);
+  }
+
+  function handleRecordedClip(clip: RecordedClip) {
+    const file = new File([clip.blob], clip.fileName, { type: clip.mimeType.split(";")[0] });
+    applyFile(file, clip.durationSec, true);
+  }
+
+  async function handlePickedFile(file: File) {
+    const typeError = validateReelVideo(file, 1);
+    if (typeError === "type" || typeError === "size") {
+      toast.error(validationMessage(typeError));
+      return;
+    }
+    const metadataSec = await readVideoDurationSeconds(file);
+    if (metadataSec == null || metadataSec > REEL_MAX_DURATION_SECONDS) {
+      toast.error(validationMessage("duration"));
+      return;
+    }
+    applyFile(file, metadataSec, true);
   }
 
   function handleLoadedMetadata() {
     const v = videoRef.current;
     if (!v) return;
-    const duration = Number.isFinite(v.duration) ? Math.round(v.duration) : 0;
-    setDurationS(duration);
-    if (duration > REEL_MAX_DURATION_SECONDS) {
+    const metadata = Number.isFinite(v.duration) ? v.duration : null;
+    const next = resolveMediaDurationSeconds({
+      recordedSec: durationLocked ? durationS : metadata,
+      metadataSec: metadata,
+      maxSeconds: REEL_MAX_DURATION_SECONDS,
+    });
+    if (next > REEL_MAX_DURATION_SECONDS) {
       toast.error(validationMessage("duration"));
       clearSelection();
       return;
+    }
+    if (!durationLocked || Math.abs(next - durationS) <= 2) {
+      setDurationS(next);
     }
     v.currentTime = 0.1;
   }
@@ -190,12 +283,16 @@ function NovoReel() {
       const result = await publishReel({
         file: file as File,
         caption,
+        hashtags,
+        mediaId: mediaId ?? undefined,
+        category: selectedChip?.category,
         context: selectedContext
           ? { tipo: selectedContext.tipo, id: selectedContext.id, titulo: selectedContext.titulo }
           : null,
         posterBlob,
         durationS,
       });
+      clearReelDraft();
       setPublishState("success");
       toast.success(
         result.persistence === "supabase"
@@ -238,10 +335,8 @@ function NovoReel() {
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
         />
         <div className="flex-1">
-          <h1 className="font-display font-bold text-lg">Novo no Agora</h1>
-          <p className="text-[11px] text-muted-foreground">
-            Um momento real de um lugar do Connexy
-          </p>
+          <h1 className="font-display font-bold text-lg">Criar Reel</h1>
+          <p className="text-[11px] text-muted-foreground">Grave agora ou adicione um vídeo</p>
         </div>
       </header>
 
@@ -249,12 +344,36 @@ function NovoReel() {
         <section className="space-y-2">
           <SectionLabel icon={<Film className="h-3.5 w-3.5" />} text="1 · Vídeo" />
           {!videoUrl ? (
-            <UploadMedia
-              mode="video"
-              value={media}
-              onChange={handleFilesChange}
-              label="Escolher vídeo"
-            />
+            <div className="space-y-3">
+              <ReelRecorder
+                variant="embedded"
+                title="Câmera"
+                onCancel={() => undefined}
+                onUse={handleRecordedClip}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-[28px] border border-dashed border-border bg-secondary/70"
+                aria-label="Adicionar vídeo"
+              >
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-surface text-foreground shadow-soft">
+                  <Plus className="h-7 w-7" />
+                </span>
+                <span className="text-sm font-semibold">Adicionar vídeo</span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void handlePickedFile(file);
+                }}
+              />
+            </div>
           ) : (
             <div className="relative rounded-3xl overflow-hidden bg-black aspect-[9/16] max-h-[46vh]">
               <video
@@ -264,6 +383,7 @@ function NovoReel() {
                 muted
                 playsInline
                 controls
+                autoPlay
                 onLoadedMetadata={handleLoadedMetadata}
                 onSeeked={grabPoster}
                 className="absolute inset-0 h-full w-full object-cover"
@@ -277,14 +397,27 @@ function NovoReel() {
               </button>
               {durationS > 0 && (
                 <div className="absolute bottom-2 left-2 rounded-full bg-black/60 text-white text-[10px] px-2 py-1 z-10">
-                  {formatDuration(durationS)}
+                  {formatExactDurationLabel(durationS)}
                 </div>
               )}
             </div>
           )}
+          {processingPercent != null ? (
+            <div className="rounded-2xl bg-secondary p-3">
+              <p className="text-xs font-semibold">Processando vídeo...</p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-gradient-brand transition-all"
+                  style={{ width: `${processingPercent}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">{processingPercent}%</p>
+            </div>
+          ) : null}
           {videoFile && (
             <p className="text-[11px] text-muted-foreground">
-              {videoFile.name} · {formatFileSize(videoFile.size)} · até {REEL_MAX_DURATION_SECONDS}s
+              {videoFile.name} · {formatFileSize(videoFile.size)}
+              {durationS > 0 ? ` · ${formatExactDurationLabel(durationS)}` : ""}
             </p>
           )}
         </section>
@@ -301,22 +434,26 @@ function NovoReel() {
           <p className="text-right text-[11px] text-muted-foreground">
             {caption.length}/{REEL_MAX_CAPTION_LENGTH}
           </p>
+          <HashtagInput tags={hashtags} onChange={setHashtags} />
           <ConnexyAiAssistant mode="media" label="Ideias para a legenda" />
         </section>
 
         <section className="rounded-3xl bg-surface border border-border p-4 space-y-3 shadow-soft">
-          <SectionLabel icon={<MapPin className="h-3.5 w-3.5" />} text="3 · Contexto (opcional)" />
+          <SectionLabel icon={<MapPin className="h-3.5 w-3.5" />} text="3 · Contexto" />
           <div className="flex flex-wrap gap-2">
-            {CONTEXT_TYPES.map((type) => {
-              const active = context?.tipo === type.tipo;
+            {CONTEXT_CHIPS.map((chip) => {
+              const active = chipId === chip.id;
               return (
                 <button
-                  key={type.tipo}
+                  key={chip.id}
+                  type="button"
                   onClick={() => {
                     if (active) {
+                      setChipId(null);
                       setContext(null);
                     } else {
-                      setContext({ tipo: type.tipo, id: "" });
+                      setChipId(chip.id);
+                      setContext(chip.tipo ? { tipo: chip.tipo, id: "" } : null);
                     }
                   }}
                   aria-pressed={active}
@@ -326,13 +463,13 @@ function NovoReel() {
                       : "bg-secondary text-muted-foreground hover:bg-border"
                   }`}
                 >
-                  {type.emoji} {type.label}
+                  {chip.label}
                 </button>
               );
             })}
           </div>
 
-          {context && (
+          {context?.tipo && (
             <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
               {contextOptions
                 .filter((o) => o.tipo === context.tipo)
@@ -341,6 +478,7 @@ function NovoReel() {
                   return (
                     <button
                       key={`${option.tipo}:${option.id}`}
+                      type="button"
                       onClick={() => setContext({ tipo: option.tipo, id: option.id })}
                       aria-pressed={active}
                       className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
@@ -373,7 +511,7 @@ function NovoReel() {
               label="Vídeo"
               value={
                 videoFile
-                  ? `${formatDuration(durationS)} · ${formatFileSize(videoFile.size)}`
+                  ? `${formatExactDurationLabel(durationS)} · ${formatFileSize(videoFile.size)}`
                   : "Não escolhido"
               }
             />
@@ -381,7 +519,9 @@ function NovoReel() {
             <Row
               label="Contexto"
               value={
-                selectedContext ? `${selectedContext.emoji} ${selectedContext.titulo}` : "Nenhum"
+                selectedContext
+                  ? `${selectedContext.emoji} ${selectedContext.titulo}`
+                  : (selectedChip?.label ?? "Nenhum")
               }
             />
             {willPublishReelRemotely() && (

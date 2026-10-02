@@ -11,7 +11,7 @@ export const APP_SCROLL_PADDING_BOTTOM =
   "calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-height, 4.75rem))";
 
 export function isRideFlowPath(pathname: string): boolean {
-  return /^\/ride(\/request|\/matching|\/active|\/)?$/.test(pathname);
+  return pathname === "/destino" || /^\/ride(\/request|\/matching|\/active|\/)?$/.test(pathname);
 }
 
 /** Product rule: the global BottomNav stays available on every `_app` screen. */
@@ -36,4 +36,34 @@ export function resetGlobalShellScroll(
   if (!element) return;
   if (element.hasAttribute?.("data-chat-thread")) return;
   element.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function isChatThreadElement(element: {
+  hasAttribute?: (name: string) => boolean;
+  closest?: (selector: string) => Element | null;
+}): boolean {
+  if (element.hasAttribute?.("data-chat-thread")) return true;
+  return Boolean(element.closest?.("[data-chat-thread]"));
+}
+
+/** Reset the app scroller and nested page scrollers, except the live chat thread. */
+export function resetAppRouteScroll(root: HTMLElement | null): void {
+  resetGlobalShellScroll(root);
+  if (typeof window !== "undefined") {
+    window.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
+    if (window.history && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }
+  if (typeof document !== "undefined") {
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }
+  if (!root) return;
+  const nested = root.querySelectorAll("[class*='overflow-y-auto'], [class*='overflow-auto']");
+  nested.forEach((node) => {
+    const element = node as HTMLElement;
+    if (isChatThreadElement(element)) return;
+    element.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
+  });
 }

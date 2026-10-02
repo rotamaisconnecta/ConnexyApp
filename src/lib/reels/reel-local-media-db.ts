@@ -1,17 +1,18 @@
 /* =========================================================
    reel-local-media-db.ts — Persistência local de mídia dos
-   Reels (Fase 3B). Vídeo/pôster em IndexedDB (API nativa,
-   sem lib externa). Chave do banco: connexy-reels-local-db
-   (v1), store "media" (keyPath: id).
-
-   Nunca armazena base64/blob em localStorage. Blobs são
-   expostos via URL.createObjectURL() apenas para exibição,
-   com cache por sessão; deleteReelMedia() revoga as URLs
-   correspondentes.
+   Reels. Arquivos reais no OPFS via local-media-storage;
+   este banco guarda metadados e, só se OPFS faltar, o Blob.
 ========================================================= */
 
+import {
+  getLocalMediaBlob,
+  getLocalMediaObjectUrl,
+  removeLocalMedia,
+  saveLocalMedia,
+} from "@/lib/media/local-media-storage";
+
 const DB_NAME = "connexy-reels-local-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "media";
 
 export interface ReelMediaRecord {
@@ -21,7 +22,19 @@ export interface ReelMediaRecord {
   posterBlob: Blob | null;
   posterType: string | null;
   storedAt: string;
+  durationMs?: number;
 }
+
+type StoredReelMedia = {
+  id: string;
+  videoType: string;
+  posterType: string | null;
+  storedAt: string;
+  videoMediaId: string;
+  posterMediaId: string | null;
+  videoBlob?: Blob;
+  posterBlob?: Blob | null;
+};
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -60,8 +73,6 @@ function withStore<T>(
   );
 }
 
-/* ─── Cache de object URLs por sessão ───────────────────── */
-
 const objectUrlCache = new Map<string, string>();
 const recordCache = new Map<string, ReelMediaRecord>();
 
@@ -69,8 +80,63 @@ function posterCacheKey(reelId: string): string {
   return `poster:${reelId}`;
 }
 
+function posterMediaId(reelId: string): string {
+  return `${reelId}-poster`;
+}
+
+async function hydrate(row: StoredReelMedia): Promise<ReelMediaRecord> {
+  let videoBlob = row.videoBlob;
+  if (!videoBlob) {
+    videoBlob = await getLocalMediaBlob(row.videoMediaId || row.id);
+  }
+  let posterBlob = row.posterBlob ?? null;
+  if (!posterBlob && row.posterMediaId) {
+    posterBlob = await getLocalMediaBlob(row.posterMediaId).catch(() => null);
+  }
+  return {
+    id: row.id,
+    videoBlob,
+    videoType: row.videoType,
+    posterBlob,
+    posterType: row.posterType,
+    storedAt: row.storedAt,
+  };
+}
+
 export async function saveReelMedia(record: ReelMediaRecord): Promise<void> {
-  await withStore("readwrite", (store) => store.put(record));
+  const video = await saveLocalMedia({
+    id: record.id,
+    kind: "reel",
+    scope: "reel",
+    blob: record.videoBlob,
+    mimeType: record.videoType,
+    fileName: `${record.id}.${record.videoType.includes("mp4") ? "mp4" : "webm"}`,
+    durationMs: record.durationMs,
+  });
+  let posterId: string | null = null;
+  if (record.posterBlob) {
+    const poster = await saveLocalMedia({
+      id: posterMediaId(record.id),
+      kind: "photo",
+      scope: "reel",
+      blob: record.posterBlob,
+      mimeType: record.posterType || "image/jpeg",
+      fileName: `${record.id}-poster.jpg`,
+    });
+    posterId = poster.id;
+  }
+  const stored: StoredReelMedia = {
+    id: record.id,
+    videoType: record.videoType,
+    posterType: record.posterType,
+    storedAt: record.storedAt,
+    videoMediaId: video.id,
+    posterMediaId: posterId,
+    ...(video.backend === "fallback"
+      ? { videoBlob: record.videoBlob, posterBlob: record.posterBlob }
+      : {}),
+  };
+  await withStore("readwrite", (store) => store.put(stored));
   recordCache.set(record.id, record);
   for (const key of [record.id, posterCacheKey(record.id)]) {
     const url = objectUrlCache.get(key);
@@ -84,33 +150,50 @@ export async function saveReelMedia(record: ReelMediaRecord): Promise<void> {
 export async function getReelMedia(reelId: string): Promise<ReelMediaRecord | null> {
   const cached = recordCache.get(reelId);
   if (cached) return cached;
-  const record = await withStore<ReelMediaRecord | undefined>("readonly", (store) =>
+  const record = await withStore<StoredReelMedia | undefined>("readonly", (store) =>
     store.get(reelId),
   );
   if (!record) return null;
-  recordCache.set(reelId, record);
-  return record;
+  try {
+    const hydrated = await hydrate(record);
+    recordCache.set(reelId, hydrated);
+    return hydrated;
+  } catch {
+    return null;
+  }
 }
 
 export async function getReelVideoUrl(reelId: string): Promise<string | null> {
   const cached = objectUrlCache.get(reelId);
   if (cached) return cached;
-  const record = await getReelMedia(reelId);
-  if (!record) return null;
-  const url = URL.createObjectURL(record.videoBlob);
-  objectUrlCache.set(reelId, url);
-  return url;
+  try {
+    const url = await getLocalMediaObjectUrl(reelId);
+    objectUrlCache.set(reelId, url);
+    return url;
+  } catch {
+    const record = await getReelMedia(reelId);
+    if (!record) return null;
+    const url = URL.createObjectURL(record.videoBlob);
+    objectUrlCache.set(reelId, url);
+    return url;
+  }
 }
 
 export async function getReelPosterUrl(reelId: string): Promise<string | null> {
-  const record = await getReelMedia(reelId);
-  if (!record?.posterBlob) return null;
   const key = posterCacheKey(reelId);
   const cached = objectUrlCache.get(key);
   if (cached) return cached;
-  const url = URL.createObjectURL(record.posterBlob);
-  objectUrlCache.set(key, url);
-  return url;
+  try {
+    const url = await getLocalMediaObjectUrl(posterMediaId(reelId));
+    objectUrlCache.set(key, url);
+    return url;
+  } catch {
+    const record = await getReelMedia(reelId);
+    if (!record?.posterBlob) return null;
+    const url = URL.createObjectURL(record.posterBlob);
+    objectUrlCache.set(key, url);
+    return url;
+  }
 }
 
 export async function listStoredReelIds(): Promise<string[]> {
@@ -121,6 +204,8 @@ export async function listStoredReelIds(): Promise<string[]> {
 
 export async function deleteReelMedia(reelId: string): Promise<void> {
   await withStore("readwrite", (store) => store.delete(reelId));
+  await removeLocalMedia(reelId).catch(() => undefined);
+  await removeLocalMedia(posterMediaId(reelId)).catch(() => undefined);
   for (const key of [reelId, posterCacheKey(reelId)]) {
     const url = objectUrlCache.get(key);
     if (url) {

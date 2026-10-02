@@ -16,4 +16,11 @@ export const Spacing = {
   "6xl": "64px",
 } as const;
 
+/** Mobile discovery rhythm: one large card, next item only peeks. */
+export const CarouselRhythm = {
+  peek: "86%",
+  gap: Spacing.md,
+  gutter: Spacing.xl,
+} as const;
+
 export type SpacingToken = (typeof Spacing)[keyof typeof Spacing];

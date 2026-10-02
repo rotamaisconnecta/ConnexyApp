@@ -27,6 +27,7 @@ export const StoredMessageKind = {
   IMAGE: "image",
   VIDEO: "video",
   AUDIO: "audio",
+  FILE: "file",
 } as const;
 
 export type StoredMessageKindValue = (typeof StoredMessageKind)[keyof typeof StoredMessageKind];
@@ -41,10 +42,15 @@ export interface StoredMessagePayload {
   route?: string;
   routeType?: "event" | "place";
   dataUrl?: string;
+  mediaId?: string;
   mimeType?: string;
   fileName?: string;
+  fileSize?: number;
+  durationSec?: number;
   width?: number;
   height?: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface StoredMessage extends PersistedEntity {
@@ -58,7 +64,7 @@ export interface StoredMessage extends PersistedEntity {
   text: string;
   /** Epoch milliseconds de criação. */
   at: number;
-  /** Subconjunto suportado localmente. Áudio entra só como kind de lista (sem MediaRecorder). */
+  /** Subconjunto suportado localmente. Áudio, foto e vídeo usam mediaId no payload. */
   kind?: StoredMessageKindValue;
   payload?: StoredMessagePayload;
 }

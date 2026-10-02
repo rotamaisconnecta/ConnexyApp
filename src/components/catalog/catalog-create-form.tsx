@@ -112,7 +112,7 @@ export function CatalogCreateForm({ kind, title }: CatalogCreateFormProps) {
         toast.error("Cadastre um negócio antes de criar a oferta.");
         return;
       }
-      const entity = createCatalogOffer({
+      createCatalogOffer({
         businessId: hostId,
         title: name,
         description,
@@ -120,7 +120,7 @@ export function CatalogCreateForm({ kind, title }: CatalogCreateFormProps) {
         validUntil: `${validUntil}T23:59:00`,
       });
       toast.success("Oferta salva no catálogo local.");
-      navigate({ to: "/business/$businessId", params: { businessId: entity.businessId } });
+      navigate({ to: "/marketplace" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível salvar.");
     } finally {

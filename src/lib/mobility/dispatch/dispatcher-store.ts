@@ -21,6 +21,7 @@ import type {
   RideDispatcher,
   RideOffer,
 } from "./dispatch-types";
+import type { RideCategory } from "../demo-fare";
 import type { TripDriver } from "../trip/trip-types";
 
 /* ─── Estado interno ─────────────────────────────────────── */
@@ -300,7 +301,60 @@ const LocalDispatcher: RideDispatcher = {
   },
 };
 
+export function acceptedDispatchCategories(trip: DispatchTripSnapshot): RideCategory[] {
+  if (trip.acceptedCategories && trip.acceptedCategories.length > 0) {
+    return trip.acceptedCategories;
+  }
+  return [trip.category];
+}
+
+function isDispatchableDriver(
+  driver: DemoDriver,
+  entry: Pick<DispatchEntry, "offeredDriverIds" | "declinedDriverIds">,
+): boolean {
+  if (driver.status !== "available") return false;
+  if (entry.offeredDriverIds.includes(driver.id)) return false;
+  if (entry.declinedDriverIds.includes(driver.id)) return false;
+  return true;
+}
+
 /* ─── Ofertar ao próximo motorista elegível ──────────────── */
+
+/* Escolhe o motorista do dispositivo ou o mais próximo.
+   requireCategory =true restringe às modalidades aceitas na corrida;
+   a segunda passada (false) existe para a corrida nunca ficar presa
+   em "buscando" quando nenhum motorista da modalidade sobrou. */
+function pickNextDispatchDriver(
+  request: DispatchRequest,
+  entry: DispatchEntry,
+  requireCategory: boolean,
+): DemoDriver | null {
+  const origin = request.trip.origin;
+  const accepted = requireCategory ? acceptedDispatchCategories(request.trip) : null;
+  const matchesCategory = (driver: DemoDriver): boolean =>
+    accepted === null || accepted.includes(driver.category);
+
+  // O motorista demo registrado neste dispositivo (DEMO_DRIVER_ID) tem
+  // prioridade quando estiver disponível e elegível — a tela /driver é o
+  // dono deste dispositivo. Sem isso a corrida ia sempre para o motorista
+  // mais próximo (nem sempre o do dispositivo).
+  const deviceDriver = state.fleet.find((driver) => driver.id === DEMO_DRIVER_ID);
+  if (deviceDriver && isDispatchableDriver(deviceDriver, entry) && matchesCategory(deviceDriver)) {
+    return deviceDriver;
+  }
+
+  let next: DemoDriver | null = null;
+  let best = Infinity;
+  for (const driver of state.fleet) {
+    if (!isDispatchableDriver(driver, entry) || !matchesCategory(driver)) continue;
+    const d = distanceMeters(origin.lat, origin.lng, driver.lat, driver.lng);
+    if (d < best) {
+      best = d;
+      next = driver;
+    }
+  }
+  return next;
+}
 
 function offerToNext(tripId: string): void {
   const entry = getEntry(tripId);
@@ -311,36 +365,11 @@ function offerToNext(tripId: string): void {
   const destination = request.trip.destination;
   if (!destination) return;
 
+  const next =
+    pickNextDispatchDriver(request, entry, true) ?? pickNextDispatchDriver(request, entry, false);
+  if (!next) return; /* sem motoristas disponíveis: Trip segue "buscando" */
+
   const origin = request.trip.origin;
-  let next: DemoDriver | null = null;
-  let best = Infinity;
-
-  // O motorista demo registrado neste dispositivo (DEMO_DRIVER_ID) tem
-  // prioridade quando estiver disponível e elegível — a tela /driver é o
-  // dono deste dispositivo. Sem isso a corrida ia sempre para o motorista
-  // mais próximo (nem sempre o do dispositivo).
-  const deviceDriver = state.fleet.find((driver) => driver.id === DEMO_DRIVER_ID);
-  if (
-    deviceDriver &&
-    deviceDriver.status === "available" &&
-    !entry.offeredDriverIds.includes(deviceDriver.id) &&
-    !entry.declinedDriverIds.includes(deviceDriver.id)
-  ) {
-    next = deviceDriver;
-  } else {
-    for (const driver of state.fleet) {
-      if (driver.status !== "available") continue;
-      if (entry.offeredDriverIds.includes(driver.id)) continue;
-      if (entry.declinedDriverIds.includes(driver.id)) continue;
-      const d = distanceMeters(origin.lat, origin.lng, driver.lat, driver.lng);
-      if (d < best) {
-        best = d;
-        next = driver;
-      }
-    }
-  }
-  if (!next) return; /* sem motoristas elegíveis: Trip segue "buscando" */
-
   const offer: RideOffer = {
     id: `offer-${tripId}-${next.id}-${Date.now()}`,
     tripId,
@@ -358,7 +387,7 @@ function offerToNext(tripId: string): void {
     durationMinutes: request.trip.durationMinutes,
     price: request.trip.estimatedFare,
     paymentMethod: request.trip.paymentMethod,
-    category: request.trip.category,
+    category: next.category,
     offeredAt: new Date().toISOString(),
   };
 

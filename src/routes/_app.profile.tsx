@@ -26,6 +26,7 @@ import {
   Tag,
   WalletCards,
 } from "lucide-react";
+import { TypeScale } from "@/theme/typography";
 import { MORE_MENU_ITEMS } from "@/lib/navigation/more-menu";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
 import { readDemoSettings, writeDemoSettings } from "@/lib/demo/demo-settings";
@@ -85,6 +86,12 @@ const SETTINGS = [
 
 type SettingId = (typeof SETTINGS)[number]["id"];
 
+const SETTINGS_ROW =
+  "grid min-h-[4.5rem] w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3.5 text-left";
+const SETTINGS_ICON = "grid h-10 w-10 place-items-center rounded-2xl";
+const SETTINGS_TITLE = "block text-sm font-semibold";
+const SETTINGS_DESC = "mt-0.5 block text-[13px] leading-snug text-muted-foreground";
+
 function ProfilePage() {
   const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -115,8 +122,8 @@ function ProfilePage() {
       <StatusBar />
       <header className="flex items-center justify-between px-5 pb-5 pt-1">
         <div>
-          <h1 className="font-display text-xl font-bold">Configurações</h1>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <h1 className={`font-display font-bold ${TypeScale.screenTitle}`}>Configurações</h1>
+          <p className={`mt-0.5 text-muted-foreground ${TypeScale.caption}`}>
             Controle sua conta e suas preferências
           </p>
         </div>
@@ -180,52 +187,50 @@ function ProfilePage() {
                 }
                 setActiveSetting(id);
               }}
-              className={`flex items-center gap-3 px-4 py-4 transition-colors hover:bg-accent/40 ${index > 0 ? "border-t border-border" : ""}`}
+              className={`${SETTINGS_ROW} transition-colors hover:bg-accent/40 ${index > 0 ? "border-t border-border" : ""}`}
             >
-              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
-                <Icon className="h-4.5 w-4.5" />
+              <span className={`${SETTINGS_ICON} bg-primary/10 text-primary`}>
+                <Icon className="h-[18px] w-[18px]" />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">{title}</span>
-                <span className="mt-0.5 block text-[11px] text-muted-foreground">
+              <span className="min-w-0">
+                <span className={SETTINGS_TITLE}>{title}</span>
+                <span className={SETTINGS_DESC}>
                   {id === "language" ? storedSettings.language : description}
                 </span>
               </span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
             </button>
           ))}
         </section>
 
         <Link
           to="/driver"
-          className="flex items-center gap-3 rounded-3xl border border-primary/20 bg-primary/[0.055] p-4 text-primary shadow-soft transition active:scale-[0.99]"
+          className={`${SETTINGS_ROW} rounded-3xl border border-primary/20 bg-primary/[0.055] text-primary shadow-soft transition active:scale-[0.99]`}
         >
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary text-primary-foreground">
+          <span className={`${SETTINGS_ICON} bg-primary text-primary-foreground`}>
             <CarFront className="h-5 w-5" />
           </span>
-          <span className="flex-1">
+          <span className="min-w-0">
             <span className="block text-sm font-bold">Torne-se um motorista</span>
-            <span className="mt-0.5 block text-[11px] text-muted-foreground">
-              Dirija com o Connexy e ganhe no seu ritmo
-            </span>
+            <span className={SETTINGS_DESC}>Dirija com o Connexy e ganhe no seu ritmo</span>
           </span>
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5 shrink-0" />
         </Link>
 
         <Link
           to="/my-connexy"
-          className="flex items-center gap-3 rounded-3xl bg-gradient-brand p-4 text-white shadow-elegant transition active:scale-[0.99]"
+          className={`${SETTINGS_ROW} rounded-3xl bg-gradient-brand text-white shadow-elegant transition active:scale-[0.99]`}
         >
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/16">
+          <span className={`${SETTINGS_ICON} bg-white/16`}>
             <SlidersHorizontal className="h-5 w-5" />
           </span>
-          <span className="flex-1">
+          <span className="min-w-0">
             <span className="block text-sm font-bold">Meu Connexy</span>
-            <span className="mt-0.5 block text-[11px] text-white/80">
+            <span className="mt-0.5 block text-[13px] text-white/80">
               Estatísticas e criações do MVP local
             </span>
           </span>
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5 shrink-0" />
         </Link>
 
         <button

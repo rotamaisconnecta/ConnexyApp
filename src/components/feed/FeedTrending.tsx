@@ -10,8 +10,7 @@ interface FeedTrendingProps {
   data: { items: Array<TrendingSectionData["items"][number] | PremiumCard> };
 }
 
-const TRENDING_CARD_WIDTH = { mobile: 240, tablet: 248, desktop: 256 } as const;
-const TRENDING_CARD_HEIGHT = 380;
+const TRENDING_CARD_HEIGHT = 468;
 
 const TREND_ICONS = {
   up: TrendingUp,
@@ -39,7 +38,7 @@ export function FeedTrending({ data }: FeedTrendingProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -62,8 +61,8 @@ export function FeedTrending({ data }: FeedTrendingProps) {
       <PremiumCarousel
         section="trending"
         items={data.items}
-        cardWidths={TRENDING_CARD_WIDTH}
         cardHeight={TRENDING_CARD_HEIGHT}
+        cardSize="min"
         renderCard={(item) => {
           if ("kind" in item) {
             return <PremiumCardView card={item} compact />;
@@ -81,7 +80,7 @@ export function FeedTrending({ data }: FeedTrendingProps) {
                   {legacy.emoji}
                 </span>
                 <div className="min-w-0">
-                  <div className="font-display font-bold text-sm truncate">{legacy.title}</div>
+                  <div className="font-display font-bold text-sm leading-snug">{legacy.title}</div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <TrendIcon className={`h-3 w-3 ${trendColor}`} />
                     <span className={`text-[11px] font-semibold ${trendColor}`}>{trendLabel}</span>

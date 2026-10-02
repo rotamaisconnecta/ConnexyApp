@@ -237,6 +237,7 @@ export interface NearbyPeopleSectionData {
     distanceMeters: number;
     interests: string[];
     online: boolean;
+    headline?: string;
     commonalities?: { labels: string[]; total: number };
   }>;
 }
@@ -254,6 +255,7 @@ export interface NearbyPlacesSectionData {
     distanceMeters: number;
     open: boolean;
     hours?: string;
+    description?: string;
   }>;
 }
 

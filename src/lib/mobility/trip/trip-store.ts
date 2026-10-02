@@ -9,8 +9,8 @@
 
 import type { GeoLocation } from "../ride-types";
 import type { RouteStop } from "../route-utils";
-import { estimateRouteDistance, estimateRouteDuration, limitRouteStops } from "../route-utils";
-import { canTransition, isCancellable, isTerminal } from "./trip-machine";
+import { computeTripRouteMeta, limitRouteStops } from "../route-utils";
+import { canTransition, isCancellable, isPlanning, isTerminal } from "./trip-machine";
 import type { Trip, TripDriver, TripRating, TripStatus } from "./trip-types";
 import { isRideBlocked, registerRideBlock } from "./ride-blocks";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
@@ -91,14 +91,9 @@ function computeRouteMeta(
   stops: RouteStop[],
   destination: GeoLocation | null,
 ): { distanceMeters: number; durationMinutes: number } {
-  const points = [origin, ...stops.map((stop) => stop.location), destination ?? origin];
-  let total = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    total += estimateRouteDistance(points[i - 1], points[i]);
-  }
-  total = Math.max(400, Math.round(total));
-  const duration = estimateRouteDuration(total) + stops.length * 3;
-  return { distanceMeters: total, durationMinutes: duration };
+  const meta = computeTripRouteMeta(origin, stops, destination);
+  if (meta.ok) return { distanceMeters: meta.distanceMeters, durationMinutes: meta.durationMinutes };
+  return { distanceMeters: 400, durationMinutes: 3 };
 }
 
 /* ─── Persistência ───────────────────────────────────────── */
@@ -249,6 +244,30 @@ export function createTrip(seed: TripSeed): Trip {
   return trip;
 }
 
+/** Inicia a corrida ou atualiza origem/destino enquanto ainda está no planejamento. */
+export function startOrUpdatePlanningTrip(seed: TripSeed): Trip {
+  const current = state.trip;
+  if (current && isPlanning(current.status)) {
+    const destination = seed.destination ?? current.destination;
+    const stops =
+      seed.stops && seed.stops.length > 0 ? limitRouteStops(seed.stops) : current.stops;
+    const origin = current.origin;
+    const routeMeta = computeRouteMeta(origin, stops, destination);
+    return (
+      patchTrip({
+        origin,
+        destination,
+        stops,
+        source: seed.source ?? current.source,
+        companionLabel: seed.companionLabel ?? current.companionLabel,
+        distanceMeters: routeMeta.distanceMeters,
+        durationMinutes: routeMeta.durationMinutes,
+      }) ?? current
+    );
+  }
+  return createTrip(seed);
+}
+
 /* ─── Transição controlada por status ────────────────────── */
 
 export function transition(to: TripStatus, data?: Partial<Trip>): Trip | null {
@@ -283,14 +302,21 @@ export function patchTrip(patch: Partial<Trip>): Trip | null {
     ...patch,
     ...(patch.stops ? { stops: limitRouteStops(patch.stops) } : {}),
   };
+  const routeChanged =
+    Boolean(patch.origin) || patch.destination !== undefined || Boolean(patch.stops);
+  if (routeChanged && patch.distanceMeters === undefined) {
+    const routeMeta = computeRouteMeta(next.origin, next.stops, next.destination);
+    next.distanceMeters = routeMeta.distanceMeters;
+    next.durationMinutes = routeMeta.durationMinutes;
+  }
   persistAndNotify({ ...state, trip: next });
   return next;
 }
 
 /* ─── Motorista encontrado ───────────────────────────────── */
 
-export function markDriverFound(driver: TripDriver): Trip | null {
-  return transition("encontrado", { driver });
+export function markDriverFound(driver: TripDriver, extras?: Partial<Trip>): Trip | null {
+  return transition("encontrado", { driver, ...extras });
 }
 
 /* ─── Cancelamento centralizado ──────────────────────────── */

@@ -7,6 +7,8 @@ import { type ReactNode } from "react";
    Superfícies permanecem neutras (branco/preto/cinza). */
 export const RIDE_LILAC = "#A855F7";
 export const RIDE_PURPLE = "#6D28D9";
+export const RIDE_MAGENTA = "#E11D8F";
+export const RIDE_STOP = "#F97316";
 export const RIDE_INK = "#111111";
 export const RIDE_MUTED = "#6E6E73";
 
@@ -182,16 +184,19 @@ export function SecondaryCTA({
   children,
   onClick,
   className = "",
+  disabled = false,
 }: {
   children: ReactNode;
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-[16px] border-2 border-zinc-900/15 text-[14px] font-semibold text-[#111111] transition-colors hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-800 ${className}`}
+      disabled={disabled}
+      className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-[16px] border-2 border-zinc-900/15 text-[14px] font-semibold text-[#111111] transition-colors hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-800 disabled:opacity-45 ${className}`}
     >
       {children}
     </button>

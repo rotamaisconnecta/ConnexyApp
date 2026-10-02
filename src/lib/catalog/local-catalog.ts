@@ -400,7 +400,7 @@ export function mergeCatalogBusinesses(fixtures: readonly Business[]): Business[
       if (extra.length === 0) return business;
       return {
         ...business,
-        promotions: [...business.promotions, ...extra],
+        promotions: [...extra, ...business.promotions],
         couponCount: business.couponCount + extra.length,
       };
     });

@@ -1,45 +1,62 @@
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { visibleMediaCaption } from "@/lib/chat/visible-media-caption";
 
 interface ImageMessageProps {
   url: string;
   caption?: string;
   width?: number;
   height?: number;
+  mediaId?: string;
+  selecting?: boolean;
+  onOpenMedia?: () => void;
 }
 
-export function ImageMessage({ url, caption, width, height }: ImageMessageProps) {
-  const [loaded, setLoaded] = useState(false);
+export function ImageMessage({
+  url,
+  caption,
+  width,
+  height,
+  selecting = false,
+  onOpenMedia,
+}: ImageMessageProps) {
+  const visibleCaption = visibleMediaCaption(caption);
+  const ready = Boolean(url);
   const [error, setError] = useState(false);
 
   return (
-    <div className="rounded-2xl overflow-hidden">
-      {!error ? (
+    <button
+      type="button"
+      disabled={!ready || error}
+      onClick={(event) => {
+        if (selecting || !ready || error) {
+          event.preventDefault();
+          return;
+        }
+        onOpenMedia?.();
+      }}
+      className="block w-full overflow-hidden rounded-[24px] text-left shadow-[0_12px_28px_rgba(24,24,43,0.06)]"
+      aria-label={selecting ? "Selecionar foto" : "Abrir foto"}
+    >
+      {!error && ready ? (
         <div
-          className={cn("relative bg-muted animate-pulse", !loaded && "min-h-[120px]")}
+          className="relative bg-muted"
           style={width && height ? { aspectRatio: `${width}/${height}` } : undefined}
         >
           <img
             src={url}
-            alt={caption ?? "Imagem"}
-            onLoad={() => setLoaded(true)}
+            alt={visibleCaption ?? "Foto"}
+            draggable={false}
             onError={() => setError(true)}
-            className={cn(
-              "w-full object-cover transition-opacity",
-              loaded ? "opacity-100" : "opacity-0 absolute inset-0",
-            )}
+            className="pointer-events-none block w-full object-cover"
           />
         </div>
-      ) : (
-        <div className="flex items-center justify-center h-32 bg-muted rounded-2xl text-xs text-muted-foreground">
+      ) : error ? (
+        <div className="grid h-32 place-items-center bg-muted text-xs text-muted-foreground">
           Imagem indisponível
         </div>
+      ) : (
+        <div className="h-32 bg-muted" />
       )}
-      {caption && (
-        <p className="px-3 py-2 text-sm whitespace-pre-wrap break-words leading-relaxed">
-          {caption}
-        </p>
-      )}
-    </div>
+    </button>
   );
 }

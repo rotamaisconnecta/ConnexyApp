@@ -88,7 +88,7 @@ export function ConversationInviteButton({
       ? "Convite enviado"
       : status === "loading"
         ? "Carregando..."
-        : "Quero conversar";
+        : "Connexy";
 
   const handleClick = useCallback(async () => {
     if (status === "invited") return;

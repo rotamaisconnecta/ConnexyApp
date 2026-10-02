@@ -16,7 +16,7 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -72,7 +72,7 @@ export function FeedNearbyDrivers({ data }: FeedNearbyDriversProps) {
                   <span className="text-muted-foreground">· {driver.distance}</span>
                 </div>
                 <Link
-                  to="/ride"
+                  to="/ride/request"
                   className="mt-auto h-12 w-full rounded-full bg-gradient-brand text-white text-[13px] font-semibold grid place-items-center transition-all hover:brightness-110"
                 >
                   Solicitar

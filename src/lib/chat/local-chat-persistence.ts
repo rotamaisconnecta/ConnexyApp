@@ -38,6 +38,7 @@ import {
   MESSAGE_STORE,
 } from "@/lib/persistence/domain/chat-schema";
 import type { StoredConversation, StoredMessage } from "@/lib/persistence/domain/chat-entities";
+import { lastMessageKind } from "@/lib/persistence/domain/chat-entities";
 import { demoStorageKey, DEMO_DB_EVENT } from "@/lib/demo/demo-config";
 import { ConversationRepository } from "@/repositories/conversation.repository";
 import { MessageRepository } from "@/repositories/message.repository";
@@ -201,6 +202,32 @@ export function getLocalChatMessages(conversationId: string): StoredMessage[] {
   return [...conversation.values()].sort((a, b) => a.at - b.at);
 }
 
+export function getLocalChatMessage(conversationId: string, messageId: string): StoredMessage | null {
+  ensureRepositories();
+  hydrateFromLegacy();
+  return messageCache.get(conversationId)?.get(messageId) ?? null;
+}
+
+export function listCachedLocalChatMessages(): StoredMessage[] {
+  ensureRepositories();
+  hydrateFromLegacy();
+  const rows: StoredMessage[] = [];
+  for (const conversation of messageCache.values()) {
+    for (const message of conversation.values()) rows.push(message);
+  }
+  return rows;
+}
+
+function removeCachedMessage(conversationId: string, messageId: string): StoredMessage | null {
+  const conversation = messageCache.get(conversationId);
+  if (!conversation) return null;
+  const current = conversation.get(messageId) ?? null;
+  if (!current) return null;
+  conversation.delete(messageId);
+  if (conversation.size === 0) messageCache.delete(conversationId);
+  return current;
+}
+
 export function getLocalChatLastMessage(conversationId: string): StoredMessage | null {
   const messages = getLocalChatMessages(conversationId);
   return messages[messages.length - 1] ?? null;
@@ -343,6 +370,64 @@ export function touchLocalConversation(
     ensureLocalChatLoaded().then(async () => {
       const conversation = await conversations.applyLastMessage(conversationId, message);
       conversationCache.set(conversation.id, conversation);
+      notifyDataChanged();
+    }),
+  );
+}
+
+export async function persistDeleteLocalChatMessage(
+  conversationId: string,
+  messageId: string,
+): Promise<void> {
+  ensureRepositories();
+  const current = getLocalChatMessage(conversationId, messageId);
+  if (!current) {
+    throw new Error("Mensagem inexistente nesta conversa.");
+  }
+  if (!canPersistLocally()) {
+    removeCachedMessage(conversationId, messageId);
+    notifyDataChanged();
+    return;
+  }
+  await trackWrite(
+    ensureLocalChatLoaded().then(async () => {
+      const persisted = await messageRepository!.get(messageId);
+      if (persisted && persisted.conversationId !== conversationId) {
+        throw new Error("Mensagem inexistente nesta conversa.");
+      }
+      if (persisted) {
+        await messageRepository!.delete(messageId);
+      }
+      removeCachedMessage(conversationId, messageId);
+      notifyDataChanged();
+    }),
+  );
+}
+
+export async function refreshLocalConversationSummary(conversationId: string): Promise<void> {
+  const last = getLocalChatLastMessage(conversationId);
+  const { conversations } = ensureRepositories();
+  const cached = conversationCache.get(conversationId);
+  const nextSummary = (current: StoredConversation): StoredConversation => ({
+    ...current,
+    lastMessageText: last?.text ?? null,
+    lastMessageType: last ? lastMessageKind(last) : null,
+    updatedAt: last?.at ?? current.updatedAt,
+  });
+  if (!canPersistLocally()) {
+    if (cached) {
+      conversationCache.set(conversationId, nextSummary(cached));
+      notifyDataChanged();
+    }
+    return;
+  }
+  await trackWrite(
+    ensureLocalChatLoaded().then(async () => {
+      const existing = (await conversations.get(conversationId)) ?? cached;
+      if (!existing) return;
+      const next = nextSummary(existing);
+      await conversations.put(next);
+      conversationCache.set(next.id, next);
       notifyDataChanged();
     }),
   );

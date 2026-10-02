@@ -10,8 +10,7 @@ interface FeedRecommendationsProps {
   data: { items: Array<RecommendationsSectionData["items"][number] | PremiumCard> };
 }
 
-const RECOMMENDATIONS_CARD_WIDTH = { mobile: 240, tablet: 248, desktop: 256 } as const;
-const RECOMMENDATIONS_CARD_HEIGHT = 380;
+const RECOMMENDATIONS_CARD_HEIGHT = 468;
 
 export function FeedRecommendations({ data }: FeedRecommendationsProps) {
   return (
@@ -21,7 +20,7 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-6">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 mb-4 px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm" aria-hidden>
@@ -44,8 +43,8 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
       <PremiumCarousel
         section="recommendations"
         items={data.items}
-        cardWidths={RECOMMENDATIONS_CARD_WIDTH}
         cardHeight={RECOMMENDATIONS_CARD_HEIGHT}
+        cardSize="min"
         renderCard={(item) => {
           if ("kind" in item) {
             return <PremiumCardView card={item} compact />;
@@ -56,7 +55,7 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
           return (
             <Link
               to={legacy.route}
-              className="block h-full rounded-[20px] overflow-hidden transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
+              className="block h-full rounded-[20px] transition-all duration-300 hover:shadow-xl active:scale-[0.98]"
             >
               <div className="flex h-full flex-col gap-2 rounded-[20px] border border-border/50 bg-surface p-4 shadow-soft">
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-2xl">
@@ -65,7 +64,7 @@ export function FeedRecommendations({ data }: FeedRecommendationsProps) {
                 <div className="font-display font-bold text-sm leading-snug">
                   {legacy.title}
                 </div>
-                <div className="text-[11px] text-muted-foreground">{legacy.description}</div>
+                <div className="text-[11px] leading-snug text-muted-foreground">{legacy.description}</div>
                 <div className="mt-auto h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold grid place-items-center transition-colors hover:bg-primary/20">
                   Explorar
                 </div>

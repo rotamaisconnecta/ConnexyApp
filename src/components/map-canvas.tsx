@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { Colors, Gradients } from "@/theme";
 
 type Pin = {
   x: number;
@@ -51,44 +50,45 @@ export function MapCanvas({
   return (
     <div
       className={`relative overflow-hidden ${stretch ? "h-full w-full" : "rounded-2xl"} ${className}`}
-      style={{ ...(stretch ? {} : { height }), background: Gradients.soft }}
+      style={{ ...(stretch ? {} : { height }), background: "#F3F0EA" }}
     >
       <svg viewBox="0 0 400 300" className="absolute inset-0 h-full w-full">
-        {/* Blocks */}
-        {Array.from({ length: 8 }).map((_, i) => (
+        <rect width="400" height="300" fill="#F3F0EA" />
+        <rect x="0" y="168" width="400" height="78" fill="#D7ECF6" opacity="0.85" />
+        <path d="M 0 175 Q 90 188 170 172 T 400 186 L 400 246 Q 210 232 0 246 Z" fill="#C9E6F4" />
+        {Array.from({ length: 9 }).map((_, i) => (
           <rect
             key={`h${i}`}
             x={0}
-            y={30 + i * 40}
+            y={18 + i * 32}
             width={400}
-            height={22}
-            fill="#e8e0ff"
-            opacity={0.5}
+            height={14}
+            fill="#E7E1D6"
+            opacity={0.55}
           />
         ))}
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: 11 }).map((_, i) => (
           <rect
             key={`v${i}`}
-            x={20 + i * 40}
+            x={8 + i * 36}
             y={0}
-            width={22}
+            width={14}
             height={300}
-            fill="#e8e0ff"
-            opacity={0.5}
+            fill="#E7E1D6"
+            opacity={0.45}
           />
         ))}
-        {/* Streets */}
-        <line x1="0" y1="120" x2="400" y2="120" stroke={Colors.background} strokeWidth="10" />
-        <line x1="0" y1="220" x2="400" y2="220" stroke={Colors.background} strokeWidth="8" />
-        <line x1="200" y1="0" x2="200" y2="300" stroke={Colors.background} strokeWidth="10" />
-        <line x1="80" y1="0" x2="80" y2="300" stroke={Colors.background} strokeWidth="6" />
-        <line x1="320" y1="0" x2="320" y2="300" stroke={Colors.background} strokeWidth="6" />
-        {/* Park */}
-        <circle cx="320" cy="80" r="34" fill="#c7f1d9" />
-        <circle cx="60" cy="240" r="26" fill="#c7f1d9" />
-        {/* Route */}
+        <line x1="0" y1="118" x2="400" y2="118" stroke="#F7F5F1" strokeWidth="9" />
+        <line x1="0" y1="214" x2="400" y2="214" stroke="#F7F5F1" strokeWidth="7" />
+        <line x1="196" y1="0" x2="196" y2="300" stroke="#F7F5F1" strokeWidth="9" />
+        <line x1="72" y1="0" x2="72" y2="300" stroke="#F7F5F1" strokeWidth="5" />
+        <line x1="312" y1="0" x2="312" y2="300" stroke="#F7F5F1" strokeWidth="5" />
+        <ellipse cx="318" cy="86" rx="42" ry="30" fill="#CDE9D4" />
+        <ellipse cx="58" cy="228" rx="30" ry="22" fill="#CDE9D4" />
+        <ellipse cx="248" cy="198" rx="26" ry="18" fill="#D4EBC0" />
         {route && (
           <motion.path
+            key={routePath ?? "default-route"}
             d={routePath ?? "M 60 260 Q 140 260 200 200 T 340 60"}
             stroke={routeColor ?? "var(--primary)"}
             strokeWidth="5"
@@ -96,7 +96,7 @@ export function MapCanvas({
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 1.6, ease: "easeInOut" }}
+            transition={{ duration: 0.7, ease: "easeInOut" }}
           />
         )}
       </svg>

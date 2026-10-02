@@ -1,88 +1,95 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Play, Pause } from "lucide-react";
+import { Pause, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAudioDuration } from "@/lib/chat/chat-format";
+import { useLocalMediaUrl } from "@/hooks/use-local-media-url";
 
 interface AudioPlayerProps {
   durationSec: number;
   waveform?: number[];
   isMine?: boolean;
+  src?: string | null;
+  mediaId?: string | null;
 }
 
-export function AudioPlayer({ durationSec, waveform, isMine = false }: AudioPlayerProps) {
+export function AudioPlayer({
+  durationSec,
+  isMine = false,
+  src,
+  mediaId,
+}: AudioPlayerProps) {
+  const resolved = useLocalMediaUrl(mediaId);
+  const playable = resolved || src || null;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>(null);
-
-  const bars = waveform ?? generateDefaultWaveform(30);
+  const [currentSec, setCurrentSec] = useState(0);
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      audioRef.current?.pause();
     };
   }, []);
 
+  const total = Math.max(durationSec, 1);
+  const progress = Math.min(100, (currentSec / total) * 100);
+
   const togglePlay = useCallback(() => {
+    if (!playable) return;
+    if (!audioRef.current) audioRef.current = new Audio(playable);
+    else if (audioRef.current.src !== playable) audioRef.current.src = playable;
+    const audio = audioRef.current;
+    audio.ontimeupdate = () => setCurrentSec(audio.currentTime);
+    audio.onended = () => {
+      setPlaying(false);
+      setCurrentSec(0);
+    };
     if (playing) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      audio.pause();
       setPlaying(false);
       return;
     }
-
-    setPlaying(true);
-    setProgress(0);
-
-    intervalRef.current = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + 100 / (durationSec * 10);
-        if (next >= 100) {
-          clearInterval(intervalRef.current!);
-          setPlaying(false);
-          return 0;
-        }
-        return next;
-      });
-    }, 100);
-  }, [playing, durationSec]);
+    void audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  }, [playable, playing]);
 
   return (
-    <div className="flex min-w-0 w-full items-center gap-2.5">
+    <div className="flex min-w-[168px] w-full items-center gap-2.5">
       <button
         type="button"
         onClick={togglePlay}
+        disabled={!playable}
         className={cn(
-          "h-8 w-8 rounded-full grid place-items-center shrink-0 transition-colors",
+          "grid h-8 w-8 shrink-0 place-items-center rounded-full transition-transform active:scale-95",
           isMine
             ? "bg-primary-foreground/20 text-primary-foreground"
             : "bg-primary/15 text-primary",
         )}
         aria-label={playing ? "Pausar" : "Reproduzir"}
       >
-        {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
+        {!playable && mediaId ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : playing ? (
+          <Pause className="h-3.5 w-3.5" />
+        ) : (
+          <Play className="h-3.5 w-3.5 ml-0.5" />
+        )}
       </button>
 
-      <div className="flex-1 flex items-end gap-[2px] h-6">
-        {bars.map((value, i) => {
-          const activeIndex = Math.floor((progress / 100) * bars.length);
-          const isActive = i <= activeIndex;
-
-          return (
-            <div
-              key={i}
-              className={cn(
-                "w-[3px] rounded-full transition-colors duration-150",
-                isActive
-                  ? isMine
-                    ? "bg-primary-foreground/70"
-                    : "bg-primary"
-                  : isMine
-                    ? "bg-primary-foreground/25"
-                    : "bg-muted-foreground/30",
-              )}
-              style={{ height: `${Math.max(value * 100, 15)}%` }}
-            />
-          );
-        })}
+      <div className="min-w-0 flex-1">
+        <div
+          className={cn(
+            "h-[3px] overflow-hidden rounded-full",
+            isMine ? "bg-primary-foreground/25" : "bg-primary/20",
+          )}
+          aria-hidden
+        >
+          <div
+            className={cn(
+              "h-full rounded-full transition-[width] duration-150",
+              isMine ? "bg-primary-foreground" : "bg-primary",
+            )}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
       <span
@@ -91,14 +98,10 @@ export function AudioPlayer({ durationSec, waveform, isMine = false }: AudioPlay
           isMine ? "text-primary-foreground/70" : "text-muted-foreground",
         )}
       >
-        {playing
-          ? formatAudioDuration((progress / 100) * durationSec)
-          : formatAudioDuration(durationSec)}
+        {playing || currentSec > 0
+          ? `${formatAudioDuration(currentSec)} / ${formatAudioDuration(total)}`
+          : formatAudioDuration(total)}
       </span>
     </div>
   );
-}
-
-function generateDefaultWaveform(count: number): number[] {
-  return Array.from({ length: count }, () => Math.random() * 0.7 + 0.3);
 }

@@ -602,6 +602,15 @@ export function compatibilityScore(person: Person): number {
   return Math.min(99, 40 + shared * 20 + onlineBoost + proximityBoost);
 }
 
+/** Percentual de interesses em comum com o usuário atual. Reusa o overlap de `commonGround`. */
+export function sharedInterestPercent(person: { interests: readonly string[] }): number | null {
+  if (currentUser.interests.length === 0) return null;
+  const shared = person.interests.filter((interest) =>
+    currentUser.interests.includes(interest),
+  ).length;
+  return Math.round((shared / currentUser.interests.length) * 100);
+}
+
 export function compatibilityInfo(score: number): { text: string; className: string } | null {
   if (score >= 90) return { text: "Excelente Match", className: "bg-gradient-brand text-white" };
   if (score >= 75) return { text: "Alta Compatibilidade", className: "bg-primary/15 text-primary" };

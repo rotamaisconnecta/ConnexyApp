@@ -82,7 +82,7 @@ export function BusinessCard({ business, onSelect }: BusinessCardProps) {
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground line-clamp-2">{business.description}</p>
+        <p className="text-[11px] leading-snug text-muted-foreground">{business.description}</p>
 
         {business.tags.length > 0 && (
           <div className="flex items-center gap-1 flex-wrap">
@@ -99,7 +99,7 @@ export function BusinessCard({ business, onSelect }: BusinessCardProps) {
         )}
 
         <div className="flex items-center justify-between pt-1">
-          <span className="text-[11px] text-muted-foreground truncate max-w-[60%]">
+          <span className="text-[11px] leading-snug text-muted-foreground">
             {business.address}
           </span>
           {business.couponCount > 0 && (

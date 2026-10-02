@@ -22,9 +22,11 @@ import {
   getOutingRideSearch,
   isOutingRideAvailable,
   listOutgoingOutingInvites,
+  listReservedOutingInvites,
   sendOutingInvite,
   useOutingInviteVersion,
 } from "@/lib/marketplace/outing-invites";
+import { occupancyForCategory } from "@/lib/mobility/ride-occupancy";
 import { useNavigate } from "@tanstack/react-router";
 import { useDemoIdentity } from "@/lib/demo/demo-identity";
 
@@ -54,8 +56,6 @@ type OutingTarget = {
   latitude?: number | null;
   longitude?: number | null;
 };
-
-const MAX_COMPANIONS = 3;
 
 type CompanionStop = {
   id: string;
@@ -265,6 +265,12 @@ function InviteTogetherSheet({
   const candidates = people.filter((person) => person.id !== identity.id).slice(0, 7);
   const outgoing = listOutgoingOutingInvites(identity.id, target.id);
   void outingVersion;
+  const reservedIds = listReservedOutingInvites(identity.id, undefined, target.id).map(
+    (invite) => invite.personId,
+  );
+  const occupancy = occupancyForCategory("connexy", reservedIds);
+  const friendSlots = Math.max(0, occupancy.capacity - occupancy.requester);
+  const remainingSlots = occupancy.available;
   const rideAvailable = isOutingRideAvailable(identity.id, target.id);
   const allDeclined =
     outgoing.length > 0 &&
@@ -281,8 +287,8 @@ function InviteTogetherSheet({
   const togglePerson = (personId: string) => {
     setSelectedIds((current) => {
       if (current.includes(personId)) return current.filter((id) => id !== personId);
-      if (current.length >= MAX_COMPANIONS) {
-        toast.error("Você pode convidar até 3 pessoas para ir junto.");
+      if (current.length >= remainingSlots) {
+        toast.error(occupancy.vacancyLabel);
         return current;
       }
       return [...current, personId];
@@ -301,7 +307,14 @@ function InviteTogetherSheet({
       toast.error("Escolha ao menos uma pessoa para convidar.");
       return;
     }
+    let sent = 0;
     for (const companion of companions) {
+      if (occupancyForCategory("connexy", [
+        ...listReservedOutingInvites(identity.id, undefined, target.id).map((invite) => invite.personId),
+      ]).available <= 0) {
+        toast.error("Capacidade máxima atingida");
+        break;
+      }
       sendOutingInvite({
         fromUserId: identity.id,
         toUserId: companion.id,
@@ -309,11 +322,13 @@ function InviteTogetherSheet({
         message: message.trim(),
         stop: { address: companion.address, lat: companion.lat, lng: companion.lng },
       });
+      sent += 1;
     }
+    if (sent === 0) return;
     toast.success(
-      companions.length === 1
+      sent === 1
         ? `Convite enviado para ${companions[0].name.split(" ")[0]}.`
-        : `${companions.length} convites enviados.`,
+        : `${sent} convites enviados.`,
     );
   };
 
@@ -336,7 +351,8 @@ function InviteTogetherSheet({
           <div>
             <h2 className="font-display text-lg font-bold">Convidar para ir junto</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Convide até {MAX_COMPANIONS} amigos para {target.title} e divida a rota.
+              {occupancy.passengerLabel} · {occupancy.vacancyLabel}. Convide até {friendSlots} amigos
+              para {target.title} e divida a rota.
             </p>
           </div>
           <button
@@ -352,14 +368,14 @@ function InviteTogetherSheet({
             <label className="mt-5 block text-xs font-semibold">
               Quem você quer convidar?{" "}
               <span className="text-muted-foreground">
-                ({selectedIds.length}/{MAX_COMPANIONS})
+                ({selectedIds.length}/{remainingSlots})
               </span>
             </label>
             <ul className="mt-2 space-y-2">
               {candidates.map((person) => {
                 const location = companionStopFor(person);
                 const selected = selectedIds.includes(person.id);
-                const readsOnly = !selected && selectedIds.length >= MAX_COMPANIONS;
+                const readsOnly = !selected && selectedIds.length >= remainingSlots;
                 return (
                   <li key={person.id}>
                     <button

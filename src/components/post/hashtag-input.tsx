@@ -5,9 +5,15 @@ interface HashtagInputProps {
   tags: string[];
   onChange: (tags: string[]) => void;
   maxTags?: number;
+  placeholder?: string;
 }
 
-export function HashtagInput({ tags, onChange, maxTags = 10 }: HashtagInputProps) {
+export function HashtagInput({
+  tags,
+  onChange,
+  maxTags = 10,
+  placeholder = "Adicionar hashtags...",
+}: HashtagInputProps) {
   const [input, setInput] = useState("");
 
   const add = () => {
@@ -35,7 +41,7 @@ export function HashtagInput({ tags, onChange, maxTags = 10 }: HashtagInputProps
               add();
             }
           }}
-          placeholder="Adicionar hashtag"
+          placeholder={placeholder}
           maxLength={30}
           className="w-full rounded-xl border border-border bg-surface pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           aria-label="Adicionar hashtag"

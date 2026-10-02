@@ -3,6 +3,7 @@
    Pure TypeScript. No React. No side effects.
 ========================================================= */
 
+import { rideLocationHasCoordinates } from "./ride-request-context";
 import type { GeoLocation } from "./ride-types";
 
 export const MAX_ROUTE_STOPS = 3;
@@ -14,24 +15,37 @@ export interface RouteStop {
   location: GeoLocation;
   label: string;
   order: number;
+  companionId?: string;
 }
 
 /* ─── createStop ─────────────────────────────────────────── */
 
-export function createStop(location: GeoLocation, label: string, order: number): RouteStop {
+export function createStop(
+  location: GeoLocation,
+  label: string,
+  order: number,
+  companionId?: string,
+): RouteStop {
   return {
     id: `stop-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     location,
     label,
     order,
+    ...(companionId ? { companionId } : {}),
   };
 }
 
 /* ─── addStop ────────────────────────────────────────────── */
 
-export function addStop(stops: RouteStop[], location: GeoLocation, label: string): RouteStop[] {
+export function addStop(
+  stops: RouteStop[],
+  location: GeoLocation,
+  label: string,
+  companionId?: string,
+): RouteStop[] {
   if (stops.length >= MAX_ROUTE_STOPS) return stops;
-  const newStop = createStop(location, label, stops.length + 1);
+  if (companionId && stops.some((stop) => stop.companionId === companionId)) return stops;
+  const newStop = createStop(location, label, stops.length + 1, companionId);
   return [...stops, newStop];
 }
 
@@ -43,6 +57,19 @@ export function limitRouteStops(stops: RouteStop[]): RouteStop[] {
 
 export function removeStop(stops: RouteStop[], stopId: string): RouteStop[] {
   return stops.filter((s) => s.id !== stopId).map((s, i) => ({ ...s, order: i + 1 }));
+}
+
+export function replaceStop(
+  stops: RouteStop[],
+  stopId: string,
+  location: GeoLocation,
+  label: string,
+): RouteStop[] {
+  return stops.map((stop) =>
+    stop.id === stopId
+      ? { ...stop, label, location: { ...location, label, address: location.address } }
+      : stop,
+  );
 }
 
 /* ─── reorderStops ───────────────────────────────────────── */
@@ -131,4 +158,40 @@ export function estimateRouteDistance(origin: GeoLocation, destination: GeoLocat
 export function estimateRouteDuration(distanceMeters: number): number {
   const km = distanceMeters / 1000;
   return Math.max(3, Math.round(km * 3.5));
+}
+
+export function canComputeTripRoute(
+  origin: GeoLocation | null | undefined,
+  destination: GeoLocation | null | undefined,
+): boolean {
+  return rideLocationHasCoordinates(origin) && rideLocationHasCoordinates(destination);
+}
+
+export function computeTripRouteMeta(
+  origin: GeoLocation | null | undefined,
+  stops: RouteStop[],
+  destination: GeoLocation | null | undefined,
+): { distanceMeters: number; durationMinutes: number; ok: boolean } {
+  if (!canComputeTripRoute(origin, destination) || !origin || !destination) {
+    return { distanceMeters: 0, durationMinutes: 0, ok: false };
+  }
+  const points = buildRoutePoints(origin, destination, stops);
+  let total = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    if (!rideLocationHasCoordinates(points[i - 1]) || !rideLocationHasCoordinates(points[i])) {
+      return { distanceMeters: 0, durationMinutes: 0, ok: false };
+    }
+    total += estimateRouteDistance(points[i - 1], points[i]);
+  }
+  total = Math.max(400, Math.round(total));
+  const duration = estimateRouteDuration(total) + stops.length * 3;
+  return { distanceMeters: total, durationMinutes: duration, ok: true };
+}
+
+export function formatRouteDistance(meters: number): string {
+  return `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
+export function formatRouteDuration(minutes: number): string {
+  return `${minutes} min`;
 }

@@ -50,7 +50,7 @@ function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap",
+        "inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-snug",
         tone === "promo"
           ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white"
           : "bg-secondary text-foreground",
@@ -62,12 +62,18 @@ function Chip({
 }
 
 function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boolean }) {
-  const metaLine = card.subtitle ?? card.category;
+  const isPerson = card.kind === "person";
+  const bodyText = card.subtitle;
 
   return (
-    <div className="flex h-full flex-col rounded-[24px] border border-border/50 bg-surface overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+    <div className="flex min-h-[inherit] flex-col rounded-[24px] border border-border/50 bg-surface transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
       {(card.photo || card.emoji) && (
-        <div className="relative w-full shrink-0" style={{ height: "57%" }}>
+        <div
+          className={cn(
+            "relative w-full shrink-0 overflow-hidden rounded-t-[24px]",
+            compact ? "h-[132px]" : "h-[200px]",
+          )}
+        >
           {card.photo ? (
             <img
               src={card.photo}
@@ -82,7 +88,7 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
           )}
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {(card.badge || card.promo || card.kind !== "person") && (
+          {(card.badge || card.promo || !isPerson) && (
             <span className="absolute top-3 left-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-gray-800 shadow-soft">
               {card.badge ?? (card.promo ? "Promoção" : KIND_LABELS[card.kind])}
             </span>
@@ -90,7 +96,7 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
 
           {card.trend && <TrendBadge trend={card.trend} />}
 
-          {card.kind === "person" && card.online != null && (
+          {isPerson && card.online != null && (
             <span
               className={cn(
                 "absolute bottom-3 right-3 z-10 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-soft",
@@ -104,32 +110,52 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
       )}
 
       <div
-        className={cn("flex min-h-0 flex-1 flex-col gap-1", compact ? "px-4 py-3" : "px-6 py-4")}
+        className={cn(
+          "flex min-h-0 flex-1 flex-col",
+          compact ? "gap-1 px-3.5 py-2.5" : "gap-1.5 px-6 py-4",
+        )}
       >
-        <div className="flex items-start justify-between gap-2">
-          <span
-            className={cn(
-              "line-clamp-2 font-display font-bold leading-snug",
-              compact ? "text-[14px]" : "text-[15px]",
-            )}
-          >
-            {card.title}
-          </span>
-          {card.kind === "person" && card.compatibility != null && (
-            <span className="shrink-0 text-xs font-bold text-primary">{card.compatibility}%</span>
+        <span
+          className={cn(
+            "font-display font-bold leading-snug",
+            compact ? "text-[13px]" : "text-[15px]",
           )}
-        </div>
+        >
+          {card.title}
+        </span>
 
-        {metaLine && <span className="line-clamp-1 text-xs text-muted-foreground">{metaLine}</span>}
+        {bodyText ? (
+          <span className={cn("leading-snug text-muted-foreground", compact ? "text-[11px]" : "text-xs")}>
+            {bodyText}
+          </span>
+        ) : null}
 
-        {card.kind === "person" && card.commonalities && card.commonalities.total > 0 && (
-          <span className="line-clamp-1 text-[11px] font-medium text-primary">
+        {isPerson && card.category && card.category !== "Pessoas" ? (
+          <span className={cn("leading-snug text-muted-foreground/90", compact ? "text-[11px]" : "text-xs")}>
+            Interesses: {card.category}
+          </span>
+        ) : null}
+
+        {isPerson && card.commonalities && card.commonalities.total > 0 && (
+          <span className="text-[11px] font-medium leading-snug text-primary">
             {card.commonalities.total}{" "}
             {card.commonalities.total === 1 ? "coisa em comum" : "coisas em comum"}
           </span>
         )}
 
-        <div className="mt-1 flex flex-nowrap gap-1.5 overflow-hidden">
+        {isPerson && card.compatibility != null && (
+          <span className="text-[12px] font-semibold leading-none text-primary">
+            Compatibilidade {card.compatibility}%
+          </span>
+        )}
+
+        {!isPerson && card.category && card.badge !== card.category ? (
+          <span className={cn("leading-snug text-muted-foreground", compact ? "text-[11px]" : "text-xs")}>
+            {card.category}
+          </span>
+        ) : null}
+
+        <div className="mt-1 flex flex-wrap gap-1">
           {card.rating != null && (
             <Chip>
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
@@ -138,25 +164,25 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
           )}
           {card.distance != null && (
             <Chip>
-              <MapPin className="h-3 w-3 text-primary" />
+              <MapPin className="h-3 w-3 shrink-0 text-primary" />
               {card.distance}
             </Chip>
           )}
           {card.people != null && (
             <Chip>
-              <Users className="h-3 w-3 text-primary" />
+              <Users className="h-3 w-3 shrink-0 text-primary" />
               {card.people}
             </Chip>
           )}
           {card.promo && (
             <Chip tone="promo">
-              <Gift className="h-3 w-3" />
+              <Gift className="h-3 w-3 shrink-0" />
               {card.promo}
             </Chip>
           )}
           {card.hours && (
             <Chip>
-              <Clock className="h-3 w-3 text-muted-foreground" />
+              <Clock className="h-3 w-3 shrink-0 text-muted-foreground" />
               {card.hours}
             </Chip>
           )}
@@ -165,7 +191,7 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
         <div
           className={cn(
             "mt-auto w-full rounded-full bg-primary/10 text-primary font-semibold grid place-items-center transition-colors hover:bg-primary/20",
-            compact ? "h-10 text-[12px]" : "h-12 text-[13px]",
+            compact ? "h-9 text-[12px]" : "h-12 text-[13px]",
           )}
         >
           {CTA_LABEL[card.kind]}
@@ -182,7 +208,7 @@ export function PremiumCardView({ card, compact }: { card: PremiumCard; compact?
     return (
       <Link
         to={route}
-        className="block h-full rounded-[24px] overflow-hidden transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
+        className="block min-h-[inherit] rounded-[24px] transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
       >
         <CardShell card={card} compact={compact} />
       </Link>
@@ -190,7 +216,7 @@ export function PremiumCardView({ card, compact }: { card: PremiumCard; compact?
   }
 
   return (
-    <div className="h-full rounded-[24px] overflow-hidden">
+    <div className="min-h-[inherit] rounded-[24px]">
       <CardShell card={card} compact={compact} />
     </div>
   );

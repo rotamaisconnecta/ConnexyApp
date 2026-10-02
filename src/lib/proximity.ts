@@ -52,6 +52,12 @@ export function proximityLabel(meters: number): string {
   return LABELS[proximityTier(meters)];
 }
 
+/** Pessoas próximas na Home: categorias contextuais até 2 km; km acima disso. */
+export function formatHomePersonProximity(meters: number): string {
+  if (meters <= 2000) return proximityLabel(meters);
+  return formatDistance(meters);
+}
+
 export function proximityRadius(meters: number): string {
   return RADIUS[proximityTier(meters)];
 }

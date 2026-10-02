@@ -1,6 +1,6 @@
 /* =========================================================
    mock-sponsored-content.ts — Simulated sponsored content for
-   the "Descobertas locais" section of the home feed.
+   the "Destaques da região" section of the home feed.
    Dados simulados locais. Banco de dados ainda não conectado.
    Pure TypeScript. No React. No side effects. No Supabase.
 ========================================================= */

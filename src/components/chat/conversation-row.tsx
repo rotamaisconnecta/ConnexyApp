@@ -43,13 +43,13 @@ export function ConversationRow({ conversation, onGesture, onMenu }: Conversatio
       variants={item}
       data-conversation-id={conversation.id}
       data-participant-id={participant.id}
-      className="group relative flex items-center gap-3 rounded-2xl px-5 py-3 transition-colors hover:bg-accent/40 active:bg-accent"
+      className="group relative flex items-center gap-3.5 rounded-2xl px-5 py-3.5 transition-colors hover:bg-accent/40 active:bg-accent"
     >
       <Link
         to="/chat/$conversationId"
         params={{ conversationId: conversation.id }}
         aria-label={`Abrir conversa com ${participant.name}`}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
       >
         <ThreadAvatar conversation={conversation} />
 
@@ -57,7 +57,7 @@ export function ConversationRow({ conversation, onGesture, onMenu }: Conversatio
           <div className="flex items-center justify-between gap-2">
             <h3
               className={cn(
-                "truncate text-[15px] tracking-tight",
+                "truncate text-base tracking-tight",
                 unreadCount > 0
                   ? "font-semibold text-foreground"
                   : "font-medium text-foreground/90",
@@ -72,7 +72,7 @@ export function ConversationRow({ conversation, onGesture, onMenu }: Conversatio
               )}
               <span
                 className={cn(
-                  "text-[11px] tabular-nums",
+                  "text-xs tabular-nums",
                   unreadCount > 0 ? "font-semibold text-primary" : "text-muted-foreground",
                 )}
               >
@@ -83,11 +83,11 @@ export function ConversationRow({ conversation, onGesture, onMenu }: Conversatio
 
           <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
             <ThreadIcon className="h-3.5 w-3.5 shrink-0 text-primary/60" strokeWidth={2.2} />
-            <p className="truncate text-[12px] font-medium text-primary/80">{currentThread}</p>
+            <p className="truncate text-[13px] font-medium text-primary/80">{currentThread}</p>
           </div>
 
           <div className="mt-0.5 flex min-w-0 items-center gap-2">
-            <p className="flex-1 truncate text-[12px] text-muted-foreground">{lastMessage}</p>
+            <p className="flex-1 truncate text-[13px] text-muted-foreground">{lastMessage}</p>
             {proximity && (
               <span className="shrink-0 text-[10px] text-muted-foreground/70">{proximity}</span>
             )}
@@ -109,7 +109,7 @@ export function ConversationRow({ conversation, onGesture, onMenu }: Conversatio
               onGesture(conversation);
             }}
             className={cn(
-              "whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary transition-all duration-200",
+              "whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition-all duration-200",
               "hover:bg-primary/15 active:bg-primary/20",
               "sm:opacity-0 sm:group-hover:opacity-100",
             )}

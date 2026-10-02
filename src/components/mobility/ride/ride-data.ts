@@ -5,7 +5,7 @@ import type { RideCategory } from "@/lib/mobility/demo-fare";
 export const DEMO_ORIGIN: GeoLocation = {
   lat: -23.55,
   lng: -46.64,
-  label: "Sua localização",
+  label: "Minha localização atual",
   address: "Bela Cintra, 750",
 };
 
@@ -78,18 +78,27 @@ export type DriverMock = typeof MOCK_DRIVER;
 
 export const CATEGORY_INFO: Record<
   RideCategory,
-  { label: string; description: string; etaMinutes: number; icon: LucideIcon }
+  { label: string; description: string; etaMinutes: number; icon: LucideIcon; seats: number }
 > = {
-  connexy: { label: "Connexy", description: "Até 4 pessoas", etaMinutes: 4, icon: Car },
+  connexy: { label: "Connexy", description: "Até 4 pessoas", etaMinutes: 4, icon: Car, seats: 4 },
   conforto: {
     label: "Connexy Comfort",
     description: "Mais espaço e conforto · até 4",
     etaMinutes: 6,
     icon: CarTaxiFront,
+    seats: 4,
   },
-  moto: { label: "Moto", description: "1 pessoa · mais rápido", etaMinutes: 3, icon: Bike },
+  moto: { label: "Moto", description: "1 pessoa · mais rápido", etaMinutes: 3, icon: Bike, seats: 1 },
 };
+
+export function seatsForRideCategory(category: RideCategory): number {
+  return CATEGORY_INFO[category].seats;
+}
 
 export function destinationToGeo(dest: DemoDestination): GeoLocation {
   return { lat: dest.lat, lng: dest.lng, label: dest.address, address: dest.address };
+}
+
+export function ridePlaceToLocation(dest: DemoDestination): GeoLocation {
+  return { lat: dest.lat, lng: dest.lng, label: dest.name, address: dest.address };
 }

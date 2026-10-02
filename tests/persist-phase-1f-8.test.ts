@@ -120,8 +120,8 @@ describe("Fase 1F-8 — Momento reutiliza connexy:demo:posts", () => {
     expect(createPost).toContain("saveDemoPost");
 
     const hub = await source("src/routes/_app/create.tsx");
-    expect(hub).toContain('id: "moment"');
-    expect(hub).toContain('route: "/create/moment"');
+    expect(hub).not.toContain('id: "moment"');
+    expect(hub).not.toContain('route: "/create/moment"');
   });
 });
 

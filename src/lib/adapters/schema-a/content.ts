@@ -54,7 +54,11 @@ export function toRemotePostPrivacy(privacy: string): {
 }
 
 function mediaToJson(media: DemoPostMedia[]): Json {
-  return media.map((item) => ({ preview: item.preview, type: item.type }));
+  return media.map((item) => ({
+    preview: item.preview,
+    type: item.type,
+    ...(item.mediaId ? { mediaId: item.mediaId } : {}),
+  }));
 }
 
 function mediaFromJson(value: Json): DemoPostMedia[] {
@@ -65,7 +69,11 @@ function mediaFromJson(value: Json): DemoPostMedia[] {
     const record = item as Record<string, unknown>;
     if (typeof record.preview !== "string") continue;
     if (record.type !== "image" && record.type !== "video") continue;
-    media.push({ preview: record.preview, type: record.type });
+    media.push({
+      preview: record.preview,
+      type: record.type,
+      mediaId: typeof record.mediaId === "string" ? record.mediaId : undefined,
+    });
   }
   return media;
 }

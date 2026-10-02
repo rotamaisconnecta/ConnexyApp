@@ -15,6 +15,7 @@ import { isDetailSaved, toggleSavedDetail } from "@/lib/marketplace/saved-detail
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { CalendarDays, CarFront, MapPinned, Share2, Users } from "lucide-react";
 import { isBusinessReservable } from "@/lib/reservations/reservable";
+import { buildRideRequestSearch } from "@/lib/mobility/ride-request-context";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import type { Business } from "@/lib/marketplace/business-types";
@@ -210,13 +211,14 @@ function BusinessDetailPage() {
         )}
         <Link
           to="/ride/request"
-          search={{
-            destinationName: business.name,
-            destinationAddress: business.address,
-            destinationLat: business.location.lat,
-            destinationLng: business.location.lng,
+          search={buildRideRequestSearch({
+            id: business.id,
+            name: business.name,
+            address: business.address,
+            lat: business.location.lat,
+            lng: business.location.lng,
             source: "business",
-          }}
+          })}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-brand py-3.5 text-sm font-semibold text-white shadow-elegant transition active:scale-[0.98]"
         >
           <CarFront className="h-4 w-4" /> Pedir corrida pelo Connexy

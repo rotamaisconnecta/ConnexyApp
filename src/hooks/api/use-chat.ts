@@ -7,102 +7,17 @@ import type { ChatMessage } from "@/lib/chat/chat-types";
 import { MessageKind } from "@/lib/chat/chat-types";
 import { supabase } from "@/lib/supabase/client";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
-import {
-  getMessages,
-  sendLocalMediaMessage,
-  sendLocalMessage,
-  sendSharedContentMessage,
-} from "@/lib/demo/demo-db";
+import { getMessages, sendLocalMediaMessage, sendLocalMessage, sendLocationMessage, sendSharedContentMessage } from "@/lib/demo/demo-db";
+import { saveLocalMedia, getLocalMediaObjectUrl } from "@/lib/media/local-media-storage";
 import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
 import { getSchemaAConversations } from "@/lib/chat/schema-a-conversations";
+import { demoRowsToChatMessages } from "@/lib/chat/demo-chat-adapter";
+import { deleteOwnChatMessages } from "@/lib/chat/chat-message-actions";
 
 const PAGE_SIZE = 50;
 
 export function localChatQueryKey(conversationId: string | null) {
   return ["local-chat-messages", conversationId] as const;
-}
-
-function demoRowsToChatMessages(
-  conversationId: string,
-  rows: ReturnType<typeof getMessages>,
-  currentUserId: string | null,
-): ChatMessage[] {
-  return rows.map((m) => {
-    if (m.kind === "image" && m.payload?.dataUrl) {
-      return {
-        id: m.id,
-        conversationId: m.conversationId || conversationId,
-        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
-        kind: MessageKind.IMAGE,
-        url: m.payload.dataUrl,
-        caption: m.payload.fileName,
-        at: new Date(m.at),
-        status: "read" as const,
-        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
-      } satisfies ChatMessage;
-    }
-    if (m.kind === "video" && m.payload?.dataUrl) {
-      return {
-        id: m.id,
-        conversationId: m.conversationId || conversationId,
-        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
-        kind: MessageKind.VIDEO,
-        url: m.payload.dataUrl,
-        at: new Date(m.at),
-        status: "read" as const,
-        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
-      } satisfies ChatMessage;
-    }
-    if (m.kind === "event" && m.payload) {
-      return {
-        id: m.id,
-        conversationId: m.conversationId || conversationId,
-        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
-        kind: MessageKind.EVENT,
-        title: m.payload.title ?? m.text,
-        cover: m.payload.cover,
-        dateText: m.payload.dateText,
-        location: m.payload.location,
-        contentId: m.payload.id,
-        contentType: "event",
-        route: m.payload.route,
-        at: new Date(m.at),
-        status: "read" as const,
-        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
-      } satisfies ChatMessage;
-    }
-
-    if (m.kind === "location" && m.payload) {
-      return {
-        id: m.id,
-        conversationId: m.conversationId || conversationId,
-        from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
-        kind: MessageKind.LOCATION,
-        label: m.payload.title ?? m.text,
-        proximity: m.payload.proximity ?? "Local compartilhado",
-        cover: m.payload.cover,
-        lat: undefined,
-        lng: undefined,
-        contentId: m.payload.id,
-        contentType: "place",
-        route: m.payload.route,
-        at: new Date(m.at),
-        status: "read" as const,
-        senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
-      } satisfies ChatMessage;
-    }
-
-    return {
-      id: m.id,
-      conversationId: m.conversationId || conversationId,
-      from: m.senderId ? (m.senderId === currentUserId ? "me" : "them") : m.from,
-      kind: MessageKind.TEXT,
-      text: m.text,
-      at: new Date(m.at),
-      status: "read" as const,
-      senderName: m.senderName ?? (m.senderId === currentUserId ? "Você" : undefined),
-    } satisfies ChatMessage;
-  });
 }
 
 function readLocalChatMessages(
@@ -217,13 +132,73 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
   );
 
   const sendMedia = useCallback(
-    (kind: "image" | "video", dataUrl: string, mimeType: string, fileName: string) => {
+    async (input: {
+      kind: "image" | "video" | "audio" | "file";
+      blob: Blob;
+      mimeType: string;
+      fileName: string;
+      durationSec?: number;
+    }) => {
       if (!local || !conversationId) return;
-      sendLocalMediaMessage(conversationId, kind, dataUrl, mimeType, fileName, getDemoIdentity());
+      const record = await saveLocalMedia({
+        kind: input.kind === "audio" ? "audio" : "photo",
+        scope: "conversation",
+        blob: input.blob,
+        mimeType: input.mimeType,
+        fileName: input.fileName,
+        durationMs: input.durationSec ? input.durationSec * 1000 : undefined,
+      });
+      await getLocalMediaObjectUrl(record.id);
+      sendLocalMediaMessage(
+        conversationId,
+        input.kind,
+        {
+          mediaId: record.id,
+          mimeType: record.mimeType,
+          fileName: input.fileName,
+          durationSec: input.durationSec,
+          fileSize: input.blob.size,
+        },
+        getDemoIdentity(),
+      );
       queryClient.setQueryData(
         localChatQueryKey(conversationId),
         readLocalChatMessages(conversationId, currentUserId),
       );
+    },
+    [local, conversationId, currentUserId, queryClient],
+  );
+
+  const sendLocation = useCallback(
+    (input: { label: string; proximity: string; lat: number; lng: number }) => {
+      if (!local || !conversationId) return;
+      sendLocationMessage(conversationId, input, getDemoIdentity());
+      queryClient.setQueryData(
+        localChatQueryKey(conversationId),
+        readLocalChatMessages(conversationId, currentUserId),
+      );
+    },
+    [local, conversationId, currentUserId, queryClient],
+  );
+
+  const deleteMessages = useCallback(
+    async (messageIds: readonly string[]) => {
+      if (!local || !conversationId || !currentUserId) {
+        return {
+          deletedIds: [] as string[],
+          failed: [{ messageId: messageIds[0] ?? "", reason: "not-found" as const }],
+        };
+      }
+      const result = await deleteOwnChatMessages({
+        conversationId,
+        currentUserId,
+        messageIds,
+      });
+      queryClient.setQueryData(
+        localChatQueryKey(conversationId),
+        readLocalChatMessages(conversationId, currentUserId),
+      );
+      return result;
     },
     [local, conversationId, currentUserId, queryClient],
   );
@@ -456,6 +431,8 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       sendMessage: demoSend,
       sendSharedContent,
       sendMedia,
+      sendLocation,
+      deleteMessages,
       loadMore: () => Promise.resolve(),
       retry: demoSend,
       subscriptionStatus,
@@ -470,7 +447,9 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
       hasMore: false,
       sendMessage: sendSchemaAMessage,
       sendSharedContent: () => undefined,
-      sendMedia: () => undefined,
+      sendMedia: async () => undefined,
+      sendLocation: () => undefined,
+      deleteMessages: async () => ({ deletedIds: [], failed: [] }),
       loadMore: () => Promise.resolve(),
       retry: () => {
         if (!conversationId) return;
@@ -492,7 +471,9 @@ export function useChat({ conversationId, currentUserId }: UseChatOptions) {
     hasMore,
     sendMessage,
     sendSharedContent,
-    sendMedia: () => undefined,
+    sendMedia: async () => undefined,
+    sendLocation: () => undefined,
+    deleteMessages: async () => ({ deletedIds: [], failed: [] }),
     loadMore,
     retry: loadMessages,
     subscriptionStatus,

@@ -21,6 +21,7 @@ import { z } from "zod";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import { BackButton } from "@/components/navigation/back-button";
 import { StatusBar } from "@/components/phone-frame";
+import { MediaViewer } from "@/components/system/media-viewer";
 import { enginePersonById } from "@/lib/engine/engine-detail";
 import { useAuth } from "@/hooks/use-auth";
 import { isDemoMode } from "@/lib/demo/demo-config";
@@ -186,7 +187,8 @@ function ViewedProfile() {
     .slice(0, 6);
   const firstName = person.name.split(" ")[0];
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const [publicationTab, setPublicationTab] = useState<"Tudo" | "Fotos" | "Momentos">("Tudo");
+  const [publicationTab, setPublicationTab] = useState<"Tudo" | "Fotos">("Tudo");
+  const [selectedPublicationIndex, setSelectedPublicationIndex] = useState<number | null>(null);
 
   const publicationImages = useMemo(() => {
     const momentImages = (person.moments ?? [])
@@ -201,9 +203,7 @@ function ViewedProfile() {
   const visiblePublicationImages =
     publicationTab === "Tudo"
       ? publicationImages
-      : publicationTab === "Fotos"
-        ? publicationImages.filter((_, index) => index % 2 === 0)
-        : publicationImages.filter((_, index) => index % 2 === 1);
+      : publicationImages.filter((_, index) => index % 2 === 0);
 
   const cover = coverImages[person.name.length % coverImages.length];
   const sharedInterestCount = common.sharedInterests.length;
@@ -468,11 +468,14 @@ function ViewedProfile() {
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-display text-lg font-bold">Publicações</h3>
           <div className="flex items-center gap-1">
-            {(["Tudo", "Fotos", "Momentos"] as const).map((tab) => (
+            {(["Tudo", "Fotos"] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
-                onClick={() => setPublicationTab(tab)}
+                onClick={() => {
+                  setPublicationTab(tab);
+                  setSelectedPublicationIndex(null);
+                }}
                 className={`rounded-full px-3 py-1.5 text-[11px] transition ${
                   publicationTab === tab
                     ? "bg-primary/[0.09] font-semibold text-primary"
@@ -489,11 +492,7 @@ function ViewedProfile() {
             <button
               key={`${source}-${index}`}
               type="button"
-              onClick={() =>
-                toast("Publicação aberta", {
-                  description: `Conteúdo compartilhado por ${firstName}.`,
-                })
-              }
+              onClick={() => setSelectedPublicationIndex(index)}
               className="aspect-square overflow-hidden bg-secondary"
               aria-label={`Abrir publicação ${index + 1}`}
             >
@@ -506,6 +505,29 @@ function ViewedProfile() {
           ))}
         </div>
       </section>
+      {selectedPublicationIndex != null && visiblePublicationImages[selectedPublicationIndex] ? (
+        <MediaViewer
+          isOpen
+          onClose={() => setSelectedPublicationIndex(null)}
+          src={visiblePublicationImages[selectedPublicationIndex]}
+          alt={`Publicação de ${firstName}`}
+          title="Publicação"
+          position={selectedPublicationIndex + 1}
+          total={visiblePublicationImages.length}
+          onPrevious={() =>
+            setSelectedPublicationIndex((current) =>
+              current == null
+                ? 0
+                : (current - 1 + visiblePublicationImages.length) % visiblePublicationImages.length,
+            )
+          }
+          onNext={() =>
+            setSelectedPublicationIndex((current) =>
+              current == null ? 0 : (current + 1) % visiblePublicationImages.length,
+            )
+          }
+        />
+      ) : null}
     </main>
   );
 }

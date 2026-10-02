@@ -88,6 +88,7 @@ describe("Fase 1F-10 — infraestrutura existente, sem WebRTC paralelo", () => {
       "image",
       "video",
       "audio",
+      "file",
     ]);
     expect(Object.values(MessageKind)).not.toContain("call");
 

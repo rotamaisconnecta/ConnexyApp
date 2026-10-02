@@ -244,7 +244,7 @@ function ReelDetailPage() {
         navigate({ to: "/event/$eventId", params: { eventId: target.id } });
         break;
       case "corrida":
-        navigate({ to: "/ride" });
+        navigate({ to: "/ride/request" });
         break;
     }
   }

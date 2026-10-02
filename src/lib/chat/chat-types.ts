@@ -61,6 +61,7 @@ export interface TextMessage extends MessageBase {
 export interface ImageMessage extends MessageBase {
   kind: typeof MessageKind.IMAGE;
   url: string;
+  mediaId?: string;
   caption?: string;
   width?: number;
   height?: number;
@@ -69,6 +70,7 @@ export interface ImageMessage extends MessageBase {
 export interface VideoMessage extends MessageBase {
   kind: typeof MessageKind.VIDEO;
   url: string;
+  mediaId?: string;
   thumbnail?: string;
   durationSec?: number;
 }
@@ -77,6 +79,8 @@ export interface AudioMessage extends MessageBase {
   kind: typeof MessageKind.AUDIO;
   durationSec: number;
   waveform?: number[];
+  mediaId?: string;
+  url?: string;
 }
 
 export interface FileMessage extends MessageBase {
@@ -84,6 +88,7 @@ export interface FileMessage extends MessageBase {
   fileName: string;
   fileSize: number;
   mimeType: string;
+  mediaId?: string;
 }
 
 export interface LocationMessage extends MessageBase {
@@ -199,10 +204,7 @@ export type AttachmentAction =
   | "share-content";
 
 export const ATTACHMENT_OPTIONS: AttachmentOption[] = [
-  { kind: MessageKind.IMAGE, label: "Foto", icon: "📷" },
-  { kind: "camera", label: "Câmera", icon: "📸" },
-  { kind: MessageKind.VIDEO, label: "Vídeo", icon: "🎬" },
-  { kind: MessageKind.AUDIO, label: "Áudio", icon: "🎤" },
+  { kind: MessageKind.IMAGE, label: "Galeria", icon: "🖼️" },
   { kind: MessageKind.FILE, label: "Arquivo", icon: "📄" },
   { kind: MessageKind.LOCATION, label: "Localização", icon: "📍" },
   { kind: "share-content", label: "Evento ou local", icon: "🔗" },

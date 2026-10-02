@@ -34,6 +34,7 @@ interface UploadMediaProps {
   disabled?: boolean;
   label?: string;
   destination?: UploadDestination;
+  onLivePhoto?: () => void;
 }
 
 export function UploadMedia({
@@ -47,6 +48,7 @@ export function UploadMedia({
   disabled,
   label,
   destination,
+  onLivePhoto,
 }: UploadMediaProps) {
   const [internalFiles, setInternalFiles] = useState<MediaFile[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -210,7 +212,13 @@ export function UploadMedia({
     <div className={cn("space-y-3", className)}>
       {label && <p className="text-sm font-medium text-foreground">{label}</p>}
 
-      <UploadSources mode={mode} multiple={multiple} onFiles={handleFiles} disabled={disabled} />
+      <UploadSources
+        mode={mode}
+        multiple={multiple}
+        onFiles={handleFiles}
+        disabled={disabled}
+        onLivePhoto={onLivePhoto}
+      />
 
       {files.length === 0 ? (
         <UploadDropzone

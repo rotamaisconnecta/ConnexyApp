@@ -51,7 +51,7 @@ const SECTIONS: Section[] = [
     id: "negocios",
     icon: Store,
     title: "Meus Negócios",
-    subtitle: LOCAL_CATALOG_DISCLAIMER,
+    subtitle: "Cadastre ou abra a página do seu estabelecimento no catálogo local.",
     createRoute: "/create/place-business",
     bgColor: "bg-amber-50 dark:bg-amber-950/20",
     role: UserRole.BUSINESS,
@@ -60,7 +60,7 @@ const SECTIONS: Section[] = [
     id: "eventos",
     icon: Calendar,
     title: "Meus Eventos",
-    subtitle: LOCAL_CATALOG_DISCLAIMER,
+    subtitle: "Crie um evento ou veja os que você já adicionou neste dispositivo.",
     createRoute: "/create/event",
     bgColor: "bg-pink-50 dark:bg-pink-950/20",
     role: UserRole.EVENT_CREATOR,
@@ -69,7 +69,7 @@ const SECTIONS: Section[] = [
     id: "locais",
     icon: MapPin,
     title: "Meus Locais",
-    subtitle: LOCAL_CATALOG_DISCLAIMER,
+    subtitle: "Adicione um lugar para ele aparecer nas descobertas perto de você.",
     createRoute: "/create/place",
     bgColor: "bg-blue-50 dark:bg-blue-950/20",
     role: UserRole.PLACE_OWNER,
@@ -78,7 +78,7 @@ const SECTIONS: Section[] = [
     id: "ofertas",
     icon: Tag,
     title: "Minhas Promoções",
-    subtitle: LOCAL_CATALOG_DISCLAIMER,
+    subtitle: "Publique uma oferta ligada a um negócio já cadastrado neste dispositivo.",
     createRoute: "/create/offer",
     bgColor: "bg-purple-50 dark:bg-purple-950/20",
     role: UserRole.BUSINESS,
@@ -87,7 +87,7 @@ const SECTIONS: Section[] = [
     id: "corridas",
     icon: Car,
     title: "Mobilidade",
-    subtitle: "Ofereça corridas como motorista",
+    subtitle: "Ofereça corridas como motorista neste dispositivo.",
     createRoute: "/driver",
     bgColor: "bg-green-50 dark:bg-green-950/20",
     role: UserRole.DRIVER,
@@ -115,7 +115,7 @@ function catalogSectionSubtitle(sectionId: string, fallback: string): string {
   if (!kind) return fallback;
   const count = listCatalogByKind(kind, getDemoIdentity().id).length;
   if (count === 0) return fallback;
-  return `${count} no catálogo local`;
+  return `${fallback} ${count} no catálogo local.`;
 }
 
 function ownedCatalogItems(): CatalogEntity[] {
@@ -128,6 +128,10 @@ function ownedCatalogItems(): CatalogEntity[] {
   ].sort((a, b) => b.createdAt - a.createdAt);
 }
 
+function catalogEntityDescription(entity: CatalogEntity): string {
+  return entity.description.trim();
+}
+
 function OwnedCatalogLink({ entity }: { entity: CatalogEntity }) {
   const kindLabel =
     entity.kind === CatalogKind.EVENT
@@ -137,41 +141,40 @@ function OwnedCatalogLink({ entity }: { entity: CatalogEntity }) {
         : entity.kind === CatalogKind.BUSINESS
           ? "Negócio"
           : "Oferta";
+  const description = catalogEntityDescription(entity);
   const className =
-    "flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-accent/40";
+    "flex items-start justify-between gap-3 px-4 py-3.5 text-left hover:bg-accent/40";
+  const body = (
+    <span className="min-w-0">
+      <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+        {kindLabel}
+      </span>
+      <span className="mt-0.5 block font-semibold leading-snug">{catalogEntityLabel(entity)}</span>
+      {description ? (
+        <span className="mt-1.5 line-clamp-4 block text-[13px] leading-snug text-muted-foreground">
+          {description}
+        </span>
+      ) : null}
+    </span>
+  );
   if (entity.kind === CatalogKind.EVENT) {
     return (
       <Link to="/event/$eventId" params={{ eventId: entity.id }} className={className}>
-        <span className="min-w-0">
-          <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
-            {kindLabel}
-          </span>
-          <span className="block truncate text-sm font-semibold">{catalogEntityLabel(entity)}</span>
-        </span>
+        {body}
       </Link>
     );
   }
   if (entity.kind === CatalogKind.PLACE) {
     return (
       <Link to="/local/$id" params={{ id: entity.id }} className={className}>
-        <span className="min-w-0">
-          <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
-            {kindLabel}
-          </span>
-          <span className="block truncate text-sm font-semibold">{catalogEntityLabel(entity)}</span>
-        </span>
+        {body}
       </Link>
     );
   }
   const businessId = entity.kind === CatalogKind.OFFER ? entity.businessId : entity.id;
   return (
     <Link to="/business/$businessId" params={{ businessId }} className={className}>
-      <span className="min-w-0">
-        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
-          {kindLabel}
-        </span>
-        <span className="block truncate text-sm font-semibold">{catalogEntityLabel(entity)}</span>
-      </span>
+      {body}
     </Link>
   );
 }
@@ -217,7 +220,7 @@ function GerenciarLayout() {
           className="h-9 w-9 grid place-items-center rounded-full bg-secondary"
         />
         <div className="flex-1">
-          <h1 className="font-display font-bold text-lg">Meu Connexy</h1>
+          <h1 className="font-display font-semibold text-lg">Meu Connexy</h1>
           <p className="text-[11px] text-muted-foreground">
             {activeRoles.length > 0
               ? `${activeRoles.length} recurso${activeRoles.length > 1 ? "s" : ""} ativo${activeRoles.length > 1 ? "s" : ""}`
@@ -236,6 +239,10 @@ function GerenciarLayout() {
           <LogOut className="h-4 w-4" />
         </button>
       </header>
+
+      <p className="px-4 mb-3 text-[13px] leading-snug text-muted-foreground">
+        {LOCAL_CATALOG_DISCLAIMER}
+      </p>
 
       {/* Active resources summary */}
       {activeRoles.length > 0 && (
@@ -282,11 +289,11 @@ function GerenciarLayout() {
                 <Icon className="h-5 w-5" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold">{section.title}</div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-sm font-semibold">{section.title}</div>
+                <div className="mt-1 line-clamp-3 text-[13px] leading-snug text-muted-foreground">
                   {section.id === "corridas"
                     ? active
-                      ? "Gerenciar"
+                      ? "Abra o painel de motorista para ficar online e gerenciar corridas."
                       : section.subtitle
                     : catalogSectionSubtitle(section.id, section.subtitle)}
                 </div>
@@ -324,9 +331,9 @@ function GerenciarLayout() {
             <UserRound className="h-5 w-5" />
           </span>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold">Gerenciar minha bio</div>
-            <div className="text-[11px] text-muted-foreground">
-              Edite dados, foto, publicacoes, humor e interesses
+            <div className="text-sm font-semibold">Gerenciar minha bio</div>
+            <div className="mt-1 line-clamp-3 text-[13px] leading-snug text-muted-foreground">
+              Abra o editor da sua bio para alterar foto, textos, humor e interesses.
             </div>
           </div>
           <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />

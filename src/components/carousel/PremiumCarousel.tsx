@@ -3,7 +3,8 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { prefersReducedMotion } from "@/lib/carousel/hint";
 
-const GAP = 16;
+const PEEK = 0.86;
+const GAP = 12;
 const CARD_HEIGHT = 300;
 const STORAGE_PREFIX = "connexy.carousel.position";
 
@@ -16,12 +17,6 @@ function getBreakpoint(): Breakpoint {
   return "mobile";
 }
 
-const CARD_WIDTH: Record<Breakpoint, number> = {
-  desktop: 290,
-  tablet: 270,
-  mobile: 260,
-};
-
 interface PremiumCarouselProps<T> {
   items: T[];
   renderCard: (item: T, index: number) => React.ReactNode;
@@ -29,6 +24,9 @@ interface PremiumCarouselProps<T> {
   section?: string;
   cardWidths?: Partial<Record<Breakpoint, number>>;
   cardHeight?: number;
+  cardSize?: "fixed" | "min";
+  itemClassName?: string;
+  scrollerClassName?: string;
 }
 
 export function PremiumCarousel<T>({
@@ -36,14 +34,17 @@ export function PremiumCarousel<T>({
   renderCard,
   className,
   section,
-  cardWidths,
   cardHeight: cardHeightProp,
+  cardSize = "fixed",
+  itemClassName = "min-w-[86%] w-[86%]",
+  scrollerClassName = "snap-x snap-mandatory gap-3 pl-5",
 }: PremiumCarouselProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>("mobile");
   const [maxScroll, setMaxScroll] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0);
 
   useEffect(() => {
     setBreakpoint(getBreakpoint());
@@ -52,17 +53,22 @@ export function PremiumCarousel<T>({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const cardWidth = cardWidths?.[breakpoint] ?? CARD_WIDTH[breakpoint];
   const cardHeight = cardHeightProp ?? CARD_HEIGHT;
-  const step = cardWidth + GAP;
+  const step = (cardWidth || 1) + GAP;
   const reduced = prefersReducedMotion();
 
   useEffect(() => {
     const element = scrollRef.current;
     if (!element) return;
     const measure = () => {
-      const total = items.length * cardWidth + Math.max(0, items.length - 1) * GAP;
-      const next = Math.max(0, total - element.clientWidth);
+      const styles = window.getComputedStyle(element);
+      const pad = Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight);
+      const inner = Math.max(0, element.clientWidth - pad);
+      const first = element.firstElementChild as HTMLElement | null;
+      const nextWidth = Math.round(first?.getBoundingClientRect().width || inner * PEEK);
+      setCardWidth(nextWidth);
+      const total = items.length * nextWidth + Math.max(0, items.length - 1) * GAP;
+      const next = Math.max(0, total - inner);
       setMaxScroll(next);
       if (next > 0 && section && !restoredRef.current) {
         const saved = Number(localStorage.getItem(`${STORAGE_PREFIX}.${section}`));
@@ -80,7 +86,7 @@ export function PremiumCarousel<T>({
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [cardWidth, items.length, section]);
+  }, [items.length, section, itemClassName]);
 
   const onScroll = useCallback(() => {
     const element = scrollRef.current;
@@ -115,13 +121,13 @@ export function PremiumCarousel<T>({
           scrollRef={scrollRef}
           onScroll={onScroll}
           ariaLabel={section ? `Carrossel ${section}` : "Carrossel"}
-          className="gap-4"
+          className={scrollerClassName}
         >
           {items.map((item, index) => (
             <div
               key={index}
-              className="shrink-0"
-              style={{ width: cardWidth, height: cardHeight }}
+              className={`shrink-0 snap-start ${itemClassName}`}
+              style={cardSize === "min" ? { minHeight: cardHeight } : { height: cardHeight }}
             >
               {renderCard(item, index)}
             </div>

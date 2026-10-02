@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
 import { RideFlow } from "@/components/mobility/ride/ride-flow";
-import { parseCompanions, buildCompanionStops, type RideSearch } from "@/lib/mobility/ride-search";
-import { DEMO_ORIGIN } from "@/components/mobility/ride/ride-data";
+import { rideSearchSchema, parseCompanions, buildCompanionStops, type RideSearch } from "@/lib/mobility/ride-search";
+import { destinationFromRideSearch, resolveRideOrigin } from "@/lib/mobility/ride-request-context";
 import { RideBlockedPanel } from "@/components/mobility/ride-blocked-panel";
 import { useDemoIdentity } from "@/lib/demo/demo-identity";
 import { useRideBlock } from "@/hooks/use-ride-block";
@@ -11,19 +10,7 @@ import { isTerminal } from "@/lib/mobility/trip/trip-machine";
 
 export const Route = createFileRoute("/_app/ride/")({
   head: () => ({ meta: [{ title: "Solicitar viagem — Connexy" }] }),
-  validateSearch: z.object({
-    destinationId: z.string().optional().nullable(),
-    destinationName: z.string().optional().nullable(),
-    destinationAddress: z.string().optional().nullable(),
-    destinationLat: z.number().optional().nullable(),
-    destinationLng: z.number().optional().nullable(),
-    pickupName: z.string().optional().nullable(),
-    pickupAddress: z.string().optional().nullable(),
-    pickupLat: z.number().optional().nullable(),
-    pickupLng: z.number().optional().nullable(),
-    companions: z.string().optional().nullable(),
-    source: z.string().optional().nullable(),
-  }),
+  validateSearch: rideSearchSchema,
   component: RideIndexPage,
 });
 
@@ -38,21 +25,14 @@ function RideIndexPage() {
     return <RideBlockedPanel block={block} />;
   }
 
-  const destination =
-    search.destinationAddress || search.destinationName
-      ? {
-          lat: search.destinationLat ?? -23.58,
-          lng: search.destinationLng ?? -46.65,
-          label: search.destinationAddress || search.destinationName || "",
-        }
-      : null;
-
+  const origin = resolveRideOrigin();
+  const destination = destinationFromRideSearch(search);
   const companions = parseCompanions(search.companions);
-  const stops = companions.length > 0 ? buildCompanionStops(DEMO_ORIGIN, companions) : [];
+  const stops = origin && companions.length > 0 ? buildCompanionStops(origin, companions) : [];
 
   return (
     <RideFlow
-      origin={DEMO_ORIGIN}
+      origin={origin}
       destination={destination}
       initialStops={stops}
       source={search.source}

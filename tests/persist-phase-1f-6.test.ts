@@ -19,6 +19,7 @@ import {
   sendOutingInvite,
 } from "../src/lib/marketplace/outing-invites";
 import { buildCompanionStops, parseCompanions } from "../src/lib/mobility/ride-search";
+import { destinationFromRideSearch, resolveRideOrigin } from "../src/lib/mobility/ride-request-context";
 import { createTrip, getTrip, resetTrip } from "../src/lib/mobility/trip/trip-store";
 
 const A = "lucas";
@@ -31,7 +32,6 @@ const TARGET = {
   latitude: -23.561,
   longitude: -46.656,
 };
-const ORIGIN = { lat: -23.55, lng: -46.64, label: "Sua localização" };
 const projectRoot = join(import.meta.dir, "..");
 
 type MemoryStorage = Storage & { keys(): string[] };
@@ -100,14 +100,12 @@ function startOutingRide(fromUserId: string, targetId: string) {
   const search = getOutingRideSearch(fromUserId, targetId);
   if (!search) return null;
   const companions = parseCompanions(search.companions);
+  const origin = resolveRideOrigin();
+  if (!origin) return null;
   return createTrip({
-    origin: ORIGIN,
-    destination: {
-      lat: search.destinationLat ?? -23.58,
-      lng: search.destinationLng ?? -46.65,
-      label: search.destinationAddress || search.destinationName || "",
-    },
-    stops: buildCompanionStops(ORIGIN, companions),
+    origin,
+    destination: destinationFromRideSearch(search),
+    stops: buildCompanionStops(origin, companions),
     source: search.source,
     companionLabel: search.source === "invite" ? "Ir juntos" : undefined,
     userId: fromUserId,
@@ -294,7 +292,7 @@ describe("Fase 1F-6 — superfícies existentes", () => {
     expect(inbox).toContain("group_invite");
 
     const page = await source("src/routes/_app.notificacoes.tsx");
-    expect(page).toContain("respondToOutingInvite");
+    expect(page).toContain("respondToRideFriendInvite");
     expect(page).toContain("listLocalInboxItems");
     expect(page).not.toContain("import { notifications");
     expect(page).not.toContain("Sunset no Parque");

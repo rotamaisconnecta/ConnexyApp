@@ -279,14 +279,13 @@ interface PresenceProviderProps {
 
 export function PresenceProvider({ children }: PresenceProviderProps) {
   const [checkins, setCheckins] = useState<PresenceRecord[]>(() =>
-    MOCK_PRESENCE_ENABLED ? loadOrSeedRecords() : [],
+    MOCK_PRESENCE_ENABLED ? loadOrSeedRecords() : loadPresenceRecords(),
   );
   const [visibility, setVisibilityState] = useState<PresenceVisibilityValue>(
     getStoredPresenceVisibility,
   );
 
   useEffect(() => {
-    if (!MOCK_PRESENCE_ENABLED) return;
     savePresenceRecords(checkins);
   }, [checkins]);
 

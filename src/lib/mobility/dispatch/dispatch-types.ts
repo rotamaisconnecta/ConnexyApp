@@ -101,6 +101,7 @@ export interface DispatchTripSnapshot {
   estimatedFare: number;
   paymentMethod: PaymentOption;
   category: RideCategory;
+  acceptedCategories?: RideCategory[];
 }
 
 /* ─── Metadados do passageiro (exibidos ao motorista) ────── */
