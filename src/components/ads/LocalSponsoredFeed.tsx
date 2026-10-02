@@ -69,7 +69,7 @@ export function LocalSponsoredFeed() {
       <SwipeCarousel
         ariaLabel="Destaques da região"
         hintLabel="Deslize para ver mais ofertas"
-        className="gap-3 pl-5 snap-x snap-mandatory"
+        className="gap-3 pl-5 pr-5"
       >
         {nearbyAds.map((ad) => (
           <article

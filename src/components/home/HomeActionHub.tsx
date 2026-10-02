@@ -16,6 +16,7 @@ import { useDemoPosts } from "@/lib/demo/demo-posts";
 import { useAuth } from "@/hooks/use-auth";
 import { TypeScale } from "@/theme/typography";
 import { HomeSectionHeading } from "@/components/home/home-section-heading";
+import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import {
   listHappeningNowCards,
   type HappeningNowCard,
@@ -160,7 +161,7 @@ function happeningBadge(kind: HappeningNowCard["kind"]) {
 }
 
 function HappeningLink({ card }: { card: HappeningNowCard }) {
-  const className = "w-[86%] min-w-[86%] shrink-0 snap-start";
+  const className = "w-[86%] min-w-[86%] shrink-0";
   const label = `Ver ${card.title}`;
   const body = (
     <HappeningCard
@@ -286,36 +287,38 @@ export function HomeActionHub() {
         />
       </div>
 
-      <div className="-mx-5 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
-        {happening.map((card) => (
-          <HappeningLink key={card.id} card={card} />
-        ))}
+      <div className="-mx-5 mt-3">
+        <SwipeCarousel hint={false} ariaLabel="Acontecendo agora" className="gap-3 px-5 pb-2">
+          {happening.map((card) => (
+            <HappeningLink key={card.id} card={card} />
+          ))}
 
-        <Link
-          to="/reels"
-          aria-label="Ver mais atualizações"
-          className="w-[86%] min-w-[86%] shrink-0 snap-start"
-        >
-          <div className="group flex min-h-[124px] items-center gap-3 rounded-[18px] border border-dashed border-primary/35 bg-primary/[0.06] p-3.5 shadow-soft transition-colors hover:bg-primary/[0.1]">
-            <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[16px] bg-primary/10 text-primary">
-              <Plus className="h-7 w-7" strokeWidth={2.2} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[12px] font-semibold leading-tight text-primary">
-                Agora
+          <Link
+            to="/reels"
+            aria-label="Ver mais atualizações"
+            className="w-[86%] min-w-[86%] shrink-0"
+          >
+            <div className="group flex min-h-[124px] items-center gap-3 rounded-[18px] border border-dashed border-primary/35 bg-primary/[0.06] p-3.5 shadow-soft transition-colors hover:bg-primary/[0.1]">
+              <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[16px] bg-primary/10 text-primary">
+                <Plus className="h-7 w-7" strokeWidth={2.2} />
               </span>
-              <span className="mt-1 line-clamp-2 block text-[16px] font-semibold leading-[1.3] text-foreground">
-                Ver mais atualizações
+              <span className="min-w-0 flex-1">
+                <span className="block text-[12px] font-semibold leading-tight text-primary">
+                  Agora
+                </span>
+                <span className="mt-1 line-clamp-2 block text-[16px] font-semibold leading-[1.3] text-foreground">
+                  Ver mais atualizações
+                </span>
+                <span className="mt-1 line-clamp-2 block text-[13px] leading-[1.4] text-muted-foreground">
+                  Abra o Agora para acompanhar o que está acontecendo.
+                </span>
               </span>
-              <span className="mt-1 line-clamp-2 block text-[13px] leading-[1.4] text-muted-foreground">
-                Abra o Agora para acompanhar o que está acontecendo.
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/[0.08] text-primary transition group-active:translate-x-0.5">
+                <ChevronRight className="h-4 w-4" />
               </span>
-            </span>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/[0.08] text-primary transition group-active:translate-x-0.5">
-              <ChevronRight className="h-4 w-4" />
-            </span>
-          </div>
-        </Link>
+            </div>
+          </Link>
+        </SwipeCarousel>
       </div>
     </section>
   );

@@ -48,6 +48,7 @@ export function FeedNearbyEvents({ data, title, section }: FeedNearbyEventsProps
         items={data.events}
         cardHeight={EVENT_CARD_HEIGHT}
         cardSize="min"
+        scrollerClassName="gap-3 pl-5 pr-5"
         renderCard={(event) => (
           <Link
             to="/event/$eventId"

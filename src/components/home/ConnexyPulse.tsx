@@ -6,6 +6,7 @@ import {
 } from "@/lib/home/home-discovery";
 import { subscribeLocalCatalog } from "@/lib/catalog/local-catalog";
 import { TypeScale } from "@/theme/typography";
+import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
@@ -102,18 +103,18 @@ export function ConnexyPulse() {
         </p>
       </div>
 
-      <div
-        className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pl-5 pb-5 no-scrollbar"
-        role="list"
-        aria-label="Connexy Pulse"
+      <SwipeCarousel
+        ariaLabel="Connexy Pulse"
+        hint={false}
+        className="mt-3 gap-3 pl-5 pb-5"
       >
         {items.map((item) => (
-          <div key={item.id} role="listitem" className="min-w-[86%] w-[86%] shrink-0 snap-start">
+          <div key={item.id} className="min-w-[86%] w-[86%] shrink-0">
             <PulseCard item={item} />
           </div>
         ))}
         <span aria-hidden className="w-5 shrink-0" />
-      </div>
+      </SwipeCarousel>
     </section>
   );
 }

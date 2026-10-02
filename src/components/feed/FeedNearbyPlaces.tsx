@@ -42,6 +42,7 @@ export function FeedNearbyPlaces({ data }: FeedNearbyPlacesProps) {
         items={data.places}
         cardHeight={PLACE_CARD_HEIGHT}
         cardSize="min"
+        scrollerClassName="gap-3 pl-5 pr-5"
         renderCard={(place) => (
           <Link
             to="/local/$id"
