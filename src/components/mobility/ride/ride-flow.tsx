@@ -202,7 +202,6 @@ export function RideFlow({
     void outingVersion;
     return trip ? listRideFriendCandidates(identity.id, trip) : [];
   }, [trip, identity.id, outingVersion]);
-  const canPickFriend = occupancy.available > 0;
 
   const { distanceMeters, durationMinutes, routeOk } = useMemo(() => {
     const meta = computeTripRouteMeta(origin, stops, destination);
@@ -477,10 +476,6 @@ export function RideFlow({
   );
 
   const handleOpenPickFriend = useCallback(() => {
-    if (!canPickFriend) {
-      toast.error("Capacidade máxima atingida");
-      return;
-    }
     const start = origin ?? resolveRideOrigin();
     if (!start) {
       toast.error("Defina a origem para pegar um amigo.");
@@ -488,7 +483,7 @@ export function RideFlow({
     }
     ensureTrip(start);
     setShowPickFriend(true);
-  }, [canPickFriend, origin, ensureTrip]);
+  }, [origin, ensureTrip]);
 
   const handleInviteFriend = useCallback(
     (friendId: string, asDestination: boolean) => {
@@ -504,10 +499,18 @@ export function RideFlow({
         asDestination,
       });
       if (!invite) {
-        toast.error(occupancy.atLimit ? "Capacidade máxima atingida" : "Não foi possível convidar.");
+        toast.error(
+          !asDestination && occupancy.atLimit
+            ? "Capacidade máxima atingida"
+            : "Não foi possível convidar.",
+        );
         return;
       }
-      toast.success("Convite enviado. A vaga fica reservada até a resposta.");
+      toast.success(
+        asDestination
+          ? "Convite enviado."
+          : "Convite enviado. A vaga fica reservada até a resposta.",
+      );
     },
     [trip, identity.id, occupancy.atLimit],
   );
@@ -658,7 +661,6 @@ export function RideFlow({
             routeStatus={routeStatus}
             source={trip?.source ?? source}
             onPickFriend={handleOpenPickFriend}
-            pickFriendDisabled={!canPickFriend}
             occupancyLabel={occupancy.passengerLabel}
             vacancyLabel={occupancy.vacancyLabel}
           />
@@ -729,7 +731,6 @@ export function RideFlow({
             onShare={() => setShowShareSheet(true)}
             onCancel={() => setShowCancelConfirm(true)}
             onPickFriend={handleOpenPickFriend}
-            pickFriendDisabled={!canPickFriend}
             pickFriendHint={occupancy.vacancyLabel}
           />
         );
@@ -757,7 +758,6 @@ export function RideFlow({
             onDetails={() => setShowDetailsOverlay(true)}
             onRecenter={() => setRecenterNonce((value) => value + 1)}
             onPickFriend={handleOpenPickFriend}
-            pickFriendDisabled={!canPickFriend}
             pickFriendHint={occupancy.vacancyLabel}
           />
         );
@@ -897,7 +897,6 @@ export function RideFlow({
             routeMeta={routeMeta}
             routeStatus={routeStatus}
             onPickFriend={handleOpenPickFriend}
-            pickFriendDisabled={!canPickFriend}
             occupancyLabel={occupancy.passengerLabel}
             vacancyLabel={occupancy.vacancyLabel}
             map={
@@ -970,7 +969,6 @@ export function RideFlow({
         open={showAlterarOverlay}
         onClose={() => setShowAlterarOverlay(false)}
         onPickFriend={handleOpenPickFriend}
-        pickFriendDisabled={!canPickFriend}
         pickFriendHint={occupancy.vacancyLabel}
         onAddStop={() => {
           setShowAlterarOverlay(false);

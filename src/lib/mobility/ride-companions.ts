@@ -48,8 +48,18 @@ export function reservedFriendIdsForTrip(fromUserId: string, tripId: string): st
   ];
 }
 
+function reservedPassengerFriendIdsForTrip(fromUserId: string, tripId: string): string[] {
+  return [
+    ...new Set(
+      listReservedOutingInvites(fromUserId, tripId)
+        .filter((invite) => invite.asDestination !== true)
+        .map((invite) => invite.personId),
+    ),
+  ];
+}
+
 export function occupancyForCurrentTrip(trip: Trip, fromUserId: string): RideOccupancy {
-  return occupancyForTrip(trip, reservedFriendIdsForTrip(fromUserId, trip.id));
+  return occupancyForTrip(trip, reservedPassengerFriendIdsForTrip(fromUserId, trip.id));
 }
 
 export function listRideFriendInvites(fromUserId: string, tripId: string): OutingInvite[] {
@@ -136,7 +146,7 @@ export function sendRideFriendInvite(input: {
   const occupancy = occupancyForCurrentTrip(input.trip, input.fromUserId);
   const reserved = reservedFriendIdsForTrip(input.fromUserId, input.trip.id);
   if (reserved.includes(input.friendId)) return null;
-  if (occupancy.available <= 0) return null;
+  if (!input.asDestination && occupancy.available <= 0) return null;
   if (!input.asDestination && input.trip.stops.length >= MAX_ROUTE_STOPS) return null;
   const friend = friendLocation(input.friendId);
   if (!friend) return null;

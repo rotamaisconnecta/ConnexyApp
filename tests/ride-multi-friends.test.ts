@@ -284,17 +284,21 @@ describe("convites de amigos na mesma corrida", () => {
 
   test("amigo pode ser o destino final sem parada redundante", () => {
     const trip = planningTrip();
+    const beforeOccupied = occupancyForCurrentTrip(trip, FROM).occupied;
     const invite = sendRideFriendInvite({
       trip,
       fromUserId: FROM,
       friendId: "beatriz",
       asDestination: true,
     });
+    expect(occupancyForCurrentTrip(getTrip()!, FROM).occupied).toBe(beforeOccupied);
     respondToRideFriendInvite(invite!.id, "beatriz", true);
     const next = getTrip()!;
     expect(next.stops).toHaveLength(0);
     expect(next.destination?.address).toContain("Augusta");
     expect(next.id).toBe(trip.id);
+    expect(occupancyForCurrentTrip(next, FROM).occupied).toBe(beforeOccupied);
+    expect(occupancyForCurrentTrip(next, FROM).friends).toBe(0);
   });
 
   test("recalcula rota e valor após cada novo amigo", () => {
@@ -434,16 +438,131 @@ describe("interface de pegar vários amigos", () => {
 
     expect(flow).toContain("handleOpenPickFriend");
     expect(flow).toContain("onPickFriend={handleOpenPickFriend}");
-    expect(flow).toContain("pickFriendDisabled={!canPickFriend}");
+    expect(flow).not.toContain("pickFriendDisabled={!canPickFriend}");
     expect(flow).toContain("PickFriendOverlay");
     expect(flow).toContain("occupancyForCurrentTrip");
     expect(itinerary).toContain("Pegar amigo");
     expect(overlays).toContain("Capacidade máxima atingida");
     expect(overlays).toContain("Usar como destino final");
+    expect(overlays).toContain("destinationOnly={stopLimitReached || occupancy.atLimit}");
     expect(occupancy).not.toContain("capacity = 4");
     expect(occupancy).toContain("seatsForRideCategory");
     expect(occupancy).toContain("trip.driver?.vehicle.seats");
     expect(live).toContain("Pegar amigo");
     expect(live).toContain("Durante a viagem");
+  });
+});
+
+describe("destino final não ocupa capacidade", () => {
+  test("moto lotada ainda permite destino final e bloqueia passageiro", () => {
+    const trip = planningTrip();
+    patchTrip({
+      category: "moto",
+      driver: { ...MOCK_DRIVER, vehicle: { ...MOCK_DRIVER.vehicle, seats: 1 } },
+    });
+    const moto = getTrip()!;
+    expect(occupancyForCurrentTrip(moto, FROM).available).toBe(0);
+    expect(occupancyForCurrentTrip(moto, FROM).occupied).toBe(1);
+    expect(sendRideFriendInvite({ trip: moto, fromUserId: FROM, friendId: "beatriz" })).toBeNull();
+    const invite = sendRideFriendInvite({
+      trip: moto,
+      fromUserId: FROM,
+      friendId: "beatriz",
+      asDestination: true,
+    });
+    expect(invite).not.toBeNull();
+    expect(invite?.asDestination).toBe(true);
+    expect(occupancyForCurrentTrip(getTrip()!, FROM).occupied).toBe(1);
+    expect(occupancyForCurrentTrip(getTrip()!, FROM).available).toBe(0);
+    expect(occupancyForCurrentTrip(getTrip()!, FROM).friends).toBe(0);
+  });
+
+  test("PENDING de destino final não reserva vaga", () => {
+    const trip = planningTrip();
+    const before = occupancyForCurrentTrip(trip, FROM);
+    const invite = sendRideFriendInvite({
+      trip,
+      fromUserId: FROM,
+      friendId: "beatriz",
+      asDestination: true,
+    });
+    expect(invite?.status).toBe(OutingInviteStatus.PENDING);
+    const pending = occupancyForCurrentTrip(getTrip()!, FROM);
+    expect(pending.occupied).toBe(before.occupied);
+    expect(pending.available).toBe(before.available);
+    expect(pending.friends).toBe(0);
+  });
+
+  test("ACCEPTED de destino final não reserva vaga, não cria parada e refaz rota e tarifa", () => {
+    const trip = planningTrip();
+    const beforeDistance = trip.distanceMeters;
+    const beforeFare = estimateDemoFare(
+      trip.category,
+      trip.distanceMeters,
+      trip.durationMinutes,
+      trip.stops.length,
+    );
+    const invite = sendRideFriendInvite({
+      trip,
+      fromUserId: FROM,
+      friendId: "beatriz",
+      asDestination: true,
+    });
+    respondToRideFriendInvite(invite!.id, "beatriz", true);
+    const next = getTrip()!;
+    expect(next.stops).toHaveLength(0);
+    expect(next.destination?.address).toContain("Augusta");
+    expect(next.distanceMeters).not.toBe(beforeDistance);
+    expect(next.estimatedFare).not.toBe(beforeFare);
+    expect(next.estimatedFare).toBe(
+      estimateDemoFare(next.category, next.distanceMeters, next.durationMinutes, next.stops.length),
+    );
+    const occupancy = occupancyForCurrentTrip(next, FROM);
+    expect(occupancy.occupied).toBe(1);
+    expect(occupancy.friends).toBe(0);
+    expect(occupancy.available).toBe(3);
+  });
+
+  test("DECLINED de destino final não ocupa vaga", () => {
+    const trip = planningTrip();
+    const invite = sendRideFriendInvite({
+      trip,
+      fromUserId: FROM,
+      friendId: "beatriz",
+      asDestination: true,
+    });
+    respondToRideFriendInvite(invite!.id, "beatriz", false);
+    const next = getTrip()!;
+    expect(next.stops).toHaveLength(0);
+    expect(next.destination?.label).toBe(DEST.label);
+    expect(occupancyForCurrentTrip(next, FROM).occupied).toBe(1);
+    expect(occupancyForCurrentTrip(next, FROM).available).toBe(3);
+    expect(listRideFriendCandidates(FROM, next).map((item) => item.id)).toContain("beatriz");
+  });
+
+  test("novo destino final substitui o anterior sem consumir assento", () => {
+    const trip = planningTrip();
+    const first = sendRideFriendInvite({
+      trip,
+      fromUserId: FROM,
+      friendId: "beatriz",
+      asDestination: true,
+    });
+    respondToRideFriendInvite(first!.id, "beatriz", true);
+    const afterFirst = getTrip()!;
+    const second = sendRideFriendInvite({
+      trip: afterFirst,
+      fromUserId: FROM,
+      friendId: "rafael",
+      asDestination: true,
+    });
+    expect(second).not.toBeNull();
+    respondToRideFriendInvite(second!.id, "rafael", true);
+    const next = getTrip()!;
+    expect(next.id).toBe(trip.id);
+    expect(next.stops).toHaveLength(0);
+    expect(next.destination?.address).not.toContain("Augusta");
+    expect(occupancyForCurrentTrip(next, FROM).occupied).toBe(1);
+    expect(occupancyForCurrentTrip(next, FROM).friends).toBe(0);
   });
 });

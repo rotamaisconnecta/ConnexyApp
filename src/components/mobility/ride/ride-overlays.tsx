@@ -640,7 +640,9 @@ export function PickFriendOverlay({
                 </p>
                 <p className="text-[11px] font-medium text-zinc-400">
                   {pending
-                    ? "Solicitação pendente · reserva uma vaga"
+                    ? invite.asDestination
+                      ? "Solicitação pendente · destino final"
+                      : "Solicitação pendente · reserva uma vaga"
                     : invite.asDestination
                       ? "Aceito · destino final"
                       : "Aceito · parada da corrida"}
@@ -680,22 +682,21 @@ export function PickFriendOverlay({
         </ul>
       )}
 
-      {occupancy.atLimit ? (
+      {occupancy.atLimit && (
         <p className="mt-4 text-center text-[12px] font-semibold text-zinc-500">
           Capacidade máxima atingida
         </p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {candidates.map((friend) => (
-            <FriendInviteRow
-              key={friend.id}
-              friend={friend}
-              destinationOnly={stopLimitReached}
-              onInvite={onInvite}
-            />
-          ))}
-        </ul>
       )}
+      <ul className="mt-4 space-y-2">
+        {candidates.map((friend) => (
+          <FriendInviteRow
+            key={friend.id}
+            friend={friend}
+            destinationOnly={stopLimitReached || occupancy.atLimit}
+            onInvite={onInvite}
+          />
+        ))}
+      </ul>
     </RideOverlaySheet>
   );
 }
