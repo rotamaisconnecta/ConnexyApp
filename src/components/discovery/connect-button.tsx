@@ -24,10 +24,10 @@ export function ConnectButton({
           : "bg-gradient-brand text-white shadow-soft hover:brightness-110",
         disabled && "opacity-50 cursor-not-allowed",
       )}
-      aria-label={connected ? "Conectado" : "Conectar"}
+      aria-label={connected ? "Conectado" : "Quero conversar"}
     >
       <UserPlus className="h-3.5 w-3.5" />
-      {connected ? "Conectado" : "Conectar"}
+      {connected ? "Conectado" : "Quero conversar"}
     </button>
   );
 }

@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { PhoneFrame } from "@/components/phone-frame";
 import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
 import { isDemoAuthenticated } from "@/lib/demo/demo-auth";
-import splashImage from "@/assets/Branding/Connexy-Splash.png";
+import { SplashScreen } from "@/components/splash/SplashScreen";
 
 const SPLASH_MIN_MS = 2000;
 const SESSION_TIMEOUT_MS = 5000;
@@ -83,20 +83,7 @@ function Splash() {
     <PhoneFrame>
       <AnimatePresence>
         {showSplash && (
-          <motion.div
-            key="splash"
-            className="flex-1 grid place-items-center bg-white relative overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <img
-              src={splashImage}
-              alt="Connexy"
-              className="h-auto max-h-[82dvh] w-auto max-w-[86vw] object-contain md:max-h-[min(680px,62dvh)] md:max-w-[min(360px,100%)]"
-            />
-          </motion.div>
+          <SplashScreen exiting={false} />
         )}
       </AnimatePresence>
     </PhoneFrame>

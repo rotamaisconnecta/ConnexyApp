@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   currentUser,
   places,
-  people as mockPeople,
+  listPeople,
   compatibilityScore,
   sharedInterestPercent,
 } from "@/lib/mock-data";
@@ -20,12 +20,14 @@ import {
 import { usePresence } from "@/providers/presence/presence-provider";
 import { formatPersonDistance } from "@/lib/proximity";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { isDemoMode } from "@/lib/demo/demo-config";
 import { useDiscovery } from "@/hooks/api/use-discovery";
 import { TypeScale } from "@/theme/typography";
 import { getDiscoverItemNavigation } from "@/lib/discovery/discover-navigation";
 import type { NearbyProfile } from "@/types/phase-13b";
 import { NearbyExploreFilterButton } from "@/components/discover/nearby-explore-filter-sheet";
 import { NearbyMapItemCard } from "@/components/discover/nearby-map-item-card";
+import { PeopleListCard } from "@/components/discovery/people-list-card";
 import {
   applyNearbyExploreFilters,
   cloneNearbyFilters,
@@ -152,7 +154,12 @@ function DiscoverPage() {
                 : undefined,
             compatibilityPercent: p.compatibility_score ?? undefined,
           }))
-        : mockPeople.slice(0, 7).map((person) => ({
+        : (isDemoMode()
+            ? [...listPeople()].sort((a, b) => a.distanceMeters - b.distanceMeters)
+            : listPeople()
+          )
+            .slice(0, 7)
+            .map((person) => ({
             id: person.id,
             name: person.name,
             distanceMeters: person.distanceMeters,
@@ -331,9 +338,13 @@ function DiscoverPage() {
       <header className="px-5 pt-1 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className={`font-display font-bold ${TypeScale.screenTitle}`}>Explorar por perto</h1>
+            <h1 className={`font-display font-bold ${TypeScale.screenTitle}`}>
+              {activeFilter === "pessoas" ? "Pessoas incríveis perto de você ✨" : "Explorar por perto"}
+            </h1>
             <p className={`text-muted-foreground ${TypeScale.caption}`}>
-              {currentUser.interests[0] ?? ""} · Próximo a você
+              {activeFilter === "pessoas"
+                ? "Explore conexões reais ao seu redor"
+                : (currentUser.interests[0] ?? "") + " · Próximo a você"}
             </p>
           </div>
           <NearbyExploreFilterButton
@@ -376,6 +387,14 @@ function DiscoverPage() {
         </div>
       </div>
 
+      {activeFilter === "pessoas" && (
+        <div className="mx-4 mt-3 rounded-2xl border border-primary/15 bg-primary/5 p-3">
+          <p className="text-xs font-semibold text-foreground">Dica Connexy</p>
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+            Conecte-se com pessoas que compartilham dos seus interesses.
+          </p>
+        </div>
+      )}
       <div
         className="mx-4 rounded-3xl bg-surface border border-border overflow-hidden shadow-soft"
         style={{ height: "calc(100vw * 0.75)", maxHeight: "400px" }}
@@ -447,26 +466,43 @@ function DiscoverPage() {
       <div className="px-4 mt-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className={`font-bold ${TypeScale.subsectionTitle}`}>
-            {activeFilter === "todos"
-              ? "Próximo a você"
-              : FILTERS.find((f) => f.id === activeFilter)?.label}
+            {activeFilter === "pessoas"
+              ? "Pessoas perto de você"
+              : activeFilter === "todos"
+                ? "Próximo a você"
+                : FILTERS.find((f) => f.id === activeFilter)?.label}
           </h3>
-          <span className={`text-muted-foreground ${TypeScale.caption}`}>
-            {mapItems.length} encontrados
-          </span>
+          <div className="flex items-center gap-2">
+            {activeFilter === "pessoas" || (activeFilter === "todos" && mapItems.some(m => m.type === "pessoas")) ? (
+              <span className={`text-muted-foreground ${TypeScale.caption}`}>Ordenar por: Distância</span>
+            ) : null}
+            <span className={`text-muted-foreground ${TypeScale.caption}`}>
+              {mapItems.length} encontrados
+            </span>
+          </div>
         </div>
         <div className="space-y-2">
-          {mapItems.slice(0, 10).map((item) => (
-            <NearbyMapItemCard
-              key={item.id}
-              item={item}
-              onSelect={() => {
-                const target = getDiscoverItemNavigation(item);
-                if (!target) return;
-                navigate(target);
-              }}
-            />
-          ))}
+          {activeFilter === "pessoas"
+            ? mapItems
+                .filter((m) => m.type === "pessoas")
+                .slice(0, 10)
+                .map((item) => (
+                  <PeopleListCard
+                    key={item.id}
+                    item={item as any}
+                  />
+                ))
+            : mapItems.slice(0, 10).map((item) => (
+                <NearbyMapItemCard
+                  key={item.id}
+                  item={item}
+                  onSelect={() => {
+                    const target = getDiscoverItemNavigation(item);
+                    if (!target) return;
+                    navigate(target);
+                  }}
+                />
+              ))}
         </div>
       </div>
     </div>
