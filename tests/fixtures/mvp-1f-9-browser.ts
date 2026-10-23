@@ -1,4 +1,5 @@
 import { getDemoIdentity, setDemoIdentity } from "../../src/lib/demo/demo-identity";
+import { setDemoDriverBehavior } from "../../src/lib/demo/demo-cast";
 import {
   acceptRideOffer,
   cancelDriverAssignment,
@@ -94,6 +95,7 @@ const harness = {
     clearTrip();
     resetDispatchState();
     setDemoDispatcherConfig({ autoAccept: false, delayMs: 60_000 });
+    setDemoDriverBehavior({ autoCompleteRide: false });
     setDemoIdentity("lucas");
     networkCalls = 0;
     return snapshot();

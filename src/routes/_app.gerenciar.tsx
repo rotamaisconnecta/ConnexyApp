@@ -16,10 +16,12 @@ import {
   Plus,
   Building2,
   UserRound,
+  Sparkles,
 } from "lucide-react";
 
 import { UserRole, type UserRolesState } from "@/lib/roles/roles-types";
 import { getStoredRoles } from "@/lib/roles/roles-storage";
+import { canManageSplash } from "@/lib/splash/splash-permissions";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
 import {
   CatalogKind,
@@ -208,6 +210,7 @@ function GerenciarLayout() {
 
   const hasRole = (role: UserRole) => rolesState.roles.includes(role);
   const activeRoles = rolesState.roles.filter((r) => r !== UserRole.USER);
+  const canManageSplashScreen = canManageSplash(rolesState.roles);
   void catalogTick;
   const ownedItems = ownedCatalogItems();
 
@@ -339,6 +342,27 @@ function GerenciarLayout() {
           <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
         </Link>
       </div>
+
+      {/* Splash screen management (campaigns gate) */}
+      {canManageSplashScreen && (
+        <div className="px-4 mt-3">
+          <Link
+            to="/gerenciar/splash"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 shadow-soft transition-all active:scale-[0.98]"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-floating">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Splash screen</div>
+              <div className="mt-1 line-clamp-3 text-[13px] leading-snug text-muted-foreground">
+                Configure imagem, textos, tipo e período da tela de abertura do app.
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+          </Link>
+        </div>
+      )}
 
       {/* Quick create links */}
       <div className="px-4 mt-6">

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { DEMO_DESTINATIONS } from "../src/components/mobility/ride/ride-data";
-import { layoutRideRoute } from "../src/lib/mobility/ride-map-layout";
+import { layoutRideRoute, mapViewMetrics, RIDE_CHOOSE_MAP_FRAME } from "../src/lib/mobility/ride-map-layout";
 import {
   addStop,
   buildRoutePoints,
@@ -95,6 +95,19 @@ describe("rota viva origem → paradas → destino", () => {
     expect(mapAEB.destination).not.toBeNull();
     expect(mapAEB.stops[0].point).not.toEqual(mapAB.origin);
     expect(mapAEB.stops[0].point).not.toEqual(mapAB.destination);
+  });
+
+  test("enquadra origem e destino na área visível acima da folha", () => {
+    const view = mapViewMetrics(RIDE_CHOOSE_MAP_FRAME);
+    const layout = layoutRideRoute(originA, destB, [], RIDE_CHOOSE_MAP_FRAME);
+    expect(layout.origin).not.toBeNull();
+    expect(layout.destination).not.toBeNull();
+    expect(layout.origin!.y).toBeGreaterThanOrEqual(view.padTop - 0.5);
+    expect(layout.origin!.y).toBeLessThanOrEqual(view.height - view.padBottom + 0.5);
+    expect(layout.destination!.y).toBeGreaterThanOrEqual(view.padTop - 0.5);
+    expect(layout.destination!.y).toBeLessThanOrEqual(view.height - view.padBottom + 0.5);
+    expect(layout.origin).not.toEqual(layout.destination);
+    expect(view.padBottom).toBeGreaterThan(view.padTop);
   });
 
   test("patch da Trip recalcula distância e tempo ao mudar a rota", () => {

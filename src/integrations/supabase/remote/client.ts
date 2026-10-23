@@ -10,6 +10,33 @@ export type SchemaAClientOptions = {
   accessToken?: string;
 };
 
+function isOpaqueSupabaseApiKey(value: string): boolean {
+  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
+}
+
+function createSupabaseFetch(supabaseKey: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+    );
+
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    }
+
+    // Opaque API keys are sent in `apikey`, not as JWT bearer tokens.
+    if (
+      isOpaqueSupabaseApiKey(supabaseKey) &&
+      headers.get("Authorization") === `Bearer ${supabaseKey}`
+    ) {
+      headers.delete("Authorization");
+    }
+
+    headers.set("apikey", supabaseKey);
+    return fetch(input, { ...init, headers });
+  };
+}
+
 /** Typed Schema A client. Call explicitly — never from UI demo effects. */
 export function createSchemaAClient(
   url: string,
@@ -23,14 +50,17 @@ export function createSchemaAClient(
     );
   }
   return createClient<SchemaADatabase>(url, key, {
+    global: {
+      fetch: createSupabaseFetch(key),
+      ...(options.accessToken
+        ? { headers: { Authorization: `Bearer ${options.accessToken}` } }
+        : {}),
+    },
     auth: {
       persistSession: options.persistSession === true,
       autoRefreshToken: options.persistSession === true,
       detectSessionInUrl: false,
     },
-    global: options.accessToken
-      ? { headers: { Authorization: `Bearer ${options.accessToken}` } }
-      : undefined,
   });
 }
 

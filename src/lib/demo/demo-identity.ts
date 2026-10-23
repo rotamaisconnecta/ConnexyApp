@@ -11,29 +11,37 @@ export type DemoIdentity = {
   photo: string;
 };
 
-const DEMO_IDENTITIES: DemoIdentity[] = [
-  { id: currentUser.id, name: currentUser.name, photo: currentUser.photo },
-  ...people.map((person) => ({ id: person.id, name: person.name, photo: person.photo })),
-];
+let demoIdentities: DemoIdentity[] | null = null;
+
+function getDemoIdentitiesList(): DemoIdentity[] {
+  if (!demoIdentities) {
+    demoIdentities = [
+      { id: currentUser.id, name: currentUser.name, photo: currentUser.photo },
+      ...people.map((person) => ({ id: person.id, name: person.name, photo: person.photo })),
+    ];
+  }
+  return demoIdentities;
+}
 
 export function getDemoIdentities(): DemoIdentity[] {
-  return DEMO_IDENTITIES;
+  return getDemoIdentitiesList();
 }
 
 export function getDemoIdentity(): DemoIdentity {
-  if (typeof window === "undefined" || !isDemoMode()) return DEMO_IDENTITIES[0];
+  const identities = getDemoIdentitiesList();
+  if (typeof window === "undefined" || !isDemoMode()) return identities[0];
   try {
     const id = window.localStorage.getItem(IDENTITY_KEY);
-    return DEMO_IDENTITIES.find((identity) => identity.id === id) ?? DEMO_IDENTITIES[0];
+    return identities.find((identity) => identity.id === id) ?? identities[0];
   } catch {
-    return DEMO_IDENTITIES[0];
+    return identities[0];
   }
 }
 
 /** Development-only identity switcher. It is not an auth action or a user account. */
 export function setDemoIdentity(id: string): void {
   if (!isDemoMode() || typeof window === "undefined") return;
-  const identity = DEMO_IDENTITIES.find((item) => item.id === id);
+  const identity = getDemoIdentitiesList().find((item) => item.id === id);
   if (!identity) return;
   try {
     if (identity.id === currentUser.id) window.localStorage.removeItem(IDENTITY_KEY);

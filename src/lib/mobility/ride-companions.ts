@@ -1,4 +1,5 @@
-import { people } from "@/lib/mock-data";
+import { listPeople } from "@/lib/mock-data";
+import { isConnected } from "@/lib/demo/demo-db";
 import { estimateDemoFare } from "./demo-fare";
 import {
   OutingInviteStatus,
@@ -30,7 +31,7 @@ export type RideFriendCandidate = {
 };
 
 function friendLocation(personId: string): RideFriendCandidate | null {
-  const person = people.find((item) => item.id === personId);
+  const person = listPeople().find((item) => item.id === personId);
   if (!person) return null;
   return {
     id: person.id,
@@ -68,10 +69,15 @@ export function listRideFriendInvites(fromUserId: string, tripId: string): Outin
 
 export function listRideFriendCandidates(fromUserId: string, trip: Trip): RideFriendCandidate[] {
   const reserved = new Set(reservedFriendIdsForTrip(fromUserId, trip.id));
-  return people
+  return listPeople()
     .filter((person) => person.id !== fromUserId && !reserved.has(person.id))
     .map((person) => friendLocation(person.id))
-    .filter((item): item is RideFriendCandidate => item != null);
+    .filter((item): item is RideFriendCandidate => item != null)
+    .sort((left, right) => {
+      const leftConnected = isConnected(left.id, fromUserId) ? 0 : 1;
+      const rightConnected = isConnected(right.id, fromUserId) ? 0 : 1;
+      return leftConnected - rightConnected;
+    });
 }
 
 function companionLabel(friend: RideFriendCandidate): string {

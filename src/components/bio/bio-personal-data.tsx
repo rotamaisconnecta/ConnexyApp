@@ -21,15 +21,42 @@ export function BioPersonalDataSection({ profile, userId, configured, onSaved }:
 
   const handleSave = async () => {
     if (!configured || saving) return;
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error("O nome nao pode ficar em branco.");
+      return;
+    }
+
+    const normalizedHandle = handle.trim().toLowerCase();
+    if (!normalizedHandle) {
+      toast.error("O @usuario nao pode ficar em branco.");
+      return;
+    }
+
+    const trimmedHeadline = headline.trim();
+    const trimmedBio = bio.trim();
+    const parsedAge = age ? Number(age) : null;
+
+    // Envia somente campos alterados: name/handle nunca saem nulos e a
+    // atualizacao parcial preserva o que ja esta gravado.
+    const patch: Partial<Omit<ProfileRow, "id">> = {};
+    if (trimmedName !== (profile.name ?? "")) patch.name = trimmedName;
+    if (normalizedHandle !== (profile.handle ?? "")) patch.handle = normalizedHandle;
+    if (trimmedHeadline !== (profile.headline ?? "")) {
+      patch.headline = trimmedHeadline || null;
+    }
+    if (trimmedBio !== (profile.bio ?? "")) patch.bio = trimmedBio || null;
+    if (parsedAge !== (profile.age ?? null)) patch.age = parsedAge;
+
+    if (Object.keys(patch).length === 0) {
+      toast.success("Dados salvos!");
+      return;
+    }
+
     setSaving(true);
     try {
-      const updated = await ProfileRepository.updateProfile(userId, {
-        name: name.trim() || null,
-        handle: handle.trim().toLowerCase() || null,
-        headline: headline.trim() || null,
-        bio: bio.trim() || null,
-        age: age ? Number(age) : null,
-      });
+      const updated = await ProfileRepository.updateProfile(userId, patch);
       onSaved(updated);
       toast.success("Dados salvos!");
     } catch (err) {

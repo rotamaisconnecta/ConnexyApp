@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
@@ -22,22 +22,18 @@ import { ConversationInviteButton } from "@/components/chat/conversation-invite-
 import { BackButton } from "@/components/navigation/back-button";
 import { StatusBar } from "@/components/phone-frame";
 import { MediaViewer } from "@/components/system/media-viewer";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import { enginePersonById } from "@/lib/engine/engine-detail";
 import { useAuth } from "@/hooks/use-auth";
 import { isDemoMode } from "@/lib/demo/demo-config";
-import { toggleFollow } from "@/lib/demo/demo-db";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { getConnectionIds, toggleFollow } from "@/lib/demo/demo-db";
 import { useDemoIsFollowing } from "@/lib/demo/use-demo-db";
 import { isRemoteSocialEnabled } from "@/lib/social/schema-a-social-flag";
 import { useRemoteFollowState } from "@/lib/social/use-remote-follow";
-import {
-  commonGround,
-  currentUser,
-  findPerson,
-  findPlace,
-  people,
-  type Moment,
-  type Person,
-} from "@/lib/mock-data";
+import { commonGround, findPerson, findPlace, type Moment, type Person } from "@/lib/mock-data";
+import { listSharedActivities } from "@/lib/presence/presence-privacy";
+import { usePresence } from "@/providers/presence/presence-provider";
 import { supabase } from "@/lib/supabase/client";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import type { ProfileRow } from "@/types/database/tables";
@@ -59,6 +55,7 @@ export const Route = createFileRoute("/_app/perfil/$id")({
   validateSearch: searchSchema,
   shouldReload: true,
   loader: async ({ params }) => {
+    if (isDemoMode() && params.id === getDemoIdentity().id) throw redirect({ to: "/perfil" });
     const person = findPerson(params.id) ?? enginePersonById(params.id);
     if (person) return person;
     if (!isPublicSupabaseConfigured()) throw notFound();
@@ -161,7 +158,9 @@ function ProfileLoadError() {
 
 function ViewedProfile() {
   const person = Route.useLoaderData() as Person;
-  const isOwnProfile = person.id === currentUser.id;
+  const { user } = useAuth();
+  const viewerId = user?.id ?? getDemoIdentity().id;
+  const isOwnProfile = person.id === viewerId;
   const common = commonGround(person);
   const favoritePlaces = useMemo(
     () => (person.favoritePlaceIds ?? []).map(findPlace).filter(Boolean),
@@ -169,12 +168,7 @@ function ViewedProfile() {
   );
   const displayPlaces = useMemo(
     () =>
-      [
-        ...favoritePlaces,
-        findPlace("cafe-central"),
-        findPlace("sunset-parque"),
-        findPlace("vinil-store"),
-      ]
+      favoritePlaces
         .filter(
           (place, index, list) =>
             place && list.findIndex((item) => item?.id === place.id) === index,
@@ -182,11 +176,23 @@ function ViewedProfile() {
         .slice(0, 4),
     [favoritePlaces],
   );
-  const sharedFriends = people
-    .filter((candidate) => candidate.id !== person.id && candidate.id !== currentUser.id)
-    .slice(0, 6);
+  const friendIds = useMemo(() => getConnectionIds(viewerId), [viewerId]);
+  const sharedFriends = useMemo(
+    () =>
+      friendIds
+        .filter(
+          (friendId) => friendId !== person.id && getConnectionIds(person.id).includes(friendId),
+        )
+        .map((friendId) => findPerson(friendId))
+        .filter((friend): friend is Person => friend !== undefined),
+    [friendIds, person.id],
+  );
+  const { checkins } = usePresence();
+  const sharedActivities = useMemo(
+    () => listSharedActivities(checkins, viewerId, person.id, friendIds),
+    [checkins, viewerId, person.id, friendIds],
+  );
   const firstName = person.name.split(" ")[0];
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const [publicationTab, setPublicationTab] = useState<"Tudo" | "Fotos">("Tudo");
   const [selectedPublicationIndex, setSelectedPublicationIndex] = useState<number | null>(null);
 
@@ -314,20 +320,19 @@ function ViewedProfile() {
 
         <div className="relative -mt-[78px] px-5 text-center">
           <div className="mx-auto h-[136px] w-[136px]">
-            {!person.photo || avatarFailed ? (
-              <div className="grid h-full w-full place-items-center rounded-full border-4 border-background bg-secondary text-primary shadow-xl">
-                <span className="text-3xl font-bold">
-                  {getProfileInitials(person.name, person.handle)}
-                </span>
-              </div>
-            ) : (
-              <img
-                src={person.photo}
-                alt={`Foto de ${person.name}`}
-                onError={() => setAvatarFailed(true)}
-                className="h-full w-full rounded-full border-4 border-background object-cover shadow-xl"
-              />
-            )}
+            <AuthenticatedAvatarImage
+              profileId={person.id}
+              legacyUrl={person.photo || null}
+              alt={`Foto de ${person.name}`}
+              className="h-full w-full rounded-full border-4 border-background object-cover shadow-xl"
+              fallback={
+                <div className="grid h-full w-full place-items-center rounded-full border-4 border-background bg-secondary text-primary shadow-xl">
+                  <span className="text-3xl font-bold">
+                    {getProfileInitials(person.name, person.handle)}
+                  </span>
+                </div>
+              }
+            />
           </div>
           <h2 className="mt-3 font-display text-[30px] font-bold leading-none tracking-[-0.035em]">
             {person.name}
@@ -389,27 +394,32 @@ function ViewedProfile() {
         </span>
       </div>
 
-      <ProfileSection title="Amigos em comum" action="12 amigos em comum">
-        <div className="flex gap-4 overflow-x-auto pb-1 no-scrollbar">
-          {sharedFriends.map((friend) => (
-            <Link
-              key={friend.id}
-              to="/perfil/$id"
-              params={{ id: friend.id }}
-              className="w-[54px] shrink-0 text-center"
-            >
-              <img
-                src={friend.photo}
-                alt=""
-                className="h-[54px] w-[54px] rounded-full object-cover"
-              />
-              <span className="mt-1.5 block truncate text-[11px] text-foreground">
-                {friend.name}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </ProfileSection>
+      {sharedFriends.length > 0 && (
+        <ProfileSection
+          title="Amigos em comum"
+          action={`${sharedFriends.length} ${sharedFriends.length === 1 ? "amigo" : "amigos"} em comum`}
+        >
+          <div className="flex gap-4 overflow-x-auto pb-1 no-scrollbar">
+            {sharedFriends.map((friend) => (
+              <Link
+                key={friend.id}
+                to="/perfil/$id"
+                params={{ id: friend.id }}
+                className="w-[54px] shrink-0 text-center"
+              >
+                <img
+                  src={friend.photo}
+                  alt=""
+                  className="h-[54px] w-[54px] rounded-full object-cover"
+                />
+                <span className="mt-1.5 block truncate text-[11px] text-foreground">
+                  {friend.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </ProfileSection>
+      )}
 
       {displayPlaces.length > 0 && (
         <ProfileSection title="Lugares que curtiu">
@@ -443,26 +453,46 @@ function ViewedProfile() {
         </ProfileSection>
       )}
 
-      <ProfileSection
-        title="Atividade compartilhada"
-        action={
-          <span className="inline-flex items-center gap-1">
-            <LockKeyhole className="h-3.5 w-3.5" /> Compartilhado por {firstName}
-          </span>
-        }
-      >
-        <div className="space-y-3">
-          <ActivityItem icon={CalendarDays} text="Confirmou presença em um evento próximo" />
-          <ActivityItem
-            icon={Heart}
-            text={`Curtiu ${displayPlaces[0]?.name ?? "um lugar da região"}`}
-          />
-          <ActivityItem
-            icon={MapPin}
-            text={`Fez check-in no ${displayPlaces[1]?.name ?? "bairro"}`}
-          />
-        </div>
-      </ProfileSection>
+      {sharedActivities.length > 0 && (
+        <ProfileSection
+          title="Atividade compartilhada"
+          action={
+            <span className="inline-flex items-center gap-1">
+              <LockKeyhole className="h-3.5 w-3.5" /> Compartilhado por {firstName}
+            </span>
+          }
+        >
+          <div className="space-y-3">
+            {sharedActivities.map((activity) =>
+              activity.targetType === "event" ? (
+                <Link
+                  key={activity.targetId}
+                  to="/event/$eventId"
+                  params={{ eventId: activity.targetId }}
+                  className="block"
+                >
+                  <ActivityItem
+                    icon={CalendarDays}
+                    text={`Vocês confirmaram presença em ${activity.targetName}`}
+                  />
+                </Link>
+              ) : (
+                <Link
+                  key={activity.targetId}
+                  to="/local/$id"
+                  params={{ id: activity.targetId }}
+                  className="block"
+                >
+                  <ActivityItem
+                    icon={MapPin}
+                    text={`Vocês fizeram check-in em ${activity.targetName}`}
+                  />
+                </Link>
+              ),
+            )}
+          </div>
+        </ProfileSection>
+      )}
 
       <section className="mt-6 px-4">
         <div className="flex items-center justify-between gap-3">
@@ -569,6 +599,8 @@ function ProfileSection({
   );
 }
 
+import { Link, useNavigate } from "@tanstack/react-router";
+
 function ActivityItem({
   icon: Icon,
   text,
@@ -586,7 +618,6 @@ function ActivityItem({
     </div>
   );
 }
-
 function ProfileFollowButton({ personId }: { personId: string }) {
   const { user } = useAuth();
   const demo = isDemoMode();

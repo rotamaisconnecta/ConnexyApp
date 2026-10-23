@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { currentUser, people } from "@/lib/mock-data";
+import { currentUser, listPeople } from "@/lib/mock-data";
 import type { CompanionStopInput } from "@/lib/mobility/ride-search";
 
 export const OUTING_INVITES_STORAGE_KEY = "connexy:demo:outing-invites";
@@ -250,7 +250,7 @@ export function isOutingRideAvailable(fromUserId: string, targetId?: string): bo
 }
 
 function stopForInvite(invite: OutingInvite): CompanionStopInput | null {
-  const person = people.find((item) => item.id === invite.personId);
+  const person = listPeople().find((item) => item.id === invite.personId);
   const name = person?.name ?? invite.personId;
   if (
     typeof invite.stopAddress === "string" &&

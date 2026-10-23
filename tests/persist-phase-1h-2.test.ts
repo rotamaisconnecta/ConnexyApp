@@ -236,7 +236,7 @@ describe("Fase 1H-2 — regressão de fontes", () => {
     expect(identity.id).toBe(A);
     const detail = await source("src/routes/_app/carona.$offerId.tsx");
     expect(detail).toContain("Conversar");
-    expect(detail).toContain("Ver ponto de encontro");
+    expect(detail).toContain("Encontro: {offer.meetup}");
     expect(detail).toContain("Cancelar");
   });
 });

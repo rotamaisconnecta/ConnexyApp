@@ -126,6 +126,16 @@ export function toRemoteProfileUpdate(
   if (profile.city !== undefined) next.city = profile.city || null;
   if (profile.bio !== undefined) next.bio = profile.bio || null;
   if (profile.interests !== undefined) next.interests = profile.interests;
+  if (profile.headline !== undefined) next.headline = profile.headline ?? null;
+  if (profile.moodEmoji !== undefined) next.mood_emoji = profile.moodEmoji ?? null;
+  if (profile.moodText !== undefined) next.mood_text = profile.moodText ?? null;
+  if (profile.nowPlaying !== undefined) {
+    next.now_playing_kind = profile.nowPlaying?.kind ?? null;
+    next.now_playing_title = profile.nowPlaying?.title ?? null;
+    next.now_playing_subtitle = profile.nowPlaying?.subtitle ?? null;
+  }
+  if (profile.looksFor !== undefined) next.looks_for = profile.looksFor;
+  if (profile.vibeTags !== undefined) next.vibe_tags = profile.vibeTags;
   if (profile.age !== undefined) next.age = profile.age ?? null;
   if (locale !== undefined) next.locale = locale;
   if (profile.visibility !== undefined) {
@@ -168,6 +178,19 @@ export function toDomainProfile(
     city: publicRow.city ?? "",
     bio: publicRow.bio ?? "",
     interests: publicRow.interests,
+    headline: publicRow.headline ?? undefined,
+    moodEmoji: publicRow.mood_emoji ?? undefined,
+    moodText: publicRow.mood_text ?? undefined,
+    nowPlaying:
+      publicRow.now_playing_kind && publicRow.now_playing_title
+        ? {
+            kind: publicRow.now_playing_kind,
+            title: publicRow.now_playing_title,
+            ...(publicRow.now_playing_subtitle ? { subtitle: publicRow.now_playing_subtitle } : {}),
+          }
+        : null,
+    looksFor: publicRow.looks_for,
+    vibeTags: publicRow.vibe_tags,
     privateAddresses: {
       home: privateRow?.home_address ?? "",
       work: privateRow?.work_address ?? "",

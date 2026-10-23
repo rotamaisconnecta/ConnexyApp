@@ -5,7 +5,7 @@ import { StatusBar } from "@/components/phone-frame";
 import { CreatePostForm } from "@/components/post/create-post-form";
 import { isPostValid, PostCategory, type PostDraft } from "@/lib/types/post";
 import { BackButton } from "@/components/navigation/back-button";
-import { currentUser } from "@/lib/mock-data";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
 import { useDemoOwnProfile } from "@/lib/demo/demo-own-profile";
 import { saveDemoPost, type DemoPost, type DemoPostMedia } from "@/lib/demo/demo-posts";
 import { CANONICAL_MOMENT_CATEGORY } from "@/lib/create/create-hub-destinations";
@@ -71,7 +71,7 @@ function CreatePostPage() {
 
     const post: DemoPost = {
       id: `demo-post-${Date.now()}`,
-      authorId: currentUser.id,
+      authorId: getDemoIdentity().id,
       authorName: demoProfile.name,
       authorPhoto: demoProfile.photo,
       authorHandle: demoProfile.handle,

@@ -22,6 +22,7 @@ import { formatPersonDistance } from "@/lib/proximity";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isDemoMode } from "@/lib/demo/demo-config";
 import { useDiscovery } from "@/hooks/api/use-discovery";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import { TypeScale } from "@/theme/typography";
 import { getDiscoverItemNavigation } from "@/lib/discovery/discover-navigation";
 import type { NearbyProfile } from "@/types/phase-13b";
@@ -103,11 +104,17 @@ function DiscoverPage() {
     [nearbyPlaces],
   );
   const eventCategories = useMemo(
-    () => [...new Set(["Eventos", ...placeCategories.filter((category) => /evento/i.test(category))])],
+    () => [
+      ...new Set(["Eventos", ...placeCategories.filter((category) => /evento/i.test(category))]),
+    ],
     [placeCategories],
   );
   const businessCategories = useMemo(
-    () => [...new Set(nearbyPlaces.map((place) => place.category).filter((category) => category !== "Eventos"))],
+    () => [
+      ...new Set(
+        nearbyPlaces.map((place) => place.category).filter((category) => category !== "Eventos"),
+      ),
+    ],
     [nearbyPlaces],
   );
 
@@ -160,16 +167,16 @@ function DiscoverPage() {
           )
             .slice(0, 7)
             .map((person) => ({
-            id: person.id,
-            name: person.name,
-            distanceMeters: person.distanceMeters,
-            photo: person.photo,
-            interests: person.interests,
-            age: person.age,
-            headline: person.headline,
-            interestPercent: sharedInterestPercent(person) ?? undefined,
-            compatibilityPercent: compatibilityScore(person),
-          }));
+              id: person.id,
+              name: person.name,
+              distanceMeters: person.distanceMeters,
+              photo: person.photo,
+              interests: person.interests,
+              age: person.age,
+              headline: person.headline,
+              interestPercent: sharedInterestPercent(person) ?? undefined,
+              compatibilityPercent: compatibilityScore(person),
+            }));
 
       profilesToUse.forEach((p) => {
         items.push({
@@ -339,7 +346,9 @@ function DiscoverPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className={`font-display font-bold ${TypeScale.screenTitle}`}>
-              {activeFilter === "pessoas" ? "Pessoas incríveis perto de você ✨" : "Explorar por perto"}
+              {activeFilter === "pessoas"
+                ? "Pessoas incríveis perto de você ✨"
+                : "Explorar por perto"}
             </h1>
             <p className={`text-muted-foreground ${TypeScale.caption}`}>
               {activeFilter === "pessoas"
@@ -438,7 +447,15 @@ function DiscoverPage() {
                     item.color,
                   )}
                 >
-                  {item.photo ? (
+                  {item.type === "pessoas" ? (
+                    <AuthenticatedAvatarImage
+                      profileId={item.id}
+                      legacyUrl={item.photo}
+                      alt=""
+                      className="h-full w-full rounded-full object-cover"
+                      fallback={<span aria-hidden>{item.icon}</span>}
+                    />
+                  ) : item.photo ? (
                     <img
                       src={item.photo}
                       alt=""
@@ -473,8 +490,11 @@ function DiscoverPage() {
                 : FILTERS.find((f) => f.id === activeFilter)?.label}
           </h3>
           <div className="flex items-center gap-2">
-            {activeFilter === "pessoas" || (activeFilter === "todos" && mapItems.some(m => m.type === "pessoas")) ? (
-              <span className={`text-muted-foreground ${TypeScale.caption}`}>Ordenar por: Distância</span>
+            {activeFilter === "pessoas" ||
+            (activeFilter === "todos" && mapItems.some((m) => m.type === "pessoas")) ? (
+              <span className={`text-muted-foreground ${TypeScale.caption}`}>
+                Ordenar por: Distância
+              </span>
             ) : null}
             <span className={`text-muted-foreground ${TypeScale.caption}`}>
               {mapItems.length} encontrados
@@ -486,12 +506,7 @@ function DiscoverPage() {
             ? mapItems
                 .filter((m) => m.type === "pessoas")
                 .slice(0, 10)
-                .map((item) => (
-                  <PeopleListCard
-                    key={item.id}
-                    item={item as any}
-                  />
-                ))
+                .map((item) => <PeopleListCard key={item.id} item={item as any} />)
             : mapItems.slice(0, 10).map((item) => (
                 <NearbyMapItemCard
                   key={item.id}

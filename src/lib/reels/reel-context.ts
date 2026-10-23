@@ -41,27 +41,6 @@ function shortDate(iso: string): string {
 }
 
 function targetForAuthor(reel: Reel): ReelContextTarget {
-  if (reel.category === ReelCategory.BUSINESS && reel.business) {
-    return { type: "negocio", id: reel.business.id };
-  }
-  if (reel.category === ReelCategory.OFFER && reel.business) {
-    return { type: "oferta", id: reel.business.id };
-  }
-  if (reel.category === ReelCategory.EVENT && reel.event) {
-    return { type: "evento", id: reel.event.id };
-  }
-  if (reel.category === ReelCategory.PLACE && reel.location) {
-    return { type: "local", id: reel.location.id };
-  }
-  if (reel.category === ReelCategory.DRIVER && reel.driver) {
-    return { type: "corrida", id: reel.driver.id };
-  }
-  if (reel.category === ReelCategory.TRAVEL && reel.location) {
-    return { type: "local", id: reel.location.id };
-  }
-  if (reel.category === ReelCategory.NETWORKING && reel.event) {
-    return { type: "evento", id: reel.event.id };
-  }
   return { type: "perfil", id: reel.author.id };
 }
 

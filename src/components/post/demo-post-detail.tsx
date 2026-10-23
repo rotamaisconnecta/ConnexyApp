@@ -15,7 +15,8 @@ import {
   listDemoPostComments,
   subscribeDemoPostComments,
 } from "@/lib/demo/demo-post-comments";
-import { LocalMediaFrame } from "@/components/media/local-media-frame";
+import { PostMediaFrame } from "@/components/media/post-media-frame";
+import { useAuth } from "@/hooks/use-auth";
 
 function isPostCategory(value: string | null): value is PostCategoryValue {
   return Boolean(value && value in POST_CATEGORY_META);
@@ -29,6 +30,8 @@ export function DemoPostDetail({ post, onClose }: { post: DemoPost; onClose: () 
   const categoryMeta = isPostCategory(post.category) ? POST_CATEGORY_META[post.category] : null;
   const privacyMeta = isPostPrivacy(post.privacy) ? POST_PRIVACY_META[post.privacy] : null;
   const createdLabel = formatRelativeTime(new Date(post.createdAt));
+  const { user } = useAuth();
+  const viewerId = user?.id ?? null;
   const [comments, setComments] = useState(() => listDemoPostComments(post.id));
   const [draft, setDraft] = useState("");
 
@@ -101,10 +104,11 @@ export function DemoPostDetail({ post, onClose }: { post: DemoPost; onClose: () 
         </div>
 
         {post.media.map((media, index) => (
-          <LocalMediaFrame
-            key={`${media.mediaId ?? media.preview}-${index}`}
-            mediaId={media.mediaId}
-            fallbackUrl={media.preview}
+          <PostMediaFrame
+            key={`${media.mediaId ?? media.preview ?? media.path}-${index}`}
+            postId={post.id}
+            viewerId={viewerId}
+            media={media}
           >
             {(url) =>
               media.type === "video" ? (
@@ -122,7 +126,7 @@ export function DemoPostDetail({ post, onClose }: { post: DemoPost; onClose: () 
                 />
               )
             }
-          </LocalMediaFrame>
+          </PostMediaFrame>
         ))}
 
         <div className="space-y-3 px-4 py-4">

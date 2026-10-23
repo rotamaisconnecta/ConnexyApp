@@ -2,6 +2,7 @@ import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { PresenceDot } from "@/components/presence-dot";
 import { formatRelativeTime, formatNumber } from "@/lib/feed/feed-utils";
 import type { FeedItem, PostData } from "@/lib/feed/feed-types";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 interface PostCardProps {
   item: FeedItem;
@@ -15,10 +16,16 @@ export function PostCard({ item }: PostCardProps) {
       {/* Header */}
       <div className="flex items-center gap-3 p-4 pb-0">
         <div className="relative">
-          <img
-            src={item.author.photo}
+          <AuthenticatedAvatarImage
+            profileId={item.author.id}
+            legacyUrl={item.author.photo}
             alt={`Foto de ${item.author.name}`}
             className="h-10 w-10 rounded-full object-cover"
+            fallback={
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-brand text-xs font-bold text-white">
+                {item.author.name.slice(0, 2).toUpperCase()}
+              </div>
+            }
           />
           {item.author.online !== undefined && (
             <span className="absolute -bottom-0.5 -right-0.5">

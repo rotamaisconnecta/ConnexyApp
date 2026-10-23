@@ -48,6 +48,19 @@ export type CaronaRequest = {
   status: CaronaRequestStatusValue;
   createdAt: number;
   conversationId?: string;
+  /** Mensagem opcional do passageiro para quem oferece a carona. */
+  message?: string;
+  seats?: number;
+};
+
+/** Critérios de busca da Carona Amiga. Todos opcionais: um filtro ausente
+ * simplesmente não restringe. Sem geocoding, distância ou score. */
+export type CaronaSearchCriteria = {
+  origin?: string | null;
+  destination?: string | null;
+  date?: string | null;
+  time?: string | null;
+  seats?: number | null;
 };
 
 type CaronaStore = {
@@ -159,6 +172,107 @@ export function listDiscoverableCaronaOffers(viewerId = getDemoIdentity().id): C
   );
 }
 
+/* ─── Busca de Carona Amiga ──────────────────────────────────────────────
+   Filtro textual simples sobre os campos que já existem no modelo.
+   Sem distância geográfica, sem score, sem dados inventados: uma oferta
+   só aparece quando o texto informado existe de fato na oferta. */
+
+function normalizeCaronaText(value: string | null | undefined): string {
+  if (typeof value !== "string") return "";
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function matchesCaronaText(offerValue: string, wanted: string | null | undefined): boolean {
+  const needle = normalizeCaronaText(wanted);
+  if (!needle) return true;
+  const haystack = normalizeCaronaText(offerValue);
+  if (!haystack) return false;
+  return haystack.includes(needle) || needle.includes(haystack);
+}
+
+function timeToMinutes(value: string | null | undefined): number | null {
+  if (typeof value !== "string") return null;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours * 60 + minutes;
+}
+
+/** Ordena por relevance simples: mesma data, horário próximo e recência. */
+function caronaRelevance(a: CaronaOffer, b: CaronaOffer): number {
+  if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+  const aMinutes = timeToMinutes(a.time);
+  const bMinutes = timeToMinutes(b.time);
+  if (aMinutes !== null && bMinutes !== null && aMinutes !== bMinutes) {
+    return aMinutes - bMinutes;
+  }
+  return b.createdAt - a.createdAt;
+}
+
+/** Ofertas que o usuário pode realmente pedir: ativas, com vaga e de outra pessoa. */
+export function listBookableCaronaOffers(viewerId = getDemoIdentity().id): CaronaOffer[] {
+  return listCaronaOffers().filter(
+    (offer) =>
+      offer.status === CaronaOfferStatus.ACTIVE &&
+      offer.ownerId !== viewerId &&
+      offer.availableSeats >= 1,
+  );
+}
+
+/** Busca textual da Carona Amiga. Só devolve ofertas com vaga real. */
+export function searchCaronaOffers(
+  criteria: CaronaSearchCriteria,
+  viewerId = getDemoIdentity().id,
+): CaronaOffer[] {
+  const seats = Math.max(1, Math.round(criteria.seats ?? 1));
+  return listBookableCaronaOffers(viewerId)
+    .filter((offer) => {
+      if (!matchesCaronaText(offer.destination, criteria.destination)) return false;
+      if (!matchesCaronaText(offer.origin, criteria.origin)) return false;
+      if (criteria.date && offer.date !== criteria.date) return false;
+      if (offer.availableSeats < seats) return false;
+      return true;
+    })
+    .sort(caronaRelevance);
+}
+
+/** Resumo curto para contexto (fluxo de corrida, evento, local).
+ * Não substitui a busca: devolve contagem e a primeira oferta relevante. */
+export type CaronaContextSummary = {
+  offers: CaronaOffer[];
+  drivers: number;
+  seats: number;
+  earliestTime: string | null;
+  date: string | null;
+};
+
+/** Contexto de Carona Amiga para um destino informado (texto já resolvido). */
+export function caronaContextForDestination(
+  destination: string | null | undefined,
+  viewerId = getDemoIdentity().id,
+): CaronaContextSummary | null {
+  const needle = normalizeCaronaText(destination);
+  if (!needle) return null;
+  const offers = listBookableCaronaOffers(viewerId).filter((offer) =>
+    matchesCaronaText(offer.destination, needle),
+  );
+  if (offers.length === 0) return null;
+  const sorted = [...offers].sort(caronaRelevance);
+  return {
+    offers: sorted,
+    drivers: new Set(sorted.map((offer) => offer.ownerId)).size,
+    seats: sorted.reduce((total, offer) => total + offer.availableSeats, 0),
+    earliestTime: sorted[0]?.time ?? null,
+    date: sorted[0]?.date ?? null,
+  };
+}
+
 export function listMyCaronaOffers(ownerId = getDemoIdentity().id): CaronaOffer[] {
   return listCaronaOffers().filter((offer) => offer.ownerId === ownerId);
 }
@@ -204,9 +318,27 @@ export function createCaronaOffer(input: CreateCaronaOfferInput): CaronaOffer {
   return offer;
 }
 
+/** Pedido ativo (pendente ou aceito) do passageiro para uma oferta. */
+export function getActiveCaronaRequest(
+  rideOfferId: string,
+  requesterId = getDemoIdentity().id,
+): CaronaRequest | null {
+  return (
+    read()
+      .requests.find(
+        (item) =>
+          item.rideOfferId === rideOfferId &&
+          item.requesterId === requesterId &&
+          (item.status === CaronaRequestStatus.REQUESTED ||
+            item.status === CaronaRequestStatus.ACCEPTED),
+      ) ?? null
+  );
+}
+
 export function requestCarona(
   rideOfferId: string,
   requesterId = getDemoIdentity().id,
+  options?: { message?: string | null; seats?: number | null },
 ): CaronaRequest {
   const store = read();
   const offer = store.offers.find((item) => item.id === rideOfferId);
@@ -214,20 +346,19 @@ export function requestCarona(
   if (offer.ownerId === requesterId) throw new Error("Você não pode solicitar a própria carona.");
   if (offer.status !== CaronaOfferStatus.ACTIVE)
     throw new Error("Esta carona não está disponível.");
-  const existing = store.requests.find(
-    (item) =>
-      item.rideOfferId === rideOfferId &&
-      item.requesterId === requesterId &&
-      (item.status === CaronaRequestStatus.REQUESTED ||
-        item.status === CaronaRequestStatus.ACCEPTED),
-  );
+  const seats = Math.max(1, Math.min(offer.availableSeats, Math.round(options?.seats ?? 1)));
+  const existing = getActiveCaronaRequest(rideOfferId, requesterId);
   if (existing) return existing;
+  const message =
+    typeof options?.message === "string" ? options.message.trim().slice(0, 240) : "";
   const request: CaronaRequest = {
     id: `carona-req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     rideOfferId,
     requesterId,
     status: CaronaRequestStatus.REQUESTED,
     createdAt: Date.now(),
+    ...(message ? { message } : {}),
+    seats,
   };
   write({ ...store, requests: [request, ...store.requests] });
   return request;
@@ -244,24 +375,34 @@ export async function acceptCaronaRequest(
   if (!offer || offer.ownerId !== ownerId) throw new Error("Só o ofertante pode aceitar.");
   if (request.status === CaronaRequestStatus.ACCEPTED) return request;
   if (request.status !== CaronaRequestStatus.REQUESTED) throw new Error("Pedido indisponível.");
-  if (offer.availableSeats < 1 || offer.status !== CaronaOfferStatus.ACTIVE) {
+  const requestedSeats = Math.max(1, Math.round(request.seats ?? 1));
+  if (offer.availableSeats < requestedSeats || offer.status !== CaronaOfferStatus.ACTIVE) {
     throw new Error("Não há vagas nesta carona.");
   }
 
   const connection = await connectUser(request.requesterId, ownerId);
-  const nextSeats = offer.availableSeats - 1;
+  const nextSeats = offer.availableSeats - requestedSeats;
   offer.availableSeats = nextSeats;
   if (nextSeats === 0) offer.status = CaronaOfferStatus.FULL;
   request.status = CaronaRequestStatus.ACCEPTED;
   request.conversationId = connection.conversationId;
   write(store);
 
+  const from = offer.origin;
   sendLocalMessage(
     connection.conversationId,
     "me",
-    `Carona Amiga confirmada\nDestino: ${offer.destination}\nHorário: ${offer.time}\nEncontro: ${offer.meetup}`,
+    `Carona Amiga confirmada\n${from} → ${offer.destination}\n${offer.date} • ${offer.time}\nVagas: ${offer.availableSeats}\nEncontro: ${offer.meetup}`,
     { id: ownerId, name: "Carona Amiga" },
   );
+  if (request.message) {
+    sendLocalMessage(
+      connection.conversationId,
+      "them",
+      request.message,
+      { id: request.requesterId, name: " passageiro" },
+    );
+  }
   return request;
 }
 

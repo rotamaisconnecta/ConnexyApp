@@ -9,6 +9,7 @@ import { useDiscovery } from "@/hooks/api/use-discovery";
 import { formatPersonDistance } from "@/lib/proximity";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import { Link } from "@tanstack/react-router";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 export const Route = createFileRoute("/_app/pessoas")({
   head: () => ({ meta: [{ title: "Pessoas — Connexy" }] }),
@@ -94,17 +95,17 @@ function Pessoas() {
                       className="relative shrink-0"
                       aria-label={`Ver perfil de ${p.name}`}
                     >
-                      {p.photo_url ? (
-                        <img
-                          src={p.photo_url}
-                          alt={p.name}
-                          className="h-14 w-14 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary text-lg font-bold">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <AuthenticatedAvatarImage
+                        profileId={p.id}
+                        legacyUrl={p.photo_url}
+                        alt={p.name}
+                        className="h-14 w-14 rounded-full object-cover"
+                        fallback={
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary text-lg font-bold">
+                            {p.name.charAt(0).toUpperCase()}
+                          </div>
+                        }
+                      />
                     </Link>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm">

@@ -40,6 +40,8 @@ test("Fase 1F-5 — Connecta, conversas e inbox usam fontes reais sem rede", asy
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
       "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
+      "--define",
       'import.meta.env.VITE_APP_SUPABASE_URL=""',
       "--define",
       'import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY=""',

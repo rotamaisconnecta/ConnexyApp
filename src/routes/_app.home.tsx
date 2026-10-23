@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Bell, UserRound } from "lucide-react";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import { StatusBar } from "@/components/phone-frame";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { HomePremiumFeed } from "@/components/feed/HomePremiumFeed";
@@ -67,7 +68,6 @@ function Home() {
   const { user } = useAuth();
   const configured = isPublicSupabaseConfigured();
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const pendingRequests = useDemoPendingRequests(user?.id);
   const pendingRequestCount = isDemoMode() ? pendingRequests.length : 0;
   const demoProfile = useDemoOwnProfile();
@@ -98,8 +98,6 @@ function Home() {
   const avatarUrl = isDemoMode() ? demoProfile.photo : (profile?.photo_url ?? null);
   const initials = getInitials(displayName);
 
-  useEffect(() => setAvatarFailed(false), [avatarUrl]);
-
   return (
     <div className="flex-1 bg-background">
       <StatusBar />
@@ -112,22 +110,21 @@ function Home() {
             aria-label="Abrir meu perfil"
             className="shrink-0 rounded-full transition-transform active:scale-95"
           >
-            {avatarUrl && !avatarFailed ? (
-              <img
-                src={avatarUrl}
-                alt={`Foto de ${displayName}`}
-                onError={() => setAvatarFailed(true)}
-                className="h-10 w-10 rounded-full object-cover ring-2 ring-background shadow-soft"
-              />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand text-white ring-2 ring-background shadow-soft">
-                {initials ? (
-                  <span className="text-xs font-semibold">{initials}</span>
-                ) : (
-                  <UserRound className="h-[18px] w-[18px]" />
-                )}
-              </div>
-            )}
+            <AuthenticatedAvatarImage
+              profileId={user?.id ?? ""}
+              legacyUrl={avatarUrl}
+              alt={`Foto de ${displayName}`}
+              className="h-10 w-10 rounded-full object-cover ring-2 ring-background shadow-soft"
+              fallback={
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand text-white ring-2 ring-background shadow-soft">
+                  {initials ? (
+                    <span className="text-xs font-semibold">{initials}</span>
+                  ) : (
+                    <UserRound className="h-[18px] w-[18px]" />
+                  )}
+                </div>
+              }
+            />
           </Link>
           <Link
             to="/notificacoes"

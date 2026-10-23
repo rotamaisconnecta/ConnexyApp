@@ -46,6 +46,8 @@ test("Fase 1D-2 — convite, conexão e mensagem sobrevivem a reload real", asyn
       "import.meta.env.DEV=true",
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
+      "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
     ],
     { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
   );

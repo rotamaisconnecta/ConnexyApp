@@ -7,6 +7,7 @@ import { TypeScale } from "@/theme/typography";
 import type { NearbyMapItemVisual } from "../discover/nearby-map-item-card";
 import { getDiscoverItemNavigation } from "@/lib/discovery/discover-navigation";
 import { useNavigate } from "@tanstack/react-router";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 interface PeopleListCardProps {
   item: NearbyMapItemVisual & {
@@ -50,22 +51,22 @@ export function PeopleListCard({ item, onConnect, connected = false }: PeopleLis
         {/* Photo (large left) */}
         <div className="relative shrink-0">
           <div className="h-[120px] w-[120px] sm:h-[144px] sm:w-[144px] overflow-hidden rounded-2xl">
-            {item.photo ? (
-              <img
-                src={item.photo}
-                alt={`Foto de ${item.name}`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div
-                className={cn(
-                  "flex h-full w-full items-center justify-center text-3xl",
-                  item.color,
-                )}
-              >
-                <span aria-hidden>{item.icon}</span>
-              </div>
-            )}
+            <AuthenticatedAvatarImage
+              profileId={item.id}
+              legacyUrl={item.photo ?? null}
+              alt={`Foto de ${item.name}`}
+              className="h-full w-full object-cover"
+              fallback={
+                <div
+                  className={cn(
+                    "flex h-full w-full items-center justify-center text-3xl",
+                    item.color,
+                  )}
+                >
+                  <span aria-hidden>{item.icon}</span>
+                </div>
+              }
+            />
           </div>
 
           {/* Online over photo */}

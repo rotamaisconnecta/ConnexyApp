@@ -33,7 +33,7 @@ import type { GeoLocation } from "@/lib/mobility/ride-types";
 import type { RideOccupancy } from "@/lib/mobility/ride-occupancy";
 import type { RideFriendCandidate } from "@/lib/mobility/ride-companions";
 import { OutingInviteStatus, type OutingInvite } from "@/lib/marketplace/outing-invites";
-import { people } from "@/lib/mock-data";
+import { findPerson } from "@/lib/mock-data";
 
 function RowIcon({
   label,
@@ -631,7 +631,7 @@ export function PickFriendOverlay({
       {invites.length > 0 && (
         <ul className="mt-4 space-y-2">
           {invites.map((invite) => {
-            const person = people.find((item) => item.id === invite.personId);
+            const person = findPerson(invite.personId);
             const pending = invite.status === OutingInviteStatus.PENDING;
             return (
               <li key={invite.id} className="rounded-[18px] border border-zinc-100 px-3 py-2.5">

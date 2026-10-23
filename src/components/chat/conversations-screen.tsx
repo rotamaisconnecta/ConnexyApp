@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { StatusBar } from "@/components/phone-frame";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import { ConversationRow } from "./conversation-row";
 import { ContinueCard } from "./continue-card";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,7 +31,7 @@ import {
 } from "@/lib/demo/demo-identity";
 import { subscribeDemoDB, respondToDemoGroupInvite } from "@/lib/demo/demo-db";
 import { useDemoGroupInvites, useDemoPendingRequests } from "@/lib/demo/use-demo-db";
-import { people } from "@/lib/mock-data";
+import { findPerson } from "@/lib/mock-data";
 import { TypeScale } from "@/theme/typography";
 import {
   listFunctionalDemoConversations,
@@ -197,7 +198,7 @@ export function ConversationsScreen() {
   const filtered = useMemo(() => {
     if (useLegacyConfigured) {
       const items = sorted.filter((conversation) => {
-        const person = people.find((item) => item.id === conversation.participant.id);
+        const person = findPerson(conversation.participant.id);
         if (onlyOnline && person && !person.online) return false;
         if (onlyNearby && person && person.distanceMeters > 2000) return false;
         return true;
@@ -207,7 +208,7 @@ export function ConversationsScreen() {
       return items.filter((c) => c.participant.name.toLowerCase().includes(q));
     }
     return searchMockConversations(sorted as MockConversation[], query).filter((conversation) => {
-      const person = people.find((item) => item.id === conversation.participant.id);
+      const person = findPerson(conversation.participant.id);
       if (onlyOnline && person && !person.online) return false;
       return !(onlyNearby && person && person.distanceMeters > 2000);
     });
@@ -558,13 +559,10 @@ export function ConversationsScreen() {
             {filteredRequests.length > 0 || groupInvites.length > 0 ? (
               <div className="space-y-2.5">
                 {groupInvites.map((group) => {
-                  const inviter = people.find((person) => person.id === group.creatorId);
+                  const inviter = findPerson(group.creatorId);
                   const participantNames = group.participants
                     .filter((participant) => participant.userId !== user?.id)
-                    .map(
-                      (participant) =>
-                        people.find((person) => person.id === participant.userId)?.name,
-                    )
+                    .map((participant) => findPerson(participant.userId)?.name)
                     .filter(Boolean)
                     .join(", ");
                   return (
@@ -629,10 +627,16 @@ export function ConversationsScreen() {
                       className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left shadow-soft transition active:scale-[0.99]"
                     >
                       <span className="relative shrink-0">
-                        <img
-                          src={person.photo}
+                        <AuthenticatedAvatarImage
+                          profileId={person.id}
+                          legacyUrl={person.photo}
                           alt=""
                           className="h-12 w-12 rounded-full object-cover"
+                          fallback={
+                            <div className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 font-semibold text-primary">
+                              {person.name.charAt(0).toUpperCase()}
+                            </div>
+                          }
                         />
                         <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-primary" />
                       </span>
@@ -714,17 +718,17 @@ function RealConversationRow({
       className="flex w-full items-center gap-3 px-5 py-3 hover:bg-accent/50 transition-colors text-left"
     >
       <div className="relative shrink-0">
-        {conversation.participant.photo ? (
-          <img
-            src={conversation.participant.photo}
-            alt=""
-            className="h-11 w-11 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
-            {conversation.participant.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <AuthenticatedAvatarImage
+          profileId={conversation.participant.id}
+          legacyUrl={conversation.participant.photo}
+          alt=""
+          className="h-11 w-11 rounded-full object-cover"
+          fallback={
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
+              {conversation.participant.name.charAt(0).toUpperCase()}
+            </div>
+          }
+        />
       </div>
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-semibold text-foreground">

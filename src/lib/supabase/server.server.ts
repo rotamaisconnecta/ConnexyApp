@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/integrations/supabase/types";
 import { AUTH_COOKIE_NAME, BASE_COOKIE_OPTIONS } from "./constants";
+import { resolveServerSupabasePublicConfig } from "./external-env";
 
 function mergeVary(existing: string | undefined, value: string): string {
   if (!existing) return value;
@@ -29,17 +30,7 @@ export async function createServerSupabaseClient() {
   } = await import("@tanstack/react-start/server");
 
   // External Supabase only — no fallback to the Lovable-managed backend.
-  const SUPABASE_URL =
-    process.env.APP_SUPABASE_URL || import.meta.env.VITE_APP_SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY =
-    process.env.APP_SUPABASE_PUBLISHABLE_KEY ||
-    import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error(
-      "Missing external Supabase environment variable(s): APP_SUPABASE_URL, APP_SUPABASE_PUBLISHABLE_KEY. Set VITE_APP_SUPABASE_URL / VITE_APP_SUPABASE_PUBLISHABLE_KEY (browser) and APP_SUPABASE_* (server) as project secrets pointing to your external Supabase project.",
-    );
-  }
+  const { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY } = resolveServerSupabasePublicConfig();
 
   const secure = getRequestProtocol() === "https";
 

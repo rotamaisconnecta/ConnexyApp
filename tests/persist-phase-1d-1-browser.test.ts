@@ -42,6 +42,8 @@ test("Fase 1D-1 — onboarding e edição sobrevivem a reload real", async () =>
       "import.meta.env.DEV=true",
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
+      "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
     ],
     { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
   );

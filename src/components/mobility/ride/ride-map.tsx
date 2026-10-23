@@ -6,9 +6,11 @@ import {
   enrichRoutePath,
   geoBoundsForLocations,
   layoutRideRoute,
+  mapViewMetrics,
   projectLocation,
   unprojectMapPoint,
   type MapPoint,
+  type RideMapFrame,
 } from "@/lib/mobility/ride-map-layout";
 import {
   layoutRideExplorePins,
@@ -111,6 +113,7 @@ export function RideMap({
   recenterNonce = 0,
   contained = false,
   compactPins = false,
+  routeFrame = null,
   className = "",
 }: {
   origin?: GeoLocation | null;
@@ -134,9 +137,10 @@ export function RideMap({
   recenterNonce?: number;
   contained?: boolean;
   compactPins?: boolean;
+  routeFrame?: RideMapFrame | null;
   className?: string;
 }) {
-  const layout = layoutRideRoute(origin, destination, stops);
+  const layout = layoutRideRoute(origin, destination, stops, routeFrame);
   const exploreLayout = exploreMode ? layoutRideExplorePins(origin, explorePins) : null;
   const drawnPath = enrichRoutePath(layout.path);
   const routePath = smoothPath(drawnPath);
@@ -154,9 +158,10 @@ export function RideMap({
           );
           const bounds = geoBoundsForLocations(located);
           if (!bounds) return [];
+          const view = mapViewMetrics(routeFrame);
           return explorePins
             .filter((pin) => rideLocationHasCoordinates(pin.location))
-            .map((pin) => ({ ...pin, point: projectLocation(pin.location, bounds) }));
+            .map((pin) => ({ ...pin, point: projectLocation(pin.location, bounds, view) }));
         })()
       : [];
 
@@ -181,7 +186,7 @@ export function RideMap({
         minLng: -46.67,
         maxLng: -46.62,
       };
-    const geo = unprojectMapPoint({ x, y }, bounds);
+    const geo = unprojectMapPoint({ x, y }, bounds, mapViewMetrics(routeFrame));
     onMapPointSelect({
       lat: geo.lat,
       lng: geo.lng,

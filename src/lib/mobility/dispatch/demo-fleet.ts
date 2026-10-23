@@ -7,6 +7,8 @@
 
 import { MOCK_DRIVER } from "@/components/mobility/ride/ride-data";
 import type { DemoDriver } from "./dispatch-types";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { listDemoCastDrivers } from "@/lib/demo/demo-cast";
 
 export const DEMO_DRIVER_IDS = ["marcos", "carla", "joao"] as const;
 
@@ -51,7 +53,12 @@ export function buildDemoFleet(): DemoDriver[] {
     status: "available",
   };
 
-  return [marcos, carla, joao];
+  const fleet = [marcos, carla, joao];
+  if (!isDemoMode()) return fleet;
+  const extra = listDemoCastDrivers().filter(
+    (driver) => !fleet.some((item) => item.id === driver.id),
+  );
+  return [...fleet, ...extra];
 }
 
 /* ─── Motorista padrão deste dispositivo (demo do app) ─────

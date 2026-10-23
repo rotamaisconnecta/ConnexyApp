@@ -5,7 +5,7 @@
    Does NOT alter any engine — reuses mock-data only.
 ========================================================= */
 
-import { people, places, compatibilityScore, currentUser } from "@/lib/mock-data";
+import { places, compatibilityScore, currentUser, listPeople } from "@/lib/mock-data";
 import { formatDistance, formatHomePersonProximity, sortByDistanceMeters } from "@/lib/proximity";
 import { getCommonalities, shouldShowNearbyPerson } from "./commonalities";
 import type { PersonCommonalities } from "./commonalities";
@@ -300,7 +300,7 @@ export function eventsUpcoming(): HomeEvent[] {
 /* ─── Section builders ────────────────────────────────── */
 
 export function buildNearbyPeople(): NearbyPeopleSectionData {
-  const visible = people.filter((p) => shouldShowNearbyPerson(p.id));
+    const visible = listPeople().filter((p) => shouldShowNearbyPerson(p.id));
   return {
     kind: "NEARBY_PEOPLE",
     count: visible.length,
@@ -394,7 +394,7 @@ function placeToCard(p: (typeof places)[number]): PremiumCard {
       : p.category === "Cafés"
         ? "cafe"
         : p.category === "Eventos"
-          ? "sponsored-event"
+          ? "event"
           : p.category === "Lojas"
             ? "store"
             : "place";
@@ -412,7 +412,7 @@ function placeToCard(p: (typeof places)[number]): PremiumCard {
     promo: p.promo,
     category: p.category,
     hours: p.hours,
-    badge: p.promo ? "Promoção" : kind === "sponsored-event" ? "Patrocinado" : undefined,
+    badge: p.promo ? "Promoção" : undefined,
   };
 }
 
@@ -561,7 +561,7 @@ const TRENDING_POSTS: PremiumCard[] = [
 ];
 
 function peopleToCards(): PremiumCard[] {
-  return people
+  return listPeople()
     .filter((p) => shouldShowNearbyPerson(p.id))
     .map((p) => ({
       id: `person-${p.id}`,
@@ -619,7 +619,7 @@ export function buildRecommendationCards(): PremiumCard[] {
   const cards: PremiumCard[] = [
     ...places.map(placeToCard),
     ...EXTRA_CARDS,
-    ...eventsToCards().map((card) => ({ ...card, kind: "sponsored-event" as PremiumCardKind })),
+    ...eventsToCards(),
   ];
 
   return rankPremiumCards(cards).slice(0, 18);

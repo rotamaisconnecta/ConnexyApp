@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { Check, Search, Users, X } from "lucide-react";
-import { people } from "@/lib/mock-data";
-import { listConversationInviteCandidates, canInviteToConversation } from "@/lib/chat/conversation-invite-candidates";
+import { findPerson } from "@/lib/mock-data";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
+import {
+  listConversationInviteCandidates,
+  canInviteToConversation,
+} from "@/lib/chat/conversation-invite-candidates";
 
 interface GroupInviteSheetProps {
   sourceConversationId: string;
@@ -80,7 +84,7 @@ export function GroupInviteSheet({
             <div className="text-xs text-muted-foreground">
               Convites pendentes:{" "}
               {selected
-                .map((id) => people.find((person) => person.id === id)?.name)
+                .map((id) => findPerson(id)?.name)
                 .filter(Boolean)
                 .join(", ")}
               .
@@ -133,10 +137,16 @@ export function GroupInviteSheet({
                         aria-pressed={selectedPerson}
                         className={`flex w-full items-center gap-3 rounded-2xl border p-2.5 text-left ${selectedPerson ? "border-primary/50 bg-primary/5" : "border-border"}`}
                       >
-                        <img
-                          src={person.photo}
+                        <AuthenticatedAvatarImage
+                          profileId={person.id}
+                          legacyUrl={person.photo}
                           alt=""
                           className="h-10 w-10 rounded-full object-cover"
+                          fallback={
+                            <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                              {person.name.charAt(0).toUpperCase()}
+                            </div>
+                          }
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-semibold">{person.name}</span>

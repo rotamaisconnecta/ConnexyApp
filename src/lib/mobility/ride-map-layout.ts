@@ -12,6 +12,45 @@ export type MapPoint = { x: number; y: number };
 
 export const MAP_VIEW = { width: 400, height: 300, padX: 42, padY: 38 };
 
+/** Folha da escolha da corrida: o mapa enquadra A → B acima dessa faixa. */
+export const RIDE_CHOOSE_SHEET_RATIO = 0.4;
+export const RIDE_CHOOSE_MAP_FRAME = {
+  topRatio: 0.18,
+  bottomRatio: RIDE_CHOOSE_SHEET_RATIO + 0.04,
+} as const;
+
+export type RideMapFrame = {
+  topRatio: number;
+  bottomRatio: number;
+};
+
+export type MapViewMetrics = {
+  width: number;
+  height: number;
+  padX: number;
+  padTop: number;
+  padBottom: number;
+};
+
+export function mapViewMetrics(frame?: RideMapFrame | null): MapViewMetrics {
+  if (!frame) {
+    return {
+      width: MAP_VIEW.width,
+      height: MAP_VIEW.height,
+      padX: MAP_VIEW.padX,
+      padTop: MAP_VIEW.padY,
+      padBottom: MAP_VIEW.padY,
+    };
+  }
+  return {
+    width: MAP_VIEW.width,
+    height: MAP_VIEW.height,
+    padX: MAP_VIEW.padX,
+    padTop: MAP_VIEW.height * frame.topRatio,
+    padBottom: MAP_VIEW.height * frame.bottomRatio,
+  };
+}
+
 export const FALLBACK_ORIGIN: MapPoint = { x: 56, y: 252 };
 export const FALLBACK_DEST: MapPoint = { x: 302, y: 44 };
 
@@ -56,38 +95,47 @@ export function geoBoundsForLocations(locations: GeoLocation[]): GeoBounds | nul
   };
 }
 
-export function projectLocation(location: GeoLocation, bounds: GeoBounds): MapPoint {
+export function projectLocation(
+  location: GeoLocation,
+  bounds: GeoBounds,
+  view: MapViewMetrics = mapViewMetrics(),
+): MapPoint {
   const latSpan = Math.max(bounds.maxLat - bounds.minLat, 0.0001);
   const lngSpan = Math.max(bounds.maxLng - bounds.minLng, 0.0001);
-  const x = MAP_VIEW.padX + ((location.lng - bounds.minLng) / lngSpan) * (MAP_VIEW.width - MAP_VIEW.padX * 2);
-  const y =
-    MAP_VIEW.padY + (1 - (location.lat - bounds.minLat) / latSpan) * (MAP_VIEW.height - MAP_VIEW.padY * 2);
+  const innerW = view.width - view.padX * 2;
+  const innerH = Math.max(view.height - view.padTop - view.padBottom, 1);
+  const x = view.padX + ((location.lng - bounds.minLng) / lngSpan) * innerW;
+  const y = view.padTop + (1 - (location.lat - bounds.minLat) / latSpan) * innerH;
   return {
-    x: Math.max(18, Math.min(MAP_VIEW.width - 18, x)),
-    y: Math.max(18, Math.min(MAP_VIEW.height - 18, y)),
+    x: Math.max(18, Math.min(view.width - 18, x)),
+    y: Math.max(view.padTop, Math.min(view.height - view.padBottom, y)),
   };
 }
 
-export function unprojectMapPoint(point: MapPoint, bounds: GeoBounds): { lat: number; lng: number } {
-  const innerW = MAP_VIEW.width - MAP_VIEW.padX * 2;
-  const innerH = MAP_VIEW.height - MAP_VIEW.padY * 2;
-  const nx = (point.x - MAP_VIEW.padX) / innerW;
-  const ny = (point.y - MAP_VIEW.padY) / innerH;
+export function unprojectMapPoint(
+  point: MapPoint,
+  bounds: GeoBounds,
+  view: MapViewMetrics = mapViewMetrics(),
+): { lat: number; lng: number } {
+  const innerW = view.width - view.padX * 2;
+  const innerH = Math.max(view.height - view.padTop - view.padBottom, 1);
+  const nx = (point.x - view.padX) / innerW;
+  const ny = (point.y - view.padTop) / innerH;
   return {
     lng: bounds.minLng + Math.max(0, Math.min(1, nx)) * (bounds.maxLng - bounds.minLng),
     lat: bounds.maxLat - Math.max(0, Math.min(1, ny)) * (bounds.maxLat - bounds.minLat),
   };
 }
 
-function separateOverlapping(points: MapPoint[]): MapPoint[] {
+function separateOverlapping(points: MapPoint[], view: MapViewMetrics): MapPoint[] {
   return points.map((point, index) => {
     const previous = points.slice(0, index);
     const collides = previous.some((other) => Math.hypot(other.x - point.x, other.y - point.y) < 14);
     if (!collides) return point;
     const angle = (index * 0.9) % (Math.PI * 2);
     return {
-      x: Math.max(18, Math.min(MAP_VIEW.width - 18, point.x + Math.cos(angle) * 16)),
-      y: Math.max(18, Math.min(MAP_VIEW.height - 18, point.y + Math.sin(angle) * 16)),
+      x: Math.max(18, Math.min(view.width - 18, point.x + Math.cos(angle) * 16)),
+      y: Math.max(view.padTop, Math.min(view.height - view.padBottom, point.y + Math.sin(angle) * 16)),
     };
   });
 }
@@ -116,7 +164,9 @@ export function layoutRideRoute(
   origin: GeoLocation | null | undefined,
   destination: GeoLocation | null | undefined,
   stops: RouteStop[],
+  frame?: RideMapFrame | null,
 ): RideRouteLayout {
+  const view = mapViewMetrics(frame);
   const orderedStops = sortedStops(stops);
   const located = [
     origin,
@@ -127,7 +177,7 @@ export function layoutRideRoute(
 
   const project = (location: GeoLocation | null | undefined, fallback: MapPoint): MapPoint | null => {
     if (!location) return null;
-    if (bounds && rideLocationHasCoordinates(location)) return projectLocation(location, bounds);
+    if (bounds && rideLocationHasCoordinates(location)) return projectLocation(location, bounds, view);
     return fallback;
   };
 
@@ -149,7 +199,7 @@ export function layoutRideRoute(
     ...stopPoints.map((stop) => stop.point),
     destinationPoint,
   ].filter((point): point is MapPoint => point != null);
-  const separated = separateOverlapping(rawPath);
+  const separated = separateOverlapping(rawPath, view);
 
   let cursor = 0;
   const take = (present: boolean): MapPoint | null => {

@@ -12,9 +12,21 @@ import { demoStorageKey } from "./demo-config";
  */
 
 export interface DemoPostMedia {
-  preview: string;
   type: "image" | "video";
   mediaId?: string;
+  /**
+   * D-M1 — identidade canonica opcional `(bucket, path)`. Quando presente,
+   * e a identidade primaria da midia; `preview` nunca concede acesso.
+   * `posterPath` acompanha videos.
+   */
+  bucket?: string;
+  path?: string;
+  posterPath?: string;
+  /**
+   * Preview local/legado (data URL ou URL de Storage). Opcional desde a D-M1:
+   * um item canonico `(bucket, path)` sem preview NAO deve ser descartado.
+   */
+  preview?: string;
 }
 
 export interface DemoPost {

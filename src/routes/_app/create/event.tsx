@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CatalogCreateForm } from "@/components/catalog/catalog-create-form";
-import { CatalogKind } from "@/lib/catalog/local-catalog";
+import { EventCreateForm } from "@/components/catalog/event-create-form";
 
 export const Route = createFileRoute("/_app/create/event")({
   head: () => ({ meta: [{ title: "Criar evento" }] }),
@@ -8,5 +7,5 @@ export const Route = createFileRoute("/_app/create/event")({
 });
 
 function CreateEventPage() {
-  return <CatalogCreateForm kind={CatalogKind.EVENT} title="Criar evento" />;
+  return <EventCreateForm />;
 }

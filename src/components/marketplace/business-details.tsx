@@ -1,6 +1,7 @@
 import { Star, MapPin, Tag, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Business } from "@/lib/marketplace/business-types";
+import { PRICE_RANGE_OPTIONS } from "@/lib/marketplace/business-types";
 import { getCategoryLabel, getCategoryColor } from "@/lib/marketplace/category-utils";
 import { formatDistance } from "@/lib/marketplace/distance-utils";
 import { BusinessGallery } from "./business-gallery";
@@ -55,6 +56,32 @@ export function BusinessDetails({
 
         <h1 className="font-display font-bold text-xl">{business.name}</h1>
         <p className="text-sm text-muted-foreground">{business.description}</p>
+
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          {business.subcategory ? <span>{business.subcategory}</span> : null}
+          {PRICE_RANGE_OPTIONS.map((option) =>
+            option.value === business.priceRange ? (
+              <span key={option.value} className="font-semibold text-foreground">
+                {option.symbol} {option.label}
+              </span>
+            ) : null,
+          )}
+          {business.website ? (
+            <a
+              href={
+                /^https?:\/\//i.test(business.website)
+                  ? business.website
+                  : `https://${business.website}`
+              }
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-1 font-semibold text-primary"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Site
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 flex-wrap">

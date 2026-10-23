@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { Sparkles, Loader2 } from "lucide-react";
 import { PublisherHeader } from "@/components/publisher/PublisherHeader";
 import { PublisherLayout } from "@/components/publisher/PublisherLayout";
 import { PublisherSubmitButton } from "@/components/publisher/PublisherSubmitButton";
@@ -14,6 +15,11 @@ import {
   LOCAL_CATALOG_DISCLAIMER,
   type CatalogKindValue,
 } from "@/lib/catalog/local-catalog";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { GEMINI_USER_FALLBACK } from "@/lib/gemini/gemini-config";
+import { composeAdDescription } from "@/lib/gemini/gemini-parse";
+import { GeminiFeature, type GeminiAdResult } from "@/lib/gemini/gemini-types";
+import { useGeminiGenerate } from "@/lib/gemini/use-gemini";
 import { getAllBusinesses } from "@/lib/marketplace/mock-businesses";
 import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/marketplace/business-types";
 
@@ -55,6 +61,7 @@ export function CatalogCreateForm({ kind, title }: CatalogCreateFormProps) {
   const [validUntil, setValidUntil] = useState(() => defaultDateValue(30));
   const [businessId, setBusinessId] = useState(() => getAllBusinesses()[0]?.id ?? "");
   const [saving, setSaving] = useState(false);
+  const { generate: generateAd, loading: generatingAd } = useGeminiGenerate();
 
   const businessOptions = useMemo(() => {
     const owned = listCatalogByKind(CatalogKind.BUSINESS);
@@ -130,6 +137,31 @@ export function CatalogCreateForm({ kind, title }: CatalogCreateFormProps) {
 
   const nameLabel = kind === CatalogKind.EVENT || kind === CatalogKind.OFFER ? "Título" : "Nome";
   const locationLabel = kind === CatalogKind.EVENT ? "Local" : "Endereço";
+  const selectedBusinessName = businessOptions.find((item) => item.id === businessId)?.name;
+  const adActionLabel = name.trim() || description.trim() ? "Aprimorar com IA" : "Criar com IA";
+
+  async function handleGenerateAd() {
+    const response = await generateAd({
+      feature: GeminiFeature.B2B_AD,
+      actorId: getDemoIdentity().id,
+      input: {
+        businessName: selectedBusinessName,
+        category: "oferta",
+        product: name || undefined,
+        description: description || undefined,
+        offer: discountValue ? `${discountValue}% de desconto` : undefined,
+        extra: validUntil ? `Válida até ${validUntil}` : undefined,
+      },
+    });
+    if (!response.ok) {
+      toast.error(response.error || GEMINI_USER_FALLBACK);
+      return;
+    }
+    const ad = response.data as GeminiAdResult;
+    setName(ad.title);
+    setDescription(composeAdDescription(ad));
+    toast.success("Revise o anúncio antes de publicar.");
+  }
 
   return (
     <PublisherLayout>
@@ -154,6 +186,17 @@ export function CatalogCreateForm({ kind, title }: CatalogCreateFormProps) {
             className="mt-1 w-full rounded-2xl border border-border bg-surface px-3 py-2 text-sm"
           />
         </label>
+        {kind === CatalogKind.OFFER ? (
+          <button
+            type="button"
+            onClick={() => void handleGenerateAd()}
+            disabled={generatingAd || saving}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary/10 text-sm font-bold text-primary disabled:opacity-70"
+          >
+            {generatingAd ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {generatingAd ? "Gerando..." : adActionLabel}
+          </button>
+        ) : null}
         {kind !== CatalogKind.OFFER && (
           <label className="block text-xs font-semibold text-muted-foreground">
             {locationLabel}

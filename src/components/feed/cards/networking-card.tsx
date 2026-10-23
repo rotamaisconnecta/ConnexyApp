@@ -1,6 +1,7 @@
 import { UserPlus } from "lucide-react";
 import { PresenceDot } from "@/components/presence-dot";
 import type { FeedItem, NetworkingData } from "@/lib/feed/feed-types";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 interface NetworkingCardProps {
   item: FeedItem;
@@ -13,10 +14,16 @@ export function NetworkingCard({ item }: NetworkingCardProps) {
     <article className="rounded-2xl border border-border bg-surface shadow-soft p-3">
       <div className="flex items-center gap-3">
         <div className="relative">
-          <img
-            src={d.person.photo}
+          <AuthenticatedAvatarImage
+            profileId={d.person.id}
+            legacyUrl={d.person.photo}
             alt={`Foto de ${d.person.name}`}
             className="h-12 w-12 rounded-full object-cover ring-2 ring-border"
+            fallback={
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-brand text-sm font-bold text-white ring-2 ring-border">
+                {d.person.name.slice(0, 2).toUpperCase()}
+              </div>
+            }
           />
           <span className="absolute -bottom-0.5 -right-0.5">
             <PresenceDot online={d.person.online ?? false} size={10} />

@@ -45,6 +45,9 @@ const ROUTES: { group: string; items: DemoLink[] }[] = [
     items: [
       { label: "/connecta", to: "/connecta", desc: "Pessoas próximas" },
       { label: "/pessoas", to: "/pessoas", desc: "Lista de pessoas" },
+      { label: "/perfil/demo_user_mariana", to: "/perfil/demo_user_mariana", desc: "Mariana Costa (demo)" },
+      { label: "/perfil/demo_user_lucas", to: "/perfil/demo_user_lucas", desc: "Lucas Mendes (demo)" },
+      { label: "/perfil/demo_user_ana", to: "/perfil/demo_user_ana", desc: "Ana Beatriz (demo)" },
       { label: "/perfil/beatriz", to: "/perfil/beatriz", desc: "Perfil de outra pessoa" },
       { label: "/chat", to: "/chat", desc: "Lista de conversas" },
       { label: "/chat/beatriz", to: "/chat/beatriz", desc: "Conversa direta" },

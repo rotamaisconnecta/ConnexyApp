@@ -15,6 +15,13 @@ const PUBLIC_PROFILE_FIELDS = [
   "locale",
   "visibility",
   "headline",
+  "mood_emoji",
+  "mood_text",
+  "now_playing_kind",
+  "now_playing_title",
+  "now_playing_subtitle",
+  "looks_for",
+  "vibe_tags",
 ] as const satisfies readonly (keyof ProfileUpdate)[];
 
 export type OwnProfilePatch = Pick<ProfileUpdate, (typeof PUBLIC_PROFILE_FIELDS)[number]>;
@@ -52,6 +59,15 @@ export class RemoteProfileRepository {
       if (patch.locale !== undefined) next.locale = patch.locale;
       if (patch.visibility !== undefined) next.visibility = patch.visibility;
       if (patch.headline !== undefined) next.headline = patch.headline;
+      if (patch.mood_emoji !== undefined) next.mood_emoji = patch.mood_emoji;
+      if (patch.mood_text !== undefined) next.mood_text = patch.mood_text;
+      if (patch.now_playing_kind !== undefined) next.now_playing_kind = patch.now_playing_kind;
+      if (patch.now_playing_title !== undefined) next.now_playing_title = patch.now_playing_title;
+      if (patch.now_playing_subtitle !== undefined) {
+        next.now_playing_subtitle = patch.now_playing_subtitle;
+      }
+      if (patch.looks_for !== undefined) next.looks_for = patch.looks_for;
+      if (patch.vibe_tags !== undefined) next.vibe_tags = patch.vibe_tags;
       if (Object.keys(next).length === 0) {
         throw new RemoteRepositoryError("Profile update is empty", RemoteErrorCode.VALIDATION);
       }

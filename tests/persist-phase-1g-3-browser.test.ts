@@ -43,6 +43,8 @@ test("Fase 1G-3 — Agora usa a infraestrutura existente de Reels sem rede", asy
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
       "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
+      "--define",
       'import.meta.env.VITE_APP_SUPABASE_URL=""',
       "--define",
       'import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY=""',

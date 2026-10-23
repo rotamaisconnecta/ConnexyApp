@@ -110,14 +110,14 @@ export function rideChooseOptionTag(
 
 export function listRideChooseOptions({
   origin,
-  types,
-  sort,
+  types = RIDE_VEHICLE_TYPES,
+  sort = "recomendado",
   fares,
   etaMap,
 }: {
   origin: GeoLocation | null;
-  types: RideVehicleType[];
-  sort: RideChooseSort;
+  types?: RideVehicleType[];
+  sort?: RideChooseSort;
   fares: Record<RideCategory, number>;
   etaMap: Record<RideCategory, number>;
 }): RideChooseOption[] {

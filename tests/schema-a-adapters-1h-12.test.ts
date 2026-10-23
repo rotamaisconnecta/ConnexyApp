@@ -51,6 +51,7 @@ import {
   toRemotePostPrivacy,
   toRemoteProfileInsert,
   toRemoteProfilePrivateInsert,
+  toRemoteProfileUpdate,
   toRemoteReelCommentInsert,
   toRemoteReelInsert,
   toRemoteReelLikeInsert,
@@ -243,6 +244,360 @@ describe("1H-12 Identity / Profile", () => {
     const back = toDomainProfile(publicRow, null);
     expect(back.privateAddresses).toEqual({ home: "", work: "" });
     expect(back.birthDate).toBeUndefined();
+  });
+});
+
+describe("1H-12 Profile extra fields", () => {
+  test("remote → domain maps headline, mood, now playing, looks for and vibe tags", () => {
+    const publicRow: ProfileRow = {
+      id: A,
+      name: "Ana",
+      handle: "ana",
+      photo_url: null,
+      cover_url: null,
+      city: null,
+      bio: null,
+      interests: [],
+      age: null,
+      locale: null,
+      visibility: {
+        confirmed_activity: "connections",
+        liked_places: "connections",
+        mutual_connections: "everyone",
+      },
+      created_at: NOW,
+      updated_at: NOW,
+      headline: "Vinil, café e caminhadas",
+      mood_emoji: "🎧",
+      mood_text: "modo playlist",
+      now_playing_kind: "music",
+      now_playing_title: "Blue Train",
+      now_playing_subtitle: "John Coltrane",
+      vibe_tags: ["curadora", "corujão"],
+      looks_for: ["role de quinta"],
+    };
+    const back = toDomainProfile(publicRow, null);
+    expect(back.headline).toBe("Vinil, café e caminhadas");
+    expect(back.moodEmoji).toBe("🎧");
+    expect(back.moodText).toBe("modo playlist");
+    expect(back.nowPlaying).toEqual({
+      kind: "music",
+      title: "Blue Train",
+      subtitle: "John Coltrane",
+    });
+    expect(back.looksFor).toEqual(["role de quinta"]);
+    expect(back.vibeTags).toEqual(["curadora", "corujão"]);
+  });
+
+  test("domain → remote update carries extras; explicit null clears now playing", () => {
+    const update = toRemoteProfileUpdate({
+      headline: "oi",
+      moodEmoji: "✨",
+      moodText: "modo descoberta",
+      nowPlaying: null,
+      looksFor: ["x"],
+      vibeTags: ["y"],
+    });
+    expect(update).toEqual({
+      headline: "oi",
+      mood_emoji: "✨",
+      mood_text: "modo descoberta",
+      now_playing_kind: null,
+      now_playing_title: null,
+      now_playing_subtitle: null,
+      looks_for: ["x"],
+      vibe_tags: ["y"],
+    });
+  });
+
+  test("partial update preserves absent extras; composite emits all three now playing columns", () => {
+    const partial = toRemoteProfileUpdate({ bio: "nova bio" });
+    expect(partial).toEqual({ bio: "nova bio" });
+    expect(partial).not.toHaveProperty("headline");
+    expect(partial).not.toHaveProperty("mood_emoji");
+
+    const playing = toRemoteProfileUpdate({
+      nowPlaying: { kind: "reading", title: "Sandman" },
+    });
+    expect(playing).toEqual({
+      now_playing_kind: "reading",
+      now_playing_title: "Sandman",
+      now_playing_subtitle: null,
+    });
+  });
+
+  test("missing remote extras stay absent in the domain", () => {
+    const row: ProfileRow = {
+      id: A,
+      name: "Ana",
+      handle: "ana",
+      photo_url: null,
+      cover_url: null,
+      city: null,
+      bio: null,
+      interests: [],
+      age: null,
+      locale: null,
+      visibility: {
+        confirmed_activity: "connections",
+        liked_places: "connections",
+        mutual_connections: "everyone",
+      },
+      created_at: NOW,
+      updated_at: NOW,
+      headline: null,
+      mood_emoji: null,
+      mood_text: null,
+      now_playing_kind: null,
+      now_playing_subtitle: null,
+      now_playing_title: null,
+      vibe_tags: [],
+      looks_for: [],
+    };
+    const back = toDomainProfile(row, null);
+    expect(back.headline).toBeUndefined();
+    expect(back.moodEmoji).toBeUndefined();
+    expect(back.moodText).toBeUndefined();
+    expect(back.nowPlaying).toBeNull();
+    expect(back.looksFor).toEqual([]);
+    expect(back.vibeTags).toEqual([]);
+  });
+});
+
+describe("1H-12 Profile string normalization contract", () => {
+  function row(overrides: Partial<ProfileRow> = {}): ProfileRow {
+    return {
+      id: A,
+      name: "Ana",
+      handle: "ana",
+      photo_url: null,
+      cover_url: null,
+      city: null,
+      bio: null,
+      interests: [],
+      age: null,
+      locale: null,
+      visibility: {
+        confirmed_activity: "connections",
+        liked_places: "connections",
+        mutual_connections: "everyone",
+      },
+      created_at: NOW,
+      updated_at: NOW,
+      headline: null,
+      mood_emoji: null,
+      mood_text: null,
+      now_playing_kind: null,
+      now_playing_subtitle: null,
+      now_playing_title: null,
+      vibe_tags: [],
+      looks_for: [],
+      ...overrides,
+    };
+  }
+
+  test("domain → remote keeps empty string for headline/mood and collapses city/bio to null", () => {
+    const update = toRemoteProfileUpdate({
+      city: "",
+      bio: "",
+      headline: "",
+      moodEmoji: "",
+      moodText: "",
+    });
+    expect(update).toEqual({
+      city: null,
+      bio: null,
+      headline: "",
+      mood_emoji: "",
+      mood_text: "",
+    });
+  });
+
+  test("domain → remote passes normal strings through unchanged", () => {
+    const update = toRemoteProfileUpdate({
+      city: "Recife",
+      bio: "Olá",
+      headline: "Vinil, café e caminhadas",
+      moodEmoji: "🎧",
+      moodText: "modo playlist",
+    });
+    expect(update).toEqual({
+      city: "Recife",
+      bio: "Olá",
+      headline: "Vinil, café e caminhadas",
+      mood_emoji: "🎧",
+      mood_text: "modo playlist",
+    });
+  });
+
+  test("domain → remote writes explicit null for all five fields (clear semantics)", () => {
+    const update = toRemoteProfileUpdate({
+      city: null,
+      bio: null,
+      headline: null,
+      moodEmoji: null,
+      moodText: null,
+    });
+    expect(update).toEqual({
+      city: null,
+      bio: null,
+      headline: null,
+      mood_emoji: null,
+      mood_text: null,
+    });
+  });
+
+  test("domain → remote omits absent fields so partial updates preserve stored values", () => {
+    const update = toRemoteProfileUpdate({ name: "Ana" });
+    expect(update).toEqual({ name: "Ana" });
+    for (const key of ["city", "bio", "headline", "mood_emoji", "mood_text"]) {
+      expect(update).not.toHaveProperty(key);
+    }
+  });
+
+  test("remote → domain maps null to undefined for headline/mood and empty string for city/bio", () => {
+    const back = toDomainProfile(row(), null);
+    expect(back.headline).toBeUndefined();
+    expect(back.moodEmoji).toBeUndefined();
+    expect(back.moodText).toBeUndefined();
+    expect(back.city).toBe("");
+    expect(back.bio).toBe("");
+  });
+
+  test("remote → domain keeps an empty string as empty string for all five fields", () => {
+    const back = toDomainProfile(
+      row({ city: "", bio: "", headline: "", mood_emoji: "", mood_text: "" }),
+      null,
+    );
+    expect(back.city).toBe("");
+    expect(back.bio).toBe("");
+    expect(back.headline).toBe("");
+    expect(back.moodEmoji).toBe("");
+    expect(back.moodText).toBe("");
+  });
+});
+
+describe("1H-12 now_playing_* partial states contract", () => {
+  function row(overrides: Partial<ProfileRow> = {}): ProfileRow {
+    return {
+      id: A,
+      name: "Ana",
+      handle: "ana",
+      photo_url: null,
+      cover_url: null,
+      city: null,
+      bio: null,
+      interests: [],
+      age: null,
+      locale: null,
+      visibility: {
+        confirmed_activity: "connections",
+        liked_places: "connections",
+        mutual_connections: "everyone",
+      },
+      created_at: NOW,
+      updated_at: NOW,
+      headline: null,
+      mood_emoji: null,
+      mood_text: null,
+      now_playing_kind: null,
+      now_playing_subtitle: null,
+      now_playing_title: null,
+      vibe_tags: [],
+      looks_for: [],
+      ...overrides,
+    };
+  }
+
+  test("complete remote state (kind+title+subtitle) recomposes fully", () => {
+    const back = toDomainProfile(
+      row({
+        now_playing_kind: "music",
+        now_playing_title: "Blue Train",
+        now_playing_subtitle: "Coltrane",
+      }),
+      null,
+    );
+    expect(back.nowPlaying).toEqual({
+      kind: "music",
+      title: "Blue Train",
+      subtitle: "Coltrane",
+    });
+  });
+
+  test("kind+title with subtitle null recomposes without a subtitle key", () => {
+    const back = toDomainProfile(
+      row({
+        now_playing_kind: "music",
+        now_playing_title: "Blue Train",
+        now_playing_subtitle: null,
+      }),
+      null,
+    );
+    expect(back.nowPlaying).toEqual({ kind: "music", title: "Blue Train" });
+    expect(back.nowPlaying).not.toHaveProperty("subtitle");
+  });
+
+  test("empty-string subtitle is treated as absent", () => {
+    const back = toDomainProfile(
+      row({
+        now_playing_kind: "music",
+        now_playing_title: "Blue Train",
+        now_playing_subtitle: "",
+      }),
+      null,
+    );
+    expect(back.nowPlaying).toEqual({ kind: "music", title: "Blue Train" });
+    expect(back.nowPlaying).not.toHaveProperty("subtitle");
+  });
+
+  test("kind without title is not recomposed (partial remote state reads as null)", () => {
+    const back = toDomainProfile(
+      row({
+        now_playing_kind: "music",
+        now_playing_title: null,
+        now_playing_subtitle: "Coltrane",
+      }),
+      null,
+    );
+    expect(back.nowPlaying).toBeNull();
+  });
+
+  test("title without kind is not recomposed (partial remote state reads as null)", () => {
+    const back = toDomainProfile(
+      row({
+        now_playing_kind: null,
+        now_playing_title: "Blue Train",
+        now_playing_subtitle: null,
+      }),
+      null,
+    );
+    expect(back.nowPlaying).toBeNull();
+  });
+
+  test("all three now_playing fields null recomposes to null", () => {
+    const back = toDomainProfile(row(), null);
+    expect(back.nowPlaying).toBeNull();
+  });
+
+  test("explicit domain update with nowPlaying:null clears all three columns", () => {
+    const update = toRemoteProfileUpdate({ nowPlaying: null });
+    expect(update).toEqual({
+      now_playing_kind: null,
+      now_playing_title: null,
+      now_playing_subtitle: null,
+    });
+  });
+
+  test("domain update with a complete nowPlaying emits all three columns", () => {
+    const update = toRemoteProfileUpdate({
+      nowPlaying: { kind: "reading", title: "Sandman", subtitle: "Gaiman" },
+    });
+    expect(update).toEqual({
+      now_playing_kind: "reading",
+      now_playing_title: "Sandman",
+      now_playing_subtitle: "Gaiman",
+    });
   });
 });
 

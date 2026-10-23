@@ -140,7 +140,11 @@ export function CreatePostForm({
         <SectionTitle>Texto</SectionTitle>
         <PostTextEditor value={draft.text} onChange={(v: string) => update("text", v)} />
         <div className="mt-3">
-          <ConnexyAiAssistant mode="media" label="Ideias para a legenda" />
+          <ConnexyAiAssistant
+            mode="media"
+            label="Ideias para a legenda"
+            onInsertSuggestion={(text) => update("text", text)}
+          />
         </div>
       </motion.div>
 

@@ -119,14 +119,15 @@ describe("Fase 1F-3 — Create Hub tipos restantes", () => {
     expect(hub).toContain("catálogo local");
     expect(hub).not.toContain("CREATE_TYPE_UNAVAILABLE_MESSAGE");
 
-    for (const file of [
-      "src/routes/_app/create/event.tsx",
-      "src/routes/_app/create/place.tsx",
-      "src/routes/_app/create/offer.tsx",
-      "src/routes/_app/create/place-business.tsx",
-    ]) {
+    const forms = {
+      "src/routes/_app/create/event.tsx": "EventCreateForm",
+      "src/routes/_app/create/place.tsx": "PlaceCreateForm",
+      "src/routes/_app/create/offer.tsx": "CatalogCreateForm",
+      "src/routes/_app/create/place-business.tsx": "BusinessCreateForm",
+    } as const;
+    for (const file of Object.keys(forms) as Array<keyof typeof forms>) {
       const contents = await source(file);
-      expect(contents).toContain("CatalogCreateForm");
+      expect(contents).toContain(forms[file]);
       expect(contents).not.toContain("CreateTypeUnavailable");
       expect(contents).not.toContain("usePublisherForm");
       expect(contents).not.toContain("Publicando...");

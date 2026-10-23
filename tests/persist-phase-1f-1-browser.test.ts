@@ -39,6 +39,8 @@ test("Fase 1F-1 — busca, evento e favorito sobrevivem no browser real", async 
       "import.meta.env.DEV=true",
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
+      "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
     ],
     { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
   );

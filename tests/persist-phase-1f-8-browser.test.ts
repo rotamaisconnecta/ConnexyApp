@@ -39,6 +39,8 @@ test("Fase 1F-8 — Momento persiste no fluxo de posts e catálogo permanece blo
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
       "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
+      "--define",
       'import.meta.env.VITE_APP_SUPABASE_URL=""',
       "--define",
       'import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY=""',

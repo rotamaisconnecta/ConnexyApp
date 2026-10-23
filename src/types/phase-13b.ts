@@ -16,7 +16,8 @@ export interface ConnectionRow {
   id: string;
   user_a_id: string;
   user_b_id: string;
-  created_at: string;
+  conversation_id: string | null;
+  connected_at: string;
 }
 
 export interface UserLocationInput {

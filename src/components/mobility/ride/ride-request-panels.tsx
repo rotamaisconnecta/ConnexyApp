@@ -54,6 +54,7 @@ export function SolicitarPanel({
   pickFriendDisabled,
   occupancyLabel,
   vacancyLabel,
+  caronaAlternative,
 }: {
   origin: GeoLocation | null;
   destination: GeoLocation | null;
@@ -75,6 +76,8 @@ export function SolicitarPanel({
   pickFriendDisabled?: boolean;
   occupancyLabel?: string;
   vacancyLabel?: string;
+  /** Bloco secundário de Carona Amiga. Nunca altera o fluxo da corrida. */
+  caronaAlternative?: ReactNode;
 }) {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const favorites = DEMO_DESTINATIONS.filter((item) => !item.recent);
@@ -243,7 +246,8 @@ export function SolicitarPanel({
         </div>
       </div>
 
-      <div className="shrink-0 px-4 pb-4 pt-2">
+      <div className="shrink-0 space-y-2.5 px-4 pb-4 pt-2">
+        {caronaAlternative}
         <motion.button
           type="button"
           onClick={onProceed}

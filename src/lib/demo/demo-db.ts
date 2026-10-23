@@ -1,4 +1,5 @@
-import { demoStorageKey, DEMO_DB_EVENT } from "./demo-config";
+import { demoStorageKey, DEMO_DB_EVENT, isDemoMode } from "./demo-config";
+import { isDemoCastUser, shouldAutoAcceptDemoConnection } from "./demo-cast";
 import {
   clearLocalChat,
   ensureLocalChatLoaded,
@@ -205,6 +206,12 @@ export function resetDemoData(): void {
   resetDemoPostComments();
   void clearAllLocalMedia();
   emitChange();
+  if (isDemoMode()) {
+    void import("./demo-cast-seed").then((mod) => {
+      mod.resetDemoCastMarker();
+      return mod.ensureDemoCastSeeded();
+    });
+  }
 }
 
 /* ─── Pub/Sub ─────────────────────────────────────────────── */
@@ -244,6 +251,12 @@ export function getConnectionsForUser(userId: string): DemoConnection[] {
   return read()
     .connections.filter((connection) => connectionIncludes(connection, userId))
     .sort((a, b) => b.connectedAt - a.connectedAt);
+}
+
+export function getConnectionIds(userId = getDemoIdentity().id): string[] {
+  return getConnectionsForUser(userId)
+    .map((connection) => getConnectionPeerId(connection, userId))
+    .filter((peerId): peerId is string => peerId != null);
 }
 
 export function getConnectionBetween(userId: string, peerUserId: string): DemoConnection | null {
@@ -310,6 +323,25 @@ export function toggleFollow(followeeId: string, followerId = getDemoIdentity().
 
 /* ─── Requests ────────────────────────────────────────────── */
 
+function maybeAutoAcceptDemoRequest(fromUserId: string, toUserId: string): void {
+  if (!shouldAutoAcceptDemoConnection(toUserId)) return;
+  void acceptRequest(fromUserId, toUserId);
+}
+
+/** Remove só o grafo criado para o elenco demo. Dados reais do viewer permanecem. */
+export function purgeDemoCastGraph(): void {
+  if (!isDemoMode()) return;
+  const db = read();
+  db.connections = db.connections.filter(
+    (connection) => !isDemoCastUser(connection.userAId) && !isDemoCastUser(connection.userBId),
+  );
+  db.requests = db.requests.filter(
+    (request) => !isDemoCastUser(request.fromUserId) && !isDemoCastUser(request.toUserId),
+  );
+  write(db);
+  emitChange();
+}
+
 export function sendRequest(fromUserId: string, toUserId: string, message = ""): DemoRequest {
   if (!fromUserId || !toUserId || fromUserId === toUserId) {
     throw new Error("Remetente e destinatário da solicitação são inválidos.");
@@ -342,6 +374,7 @@ export function sendRequest(fromUserId: string, toUserId: string, message = ""):
       write(db);
       emitChange();
     }
+    maybeAutoAcceptDemoRequest(fromUserId, toUserId);
     return existing;
   }
 
@@ -354,6 +387,7 @@ export function sendRequest(fromUserId: string, toUserId: string, message = ""):
     previous.createdAt = Date.now();
     write(db);
     emitChange();
+    maybeAutoAcceptDemoRequest(fromUserId, toUserId);
     return previous;
   }
 
@@ -362,12 +396,13 @@ export function sendRequest(fromUserId: string, toUserId: string, message = ""):
     fromUserId,
     toUserId,
     message: normalizedMessage,
-    status: "pending",
     createdAt: Date.now(),
+    status: "pending",
   };
   db.requests.push(request);
   write(db);
   emitChange();
+  maybeAutoAcceptDemoRequest(fromUserId, toUserId);
   return request;
 }
 
@@ -540,7 +575,9 @@ export function createDemoGroup(
       .filter((group) => group.sourceConversationId === sourceConversationId)
       .flatMap((group) =>
         group.participants
-          .filter((participant) => participant.status === "pending" || participant.status === "accepted")
+          .filter(
+            (participant) => participant.status === "pending" || participant.status === "accepted",
+          )
           .map((participant) => participant.userId),
       ),
   );

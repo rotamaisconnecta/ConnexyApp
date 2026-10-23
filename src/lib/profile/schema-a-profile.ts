@@ -65,6 +65,12 @@ export function mappedProfileForRemote(profile: DemoOwnProfile): DemoOwnProfile 
     city: profile.city,
     bio: profile.bio,
     interests: profile.interests,
+    headline: profile.headline,
+    moodEmoji: profile.moodEmoji,
+    moodText: profile.moodText,
+    nowPlaying: profile.nowPlaying,
+    looksFor: profile.looksFor,
+    vibeTags: profile.vibeTags,
     privateAddresses: {
       home: profile.privateAddresses.home,
       work: profile.privateAddresses.work,

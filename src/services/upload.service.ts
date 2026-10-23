@@ -1,5 +1,6 @@
 import { StorageHelper } from "@/lib/supabase/storage";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { validateMediaPath } from "@/lib/media/media-path";
 import type { UploadDestination, UploadedMedia } from "@/lib/upload/upload-types";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -48,16 +49,30 @@ export const BUCKETS = {
 
 export type AllowedBucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 
-function extractStoragePathFromUrl(publicUrl: string): string | null {
+function extractStoragePathFromUrl(reference: string): string | null {
+  if (typeof reference !== "string") return null;
+  const value = reference.trim();
+  if (value === "") return null;
+
+  // Canonical path persisted by the active writers (`{ownerId}/{uuid}.ext`).
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(value)) {
+    const validation = validateMediaPath(value);
+    return validation.ok ? value : null;
+  }
+
   try {
-    const url = new URL(publicUrl);
+    const url = new URL(value);
     const marker = "/storage/v1/object/public/";
     const idx = url.pathname.indexOf(marker);
     if (idx === -1) return null;
     const rest = url.pathname.slice(idx + marker.length);
     const slashIdx = rest.indexOf("/");
     if (slashIdx === -1) return null;
-    return rest.slice(slashIdx + 1);
+    // Defense in depth: the path sliced out of a legacy URL is re-validated
+    // with the same canonical rules before it can reach a delete call.
+    const extracted = rest.slice(slashIdx + 1);
+    const validation = validateMediaPath(extracted);
+    return validation.ok ? extracted : null;
   } catch {
     return null;
   }

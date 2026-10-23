@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { StatusBar } from "@/components/phone-frame";
 import { BackButton } from "@/components/navigation/back-button";
 import { NotFoundState } from "@/components/navigation/not-found";
+import { CaronaContextSection } from "@/components/carona/carona-context-section";
 import { BusinessCard } from "@/components/marketplace/business-card";
 import { EventList } from "@/components/marketplace/event-list";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
@@ -135,6 +136,11 @@ function EventDetailPage() {
 
         <div className="space-y-3">
           <div className="flex items-center gap-2">
+            {event.category ? (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                {event.category}
+              </span>
+            ) : null}
             <span
               className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getEventStatusBgColor(event.status)}`}
             >
@@ -232,6 +238,12 @@ function EventDetailPage() {
             { author: "Juliana C.", rating: 5, text: "Organização ótima e clima muito bom." },
             { author: "Rafael P.", rating: 4, text: "Uma experiência que vale repetir." },
           ]}
+        />
+
+        <CaronaContextSection
+          destination={event.title}
+          contextType="event"
+          contextId={event.id}
         />
 
         {hostBusiness && (

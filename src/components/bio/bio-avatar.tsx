@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Trash2, Loader2, Save, UserRound } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase/client";
 import { ProfileRepository } from "@/repositories/profile.repository";
 import { UploadService, BUCKETS } from "@/services/upload.service";
+import { validateMediaPath } from "@/lib/media/media-path";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import type { ProfileRow } from "@/types/database/tables";
 
 const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
@@ -115,11 +116,14 @@ export function BioAvatarSection({ profile, userId, configured, onSaved }: Props
       if (avatarFile) {
         const { path } = await UploadService.uploadAvatar(userId, avatarFile);
         uploadedPath = path;
-        const { data: urlData } = supabase.storage.from(BUCKETS.avatars).getPublicUrl(path);
-        const newPhotoUrl = urlData.publicUrl;
+        const validation = validateMediaPath(path);
+        if (!validation.ok || validation.ownerId !== userId) {
+          await UploadService.deleteFile(BUCKETS.avatars, [path]).catch(() => {});
+          throw new Error("Nao foi possivel salvar esta foto.");
+        }
         try {
           const updated = await ProfileRepository.updateProfile(userId, {
-            photo_url: newPhotoUrl,
+            photo_url: path,
           });
           const oldPath = profile.photo_url
             ? UploadService.extractStoragePathFromUrl(profile.photo_url)
@@ -172,21 +176,21 @@ export function BioAvatarSection({ profile, userId, configured, onSaved }: Props
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative h-24 w-24">
-        {avatarPreview ? (
-          <img
-            src={avatarPreview}
-            alt="Sua foto de perfil"
-            className="h-full w-full rounded-full object-cover ring-2 ring-primary/20"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center rounded-full bg-secondary ring-2 ring-primary/20">
-            {initials ? (
-              <span className="text-xl font-bold text-primary/50">{initials}</span>
-            ) : (
-              <UserRound className="h-8 w-8 text-muted-foreground/50" />
-            )}
-          </div>
-        )}
+        <AuthenticatedAvatarImage
+          profileId={userId}
+          legacyUrl={avatarPreview}
+          alt="Sua foto de perfil"
+          className="h-full w-full rounded-full object-cover ring-2 ring-primary/20"
+          fallback={
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-secondary ring-2 ring-primary/20">
+              {initials ? (
+                <span className="text-xl font-bold text-primary/50">{initials}</span>
+              ) : (
+                <UserRound className="h-8 w-8 text-muted-foreground/50" />
+              )}
+            </div>
+          }
+        />
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         <button

@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CatalogCreateForm } from "@/components/catalog/catalog-create-form";
-import { CatalogKind } from "@/lib/catalog/local-catalog";
+import { PlaceCreateForm } from "@/components/catalog/place-create-form";
 
 export const Route = createFileRoute("/_app/create/place")({
   head: () => ({ meta: [{ title: "Cadastrar local" }] }),
@@ -8,5 +7,5 @@ export const Route = createFileRoute("/_app/create/place")({
 });
 
 function CreatePlacePage() {
-  return <CatalogCreateForm kind={CatalogKind.PLACE} title="Cadastrar local" />;
+  return <PlaceCreateForm />;
 }

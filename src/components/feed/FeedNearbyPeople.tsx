@@ -5,6 +5,7 @@ import { PremiumCarousel } from "@/components/carousel/PremiumCarousel";
 import { formatPersonDistance } from "@/lib/proximity";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
 import { TypeScale } from "@/theme/typography";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import type { NearbyPeopleSectionData } from "@/lib/feed/feed-types";
 import type { NearbyProfile } from "@/types/phase-13b";
 
@@ -114,20 +115,20 @@ export function FeedNearbyPeople({ data, profiles }: FeedNearbyPeopleProps) {
                 className="flex min-h-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <div className="relative h-[96px] w-full shrink-0 overflow-hidden rounded-t-2xl">
-                  {person.photo ? (
-                    <img
-                      src={person.photo}
-                      alt={person.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                      <span className="text-xl font-semibold text-primary">
-                        {person.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+                  <AuthenticatedAvatarImage
+                    profileId={person.id}
+                    legacyUrl={person.photo || null}
+                    alt={person.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                    fallback={
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                        <span className="text-xl font-semibold text-primary">
+                          {person.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    }
+                  />
                   <span className="absolute bottom-1.5 left-1.5 inline-flex max-w-[calc(100%-12px)] items-center gap-1 rounded-full bg-black/45 px-1.5 py-0.5">
                     <span
                       className={`h-1.5 w-1.5 shrink-0 rounded-full ${person.online ? "bg-green-400" : "bg-white/50"}`}

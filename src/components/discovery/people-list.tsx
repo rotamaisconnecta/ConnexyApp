@@ -8,6 +8,7 @@ import { ConnectButton } from "./connect-button";
 import { FavoriteButton } from "./favorite-button";
 import { IgnoreButton } from "./ignore-button";
 import type { DiscoveryPerson } from "@/lib/discovery/discovery-types";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 interface PeopleListProps {
   people: DiscoveryPerson[];
@@ -53,10 +54,16 @@ export function PeopleList({
           aria-label={`Perfil de ${person.name}`}
         >
           <div className="relative shrink-0">
-            <img
-              src={person.photo}
+            <AuthenticatedAvatarImage
+              profileId={person.id}
+              legacyUrl={person.photo}
               alt={`Foto de ${person.name}`}
               className="h-14 w-14 rounded-2xl object-cover"
+              fallback={
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-brand text-sm font-bold text-white">
+                  {person.name.slice(0, 2).toUpperCase()}
+                </div>
+              }
             />
             <span className="absolute -bottom-0.5 -right-0.5">
               <PresenceDot online={person.online} size={10} />

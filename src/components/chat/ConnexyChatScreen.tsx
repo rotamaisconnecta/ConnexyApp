@@ -22,6 +22,7 @@ import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
 import { FileMessage } from "./file-message";
 import { ConnexyAiAssistant } from "@/components/ai/connexy-ai-assistant";
+import { recentTextMessagesForGemini } from "@/lib/gemini/gemini-prompts";
 import { useAuth } from "@/hooks/use-auth";
 import { useChat } from "@/hooks/api/use-chat";
 import { ChatRepository } from "@/repositories/chat.repository";
@@ -32,7 +33,7 @@ import { listShareableCheckins } from "@/lib/chat/shareable-checkins";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
 import { getSchemaAConversations } from "@/lib/chat/schema-a-conversations";
-import { currentUser, people } from "@/lib/mock-data";
+import { currentUser, findPerson } from "@/lib/mock-data";
 import {
   createDemoGroup,
   getConnectionByConversationId,
@@ -178,7 +179,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
       const connection = getConnectionByConversationId(conversationId, user.id);
       const peerId = connection ? getConnectionPeerId(connection, user.id) : conversationId;
       const mock =
-        people.find((person) => person.id === peerId) ??
+        (peerId ? findPerson(peerId) : undefined) ??
         (peerId === currentUser.id ? currentUser : null);
       setParticipant({
         id: peerId ?? conversationId,
@@ -684,6 +685,10 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
   };
 
   const activeParticipant = participant ?? fallbackParticipant;
+  const peerInterests = findPerson(activeParticipant.id)?.interests?.slice(0, 6);
+  const sharedInterests = currentUser.interests
+    .filter((interest) => peerInterests?.includes(interest))
+    .slice(0, 6);
   const pendingGroupInvite = group?.participants.find(
     (item) => item.userId === user?.id && item.status === "pending",
   );
@@ -760,7 +765,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         <section className="border-b border-primary/15 bg-primary/5 px-4 py-3">
           <p className="text-sm font-semibold">Convite para {group.name}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {people.find((person) => person.id === group.creatorId)?.name ?? "Uma conexão"} convidou
+            {findPerson(group.creatorId)?.name ?? "Uma conexão"} convidou
             você. O grupo começa agora; nenhuma mensagem da conversa privada é compartilhada.
           </p>
           <div className="mt-2 flex gap-2">
@@ -873,8 +878,14 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
         >
           <ConnexyAiAssistant
             mode="conversations"
-            label="Sugerir próximo passo"
+            label="Assistente Connexy"
             className="w-fit bg-primary/[0.09] px-3.5 py-1.5 text-[11px] font-semibold"
+            chatContext={{
+              peerName: activeParticipant.name,
+              interests: peerInterests,
+              sharedInterests,
+              messages: recentTextMessagesForGemini(messages),
+            }}
             onInsertSuggestion={(text) => {
               setComposerInsert({ token: Date.now(), text });
             }}
@@ -1154,7 +1165,7 @@ export default function ConnexyChatScreen({ conversationId }: ConnexyChatScreenP
                     group.participants
                       .map(
                         (item) =>
-                          `${people.find((person) => person.id === item.userId)?.name ?? "Você"}: ${item.status}`,
+                          `${findPerson(item.userId)?.name ?? "Você"}: ${item.status}`,
                       )
                       .join(" · "),
                   );

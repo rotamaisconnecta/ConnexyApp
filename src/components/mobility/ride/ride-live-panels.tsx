@@ -1,25 +1,37 @@
 import { motion } from "framer-motion";
-import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   Banknote,
+  CalendarDays,
   Car,
   Check,
   ChevronDown,
   ChevronRight,
   Clock3,
+  Coffee,
   FileText,
+  Gift,
+  Heart,
   LocateFixed,
   MapPin,
   MessageCircle,
   Phone,
   Route,
   Share2,
+  Shield,
   ShieldCheck,
+  ShoppingBag,
   Smartphone,
+  Smile,
+  Sparkles,
   Star,
+  Trees,
   Users,
+  UtensilsCrossed,
+  Wine,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { formatRouteDistance } from "@/lib/mobility/route-utils";
 import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import {
@@ -45,6 +57,20 @@ import { paymentMethodLabel } from "@/lib/mobility/payment";
 import type { TripPaymentIssue } from "@/lib/mobility/trip/trip-types";
 import type { DriverMock } from "./ride-data";
 import type { GeoLocation } from "@/lib/mobility/ride-types";
+import {
+  connexyPointsForFare,
+  formatPostRideDistance,
+  listPostRideDiscovery,
+  ratingFeedbackLabel,
+  resolvePostRideNavigation,
+  RATING_COMMENT_MAX,
+} from "@/lib/mobility/post-ride-discovery";
+import {
+  isSponsoredPlacement,
+  type DiscoveryPlacement,
+} from "@/lib/ads/sponsored-placement";
+import { AD_PLACEMENTS, recordAdMetric } from "@/lib/ads/ad-metrics";
+import { useAdImpression } from "@/hooks/use-ad-metrics";
 
 /* ─── Tela 05 — Procurando motorista ─────────────────────── */
 
@@ -881,20 +907,224 @@ export function ArrivalPanel({
   );
 }
 
-/* ─── Tela 12 — Avaliação ────────────────────────────────── */
+/* ─── Tela 12 — Avaliação / Viagem concluída ─────────────── */
 
 const RATING_CHIPS_POSITIVE = [
-  "Boa direção",
-  "Carro limpo",
-  "Educado",
-  "Pontual",
-  "Viagem tranquila",
-];
-const RATING_CHIPS_NEUTRAL = ["Boa comunicação", "Respeitou a rota"];
+  { label: "Motorista educado", icon: Smile },
+  { label: "Carro limpo", icon: Car },
+  { label: "Condução segura", icon: Shield },
+  { label: "Chegou no horário", icon: Clock3 },
+  { label: "Ótimo atendimento", icon: Heart },
+] as const;
+const RATING_CHIPS_NEUTRAL = [
+  { label: "Boa comunicação", icon: MessageCircle },
+  { label: "Respeitou a rota", icon: Route },
+] as const;
+
+function postRideCategoryIcon(category: string): LucideIcon {
+  const key = category.toLowerCase();
+  if (key.includes("café") || key.includes("cafe") || key.includes("cafeteria")) return Coffee;
+  if (key.includes("pizza") || key.includes("restaur") || key.includes("gastro")) return UtensilsCrossed;
+  if (key.includes("bar") || key.includes("vinho") || key.includes("wine")) return Wine;
+  if (key.includes("shop") || key.includes("loja") || key.includes("mall")) return ShoppingBag;
+  if (key.includes("parque") || key.includes("praça") || key.includes("praca") || key.includes("natureza")) {
+    return Trees;
+  }
+  if (key.includes("evento") || key.includes("show")) return CalendarDays;
+  if (key.includes("bem-estar") || key.includes("spa") || key.includes("ativid")) return Sparkles;
+  return MapPin;
+}
+
+function PostRideScreen({
+  children,
+  footer,
+}: {
+  children: ReactNode;
+  footer: ReactNode;
+}) {
+  return (
+    <section className="absolute inset-0 z-40 flex flex-col bg-white">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+        {children}
+      </div>
+      <div className="shrink-0 bg-white px-5 pb-[max(env(safe-area-inset-bottom,0px),1rem)] pt-2">
+        {footer}
+      </div>
+    </section>
+  );
+}
+
+function FinalizarButton({
+  onClick,
+  disabled,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      whileTap={disabled ? undefined : { scale: 0.98 }}
+      className="flex h-[54px] w-full items-center justify-center rounded-full text-[16px] font-semibold text-white shadow-[0_10px_24px_rgba(124,58,237,0.28)] disabled:opacity-40"
+      style={{ background: "linear-gradient(90deg, #7C3AED 0%, #A855F7 100%)" }}
+    >
+      Finalizar
+    </motion.button>
+  );
+}
+
+function TripSummaryCard({
+  driver,
+  fare,
+  routeMeta,
+}: {
+  driver: DriverMock;
+  fare: number;
+  routeMeta: { distance: string; duration: string };
+}) {
+  return (
+    <div className="flex items-center gap-3.5 rounded-[28px] bg-white px-3.5 py-3.5 shadow-[0_8px_30px_rgba(17,17,17,0.06)] ring-1 ring-black/[0.03]">
+      <img
+        src={driver.photo}
+        alt={driver.name}
+        className="h-[64px] w-[64px] shrink-0 rounded-full object-cover"
+      />
+      <div className="min-w-0 flex-1 text-left">
+        <p className="truncate text-[16px] font-bold tracking-tight text-[#111111]">{driver.name}</p>
+        <p className="mt-0.5 truncate text-[12px] text-zinc-500">
+          {driver.vehicle.name} · {driver.vehicle.color}
+        </p>
+        <p className="mt-0.5 text-[12px] font-semibold tracking-[0.12em] text-zinc-500">
+          {driver.vehicle.plate}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-[20px] font-extrabold tracking-tight text-[#111111]">{formatPrice(fare)}</p>
+        <p className="mt-0.5 text-[11px] font-medium text-zinc-400">
+          {routeMeta.distance} · {routeMeta.duration}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ConnexyPointsCard({ fare }: { fare: number }) {
+  const points = connexyPointsForFare(fare);
+  return (
+    <div className="flex items-center gap-3 rounded-[24px] bg-[#F3EBFF] px-4 py-3.5">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#7C3AED]">
+        <Gift className="h-5 w-5" strokeWidth={2} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-bold tracking-tight text-[#111111]">
+          Você ganhou {points} pontos Connexy!
+        </p>
+        <p className="mt-0.5 text-[12px] leading-snug text-zinc-500">
+          Continue acumulando e desbloqueie benefícios.
+        </p>
+      </div>
+      <ChevronRight className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
+    </div>
+  );
+}
+
+function PostRidePlaceCard({ card }: { card: DiscoveryPlacement }) {
+  const nav = useNavigate();
+  const sponsored = isSponsoredPlacement(card);
+  const distance = formatPostRideDistance(card.distanceMeters);
+  const CategoryIcon = postRideCategoryIcon(card.category);
+  const impressionRef = useAdImpression(
+    sponsored
+      ? {
+          ad: card.id,
+          placement: AD_PLACEMENTS.POST_RIDE_DISCOVERY,
+          advertiserId: card.advertiserId ?? null,
+          campaignId: card.campaignId ?? null,
+        }
+      : { ad: "", placement: "" }, // orgânico nunca gera métrica
+  );
+
+  function openCard() {
+    const target = resolvePostRideNavigation(card);
+    if (!target) return;
+    if (sponsored) {
+      recordAdMetric({
+        type: "click",
+        ad: card.id,
+        placement: AD_PLACEMENTS.POST_RIDE_DISCOVERY,
+        advertiserId: card.advertiserId ?? null,
+        campaignId: card.campaignId ?? null,
+      });
+    }
+    if (target.kind === "external") {
+      window.open(target.href, "_blank", "noopener,noreferrer");
+      return;
+    }
+    nav({ href: target.href });
+  }
+
+  return (
+    <button
+      type="button"
+      ref={impressionRef}
+      onClick={openCard}
+      className="w-[142px] min-w-[142px] shrink-0 overflow-hidden rounded-[22px] bg-white text-left shadow-[0_10px_24px_rgba(17,17,17,0.06)]"
+    >
+      <div className="relative aspect-[5/4] overflow-hidden">
+        <img src={card.image} alt="" className="h-full w-full object-cover" />
+        {sponsored ? (
+          <span className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-semibold text-white">
+            Patrocinado
+          </span>
+        ) : null}
+        <span className="absolute bottom-2 left-2 grid h-7 w-7 place-items-center rounded-[10px] bg-white text-[#7C3AED] shadow-sm">
+          <CategoryIcon className="h-3.5 w-3.5" strokeWidth={2.1} />
+        </span>
+      </div>
+      <div className="px-2.5 py-2.5">
+        <p className="truncate text-[13px] font-bold tracking-tight text-[#111111]">{card.name}</p>
+        <p className="mt-0.5 truncate text-[11px] text-zinc-500">
+          {card.category}
+          {distance ? ` · ${distance}` : ""}
+        </p>
+        {card.rating != null ? (
+          <p className="mt-1 flex items-center gap-0.5 text-[11px] font-semibold text-[#111111]">
+            {card.rating.toFixed(1).replace(".", ",")}
+            <Star className="h-3 w-3 fill-[#7C3AED] text-[#7C3AED]" />
+          </p>
+        ) : card.ctaLabel ? (
+          <p className="mt-1 text-[11px] font-semibold text-[#7C3AED]">{card.ctaLabel}</p>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+function PostRidePlacesRail({ destination }: { destination: GeoLocation }) {
+  const cards = useMemo(() => listPostRideDiscovery(destination), [destination]);
+  if (cards.length === 0) return null;
+  return (
+    <section className="mt-7 text-left">
+      <div className="px-5">
+        <h3 className="text-[17px] font-bold tracking-tight text-[#111111]">Lugares perto do seu destino</h3>
+        <p className="mt-0.5 text-[12px] text-zinc-500">Descubra excelentes opções na região</p>
+      </div>
+      <SwipeCarousel hint={false} ariaLabel="Lugares perto do seu destino" className="mt-3.5 gap-3 px-5">
+        {cards.map((card) => (
+          <PostRidePlaceCard key={`${card.sponsored ? "ad" : "place"}:${card.id}`} card={card} />
+        ))}
+      </SwipeCarousel>
+    </section>
+  );
+}
 
 export function RatingPanel({
   driver,
-  categoryLabel,
+  fare,
+  routeMeta,
+  destination,
   stars,
   onStars,
   tags,
@@ -902,10 +1132,12 @@ export function RatingPanel({
   comment,
   onComment,
   onSend,
-  onSkip,
+  onSkip: _onSkip,
 }: {
   driver: DriverMock;
-  categoryLabel: string;
+  fare: number;
+  routeMeta: { distance: string; duration: string };
+  destination: GeoLocation;
   stars: number;
   onStars: (n: number) => void;
   tags: string[];
@@ -916,38 +1148,24 @@ export function RatingPanel({
   onSkip: () => void;
 }) {
   const chips = stars >= 4 ? RATING_CHIPS_POSITIVE : stars > 0 ? RATING_CHIPS_NEUTRAL : [];
+  const feedback = ratingFeedbackLabel(stars);
   return (
-    <RideSheet
-      footer={
-        <>
-          <PrimaryCTA onClick={onSend} disabled={stars === 0}>
-            Enviar avaliação
-          </PrimaryCTA>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="mt-2 h-9 w-full text-[12px] font-semibold text-zinc-400"
-          >
-            Agora não
-          </button>
-        </>
-      }
-    >
-      <div className="px-5 pb-3 pt-4 text-center">
-        <img
-          src={driver.photo}
-          alt={driver.name}
-          className="mx-auto h-16 w-16 rounded-full object-cover ring-2 ring-white shadow-sm"
-        />
-        <h2 className="mt-2.5 text-[21px] font-extrabold tracking-tight text-[#111111]">
-          Como foi sua viagem?
-        </h2>
-        <p className="mt-0.5 text-[12px]" style={{ color: RIDE_MUTED }}>
-          {driver.name} · {categoryLabel}
-        </p>
+    <PostRideScreen footer={<FinalizarButton onClick={onSend} disabled={stars === 0} />}>
+      <div className="px-5 pb-4 pt-[max(1.75rem,env(safe-area-inset-top,0px))] text-center">
+        <h1 className="text-[26px] font-bold leading-tight tracking-tight text-[#111111]">
+          Viagem concluída!
+        </h1>
+        <p className="mt-1.5 text-[13px] text-zinc-500">Obrigado por escolher a Connexy.</p>
+
+        <div className="mt-6 text-left">
+          <TripSummaryCard driver={driver} fare={fare} routeMeta={routeMeta} />
+        </div>
+
+        <h2 className="mt-8 text-[18px] font-bold tracking-tight text-[#111111]">Como foi sua viagem?</h2>
+        <p className="mt-1 text-[13px] text-zinc-400">Avalie seu motorista</p>
 
         <div
-          className="mt-3.5 flex items-center justify-center gap-1.5"
+          className="mt-5 flex items-center justify-center gap-2.5"
           role="radiogroup"
           aria-label="Nota do motorista"
         >
@@ -959,65 +1177,74 @@ export function RatingPanel({
               aria-checked={stars >= value}
               aria-label={`${value} estrela${value > 1 ? "s" : ""}`}
               onClick={() => onStars(value)}
-              className="grid h-12 w-11 grid-cols-1 place-items-center transition-transform active:scale-90"
+              className="grid h-12 w-12 grid-cols-1 place-items-center transition-transform active:scale-90"
             >
               <Star
-                className={`h-9 w-9 ${
-                  stars >= value ? "fill-[#A855F7] text-[#A855F7]" : "fill-none text-[#D1D1D6]"
+                className={`h-10 w-10 ${
+                  stars >= value ? "fill-[#7C3AED] text-[#7C3AED]" : "fill-none text-[#D4D4D8]"
                 }`}
-                strokeWidth={1.5}
+                strokeWidth={1.6}
               />
             </button>
           ))}
         </div>
+        {feedback ? (
+          <p className="mt-2 text-[14px] font-semibold text-[#7C3AED]">{feedback}</p>
+        ) : (
+          <p className="mt-2 h-5" aria-hidden />
+        )}
 
         {stars > 0 && (
-          <div className="mt-3.5 flex flex-wrap justify-center gap-1.5">
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
             {chips.map((chip) => {
-              const active = tags.includes(chip);
+              const active = tags.includes(chip.label);
+              const Icon = chip.icon;
               return (
                 <button
-                  key={chip}
+                  key={chip.label}
                   type="button"
-                  onClick={() => onTag(chip)}
-                  className={`h-9 rounded-full border px-3.5 text-[12px] font-semibold transition-colors ${
-                    active ? "border-transparent" : "border-zinc-200 bg-white text-zinc-600"
-                  }`}
-                  style={
+                  onClick={() => onTag(chip.label)}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[12px] font-medium transition-colors ${
                     active
-                      ? {
-                          background: "rgba(168,85,247,0.08)",
-                          border: "1px solid rgba(168,85,247,0.25)",
-                          color: RIDE_PURPLE,
-                        }
-                      : undefined
-                  }
+                      ? "bg-[#EFE6FF] text-[#7C3AED]"
+                      : "bg-[#F6F4F8] text-zinc-600"
+                  }`}
                 >
-                  {chip}
+                  <Icon className="h-3.5 w-3.5 text-[#7C3AED]" />
+                  {chip.label}
                 </button>
               );
             })}
           </div>
         )}
 
-        <div className="mt-4 text-left">
-          <label
-            htmlFor="rating-comment"
-            className="text-[11px] font-bold uppercase tracking-wide text-zinc-400"
-          >
-            Quer contar mais?
+        <div className="mt-7 text-left">
+          <label htmlFor="rating-comment" className="text-[13px] font-semibold text-[#111111]">
+            Deixe um comentário (opcional)
           </label>
-          <textarea
-            id="rating-comment"
-            value={comment}
-            onChange={(event) => onComment(event.target.value)}
-            rows={3}
-            placeholder="Conte como foi a sua viagem (opcional)"
-            className="mt-1.5 w-full resize-none rounded-[16px] border border-zinc-200 bg-zinc-50 px-4 py-3 text-[13px] font-medium text-[#111111] outline-none transition-colors focus:border-zinc-300 focus:bg-white"
-          />
+          <div className="relative mt-2.5">
+            <textarea
+              id="rating-comment"
+              value={comment}
+              onChange={(event) => onComment(event.target.value.slice(0, RATING_COMMENT_MAX))}
+              rows={4}
+              maxLength={RATING_COMMENT_MAX}
+              placeholder="Conte mais sobre sua experiência..."
+              className="w-full resize-none rounded-[22px] border border-zinc-200 bg-white px-4 py-3.5 pb-8 text-[13px] font-medium text-[#111111] outline-none placeholder:text-zinc-400 focus:border-violet-200 focus:ring-2 focus:ring-violet-100"
+            />
+            <span className="pointer-events-none absolute bottom-3 right-3.5 text-[11px] text-zinc-400">
+              {comment.length}/{RATING_COMMENT_MAX}
+            </span>
+          </div>
         </div>
       </div>
-    </RideSheet>
+
+      <PostRidePlacesRail destination={destination} />
+
+      <div className="px-5 pb-2 pt-5">
+        <ConnexyPointsCard fare={fare} />
+      </div>
+    </PostRideScreen>
   );
 }
 
@@ -1029,6 +1256,7 @@ export function FinalPanel({
   routeMeta,
   fare,
   payment,
+  driver,
   onHome,
 }: {
   originLabel: string;
@@ -1036,54 +1264,48 @@ export function FinalPanel({
   routeMeta: { distance: string; duration: string };
   fare: number;
   payment: PaymentOption;
+  driver?: DriverMock | null;
   onHome: () => void;
 }) {
   return (
-    <RideSheet footer={<PrimaryCTA onClick={onHome}>Voltar para Home</PrimaryCTA>}>
-      <div className="px-5 pb-3 pt-5 text-center">
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          className="mx-auto grid h-14 w-14 grid-cols-1 place-items-center rounded-full text-white shadow-lg"
-          style={{ background: RIDE_LILAC }}
-        >
-          <Check className="h-7 w-7" strokeWidth={3} />
-        </motion.span>
-        <h2 className="mt-3 text-[21px] font-extrabold tracking-tight text-[#111111]">
-          Obrigado por viajar com o Connexy.
-        </h2>
-        <p className="mt-1 text-[12px]" style={{ color: RIDE_MUTED }}>
-          Sua viagem foi concluída com sucesso.
-        </p>
+    <PostRideScreen footer={<FinalizarButton onClick={onHome} />}>
+      <div className="px-5 pb-5 pt-[max(1.75rem,env(safe-area-inset-top,0px))] text-center">
+        <h1 className="text-[26px] font-bold leading-tight tracking-tight text-[#111111]">
+          Viagem concluída!
+        </h1>
+        <p className="mt-1.5 text-[13px] text-zinc-500">Obrigado por escolher a Connexy.</p>
 
-        <div className="mt-4 divide-y divide-zinc-100 rounded-[18px] bg-zinc-50 px-4 text-left">
-          {[
-            { label: "Origem", value: originLabel },
-            { label: "Destino", value: destination.label },
-            { label: "Distância", value: routeMeta.distance },
-            { label: "Tempo", value: routeMeta.duration },
-            { label: "Valor", value: formatPrice(fare) },
-            { label: "Forma de pagamento", value: paymentMethodLabel(payment) },
-          ].map((row) => (
-            <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="shrink-0 text-[12px]" style={{ color: RIDE_MUTED }}>
-                {row.label}
-              </span>
-              <span className="min-w-0 truncate text-right text-[13px] font-bold text-[#111111]">
-                {row.value}
-              </span>
+        <div className="mt-5 text-left">
+          {driver ? (
+            <TripSummaryCard driver={driver} fare={fare} routeMeta={routeMeta} />
+          ) : (
+            <div className="divide-y divide-zinc-100 rounded-[22px] bg-white px-4 shadow-[0_10px_28px_rgba(109,40,217,0.07)]">
+              {[
+                { label: "Origem", value: originLabel },
+                { label: "Destino", value: destination.label },
+                { label: "Distância", value: routeMeta.distance },
+                { label: "Tempo", value: routeMeta.duration },
+                { label: "Valor", value: formatPrice(fare) },
+                { label: "Forma de pagamento", value: paymentMethodLabel(payment) },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="shrink-0 text-[12px]" style={{ color: RIDE_MUTED }}>
+                    {row.label}
+                  </span>
+                  <span className="min-w-0 truncate text-right text-[13px] font-bold text-[#111111]">
+                    {row.value}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-
-        {payment === "pix" && (
-          <p className="mt-3 text-center text-[11px]" style={{ color: RIDE_MUTED }}>
-            Combine o pagamento diretamente com o motorista.
-          </p>
-        )}
       </div>
-    </RideSheet>
+
+      <div className="px-5 pb-2 pt-5">
+        <ConnexyPointsCard fare={fare} />
+      </div>
+    </PostRideScreen>
   );
 }
 

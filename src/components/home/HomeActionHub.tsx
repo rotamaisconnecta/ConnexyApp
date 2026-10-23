@@ -10,7 +10,7 @@ import {
   ShoppingBag,
   Sparkles,
 } from "lucide-react";
-import { people } from "@/lib/mock-data";
+import { listPeople } from "@/lib/mock-data";
 import { useDemoPendingRequests } from "@/lib/demo/use-demo-db";
 import { useDemoPosts } from "@/lib/demo/demo-posts";
 import { useAuth } from "@/hooks/use-auth";
@@ -220,7 +220,7 @@ export function HomeActionHub() {
           ? { fromUserId: pendingRequest.fromUserId, message: pendingRequest.message }
           : null,
         posts,
-        people,
+        people: listPeople(),
       }),
     [nowTick, pendingRequest, posts],
   );

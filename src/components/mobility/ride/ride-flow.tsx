@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { RideMap, type RideRouteStatus } from "./ride-map";
 import { RideCapsule, RoundIconButton } from "./ride-capsule";
 import { RideLandingChrome } from "./ride-landing";
+import { RideCaronaAlternative } from "./ride-carona-alternative";
 import {
   SolicitarPanel,
   RouteEditorPanel,
@@ -38,6 +39,7 @@ import { RidePlacePickerOverlay } from "./ride-place-picker";
 import { DEMO_ORIGIN, MOCK_DRIVER, PICKUP_CHIPS, CATEGORY_INFO } from "./ride-data";
 import { CURRENT_RIDE_ORIGIN_LABEL, resolveRideOrigin } from "@/lib/mobility/ride-request-context";
 import { listRideExplorePins, type RideExploreKind } from "@/lib/mobility/ride-explore-pins";
+import { RIDE_CHOOSE_MAP_FRAME } from "@/lib/mobility/ride-map-layout";
 import { estimateDemoFare, RIDE_CATEGORIES, type RideCategory } from "@/lib/mobility/demo-fare";
 import {
   categoriesFromRideOptions,
@@ -690,7 +692,6 @@ export function RideFlow({
             onBack={goBack}
             onSafety={() => setShowSafetyOverlay(true)}
             onMore={() => setShowAlterarOverlay(true)}
-            onPromos={() => setShowPaymentOverlay(true)}
             onEditOrigin={() => setPlacePicker({ target: "origin" })}
             onEditDestination={() => setPlacePicker({ target: "destination" })}
             onRecenter={() => setRecenterNonce((value) => value + 1)}
@@ -779,7 +780,9 @@ export function RideFlow({
         return (
           <RatingPanel
             driver={driver}
-            categoryLabel={categoryLabel}
+            fare={fare}
+            routeMeta={routeMeta}
+            destination={displayDestination}
             stars={ratingStars}
             onStars={setRatingStars}
             tags={ratingTags}
@@ -798,6 +801,7 @@ export function RideFlow({
             routeMeta={routeMeta}
             fare={fare}
             payment={payment}
+            driver={driver}
             onHome={handleGoHome}
           />
         );
@@ -818,7 +822,7 @@ export function RideFlow({
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-white">
       <div className="relative flex-1 min-h-0 overflow-hidden">
-        {!showDestEditor && (
+        {!showDestEditor && flowState !== "avaliacao" && flowState !== "conclusao" && (
           <RideMap
             origin={origin}
             destination={destination}
@@ -834,6 +838,7 @@ export function RideFlow({
             interactive={flowState === "embarque"}
             pickupFocus={flowState === "embarque"}
             compactPins={flowState === "categoria"}
+            routeFrame={flowState === "categoria" ? RIDE_CHOOSE_MAP_FRAME : null}
             routeStatus={["solicitar", "rota"].includes(flowState) ? routeStatus : "ready"}
             exploreMode={flowState === "solicitar" && !destEditorOpen}
             explorePins={explorePins}
@@ -868,7 +873,11 @@ export function RideFlow({
             onRecenter={() => setRecenterNonce((value) => value + 1)}
           />
         )}
-        {flowState !== "solicitar" && flowState !== "categoria" && flowState !== "emviagem" && (
+        {flowState !== "solicitar" &&
+          flowState !== "categoria" &&
+          flowState !== "emviagem" &&
+          flowState !== "avaliacao" &&
+          flowState !== "conclusao" && (
           <RideCapsule text={capsuleText} pulse={pulseActive} />
         )}
         {canGoBack && flowState !== "categoria" && flowState !== "emviagem" && (
@@ -899,6 +908,9 @@ export function RideFlow({
             onPickFriend={handleOpenPickFriend}
             occupancyLabel={occupancy.passengerLabel}
             vacancyLabel={occupancy.vacancyLabel}
+            caronaAlternative={
+              <RideCaronaAlternative destinationLabel={destination?.label ?? null} />
+            }
             map={
               <RideMap
                 contained

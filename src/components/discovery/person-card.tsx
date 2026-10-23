@@ -10,6 +10,7 @@ import { FavoriteButton } from "./favorite-button";
 import { IgnoreButton } from "./ignore-button";
 import type { DiscoveryPerson } from "@/lib/discovery/discovery-types";
 import { cardHover } from "@/components/profile/animations";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 interface PersonCardProps {
   person: DiscoveryPerson;
@@ -37,10 +38,16 @@ export function PersonCard({
     >
       {/* Photo */}
       <div className="relative">
-        <img
-          src={person.photo}
+        <AuthenticatedAvatarImage
+          profileId={person.id}
+          legacyUrl={person.photo}
           alt={`Foto de ${person.name}`}
           className="h-40 w-full object-cover"
+          fallback={
+            <div className="grid h-40 w-full place-items-center bg-gradient-brand text-4xl font-bold text-white">
+              {person.name.charAt(0).toUpperCase()}
+            </div>
+          }
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 

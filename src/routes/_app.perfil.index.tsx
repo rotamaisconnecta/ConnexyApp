@@ -26,11 +26,13 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { StatusBar } from "@/components/phone-frame";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import { MediaViewer } from "@/components/system/media-viewer";
 import { DemoPostDetail } from "@/components/post/demo-post-detail";
-import { LocalMediaFrame } from "@/components/media/local-media-frame";
+import { PostMediaFrame } from "@/components/media/post-media-frame";
 import { type DemoOwnProfile, type ProfileVisibility } from "@/lib/demo/demo-own-profile";
 import { useOwnProfileController } from "@/lib/profile/use-own-profile";
+import { useAuth } from "@/hooks/use-auth";
 import { currentUser, findPlace, people } from "@/lib/mock-data";
 import {
   POST_CATEGORY_META,
@@ -127,6 +129,7 @@ type VisibilityKey = keyof DemoOwnProfile["visibility"];
 
 function OwnProfile() {
   const { profile, save: persistProfile, loading, error, source } = useOwnProfileController();
+  const { user } = useAuth();
   const { edit = false } = Route.useSearch();
   const navigate = useNavigate();
   const [draft, setDraft] = useState(profile);
@@ -201,17 +204,26 @@ function OwnProfile() {
   return edit ? (
     <Editor
       draft={draft}
+      profileId={user?.id ?? currentUser.id}
       update={update}
       toggleInterest={toggleInterest}
       save={save}
       cancel={closeEditor}
     />
   ) : (
-    <Profile profile={profile} edit={openEditor} />
+    <Profile profile={profile} profileId={user?.id ?? currentUser.id} edit={openEditor} />
   );
 }
 
-function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void }) {
+function Profile({
+  profile,
+  profileId,
+  edit,
+}: {
+  profile: DemoOwnProfile;
+  profileId: string;
+  edit: () => void;
+}) {
   const navigate = useNavigate();
   const [publicationTab, setPublicationTab] = useState<PublicationTab>("Tudo");
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
@@ -339,10 +351,16 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
         <OrganicCover src={profile.cover} alt={`Paisagem de capa de ${profile.name}`} />
         <div className="relative -mt-[82px] px-5 text-center">
           <div className="relative mx-auto h-[116px] w-[116px]">
-            <img
-              src={profile.photo}
+            <AuthenticatedAvatarImage
+              profileId={profileId}
+              legacyUrl={profile.photo}
               alt={`Foto de ${profile.name}`}
               className="h-full w-full rounded-full border-4 border-background object-cover shadow-xl"
+              fallback={
+                <div className="grid h-full w-full place-items-center rounded-full border-4 border-background bg-secondary font-bold text-primary shadow-xl">
+                  {profile.name.charAt(0).toUpperCase()}
+                </div>
+              }
             />
             <span
               aria-label="Perfil verificado"
@@ -559,12 +577,14 @@ function Profile({ profile, edit }: { profile: DemoOwnProfile; edit: () => void 
 
 function Editor({
   draft,
+  profileId,
   update,
   toggleInterest,
   save,
   cancel,
 }: {
   draft: DemoOwnProfile;
+  profileId: string;
   update: UpdateProfile;
   toggleInterest: (value: string) => void;
   save: () => void;
@@ -671,10 +691,16 @@ function Editor({
         </OrganicCover>
         <div className="relative -mt-[78px] h-[118px]">
           <div className="absolute left-1/2 h-[112px] w-[112px] -translate-x-1/2">
-            <img
-              src={draft.photo}
+            <AuthenticatedAvatarImage
+              profileId={profileId}
+              legacyUrl={draft.photo}
               alt={`Foto de ${draft.name}`}
               className="h-full w-full rounded-full border-4 border-background object-cover shadow-xl"
+              fallback={
+                <div className="grid h-full w-full place-items-center rounded-full border-4 border-background bg-secondary font-bold text-primary shadow-xl">
+                  {draft.name.charAt(0).toUpperCase()}
+                </div>
+              }
             />
             <button
               type="button"
@@ -963,6 +989,8 @@ function Stat({
 }
 
 function DemoPostTile({ post, onOpen }: { post: DemoPost; onOpen: () => void }) {
+  const { user } = useAuth();
+  const viewerId = user?.id ?? null;
   const media = post.media[0];
   if (media?.type === "image") {
     return (
@@ -972,7 +1000,7 @@ function DemoPostTile({ post, onOpen }: { post: DemoPost; onOpen: () => void }) 
         aria-label={`Abrir publicação de ${post.authorName}`}
         className="relative aspect-square overflow-hidden rounded-xl bg-muted transition active:scale-[0.97]"
       >
-        <LocalMediaFrame mediaId={media.mediaId} fallbackUrl={media.preview}>
+        <PostMediaFrame postId={post.id} viewerId={viewerId} media={media}>
           {(url) => (
             <img
               src={url ?? undefined}
@@ -980,7 +1008,7 @@ function DemoPostTile({ post, onOpen }: { post: DemoPost; onOpen: () => void }) 
               className="h-full w-full object-cover"
             />
           )}
-        </LocalMediaFrame>
+        </PostMediaFrame>
       </button>
     );
   }
@@ -993,11 +1021,16 @@ function DemoPostTile({ post, onOpen }: { post: DemoPost; onOpen: () => void }) 
         aria-label={`Abrir publicação em vídeo de ${post.authorName}`}
         className="relative aspect-square overflow-hidden rounded-xl bg-muted transition active:scale-[0.97]"
       >
-        <LocalMediaFrame mediaId={media.mediaId} fallbackUrl={media.preview}>
+        <PostMediaFrame postId={post.id} viewerId={viewerId} media={media}>
           {(url) => (
-            <video src={url ?? undefined} muted playsInline className="h-full w-full object-cover" />
+            <video
+              src={url ?? undefined}
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+            />
           )}
-        </LocalMediaFrame>
+        </PostMediaFrame>
       </button>
     );
   }

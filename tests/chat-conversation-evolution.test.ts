@@ -43,12 +43,22 @@ describe("Perfil sem Momentos", () => {
   });
 });
 
-describe("Menu + Carona ao lado de Negócio", () => {
-  test("Carona Amiga vem imediatamente após Negócio e usa /carona/nova", async () => {
+describe("Menu + Marketplace no lugar certo e Carona Amiga ao lado da Corrida", () => {
+  test("Abrir Marketplace vem imediatamente após Negócio", async () => {
     const hub = await readFile(join(projectRoot, "src/routes/_app/create.tsx"), "utf8");
     const ids = [...hub.matchAll(/id: "([^"]+)"/g)].map((match) => match[1]);
-    expect(ids.indexOf("carona")).toBe(ids.indexOf("business") + 1);
-    expect(hub).toContain('route: "/carona/nova"');
+    expect(ids.indexOf("browse-marketplace")).toBe(ids.indexOf("business") + 1);
+    expect(hub).toContain("Abrir Marketplace");
+    expect(hub).toContain('route: "/marketplace"');
+  });
+
+  test("Carona Amiga vem imediatamente após Pedir corrida e usa o Hub", async () => {
+    const hub = await readFile(join(projectRoot, "src/routes/_app/create.tsx"), "utf8");
+    const ids = [...hub.matchAll(/id: "([^"]+)"/g)].map((match) => match[1]);
+    expect(ids.indexOf("carona")).toBe(ids.indexOf("hail") + 1);
+    expect(hub).toContain("Carona Amiga");
+    expect(hub).toContain('route: "/carona"');
+    expect(hub).toContain("Pedir corrida");
   });
 });
 
@@ -138,10 +148,16 @@ describe("Assistente Copiar e editar", () => {
       "utf8",
     );
     const input = await readFile(join(projectRoot, "src/components/chat/message-input.tsx"), "utf8");
-    expect(assistant).toContain("Copiar e editar");
+    expect(assistant).toContain("Usar");
     expect(assistant).toContain("onInsertSuggestion");
+    expect(assistant).toContain("O que você deseja?");
+    expect(assistant).toContain("Sugestão de conversa");
+    expect(assistant).toContain('const mediaFlow = flowMode === "media"');
+    expect(assistant).not.toContain("|| conversationFlow");
+    expect(assistant).not.toContain("Pedido de conversa");
     expect(screen).toContain("onInsertSuggestion");
     expect(screen).toContain("setComposerInsert");
+    expect(screen).not.toContain("onCreateMedia");
     expect(input).toContain("mergeComposerSuggestion");
     const insertEffect = input.slice(
       input.indexOf("if (!insertRequest"),

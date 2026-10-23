@@ -1,4 +1,4 @@
-import { people } from "@/lib/mock-data";
+import { listPeople } from "@/lib/mock-data";
 import {
   getConnectionByConversationId,
   getConnectionPeerId,
@@ -60,7 +60,7 @@ export function listConversationInviteCandidates(
     for (const connection of getConnectionsForUser(participantId)) {
       const peerId = getConnectionPeerId(connection, participantId);
       if (!peerId || blocked.has(peerId) || seen.has(peerId)) continue;
-      const person = people.find((entry) => entry.id === peerId);
+      const person = listPeople().find((entry) => entry.id === peerId);
       if (!person) continue;
       seen.add(peerId);
       candidates.push({

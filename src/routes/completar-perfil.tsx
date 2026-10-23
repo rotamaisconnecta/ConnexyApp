@@ -17,6 +17,7 @@ import { profileOnboardingForGuard } from "@/lib/profile/profile-status";
 import { isDemoMode } from "@/lib/demo/demo-config";
 import { isRemoteProfileEnabled } from "@/lib/profile/schema-a-profile-flag";
 import { getSchemaAProfile } from "@/lib/profile/schema-a-profile";
+import { validateMediaPath } from "@/lib/media/media-path";
 import {
   ageFromBirthDate,
   applyDemoOnboardingProfile,
@@ -244,13 +245,12 @@ function CompleteProfile() {
             );
           }
           uploadedPath = path;
-          const { data: signed, error: signedError } = await supabase.storage
-            .from("avatars")
-            .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
-          if (signedError || !signed?.signedUrl) {
-            throw new Error("Falha ao processar a foto. Tente novamente.");
+          const validation = validateMediaPath(path);
+          if (!validation.ok || validation.ownerId !== user.id) {
+            await supabase.storage.from("avatars").remove([path]);
+            throw new Error("Falha ao enviar a foto. Tente novamente.");
           }
-          photoUrl = signed.signedUrl;
+          photoUrl = path;
         }
 
         try {

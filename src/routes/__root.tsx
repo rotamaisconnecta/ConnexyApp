@@ -16,6 +16,8 @@ import { isBackendConfigured, isBackendUnavailableError } from "@/lib/supabase/c
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { ensureDemoCastSeeded } from "@/lib/demo/demo-cast-seed";
 
 function NotFoundComponent() {
   return (
@@ -150,6 +152,10 @@ function RootComponent() {
   const router = useRouter();
   const configured = isBackendConfigured();
   useGlobalDragScroll();
+  useEffect(() => {
+    if (!isDemoMode()) return;
+    void ensureDemoCastSeeded();
+  }, []);
   useEffect(() => {
     if (!configured) return;
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {

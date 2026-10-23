@@ -185,6 +185,7 @@ export interface BusinessEvent {
   businessId: string;
   title: string;
   description: string;
+  category?: string;
   photo?: string;
   startDate: Date;
   endDate: Date;

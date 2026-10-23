@@ -48,6 +48,50 @@ export class RemoteContentRepository {
     });
   }
 
+  async updatePost(
+    id: string,
+    patch: {
+      text?: string | null;
+      privacy?: PostPrivacy;
+      category?: string | null;
+      location_label?: string | null;
+      hashtags?: string[];
+      media?: Json;
+    },
+  ): Promise<PostRow> {
+    return runRemote(async () => {
+      await requireAuthUserId(this.client);
+      if (patch.privacy !== undefined && !POST_PRIVACY.includes(patch.privacy)) {
+        throw new RemoteRepositoryError("Invalid post privacy", RemoteErrorCode.VALIDATION);
+      }
+      const next: Partial<PostRow> = {};
+      if (patch.text !== undefined) next.text = patch.text ?? null;
+      if (patch.category !== undefined) next.category = patch.category ?? null;
+      if (patch.privacy !== undefined) next.privacy = patch.privacy;
+      if (patch.location_label !== undefined) next.location_label = patch.location_label ?? null;
+      if (patch.hashtags !== undefined) next.hashtags = patch.hashtags;
+      if (patch.media !== undefined) next.media = patch.media;
+      if (Object.keys(next).length === 0) {
+        throw new RemoteRepositoryError("Post update is empty", RemoteErrorCode.VALIDATION);
+      }
+      return unwrapRow(
+        await this.client.from("posts").update(next).eq("id", id).select("*").single(),
+        "Post was not found",
+      );
+    });
+  }
+
+  async deletePost(id: string): Promise<void> {
+    return runRemote(async () => {
+      await requireAuthUserId(this.client);
+      const result = await this.client.from("posts").delete().eq("id", id).select("id");
+      throwIfPostgrestError(result.error, result.status);
+      if ((result.data ?? []).length === 0) {
+        throw new RemoteRepositoryError("Post was not deleted", RemoteErrorCode.NOT_FOUND, 404);
+      }
+    });
+  }
+
   async listOwnPosts(): Promise<PostRow[]> {
     return runRemote(async () => {
       const uid = await requireAuthUserId(this.client);

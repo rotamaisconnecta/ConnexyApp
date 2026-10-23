@@ -7,6 +7,7 @@ import { mergeCatalogPlaces } from "@/lib/catalog/local-catalog";
 import { formatDistance } from "@/lib/proximity";
 import { PresenceCheckin } from "@/components/event-checkin/presence-checkin";
 import { PresentList } from "@/components/event-checkin/present-list";
+import { CaronaContextSection } from "@/components/carona/carona-context-section";
 import {
   DetailActionBar,
   PromotionRedeemCard,
@@ -14,9 +15,10 @@ import {
 } from "@/components/marketplace/local-engagement";
 import { PlaceStatusMeta } from "@/lib/integration/integration-types";
 import { usePresence } from "@/providers/presence/presence-provider";
-import { CalendarDays, Star, Users, MapPinned, CarFront } from "lucide-react";
+import { CalendarDays, Globe, Star, Tag, Users, MapPinned, CarFront } from "lucide-react";
 import { isPlaceReservable } from "@/lib/reservations/reservable";
 import { buildRideRequestSearch } from "@/lib/mobility/ride-request-context";
+import { BusinessHours } from "@/components/marketplace/business-hours";
 
 export const Route = createFileRoute("/_app/local/$id")({
   ssr: false,
@@ -80,6 +82,38 @@ function LocalDetail() {
 
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{p.description}</p>
 
+        {p.tags && p.tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-1.5">
+            {p.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                <Tag className="h-2.5 w-2.5" />
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {p.website && (
+          <a
+            href={/^https?:\/\//i.test(p.website) ? p.website : `https://${p.website}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            {p.website}
+          </a>
+        )}
+
+        {p.hoursSlots && p.hoursSlots.length > 0 ? (
+          <div className="mt-5">
+            <BusinessHours hours={p.hoursSlots} />
+          </div>
+        ) : null}
+
         {p.promo && (
           <div className="mt-4">
             <PromotionRedeemCard
@@ -95,7 +129,7 @@ function LocalDetail() {
           <DetailActionBar
             targetId={p.id}
             title={p.name}
-            phone="+551140000000"
+            phone={p.phone}
             outing={{
               id: p.id,
               title: p.name,
@@ -128,6 +162,10 @@ function LocalDetail() {
 
         <div className="mt-5">
           <PresentList targetId={p.id} title="Presentes agora" />
+        </div>
+
+        <div className="mt-5">
+          <CaronaContextSection destination={p.name} contextType="local" contextId={p.id} />
         </div>
 
         <div className="mt-6">

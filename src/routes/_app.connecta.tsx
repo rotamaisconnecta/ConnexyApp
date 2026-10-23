@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusBar } from "@/components/phone-frame";
-import { people } from "@/lib/mock-data";
+import { listPeople } from "@/lib/mock-data";
 import { proximityTone, personProximityLabel, personProximityRadius } from "@/lib/proximity";
 import { PresenceDot } from "@/components/presence-dot";
 import { ConversationInviteButton } from "@/components/chat/conversation-invite-button";
@@ -14,6 +14,7 @@ import { matchesConnectaListFilter } from "@/lib/discovery/connecta-list-filter"
 import { resolveDemoCatalogPerson } from "@/lib/chat/functional-conversation-list";
 import { useDiscovery } from "@/hooks/api/use-discovery";
 import { formatPersonDistance } from "@/lib/proximity";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 export const Route = createFileRoute("/_app/connecta")({
   head: () => ({ meta: [{ title: "Connexy — Pessoas próximas" }] }),
@@ -33,7 +34,7 @@ function Connecta() {
   const { people: nearbyProfiles, isLoading, error, refresh } = useDiscovery();
   const filtersActive = onlyOnline || onlyNearby;
   const filter = { onlyOnline, onlyNearby };
-  const filteredPeople = people.filter((person) => matchesConnectaListFilter(person, filter));
+  const filteredPeople = listPeople().filter((person) => matchesConnectaListFilter(person, filter));
   const filteredRequests = pendingRequests.filter((request) => {
     const person = resolveDemoCatalogPerson(request.fromUserId);
     return matchesConnectaListFilter(person ?? undefined, filter);
@@ -173,17 +174,17 @@ function Connecta() {
                       className="relative shrink-0"
                       aria-label={`Ver perfil de ${p.name}`}
                     >
-                      {p.photo_url ? (
-                        <img
-                          src={p.photo_url}
-                          alt={p.name}
-                          className="h-14 w-14 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary text-lg font-bold">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <AuthenticatedAvatarImage
+                        profileId={p.id}
+                        legacyUrl={p.photo_url}
+                        alt={p.name}
+                        className="h-14 w-14 rounded-full object-cover"
+                        fallback={
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary text-lg font-bold">
+                            {p.name.charAt(0).toUpperCase()}
+                          </div>
+                        }
+                      />
                     </Link>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm">
@@ -237,7 +238,17 @@ function Connecta() {
                   className="relative shrink-0"
                   aria-label={`Ver perfil de ${p.name}`}
                 >
-                  <img src={p.photo} alt={p.name} className="h-14 w-14 rounded-full object-cover" />
+                  <AuthenticatedAvatarImage
+                    profileId={p.id}
+                    legacyUrl={p.photo}
+                    alt={p.name}
+                    className="h-14 w-14 rounded-full object-cover"
+                    fallback={
+                      <div className="grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                    }
+                  />
                   <PresenceDot online={p.online} className="absolute -bottom-0.5 -right-0.5" />
                 </Link>
                 <div className="flex-1 min-w-0">
@@ -307,10 +318,16 @@ function Connecta() {
                     className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left shadow-soft transition active:scale-[0.99]"
                   >
                     <span className="relative shrink-0">
-                      <img
-                        src={person.photo}
+                      <AuthenticatedAvatarImage
+                        profileId={person.id}
+                        legacyUrl={person.photo}
                         alt=""
                         className="h-14 w-14 rounded-full object-cover"
+                        fallback={
+                          <div className="grid h-14 w-14 place-items-center rounded-full bg-primary/10 font-semibold text-primary">
+                            {person.name.charAt(0).toUpperCase()}
+                          </div>
+                        }
                       />
                       <PresenceDot
                         online={person.online}

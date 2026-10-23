@@ -1,52 +1,35 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, Check, Copy, MessageCircleHeart, Sparkles, WandSparkles, X } from "lucide-react";
+import { Bot, Copy, ImagePlus, Loader2, MessageCircle, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { generateConnexyAI } from "@/lib/gemini/generate";
+import { GEMINI_USER_FALLBACK } from "@/lib/gemini/gemini-config";
+import { composeMediaSuggestion } from "@/lib/gemini/gemini-parse";
+import { GeminiFeature } from "@/lib/gemini/gemini-types";
+import type {
+  GeminiChatTopicInput,
+  GeminiChatTopicResult,
+  GeminiGenerateResult,
+  GeminiIcebreakerInput,
+  GeminiIcebreakerResult,
+  GeminiMediaResult,
+} from "@/lib/gemini/gemini-types";
 
 export type ConnexyAiAssistantMode = "media" | "invite" | "conversations";
+type AssistantAction = "media-intent" | "chat-intent" | "chat-continue";
 
-const prompts: Record<
-  ConnexyAiAssistantMode,
-  { label: string; title: string; helper: string; initial: string }
-> = {
-  media: {
-    label: "Criar mídia",
-    title: "Ideia para sua mídia",
-    helper: "Descreva o momento, o local ou a mensagem que você quer publicar.",
-    initial: "Um momento especial que quero compartilhar no Connexy",
-  },
-  invite: {
-    label: "Pedido de conversa",
-    title: "Convite mais natural",
-    helper: "Escreva o nome ou o contexto e receba uma sugestão editável.",
-    initial: "Quero convidar Diego para conversar sobre lugares novos na região",
-  },
-  conversations: {
-    label: "Acompanhar conversas",
-    title: "Próximo passo da conversa",
-    helper: "O assistente organiza o contexto e sugere uma resposta respeitosa.",
-    initial: "Conversa sobre combinar de conhecer o Burger House",
-  },
-};
-
-function suggestionFor(mode: ConnexyAiAssistantMode, value: string): string {
-  const context = value.trim() || "este momento";
-  if (mode === "media") {
-    return `Sugestão de legenda: “${context}. Mais um lugar que vale guardar — quem topa descobrir comigo?”`;
-  }
-  if (mode === "invite") {
-    return `Oi! Vi que temos interesses em comum. Que tal conversar sobre ${context.toLocaleLowerCase("pt-BR")}?`;
-  }
-  return `Resumo: a conversa está em um tom leve sobre ${context.toLocaleLowerCase("pt-BR")}. Próximo passo sugerido: confirmar um horário e enviar o convite para ir junto.`;
-}
+const ASSISTANT_FALLBACK = "Não consegui criar uma sugestão agora. Tente novamente.";
 
 interface ConnexyAiAssistantProps {
-  /** Fluxo onde o gatilho está montado; define o modo inicial do assistente. */
   mode: ConnexyAiAssistantMode;
   label?: string;
   className?: string;
   onInsertSuggestion?: (text: string) => void;
+  onCreateMedia?: () => void;
+  icebreakerContext?: GeminiIcebreakerInput;
+  chatContext?: GeminiChatTopicInput;
 }
 
 export function ConnexyAiAssistant({
@@ -54,26 +37,116 @@ export function ConnexyAiAssistant({
   label = "Assistente Connexy",
   className,
   onInsertSuggestion,
+  onCreateMedia,
+  icebreakerContext,
+  chatContext,
 }: ConnexyAiAssistantProps) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState(flowMode);
-  const [input, setInput] = useState(prompts[flowMode].initial);
+  const [action, setAction] = useState<AssistantAction | null>(null);
+  const [input, setInput] = useState("");
   const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  const conversationFlow = flowMode === "conversations";
+  const mediaFlow = flowMode === "media";
+  const inviteFlow = flowMode === "invite";
 
   const openAssistant = () => {
-    setMode(flowMode);
-    setInput(prompts[flowMode].initial);
+    setAction(null);
+    setInput("");
     setResult("");
+    setError("");
     setOpen(true);
   };
 
-  const selectMode = (next: ConnexyAiAssistantMode) => {
-    setMode(next);
-    setInput(prompts[next].initial);
-    setResult("");
+  const generateInvite = async () => {
+    setGenerating(true);
+    setError("");
+    try {
+      const response = (await generateConnexyAI({
+        data: {
+          feature: GeminiFeature.FIRST_CONTACT,
+          actorId: getDemoIdentity().id,
+          input: { ...icebreakerContext, notes: input.trim() || undefined },
+        },
+      })) as GeminiGenerateResult;
+      if (!response.ok) {
+        toast.error(response.error || GEMINI_USER_FALLBACK);
+        return;
+      }
+      setResult((response.data as GeminiIcebreakerResult).message);
+    } catch {
+      toast.error(GEMINI_USER_FALLBACK);
+    } finally {
+      setGenerating(false);
+    }
   };
 
-  const generate = () => setResult(suggestionFor(mode, input));
+  const generateMedia = async (refresh = false) => {
+    if (!input.trim()) {
+      setError("Diga o que você quer fazer com essa mídia.");
+      setAction("media-intent");
+      return;
+    }
+    setAction("media-intent");
+    setGenerating(true);
+    setError("");
+    try {
+      const response = (await generateConnexyAI({
+        data: {
+          feature: GeminiFeature.ASSISTANT_MEDIA,
+          actorId: getDemoIdentity().id,
+          input: {
+            intent: input.trim(),
+            avoid: refresh ? result.trim() || undefined : undefined,
+          },
+        },
+      })) as GeminiGenerateResult;
+      if (!response.ok) {
+        setError(response.error || ASSISTANT_FALLBACK);
+        return;
+      }
+      setResult(composeMediaSuggestion(response.data as GeminiMediaResult));
+    } catch {
+      setError(ASSISTANT_FALLBACK);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const generateConversation = async (nextAction: "chat-intent" | "chat-continue", refresh = false) => {
+    if (nextAction === "chat-intent" && !input.trim()) {
+      setError("Diga o que você quer fazer nesta conversa.");
+      setAction("chat-intent");
+      return;
+    }
+    setAction(nextAction);
+    setGenerating(true);
+    setError("");
+    try {
+      const response = (await generateConnexyAI({
+        data: {
+          feature: GeminiFeature.CHAT_TOPIC,
+          actorId: getDemoIdentity().id,
+          input: {
+            ...chatContext,
+            intent: nextAction === "chat-intent" ? input.trim() : undefined,
+            avoid: refresh ? result.trim() || undefined : undefined,
+          },
+        },
+      })) as GeminiGenerateResult;
+      if (!response.ok) {
+        setError(response.error || ASSISTANT_FALLBACK);
+        return;
+      }
+      setResult((response.data as GeminiChatTopicResult).suggestion);
+    } catch {
+      setError(ASSISTANT_FALLBACK);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const copyResult = async () => {
     if (!result) return;
@@ -85,14 +158,29 @@ export function ConnexyAiAssistant({
     }
   };
 
-  const copyAndEdit = () => {
-    if (!result) return;
+  const useResult = () => {
+    const text = result.trim();
+    if (!text) return;
     if (onInsertSuggestion) {
-      onInsertSuggestion(result);
+      onInsertSuggestion(text);
       setOpen(false);
       return;
     }
     void copyResult();
+  };
+
+  const createMedia = () => {
+    const caption = result.trim() || input.trim();
+    if (caption && onInsertSuggestion) onInsertSuggestion(caption);
+    onCreateMedia?.();
+    setOpen(false);
+  };
+
+  const retry = () => {
+    if (action === "media-intent") return generateMedia(Boolean(result));
+    if (action === "chat-intent" || action === "chat-continue") {
+      return generateConversation(action, Boolean(result));
+    }
   };
 
   return (
@@ -100,7 +188,7 @@ export function ConnexyAiAssistant({
       <button
         type="button"
         onClick={openAssistant}
-        aria-label="Abrir assistente Connexy IA"
+        aria-label={label}
         className={cn(
           "inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-2 text-[12px] font-semibold text-primary shadow-[0_8px_20px_rgba(108,59,255,0.08)] transition-transform hover:bg-primary/15 active:scale-[0.98]",
           className,
@@ -128,7 +216,7 @@ export function ConnexyAiAssistant({
               exit={{ opacity: 0, y: 24, scale: 0.98 }}
               transition={{ type: "spring", stiffness: 320, damping: 28 }}
               onClick={(event) => event.stopPropagation()}
-              className="w-full max-w-md rounded-[28px] bg-background p-5 shadow-elevated"
+              className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-[28px] bg-background p-5 shadow-elevated"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3">
@@ -152,56 +240,203 @@ export function ConnexyAiAssistant({
                 </button>
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-2">
-                {(Object.keys(prompts) as ConnexyAiAssistantMode[]).map((item) => (
+              {mediaFlow ? (
+                <div className="mt-5 space-y-2">
+                  <p className="px-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Criar mídia
+                  </p>
                   <button
-                    key={item}
                     type="button"
-                    onClick={() => selectMode(item)}
-                    className={`min-h-16 rounded-2xl px-2 text-[10px] font-semibold transition ${mode === item ? "bg-primary text-white shadow-soft" : "bg-secondary text-foreground"}`}
+                    onClick={() => {
+                      setAction("media-intent");
+                      setError("");
+                    }}
+                    disabled={generating}
+                    className={`w-full rounded-2xl px-4 py-3 text-left transition ${action === "media-intent" ? "bg-primary text-white shadow-soft" : "bg-secondary text-foreground"}`}
                   >
-                    {item === "media" ? (
-                      <WandSparkles className="mx-auto mb-1 h-4 w-4" />
-                    ) : item === "invite" ? (
-                      <MessageCircleHeart className="mx-auto mb-1 h-4 w-4" />
-                    ) : (
-                      <Check className="mx-auto mb-1 h-4 w-4" />
-                    )}
-                    {prompts[item].label}
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <Sparkles className="h-4 w-4" />
+                      O que você deseja?
+                    </span>
+                    <span className={`mt-1 block text-[11px] leading-relaxed ${action === "media-intent" ? "text-white/80" : "text-muted-foreground"}`}>
+                      Diga o que você quer criar ou melhorar nesta mídia.
+                    </span>
                   </button>
-                ))}
-              </div>
-
-              <h2 className="mt-5 font-display text-lg font-bold">{prompts[mode].title}</h2>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                {prompts[mode].helper}
-              </p>
-              <textarea
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                rows={3}
-                className="mt-4 w-full resize-none rounded-2xl bg-secondary px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <button
-                type="button"
-                onClick={generate}
-                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand text-sm font-bold text-white shadow-elegant"
-              >
-                <Sparkles className="h-4 w-4" /> Criar sugestão
-              </button>
-
-              {result && (
-                <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
-                  <p className="text-sm leading-relaxed">{result}</p>
                   <button
                     type="button"
-                    onClick={copyAndEdit}
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary"
+                    onClick={createMedia}
+                    disabled={generating}
+                    className="w-full rounded-2xl bg-secondary px-4 py-3 text-left text-foreground"
                   >
-                    <Copy className="h-3.5 w-3.5" /> Copiar e editar
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <ImagePlus className="h-4 w-4" />
+                      Criar mídia
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-muted-foreground">
+                      Usa a câmera, o anexo e o fluxo de mídia que você já conhece.
+                    </span>
                   </button>
                 </div>
-              )}
+              ) : null}
+
+              {conversationFlow ? (
+                <div className="mt-5 space-y-2">
+                  <p className="px-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Sugestão de conversa
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAction("chat-intent");
+                      setError("");
+                    }}
+                    disabled={generating}
+                    className={`w-full rounded-2xl px-4 py-3 text-left transition ${action === "chat-intent" ? "bg-primary text-white shadow-soft" : "bg-secondary text-foreground"}`}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <Sparkles className="h-4 w-4" />
+                      O que você deseja?
+                    </span>
+                    <span className={`mt-1 block text-[11px] leading-relaxed ${action === "chat-intent" ? "text-white/80" : "text-muted-foreground"}`}>
+                      Diga o que você quer fazer nesta conversa e eu preparo uma sugestão.
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void generateConversation("chat-continue", Boolean(result))}
+                    disabled={generating}
+                    className={`w-full rounded-2xl px-4 py-3 text-left transition ${action === "chat-continue" ? "bg-primary text-white shadow-soft" : "bg-secondary text-foreground"}`}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-bold">
+                      <MessageCircle className="h-4 w-4" />
+                      Sugestão de conversa
+                    </span>
+                    <span className={`mt-1 block text-[11px] leading-relaxed ${action === "chat-continue" ? "text-white/80" : "text-muted-foreground"}`}>
+                      Veja uma sugestão baseada no contexto desta conversa.
+                    </span>
+                  </button>
+                </div>
+              ) : null}
+
+              {inviteFlow ? (
+                <>
+                  <h2 className="mt-5 font-display text-lg font-bold">Convite mais natural</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Revise a sugestão. Nada é enviado sem você decidir.
+                  </p>
+                </>
+              ) : null}
+
+              {action === "media-intent" || action === "chat-intent" || inviteFlow ? (
+                <textarea
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  rows={3}
+                  placeholder={
+                    action === "media-intent"
+                      ? "Ex.: quero deixar essa foto mais profissional"
+                      : action === "chat-intent"
+                        ? "Ex.: quero chamar para um café"
+                        : undefined
+                  }
+                  className="mt-4 w-full resize-none rounded-2xl bg-secondary px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              ) : null}
+
+              {inviteFlow || action === "media-intent" || action === "chat-intent" ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void (inviteFlow
+                      ? generateInvite()
+                      : action === "media-intent"
+                        ? generateMedia()
+                        : generateConversation("chat-intent"))
+                  }
+                  disabled={generating}
+                  className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-brand px-4 text-sm font-bold text-white shadow-elegant disabled:opacity-70"
+                >
+                  {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {generating ? "Pensando em uma boa sugestão..." : "Criar sugestão"}
+                </button>
+              ) : generating ? (
+                <p className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Pensando em uma boa sugestão...
+                </p>
+              ) : null}
+
+              {error ? (
+                <div className="mt-4 rounded-2xl bg-secondary px-4 py-3">
+                  <p className="text-xs leading-relaxed text-muted-foreground">{error}</p>
+                  {action ? (
+                    <button
+                      type="button"
+                      onClick={() => void retry()}
+                      disabled={generating}
+                      className="mt-2 text-xs font-bold text-primary"
+                    >
+                      Tentar novamente
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {result ? (
+                <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                  <label className="text-[11px] font-semibold text-muted-foreground">
+                    Editar sugestão
+                    <textarea
+                      value={result}
+                      onChange={(event) => setResult(event.target.value)}
+                      rows={3}
+                      className="mt-2 w-full resize-none rounded-xl bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </label>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={useResult}
+                      className="inline-flex flex-1 items-center justify-center rounded-full bg-primary px-3 py-2 text-xs font-bold text-white"
+                    >
+                      {conversationFlow || mediaFlow ? "Usar sugestão" : "Usar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResult("");
+                        setError("");
+                      }}
+                      className="inline-flex flex-1 items-center justify-center rounded-full bg-secondary px-3 py-2 text-xs font-bold text-foreground"
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                  {action ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void (action === "media-intent"
+                          ? generateMedia(true)
+                          : generateConversation(action === "chat-continue" ? "chat-continue" : "chat-intent", true))
+                      }
+                      disabled={generating}
+                      className="mt-2 text-xs font-bold text-primary disabled:opacity-70"
+                    >
+                      Nova sugestão
+                    </button>
+                  ) : null}
+                  {!onInsertSuggestion ? (
+                    <button
+                      type="button"
+                      onClick={() => void copyResult()}
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-primary"
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copiar
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </motion.section>
           </motion.div>
         )}

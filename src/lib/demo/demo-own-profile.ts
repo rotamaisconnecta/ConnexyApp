@@ -27,6 +27,18 @@ export type DemoOwnProfile = {
   birthDate?: string;
   /** Identidade demo à qual este perfil está associado. */
   identityId?: string;
+  headline?: string | null;
+  moodEmoji?: string | null;
+  moodText?: string | null;
+  nowPlaying?: DemoNowPlaying | null;
+  looksFor?: string[];
+  vibeTags?: string[];
+};
+
+export type DemoNowPlaying = {
+  kind: string;
+  title: string;
+  subtitle?: string;
 };
 
 export type ProfileVisibility = "Todos" | "Conexões" | "Somente você";
@@ -104,6 +116,30 @@ export function ageFromBirthDate(value: string): number | null {
   return age;
 }
 
+function optionalString(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  if (typeof value === "string") return value;
+  return undefined;
+}
+
+function optionalStringArray(value: unknown): string[] | undefined {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : undefined;
+}
+
+function optionalNowPlaying(value: unknown): DemoNowPlaying | null | undefined {
+  if (value === null) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.kind !== "string" || typeof record.title !== "string") return undefined;
+  return {
+    kind: record.kind,
+    title: record.title,
+    ...(typeof record.subtitle === "string" ? { subtitle: record.subtitle } : {}),
+  };
+}
+
 function normalizeStoredProfile(saved: Partial<DemoOwnProfile>): DemoOwnProfile {
   const base = defaults();
   const next: DemoOwnProfile = {
@@ -113,6 +149,13 @@ function normalizeStoredProfile(saved: Partial<DemoOwnProfile>): DemoOwnProfile 
     privateAddresses: { ...base.privateAddresses, ...saved.privateAddresses },
     visibility: { ...base.visibility, ...saved.visibility },
   };
+
+  next.headline = optionalString(saved.headline);
+  next.moodEmoji = optionalString(saved.moodEmoji);
+  next.moodText = optionalString(saved.moodText);
+  next.nowPlaying = optionalNowPlaying(saved.nowPlaying);
+  next.looksFor = optionalStringArray(saved.looksFor);
+  next.vibeTags = optionalStringArray(saved.vibeTags);
 
   if (typeof saved.identityId === "string" && saved.identityId.trim()) {
     next.identityId = saved.identityId.trim();

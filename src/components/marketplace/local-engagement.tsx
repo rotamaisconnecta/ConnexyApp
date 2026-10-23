@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { people, type Person } from "@/lib/mock-data";
+import { listPeople, type Person } from "@/lib/mock-data";
 import { estimateRouteDistance } from "@/lib/mobility/route-utils";
 import { isDetailSaved, toggleSavedDetail } from "@/lib/marketplace/saved-details";
 import {
@@ -262,6 +262,7 @@ function InviteTogetherSheet({
   const outingVersion = useOutingInviteVersion();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [message, setMessage] = useState(`Vamos juntos para ${target.title}?`);
+  const people = listPeople();
   const candidates = people.filter((person) => person.id !== identity.id).slice(0, 7);
   const outgoing = listOutgoingOutingInvites(identity.id, target.id);
   void outingVersion;

@@ -5,14 +5,20 @@ import { MapPin } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { SwipeCarousel } from "@/components/system/swipe-carousel";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { useAdImpression } from "@/hooks/use-ad-metrics";
 import { calculateDistanceMeters, formatDistance } from "@/lib/marketplace/distance-utils";
 import {
   SPONSORED_ADS,
   sponsoredActionMessage,
   type SponsoredAction,
+  type SponsoredContent,
 } from "@/lib/ads/mock-sponsored-content";
+import { selectEligibleSponsored, sponsoredContentToPlacement } from "@/lib/ads/sponsored-placement";
+import { AD_PLACEMENTS, recordAdMetric } from "@/lib/ads/ad-metrics";
 import { resolveSponsoredRoute } from "@/lib/navigation/detail-routes";
 import { HomeSectionHeading } from "@/components/home/home-section-heading";
+
+type LiveSponsoredContent = SponsoredContent & { liveDistanceMeters: number };
 
 export function LocalSponsoredFeed() {
   const nav = useNavigate();
@@ -22,34 +28,51 @@ export function LocalSponsoredFeed() {
     geolocation.request();
   }, [geolocation.request]);
 
-  const nearbyAds = useMemo(() => {
-    const userLocation =
-      geolocation.latitude !== null && geolocation.longitude !== null
-        ? { lat: geolocation.latitude, lng: geolocation.longitude }
-        : { lat: -23.55, lng: -46.64 };
+  const nearbyAds = useMemo<LiveSponsoredContent[]>(() => {
+    const hasUserLocation = geolocation.latitude !== null && geolocation.longitude !== null;
+    const userLocation = hasUserLocation
+      ? { lat: geolocation.latitude!, lng: geolocation.longitude! }
+      : { lat: -23.55, lng: -46.64 };
 
-    const ranked = SPONSORED_ADS.map((ad) => ({
-      ...ad,
-      liveDistanceMeters: calculateDistanceMeters(userLocation, {
-        lat: ad.latitude,
-        lng: ad.longitude,
-      }),
-    })).sort((a, b) => a.liveDistanceMeters - b.liveDistanceMeters);
+    const eligibleIds = new Set(
+      selectEligibleSponsored(
+        SPONSORED_ADS.map((ad) => sponsoredContentToPlacement(
+          ad,
+          calculateDistanceMeters(userLocation, { lat: ad.latitude, lng: ad.longitude }),
+        )),
+        { locationAvailable: hasUserLocation },
+      ).map((ad) => ad.id),
+    );
+    const ranked = SPONSORED_ADS
+      .filter((ad) => eligibleIds.has(ad.id))
+      .map((ad) => ({
+        ...ad,
+        liveDistanceMeters: calculateDistanceMeters(userLocation, {
+          lat: ad.latitude,
+          lng: ad.longitude,
+        }),
+      }))
+      .sort((a, b) => a.liveDistanceMeters - b.liveDistanceMeters);
     const withinRadius = ranked.filter((ad) => ad.liveDistanceMeters <= 2_000);
 
     // A experiência não fica vazia: fora do raio, mostramos os patrocinados mais próximos.
     return withinRadius.length > 0 ? withinRadius : ranked.slice(0, 3);
   }, [geolocation.latitude, geolocation.longitude]);
 
-  function handleClick(adId: string, action: string, title: string) {
-    const ad = SPONSORED_ADS.find((a) => a.id === adId);
-    const route = ad ? resolveSponsoredRoute(ad) : null;
+  function handleOpen(ad: LiveSponsoredContent) {
+    recordAdMetric({
+      type: "click",
+      ad: ad.id,
+      placement: AD_PLACEMENTS.HOME_REGIONAL_HIGHLIGHTS,
+    });
+    const route = resolveSponsoredRoute(ad);
     if (route) {
       nav({ href: route });
       return;
     }
-    toast.success(sponsoredActionMessage(action as SponsoredAction, title));
+    toast.success(sponsoredActionMessage(ad.action as SponsoredAction, ad.title));
   }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -62,7 +85,7 @@ export function LocalSponsoredFeed() {
           as="h3"
           emoji="🏷️"
           title="Destaques da região"
-          subtitle="Patrocinados em até 2 km da sua localização"
+          subtitle="Patrocinados em destaque na região"
         />
       </div>
 
@@ -72,51 +95,73 @@ export function LocalSponsoredFeed() {
         className="gap-3 pl-5 pr-5"
       >
         {nearbyAds.map((ad) => (
-          <article
-            key={ad.id}
-            className="min-w-[86%] w-[86%] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
-          >
-            <div className="relative aspect-[16/10]">
-              {ad.cover ? (
-                <img
-                  src={ad.cover}
-                  alt={ad.title}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary/10 to-secondary/40 text-3xl">
-                  {ad.emoji ?? "🛍️"}
-                </div>
-              )}
-              <span className="absolute top-2.5 left-2.5 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-semibold text-gray-800 shadow-soft">
-                Patrocinado
-              </span>
-              <span className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
-                <MapPin className="h-3 w-3" />
-                {formatDistance(ad.liveDistanceMeters)}
-              </span>
-            </div>
-
-            <div className="flex flex-col p-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
-                {ad.category}
-              </div>
-              <h4 className="font-display text-sm font-semibold leading-snug">{ad.title}</h4>
-              {ad.subtitle && (
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{ad.subtitle}</p>
-              )}
-              <button
-                type="button"
-                onClick={() => handleClick(ad.id, ad.action, ad.title)}
-                className="mt-3 h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold transition-colors hover:bg-primary/20 active:scale-[0.98]"
-              >
-                {ad.ctaLabel}
-              </button>
-            </div>
-          </article>
+          <LocalSponsoredAdCard key={ad.id} ad={ad} onOpen={handleOpen} />
         ))}
       </SwipeCarousel>
     </motion.div>
+  );
+}
+
+/**
+ * Card de patrocinado da Home. Registra a impressão quando o cartão
+ * realmente entra na viewport (IntersectionObserver) e o clique no
+ * acionamento do botão, sem alterar a navegação existente.
+ */
+function LocalSponsoredAdCard({
+  ad,
+  onOpen,
+}: {
+  ad: LiveSponsoredContent;
+  onOpen: (ad: LiveSponsoredContent) => void;
+}) {
+  const impressionRef = useAdImpression({
+    ad: ad.id,
+    placement: AD_PLACEMENTS.HOME_REGIONAL_HIGHLIGHTS,
+  });
+
+  return (
+    <article
+      ref={impressionRef}
+      className="min-w-[86%] w-[86%] shrink-0 snap-start overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-soft transition-all duration-300 hover:shadow-xl"
+    >
+      <div className="relative aspect-[16/10]">
+        {ad.cover ? (
+          <img
+            src={ad.cover}
+            alt={ad.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary/10 to-secondary/40 text-3xl">
+            {ad.emoji ?? "🛍️"}
+          </div>
+        )}
+        <span className="absolute top-2.5 left-2.5 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-semibold text-gray-800 shadow-soft">
+          Patrocinado
+        </span>
+        <span className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+          <MapPin className="h-3 w-3" />
+          {formatDistance(ad.liveDistanceMeters)}
+        </span>
+      </div>
+
+      <div className="flex flex-col p-3">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+          {ad.category}
+        </div>
+        <h4 className="font-display text-sm font-semibold leading-snug">{ad.title}</h4>
+        {ad.subtitle && (
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{ad.subtitle}</p>
+        )}
+        <button
+          type="button"
+          onClick={() => onOpen(ad)}
+          className="mt-3 h-10 w-full rounded-full bg-primary/10 text-primary text-xs font-semibold transition-colors hover:bg-primary/20 active:scale-[0.98]"
+        >
+          {ad.ctaLabel}
+        </button>
+      </div>
+    </article>
   );
 }

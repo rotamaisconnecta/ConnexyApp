@@ -45,7 +45,7 @@ import {
   sortByPriority,
 } from "@/lib/integration/integration-notifications";
 import { dispatchCheckinCreated } from "@/lib/live/live-dispatcher";
-import { currentUser } from "@/lib/mock-data";
+import { getActiveViewer } from "@/lib/mock-data";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
 
 /* ==== Mock presence gate: demo data only runs in DEV, with Supabase
@@ -56,7 +56,6 @@ const MOCK_PRESENCE_ENABLED =
   !isPublicSupabaseConfigured() &&
   import.meta.env.VITE_APP_ENABLE_MOCK_PRESENCE === "1";
 
-const CURRENT_USER_ID = "lucas";
 const VIEWER_LAT = -23.55;
 const VIEWER_LNG = -46.63;
 
@@ -434,15 +433,16 @@ export function PresenceProvider({ children }: PresenceProviderProps) {
   const checkIn = useCallback(
     (target: PresenceTargetInput, visibilityOverride?: PresenceVisibilityValue) => {
       const chosen = visibilityOverride ?? visibility;
+      const viewer = getActiveViewer();
       const coords =
         target.lat && target.lng
           ? { lat: target.lat, lng: target.lng }
           : syntheticCoords(target.id);
       const record: PresenceRecord = {
         id: `prs-${Date.now()}`,
-        userId: CURRENT_USER_ID,
-        userName: currentUser.name,
-        userPhoto: currentUser.photo,
+        userId: viewer.id,
+        userName: viewer.name,
+        userPhoto: viewer.photo,
         visibility: chosen,
         targetId: target.id,
         targetName: target.name,
@@ -455,9 +455,9 @@ export function PresenceProvider({ children }: PresenceProviderProps) {
       setCheckins((prev) => [...prev, record]);
 
       dispatchCheckinCreated({
-        userId: CURRENT_USER_ID,
-        userName: currentUser.name,
-        userPhoto: currentUser.photo,
+        userId: viewer.id,
+        userName: viewer.name,
+        userPhoto: viewer.photo,
         placeName: target.type === "place" ? target.name : "",
         eventId: target.type === "event" ? target.id : null,
         eventName: target.type === "event" ? target.name : null,
@@ -469,9 +469,10 @@ export function PresenceProvider({ children }: PresenceProviderProps) {
   );
 
   const leave = useCallback((targetId: string) => {
+    const viewerId = getActiveViewer().id;
     setCheckins((prev) =>
       prev.map((record) =>
-        record.userId === CURRENT_USER_ID && record.targetId === targetId && !record.leftAt
+        record.userId === viewerId && record.targetId === targetId && !record.leftAt
           ? { ...record, leftAt: new Date().toISOString() }
           : record,
       ),
@@ -479,9 +480,10 @@ export function PresenceProvider({ children }: PresenceProviderProps) {
   }, []);
 
   const updateVisibility = useCallback((targetId: string, next: PresenceVisibilityValue) => {
+    const viewerId = getActiveViewer().id;
     setCheckins((prev) =>
       prev.map((record) =>
-        record.userId === CURRENT_USER_ID && record.targetId === targetId && !record.leftAt
+        record.userId === viewerId && record.targetId === targetId && !record.leftAt
           ? { ...record, visibility: next }
           : record,
       ),
@@ -493,7 +495,7 @@ export function PresenceProvider({ children }: PresenceProviderProps) {
       anonymizePresenceList(
         getPresenceForTarget(activeCheckins, targetId),
         FRIEND_IDS,
-        CURRENT_USER_ID,
+        getActiveViewer().id,
       ),
     [activeCheckins],
   );

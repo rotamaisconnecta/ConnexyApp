@@ -11,10 +11,14 @@ import {
 } from "@/lib/chat/schema-a-conversations";
 import { isRemoteConversationsEnabled } from "@/lib/chat/schema-a-conversations-flag";
 import { getConnectionBetween } from "@/lib/demo/demo-db";
-import { useDemoIsConnected, useDemoOutgoingRequest } from "@/lib/demo/use-demo-db";
+import {
+  useDemoIsConnected,
+  useDemoOutgoingRequest,
+  useDemoPendingRequests,
+} from "@/lib/demo/use-demo-db";
 import { useAuth } from "@/hooks/use-auth";
 
-type InviteStatus = "loading" | "connected" | "invited" | "available";
+type InviteStatus = "loading" | "connected" | "invited" | "incoming" | "available";
 
 interface ConversationInviteButtonProps {
   personId: string;
@@ -34,13 +38,23 @@ export function ConversationInviteButton({
   const [status, setStatus] = useState<InviteStatus>("loading");
   const demoConnected = useDemoIsConnected(personId, user?.id);
   const demoOutgoingRequest = useDemoOutgoingRequest(user?.id, personId);
+  const demoIncomingRequest =
+    useDemoPendingRequests(user?.id).find((request) => request.fromUserId === personId) ?? null;
   const demo = isDemoMode();
   const remoteChat = isRemoteConversationsEnabled();
   const [remoteConversationId, setRemoteConversationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (demo) {
-      setStatus(demoConnected ? "connected" : demoOutgoingRequest ? "invited" : "available");
+      setStatus(
+        demoConnected
+          ? "connected"
+          : demoIncomingRequest
+            ? "incoming"
+            : demoOutgoingRequest
+              ? "invited"
+              : "available",
+      );
       return;
     }
     if (remoteChat) {
@@ -79,19 +93,29 @@ export function ConversationInviteButton({
     return () => {
       cancelled = true;
     };
-  }, [personId, demo, demoConnected, demoOutgoingRequest, remoteChat]);
+  }, [personId, demo, demoConnected, demoIncomingRequest, demoOutgoingRequest, remoteChat]);
 
   const connected = status === "connected";
   const label = connected
     ? "Conversar"
     : status === "invited"
       ? "Convite enviado"
-      : status === "loading"
-        ? "Carregando..."
-        : "Connexy";
+      : status === "incoming"
+        ? "Responder convite"
+        : status === "loading"
+          ? "Carregando..."
+          : "Connexy";
 
   const handleClick = useCallback(async () => {
     if (status === "invited") return;
+    if (status === "incoming") {
+      navigate({
+        to: "/solicitacao/$id",
+        params: { id: personId },
+        search: { mode: "receive" },
+      });
+      return;
+    }
     if (!connected) {
       if (remoteChat) {
         if (!canRemoteConversationTarget(personId)) return;
@@ -149,6 +173,8 @@ export function ConversationInviteButton({
       navigate({ to: "/chat/$conversationId", params: { conversationId: personId } });
     }
   }, [connected, demo, navigate, personId, remoteChat, remoteConversationId, status, user?.id]);
+
+  if (user && user.id === personId) return null;
 
   return (
     <button

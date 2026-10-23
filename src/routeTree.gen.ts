@@ -21,6 +21,7 @@ import { Route as FinalizarPerfilRouteImport } from './routes/finalizar-perfil'
 import { Route as CompletarPerfilRouteImport } from './routes/completar-perfil'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
@@ -71,6 +72,7 @@ import { Route as AppReelsReelIdRouteImport } from './routes/_app/reels/$reelId'
 import { Route as AppProfileRolesRouteImport } from './routes/_app/profile/roles'
 import { Route as AppPerfilIdRouteImport } from './routes/_app.perfil.$id'
 import { Route as AppLocalIdRouteImport } from './routes/_app.local.$id'
+import { Route as AppGerenciarSplashRouteImport } from './routes/_app.gerenciar.splash'
 import { Route as AppGerenciarNovoVideoRouteImport } from './routes/_app.gerenciar.novo-video'
 import { Route as AppGerenciarNovoTextoRouteImport } from './routes/_app.gerenciar.novo-texto'
 import { Route as AppGerenciarNovoReelRouteImport } from './routes/_app.gerenciar.novo-reel'
@@ -97,6 +99,9 @@ import { Route as AppCreateMomentRouteImport } from './routes/_app/create/moment
 import { Route as AppCreateEventRouteImport } from './routes/_app/create/event'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat.$conversationId'
 import { Route as AppCaronaNovaRouteImport } from './routes/_app/carona.nova'
+import { Route as AppCaronaMinhasRouteImport } from './routes/_app/carona.minhas'
+import { Route as AppCaronaEncontrarRouteImport } from './routes/_app/carona.encontrar'
+import { Route as AppCaronaEncontradasRouteImport } from './routes/_app/carona.encontradas'
 import { Route as AppCaronaOfferIdRouteImport } from './routes/_app/carona.$offerId'
 import { Route as AppBusinessBusinessIdRouteImport } from './routes/_app/business.$businessId'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -163,6 +168,11 @@ const CadastroRoute = CadastroRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -416,6 +426,11 @@ const AppLocalIdRoute = AppLocalIdRouteImport.update({
   path: '/local/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGerenciarSplashRoute = AppGerenciarSplashRouteImport.update({
+  id: '/splash',
+  path: '/splash',
+  getParentRoute: () => AppGerenciarRoute,
+} as any)
 const AppGerenciarNovoVideoRoute = AppGerenciarNovoVideoRouteImport.update({
   id: '/novo-video',
   path: '/novo-video',
@@ -546,6 +561,21 @@ const AppCaronaNovaRoute = AppCaronaNovaRouteImport.update({
   path: '/nova',
   getParentRoute: () => AppCaronaRoute,
 } as any)
+const AppCaronaMinhasRoute = AppCaronaMinhasRouteImport.update({
+  id: '/minhas',
+  path: '/minhas',
+  getParentRoute: () => AppCaronaRoute,
+} as any)
+const AppCaronaEncontrarRoute = AppCaronaEncontrarRouteImport.update({
+  id: '/encontrar',
+  path: '/encontrar',
+  getParentRoute: () => AppCaronaRoute,
+} as any)
+const AppCaronaEncontradasRoute = AppCaronaEncontradasRouteImport.update({
+  id: '/encontradas',
+  path: '/encontradas',
+  getParentRoute: () => AppCaronaRoute,
+} as any)
 const AppCaronaOfferIdRoute = AppCaronaOfferIdRouteImport.update({
   id: '/$offerId',
   path: '/$offerId',
@@ -585,6 +615,7 @@ const AppDriverTripTripIdRoute = AppDriverTripTripIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/completar-perfil': typeof CompletarPerfilRoute
@@ -636,6 +667,9 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/carona/$offerId': typeof AppCaronaOfferIdRoute
+  '/carona/encontradas': typeof AppCaronaEncontradasRoute
+  '/carona/encontrar': typeof AppCaronaEncontrarRoute
+  '/carona/minhas': typeof AppCaronaMinhasRoute
   '/carona/nova': typeof AppCaronaNovaRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -662,6 +696,7 @@ export interface FileRoutesByFullPath {
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/gerenciar/novo-texto': typeof AppGerenciarNovoTextoRoute
   '/gerenciar/novo-video': typeof AppGerenciarNovoVideoRoute
+  '/gerenciar/splash': typeof AppGerenciarSplashRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/profile/roles': typeof AppProfileRolesRoute
@@ -681,6 +716,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/completar-perfil': typeof CompletarPerfilRoute
@@ -731,6 +767,9 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/carona/$offerId': typeof AppCaronaOfferIdRoute
+  '/carona/encontradas': typeof AppCaronaEncontradasRoute
+  '/carona/encontrar': typeof AppCaronaEncontrarRoute
+  '/carona/minhas': typeof AppCaronaMinhasRoute
   '/carona/nova': typeof AppCaronaNovaRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/create/event': typeof AppCreateEventRoute
@@ -757,6 +796,7 @@ export interface FileRoutesByTo {
   '/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/gerenciar/novo-texto': typeof AppGerenciarNovoTextoRoute
   '/gerenciar/novo-video': typeof AppGerenciarNovoVideoRoute
+  '/gerenciar/splash': typeof AppGerenciarSplashRoute
   '/local/$id': typeof AppLocalIdRoute
   '/perfil/$id': typeof AppPerfilIdRoute
   '/profile/roles': typeof AppProfileRolesRoute
@@ -777,6 +817,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/cadastro': typeof CadastroRoute
   '/completar-perfil': typeof CompletarPerfilRoute
@@ -828,6 +869,9 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_app/business/$businessId': typeof AppBusinessBusinessIdRoute
   '/_app/carona/$offerId': typeof AppCaronaOfferIdRoute
+  '/_app/carona/encontradas': typeof AppCaronaEncontradasRoute
+  '/_app/carona/encontrar': typeof AppCaronaEncontrarRoute
+  '/_app/carona/minhas': typeof AppCaronaMinhasRoute
   '/_app/carona/nova': typeof AppCaronaNovaRoute
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/create/event': typeof AppCreateEventRoute
@@ -854,6 +898,7 @@ export interface FileRoutesById {
   '/_app/gerenciar/novo-reel': typeof AppGerenciarNovoReelRoute
   '/_app/gerenciar/novo-texto': typeof AppGerenciarNovoTextoRoute
   '/_app/gerenciar/novo-video': typeof AppGerenciarNovoVideoRoute
+  '/_app/gerenciar/splash': typeof AppGerenciarSplashRoute
   '/_app/local/$id': typeof AppLocalIdRoute
   '/_app/perfil/$id': typeof AppPerfilIdRoute
   '/_app/profile/roles': typeof AppProfileRolesRoute
@@ -875,6 +920,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/cadastro'
     | '/completar-perfil'
@@ -926,6 +972,9 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/business/$businessId'
     | '/carona/$offerId'
+    | '/carona/encontradas'
+    | '/carona/encontrar'
+    | '/carona/minhas'
     | '/carona/nova'
     | '/chat/$conversationId'
     | '/create/event'
@@ -952,6 +1001,7 @@ export interface FileRouteTypes {
     | '/gerenciar/novo-reel'
     | '/gerenciar/novo-texto'
     | '/gerenciar/novo-video'
+    | '/gerenciar/splash'
     | '/local/$id'
     | '/perfil/$id'
     | '/profile/roles'
@@ -971,6 +1021,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/auth'
     | '/cadastro'
     | '/completar-perfil'
@@ -1021,6 +1072,9 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/business/$businessId'
     | '/carona/$offerId'
+    | '/carona/encontradas'
+    | '/carona/encontrar'
+    | '/carona/minhas'
     | '/carona/nova'
     | '/chat/$conversationId'
     | '/create/event'
@@ -1047,6 +1101,7 @@ export interface FileRouteTypes {
     | '/gerenciar/novo-reel'
     | '/gerenciar/novo-texto'
     | '/gerenciar/novo-video'
+    | '/gerenciar/splash'
     | '/local/$id'
     | '/perfil/$id'
     | '/profile/roles'
@@ -1066,6 +1121,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/admin'
     | '/auth'
     | '/cadastro'
     | '/completar-perfil'
@@ -1117,6 +1173,9 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_app/business/$businessId'
     | '/_app/carona/$offerId'
+    | '/_app/carona/encontradas'
+    | '/_app/carona/encontrar'
+    | '/_app/carona/minhas'
     | '/_app/carona/nova'
     | '/_app/chat/$conversationId'
     | '/_app/create/event'
@@ -1143,6 +1202,7 @@ export interface FileRouteTypes {
     | '/_app/gerenciar/novo-reel'
     | '/_app/gerenciar/novo-texto'
     | '/_app/gerenciar/novo-video'
+    | '/_app/gerenciar/splash'
     | '/_app/local/$id'
     | '/_app/perfil/$id'
     | '/_app/profile/roles'
@@ -1164,6 +1224,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CadastroRoute: typeof CadastroRoute
   CompletarPerfilRoute: typeof CompletarPerfilRoute
@@ -1268,6 +1329,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -1620,6 +1688,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLocalIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/gerenciar/splash': {
+      id: '/_app/gerenciar/splash'
+      path: '/splash'
+      fullPath: '/gerenciar/splash'
+      preLoaderRoute: typeof AppGerenciarSplashRouteImport
+      parentRoute: typeof AppGerenciarRoute
+    }
     '/_app/gerenciar/novo-video': {
       id: '/_app/gerenciar/novo-video'
       path: '/novo-video'
@@ -1802,6 +1877,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCaronaNovaRouteImport
       parentRoute: typeof AppCaronaRoute
     }
+    '/_app/carona/minhas': {
+      id: '/_app/carona/minhas'
+      path: '/minhas'
+      fullPath: '/carona/minhas'
+      preLoaderRoute: typeof AppCaronaMinhasRouteImport
+      parentRoute: typeof AppCaronaRoute
+    }
+    '/_app/carona/encontrar': {
+      id: '/_app/carona/encontrar'
+      path: '/encontrar'
+      fullPath: '/carona/encontrar'
+      preLoaderRoute: typeof AppCaronaEncontrarRouteImport
+      parentRoute: typeof AppCaronaRoute
+    }
+    '/_app/carona/encontradas': {
+      id: '/_app/carona/encontradas'
+      path: '/encontradas'
+      fullPath: '/carona/encontradas'
+      preLoaderRoute: typeof AppCaronaEncontradasRouteImport
+      parentRoute: typeof AppCaronaRoute
+    }
     '/_app/carona/$offerId': {
       id: '/_app/carona/$offerId'
       path: '/$offerId'
@@ -1856,11 +1952,17 @@ declare module '@tanstack/react-router' {
 
 interface AppCaronaRouteChildren {
   AppCaronaOfferIdRoute: typeof AppCaronaOfferIdRoute
+  AppCaronaEncontradasRoute: typeof AppCaronaEncontradasRoute
+  AppCaronaEncontrarRoute: typeof AppCaronaEncontrarRoute
+  AppCaronaMinhasRoute: typeof AppCaronaMinhasRoute
   AppCaronaNovaRoute: typeof AppCaronaNovaRoute
 }
 
 const AppCaronaRouteChildren: AppCaronaRouteChildren = {
   AppCaronaOfferIdRoute: AppCaronaOfferIdRoute,
+  AppCaronaEncontradasRoute: AppCaronaEncontradasRoute,
+  AppCaronaEncontrarRoute: AppCaronaEncontrarRoute,
+  AppCaronaMinhasRoute: AppCaronaMinhasRoute,
   AppCaronaNovaRoute: AppCaronaNovaRoute,
 }
 
@@ -1918,6 +2020,7 @@ interface AppGerenciarRouteChildren {
   AppGerenciarNovoReelRoute: typeof AppGerenciarNovoReelRoute
   AppGerenciarNovoTextoRoute: typeof AppGerenciarNovoTextoRoute
   AppGerenciarNovoVideoRoute: typeof AppGerenciarNovoVideoRoute
+  AppGerenciarSplashRoute: typeof AppGerenciarSplashRoute
 }
 
 const AppGerenciarRouteChildren: AppGerenciarRouteChildren = {
@@ -1929,6 +2032,7 @@ const AppGerenciarRouteChildren: AppGerenciarRouteChildren = {
   AppGerenciarNovoReelRoute: AppGerenciarNovoReelRoute,
   AppGerenciarNovoTextoRoute: AppGerenciarNovoTextoRoute,
   AppGerenciarNovoVideoRoute: AppGerenciarNovoVideoRoute,
+  AppGerenciarSplashRoute: AppGerenciarSplashRoute,
 }
 
 const AppGerenciarRouteWithChildren = AppGerenciarRoute._addFileChildren(
@@ -2093,6 +2197,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CadastroRoute: CadastroRoute,
   CompletarPerfilRoute: CompletarPerfilRoute,

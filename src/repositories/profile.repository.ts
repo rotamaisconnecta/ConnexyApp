@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { SupabaseError } from "@/lib/supabase/errors";
+import { runProfileUpdate, type ProfileUpdatePatch } from "@/lib/profile/profile-update";
 import type { ProfileRow, MomentRow, CompatibilityRow } from "@/types/database/tables";
 
 export const ProfileRepository = {
@@ -9,15 +10,17 @@ export const ProfileRepository = {
     return data;
   },
 
-  async updateProfile(userId: string, data: Partial<Omit<ProfileRow, "id">>): Promise<ProfileRow> {
-    const { data: updated, error } = await supabase
-      .from("profiles")
-      .update({ ...data, updated_at: new Date().toISOString() })
-      .eq("id", userId)
-      .select()
-      .single();
-    if (error) throw new SupabaseError(error.message, error.code);
-    return updated;
+  async updateProfile(userId: string, data: ProfileUpdatePatch): Promise<ProfileRow> {
+    return runProfileUpdate(data, async (payload) => {
+      const { data: updated, error } = await supabase
+        .from("profiles")
+        .update(payload)
+        .eq("id", userId)
+        .select()
+        .single();
+      if (error) return { data: null, error: { message: error.message, code: error.code } };
+      return { data: updated, error: null };
+    });
   },
 
   async getMoments(userId: string): Promise<MomentRow[]> {

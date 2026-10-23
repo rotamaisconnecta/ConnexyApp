@@ -25,6 +25,9 @@ import {
 } from "./dispatcher-store";
 import type { DispatchMeta, DispatchRequest } from "./dispatch-types";
 import { estimateDemoFare } from "../demo-fare";
+import { getDemoDriverBehavior } from "@/lib/demo/demo-cast";
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { maybeAutoCompleteDemoRide } from "@/lib/demo/demo-cast-rides";
 import { getDemoIdentities, getDemoIdentity } from "@/lib/demo/demo-identity";
 import {
   cancelTrip,
@@ -88,6 +91,7 @@ function armAutoAccept(tripId: string): void {
   clearDemoTimer(tripId);
   const config = readConfig();
   if (!config.autoAccept) return;
+  if (isDemoMode() && !getDemoDriverBehavior().autoAcceptRide) return;
   const timer = setTimeout(() => {
     demoTimers.delete(tripId);
     const entry = getEntry(tripId);
@@ -220,12 +224,14 @@ export function hydrateDispatcherFromTrip(): void {
 
 subscribeTrip(() => {
   hydrateDispatcherFromTrip();
+  maybeAutoCompleteDemoRide();
 });
 
 /* ─── Recuperar Trip após reload ─────────────────────────── */
 
 (function init(): void {
   hydrateDispatcherFromTrip();
+  maybeAutoCompleteDemoRide();
 })();
 
 /* ─── API para o app ───────────────────────────────────────

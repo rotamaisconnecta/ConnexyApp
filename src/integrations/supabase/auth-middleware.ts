@@ -3,6 +3,7 @@ import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { resolveServerSupabasePublicConfig } from "@/lib/supabase/external-env";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -33,15 +34,12 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const SUPABASE_URL = import.meta.env.VITE_APP_SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      const missing = [
-        ...(!SUPABASE_URL ? ["VITE_APP_SUPABASE_URL"] : []),
-        ...(!SUPABASE_PUBLISHABLE_KEY ? ["VITE_APP_SUPABASE_PUBLISHABLE_KEY"] : []),
-      ];
-      const message = `Missing external Supabase environment variable(s): ${missing.join(", ")}.`;
+    let SUPABASE_URL: string;
+    let SUPABASE_PUBLISHABLE_KEY: string;
+    try {
+      ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY } = resolveServerSupabasePublicConfig());
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid Supabase configuration.";
       console.error(`[Supabase] ${message}`);
       throw new Error(message);
     }

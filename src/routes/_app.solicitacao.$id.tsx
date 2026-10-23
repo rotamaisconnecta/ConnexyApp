@@ -25,9 +25,10 @@ import {
   useDemoPendingRequests,
 } from "@/lib/demo/use-demo-db";
 import type { ProfileRow } from "@/types/database/tables";
-import { currentUser, people } from "@/lib/mock-data";
+import { currentUser, findPerson } from "@/lib/mock-data";
 import { enginePersonById } from "@/lib/engine/engine-detail";
 import { formatPersonDistance } from "@/lib/proximity";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 const searchSchema = z.object({
   mode: z.enum(["send", "receive"]).optional(),
@@ -112,7 +113,7 @@ function Solicitacao() {
 
   useEffect(() => {
     if (remote) {
-      const nearbyPerson = people.find((person) => person.id === id);
+      const nearbyPerson = findPerson(id);
       const mockPerson = nearbyPerson ?? enginePersonById(id) ?? null;
       if (mockPerson) {
         setProfile({
@@ -138,7 +139,7 @@ function Solicitacao() {
       return;
     }
     if (!configured) {
-      const nearbyPerson = people.find((person) => person.id === id);
+      const nearbyPerson = findPerson(id);
       const identityPerson =
         id === currentUser.id
           ? {
@@ -153,7 +154,7 @@ function Solicitacao() {
           : null;
       const mockPerson = nearbyPerson ?? enginePersonById(id) ?? identityPerson;
       if (mockPerson) {
-        const pendingRequest = demo && mode === "receive" ? incomingRequest : outgoingRequest;
+        const pendingRequest = demo && incomingRequest ? incomingRequest : outgoingRequest;
         setProfile({
           name: mockPerson.name,
           photo_url: mockPerson.photo,
@@ -168,7 +169,7 @@ function Solicitacao() {
         setStatus(
           demo && demoConnected
             ? "connected"
-            : mode === "receive" && incomingRequest
+            : demo && incomingRequest
               ? "receive"
               : demo && outgoingRequest
                 ? "sent"
@@ -511,13 +512,17 @@ function Solicitacao() {
   return (
     <div className="relative h-full overflow-hidden bg-gray-950">
       <div className="absolute inset-0">
-        {profile.photo_url ? (
-          <img src={profile.photo_url} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="grid h-full w-full place-items-center bg-gradient-brand text-7xl font-bold text-white">
-            {profile.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <AuthenticatedAvatarImage
+          profileId={id}
+          legacyUrl={profile.photo_url}
+          alt=""
+          className="h-full w-full object-cover"
+          fallback={
+            <div className="grid h-full w-full place-items-center bg-gradient-brand text-7xl font-bold text-white">
+              {profile.name.charAt(0).toUpperCase()}
+            </div>
+          }
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/20 to-black/80" />
       </div>
 
@@ -540,17 +545,17 @@ function Solicitacao() {
       >
         <div className="relative shrink-0 px-5 pb-3 pt-20 text-center">
           <div className="absolute left-1/2 top-3 h-16 w-16 -translate-x-1/2 overflow-hidden rounded-full border-[3px] border-white bg-gray-100 shadow-lg">
-            {profile.photo_url ? (
-              <img
-                src={profile.photo_url}
-                alt={profile.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="grid h-full w-full place-items-center text-primary">
-                <UserRound className="h-6 w-6" />
-              </div>
-            )}
+            <AuthenticatedAvatarImage
+              profileId={id}
+              legacyUrl={profile.photo_url}
+              alt={profile.name}
+              className="h-full w-full object-cover"
+              fallback={
+                <div className="grid h-full w-full place-items-center text-primary">
+                  <UserRound className="h-6 w-6" />
+                </div>
+              }
+            />
           </div>
           <button
             type="button"
@@ -600,7 +605,19 @@ function Solicitacao() {
                   {invitationMessage.length}/240
                 </p>
                 <div className="mt-3">
-                  <ConnexyAiAssistant mode="invite" label="Sugerir minha mensagem" />
+                  <ConnexyAiAssistant
+                    mode="invite"
+                    label="Sugerir mensagem com IA"
+                    icebreakerContext={{
+                      name: profile.name,
+                      headline: profile.headline ?? undefined,
+                      interests: profile.interests.slice(0, 6),
+                      sharedInterests: currentUser.interests.filter((interest) =>
+                        profile.interests.includes(interest),
+                      ),
+                    }}
+                    onInsertSuggestion={(text) => setInvitationMessage(text.slice(0, 240))}
+                  />
                 </div>
               </div>
             ))}

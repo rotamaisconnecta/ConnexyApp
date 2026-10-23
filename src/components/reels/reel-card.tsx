@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { personProximityLabel } from "@/lib/proximity";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 export type ReelItem = {
   id: string;
@@ -153,13 +154,16 @@ export function ReelCard({
             search={{ from: "reels" }}
             className="relative"
           >
-            <img
-              src={
-                reel.author.photo_url ??
-                `https://api.dicebear.com/9.x/initials/svg?seed=${reel.author.name ?? "?"}`
-              }
+            <AuthenticatedAvatarImage
+              profileId={reel.author.id}
+              legacyUrl={reel.author.photo_url}
               alt=""
               className="h-11 w-11 rounded-full object-cover ring-2 ring-white/90"
+              fallback={
+                <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-brand text-sm font-bold text-white ring-2 ring-white/90">
+                  {reel.author.name?.charAt(0).toUpperCase() ?? "?"}
+                </div>
+              }
             />
             <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-5 w-5 grid place-items-center rounded-full bg-gradient-brand text-white text-xs font-bold border border-black/20">
               +
@@ -206,13 +210,16 @@ export function ReelCard({
               search={{ from: "reels" }}
               className="flex items-center gap-2"
             >
-              <img
-                src={
-                  reel.author.photo_url ??
-                  `https://api.dicebear.com/9.x/initials/svg?seed=${reel.author.name ?? "?"}`
-                }
+              <AuthenticatedAvatarImage
+                profileId={reel.author.id}
+                legacyUrl={reel.author.photo_url}
                 alt=""
                 className="h-8 w-8 rounded-full ring-2 ring-primary/60 object-cover"
+                fallback={
+                  <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-brand text-xs font-bold text-white ring-2 ring-primary/60">
+                    {reel.author.name?.charAt(0).toUpperCase() ?? "?"}
+                  </div>
+                }
               />
               <span className="text-white text-sm font-bold">{reel.author.name}</span>
               <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />

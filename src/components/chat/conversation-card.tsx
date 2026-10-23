@@ -4,6 +4,7 @@ import { PresenceDot } from "@/components/presence-dot";
 import type { Conversation } from "@/lib/chat/chat-types";
 import { formatConversationPreview, formatConversationTime } from "@/lib/chat/chat-format";
 import { truncateText } from "@/lib/chat/chat-format";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 interface ConversationCardProps {
   conversation: Conversation;
@@ -30,10 +31,16 @@ export function ConversationCard({ conversation, onClick }: ConversationCardProp
     >
       {/* Avatar */}
       <div className="relative shrink-0">
-        <img
-          src={participant.photo}
+        <AuthenticatedAvatarImage
+          profileId={participant.id}
+          legacyUrl={participant.photo}
           alt={`Foto de ${participant.name}`}
           className="h-12 w-12 rounded-2xl object-cover"
+          fallback={
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-brand text-sm font-bold text-white">
+              {participant.name.slice(0, 2).toUpperCase()}
+            </div>
+          }
         />
         <span className="absolute -bottom-0.5 -right-0.5">
           <PresenceDot online={participant.online} size={10} />

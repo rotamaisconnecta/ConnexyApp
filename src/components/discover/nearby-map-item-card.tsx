@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { TypeScale } from "@/theme/typography";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 export type NearbyMapItemVisual = {
   id: string;
@@ -51,7 +52,15 @@ export function NearbyMapItemCard({ item, onSelect }: NearbyMapItemCardProps) {
             item.color,
           )}
         >
-          {item.photo ? (
+          {item.type === "pessoas" ? (
+            <AuthenticatedAvatarImage
+              profileId={item.id}
+              legacyUrl={item.photo}
+              alt=""
+              className="h-full w-full object-cover"
+              fallback={<span aria-hidden>{item.icon}</span>}
+            />
+          ) : item.photo ? (
             <img src={item.photo} alt="" className="h-full w-full object-cover" />
           ) : (
             <span aria-hidden>{item.icon}</span>
@@ -80,7 +89,9 @@ export function NearbyMapItemCard({ item, onSelect }: NearbyMapItemCardProps) {
           ) : null}
           {item.type === "pessoas" &&
             (item.interestPercent != null || item.compatibilityPercent != null) && (
-              <div className={`mt-1 flex flex-wrap gap-x-3 text-muted-foreground ${TypeScale.meta}`}>
+              <div
+                className={`mt-1 flex flex-wrap gap-x-3 text-muted-foreground ${TypeScale.meta}`}
+              >
                 {item.interestPercent != null && <span>Interesses: {item.interestPercent}%</span>}
                 {item.compatibilityPercent != null && (
                   <span className="font-semibold text-primary">

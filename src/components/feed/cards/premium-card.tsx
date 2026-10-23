@@ -7,6 +7,8 @@ import {
   type PremiumCardKind,
 } from "@/lib/feed/home-premium";
 import { resolvePremiumCardRoute } from "@/lib/navigation/detail-routes";
+import { AD_PLACEMENTS, recordAdMetric } from "@/lib/ads/ad-metrics";
+import { useAdImpression } from "@/hooks/use-ad-metrics";
 import { cn } from "@/lib/utils";
 
 const CTA_LABEL: Record<PremiumCardKind, string> = {
@@ -203,11 +205,26 @@ function CardShell({ card, compact = false }: { card: PremiumCard; compact?: boo
 
 export function PremiumCardView({ card, compact }: { card: PremiumCard; compact?: boolean }) {
   const route = resolvePremiumCardRoute(card);
+  // Apenas cards com selo explícito "Patrocinado" são publicidade (18A).
+  const sponsored = card.badge === "Patrocinado";
+  const impressionRef = useAdImpression(
+    sponsored
+      ? { ad: card.id, placement: AD_PLACEMENTS.HOME_PREMIUM }
+      : { ad: "", placement: "" },
+  );
+
+  function handleClick() {
+    if (sponsored) {
+      recordAdMetric({ type: "click", ad: card.id, placement: AD_PLACEMENTS.HOME_PREMIUM });
+    }
+  }
 
   if (route) {
     return (
       <Link
+        ref={impressionRef}
         to={route}
+        onClick={handleClick}
         className="block min-h-[inherit] rounded-[24px] transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
       >
         <CardShell card={card} compact={compact} />

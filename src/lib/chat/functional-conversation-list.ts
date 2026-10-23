@@ -5,8 +5,12 @@ import {
   getDemoGroupsForUser,
 } from "@/lib/demo/demo-db";
 import { getLocalConversations } from "@/lib/chat/local-chat-persistence";
-import { deriveListGesture, isPinnedForUser } from "@/lib/chat/conversation-list-state";
-import { currentUser, people } from "@/lib/mock-data";
+import {
+  deriveListGesture,
+  isMessageFromOther,
+  isPinnedForUser,
+} from "@/lib/chat/conversation-list-state";
+import { currentUser, listPeople } from "@/lib/mock-data";
 import {
   LastMessageType,
   ThreadIcon,
@@ -20,7 +24,7 @@ import type {
 } from "@/lib/persistence/domain/chat-entities";
 
 export function resolveDemoCatalogPerson(peerId: string) {
-  const nearbyPerson = people.find((item) => item.id === peerId);
+  const nearbyPerson = listPeople().find((item) => item.id === peerId);
   if (nearbyPerson) return nearbyPerson;
   if (peerId === currentUser.id) {
     return {
@@ -91,7 +95,7 @@ export function listFunctionalDemoConversations(userId: string): MockConversatio
           threadIcon: ThreadIcon.COFFEE,
           lastMessage: aggregate?.lastMessageText ?? last?.text ?? "Vocês estão conectados",
           updatedAt: new Date(aggregate?.updatedAt ?? last?.at ?? connection.connectedAt),
-          unreadCount: last && last.senderId && last.senderId !== userId ? 1 : 0,
+          unreadCount: isMessageFromOther(last, userId) ? 1 : 0,
           isMuted: false,
           sharedInterest: person.interests[0],
         },

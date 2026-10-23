@@ -45,7 +45,7 @@ export const ConnectionsRepository = {
   },
 
   async list(): Promise<ConnectionRow[]> {
-    const { data, error } = await supabase.from("connections").select("*").order("created_at");
+    const { data, error } = await supabase.from("connections").select("*").order("connected_at");
     if (error) throw new Error(error.message);
     return (data ?? []) as ConnectionRow[];
   },

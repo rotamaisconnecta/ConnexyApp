@@ -53,6 +53,8 @@ test("Fase 1D-5 — inbox, histórico e settings sobrevivem a reload real", asyn
       "import.meta.env.DEV=true",
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
+      "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
     ],
     { cwd: projectRoot, stdout: "pipe", stderr: "pipe" },
   );

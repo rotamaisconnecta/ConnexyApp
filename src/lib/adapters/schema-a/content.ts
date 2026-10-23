@@ -1,4 +1,5 @@
 import type { DemoPost, DemoPostMedia } from "@/lib/demo/demo-posts";
+import { normalizePostMedia } from "@/lib/media/media-contract";
 import { PostPrivacy, type PostPrivacyValue } from "@/lib/types/post";
 import type {
   StoredReel,
@@ -54,28 +55,30 @@ export function toRemotePostPrivacy(privacy: string): {
 }
 
 function mediaToJson(media: DemoPostMedia[]): Json {
-  return media.map((item) => ({
-    preview: item.preview,
-    type: item.type,
-    ...(item.mediaId ? { mediaId: item.mediaId } : {}),
-  }));
+  return media.map((item) => {
+    const out: { [key: string]: Json | undefined } = { type: item.type };
+    // D-M1: preservar a identidade canonica `(bucket, path)`/`posterPath`.
+    if (item.bucket !== undefined) out.bucket = item.bucket;
+    if (item.path !== undefined) out.path = item.path;
+    if (item.posterPath !== undefined) out.posterPath = item.posterPath;
+    if (item.preview !== undefined) out.preview = item.preview;
+    if (item.mediaId !== undefined) out.mediaId = item.mediaId;
+    return out;
+  });
 }
 
 function mediaFromJson(value: Json): DemoPostMedia[] {
-  if (!Array.isArray(value)) return [];
-  const media: DemoPostMedia[] = [];
-  for (const item of value) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
-    const record = item as Record<string, unknown>;
-    if (typeof record.preview !== "string") continue;
-    if (record.type !== "image" && record.type !== "video") continue;
-    media.push({
-      preview: record.preview,
-      type: record.type,
-      mediaId: typeof record.mediaId === "string" ? record.mediaId : undefined,
-    });
-  }
-  return media;
+  // D-M1: mesma normalizacao do servidor. Preserva itens canonicos sem preview,
+  // legado (URL/demo) e locais; descarta apenas itens sem identidade alguma.
+  return normalizePostMedia(value).map((item) => {
+    const out: DemoPostMedia = { type: item.type };
+    if (item.bucket !== undefined) out.bucket = item.bucket;
+    if (item.path !== undefined) out.path = item.path;
+    if (item.posterPath !== undefined) out.posterPath = item.posterPath;
+    if (item.preview !== undefined) out.preview = item.preview;
+    if (item.mediaId !== undefined) out.mediaId = item.mediaId;
+    return out;
+  });
 }
 
 export function toRemotePostInsert(post: DemoPost, authorId: string): PostInsert {

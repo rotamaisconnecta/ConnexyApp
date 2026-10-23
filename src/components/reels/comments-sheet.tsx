@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Send, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 type ProfileSnippet = { name: string | null; photo_url: string | null };
 
@@ -132,13 +133,16 @@ export function CommentsSheet({
                 <ul className="space-y-3">
                   {comments.map((c) => (
                     <li key={c.id} className="flex items-start gap-2.5">
-                      <img
-                        src={
-                          c.author?.photo_url ??
-                          `https://api.dicebear.com/9.x/initials/svg?seed=${c.author?.name ?? "?"}`
-                        }
+                      <AuthenticatedAvatarImage
+                        profileId={c.author_id}
+                        legacyUrl={c.author?.photo_url}
                         alt=""
                         className="h-8 w-8 rounded-full object-cover"
+                        fallback={
+                          <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-brand text-xs font-bold text-white">
+                            {c.author?.name?.charAt(0).toUpperCase() ?? "?"}
+                          </div>
+                        }
                       />
                       <div className="flex-1 rounded-2xl bg-secondary px-3 py-2">
                         <div className="text-[11px] font-semibold text-primary">

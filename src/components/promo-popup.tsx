@@ -4,71 +4,30 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { ArrowUpRight, Sparkles, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  brasiliaDateAndPeriod,
+  buildUsageKey,
+  readDailyUsage,
+  registerDailyImpression,
+  type DailyPeriod,
+  type DailyUsage,
+} from "@/lib/promotions/daily-usage";
 
 const PROMO_ID = "cafe-central-20off";
-type PromoPeriod = "morning" | "afternoon" | "night";
 
-interface DailyPromoUsage {
-  date: string;
-  shownPeriods: PromoPeriod[];
-}
-
+// Chave preservada: connexy:promotion-usage:<user|anon>:cafe-central-20off
 function getUsageKey(userId: string | null): string {
-  return `connexy:promotion-usage:${userId ?? "anon"}:${PROMO_ID}`;
+  return buildUsageKey("connexy:promotion-usage", userId, PROMO_ID);
 }
 
-function brasiliaDateAndPeriod(): { date: string; period: PromoPeriod | null } {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date());
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-  const hour = Number(get("hour"));
-  const date = `${get("year")}-${get("month")}-${get("day")}`;
+export { brasiliaDateAndPeriod };
 
-  if (hour >= 6 && hour < 12) return { date, period: "morning" };
-  if (hour >= 12 && hour < 18) return { date, period: "afternoon" };
-  if (hour >= 18 && hour < 24) return { date, period: "night" };
-  return { date, period: null };
+export function readUsage(userId: string | null, date: string): DailyUsage {
+  return readDailyUsage(getUsageKey(userId), date);
 }
 
-function readUsage(userId: string | null, date: string): DailyPromoUsage {
-  const empty = { date, shownPeriods: [] as PromoPeriod[] };
-  if (typeof window === "undefined") return empty;
-  try {
-    const raw = localStorage.getItem(getUsageKey(userId));
-    if (!raw) return empty;
-    const parsed = JSON.parse(raw) as Partial<DailyPromoUsage>;
-    if (parsed.date !== empty.date || !Array.isArray(parsed.shownPeriods)) return empty;
-    return {
-      date: empty.date,
-      shownPeriods: parsed.shownPeriods.filter(
-        (period): period is PromoPeriod =>
-          period === "morning" || period === "afternoon" || period === "night",
-      ),
-    };
-  } catch {
-    return empty;
-  }
-}
-
-function registerImpression(userId: string | null, date: string, period: PromoPeriod): boolean {
-  const usage = readUsage(userId, date);
-  if (usage.shownPeriods.includes(period)) return false;
-  try {
-    localStorage.setItem(
-      getUsageKey(userId),
-      JSON.stringify({ ...usage, shownPeriods: [...usage.shownPeriods, period] }),
-    );
-  } catch {
-    // Storage unavailable: the promotion may be shown again on a future visit.
-  }
-  return true;
+export function registerImpression(userId: string | null, date: string, period: DailyPeriod): boolean {
+  return registerDailyImpression(getUsageKey(userId), date, period);
 }
 
 export function PromoPopup() {

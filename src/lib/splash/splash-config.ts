@@ -22,6 +22,46 @@ const DEFAULT_SPLASH_CONFIG: SplashConfig = {
   type: "institutional",
 };
 
+/** Fallback padrão utilizado quando não há configuração salva. */
+export function defaultSplashConfig(): SplashConfig {
+  return { ...DEFAULT_SPLASH_CONFIG };
+}
+
+/**
+ * Coage uma entrada desconhecida (ex.: JSON de localStorage) para uma
+ * SplashConfig segura. Campos ausentes ou inválidos são descartados e
+ * a configuração segue os padrões atuais.
+ */
+export function sanitizeSplashConfig(input: unknown): SplashConfig {
+  if (!input || typeof input !== "object") return defaultSplashConfig();
+  const raw = input as Record<string, unknown>;
+  const out: SplashConfig = {
+    enabled:
+      typeof raw.enabled === "boolean"
+        ? raw.enabled
+        : DEFAULT_SPLASH_CONFIG.enabled,
+    type:
+      raw.type === "institutional" || raw.type === "promotional" || raw.type === "sponsored"
+        ? raw.type
+        : DEFAULT_SPLASH_CONFIG.type,
+  };
+
+  if (typeof raw.image === "string" && raw.image.trim()) out.image = raw.image.trim();
+  if (typeof raw.title === "string" && raw.title.trim()) out.title = raw.title.trim();
+  if (typeof raw.subtitle === "string" && raw.subtitle.trim()) out.subtitle = raw.subtitle.trim();
+  if (typeof raw.startAt === "string" && !Number.isNaN(Date.parse(raw.startAt))) {
+    out.startAt = raw.startAt;
+  }
+  if (typeof raw.endAt === "string" && !Number.isNaN(Date.parse(raw.endAt))) {
+    out.endAt = raw.endAt;
+  }
+  if (typeof raw.priority === "number" && Number.isFinite(raw.priority)) {
+    out.priority = raw.priority;
+  }
+
+  return out;
+}
+
 export function getSplashConfig(): SplashConfig {
   // Frontend-only, local fallback. Prepared for future remote merge.
   return { ...DEFAULT_SPLASH_CONFIG };

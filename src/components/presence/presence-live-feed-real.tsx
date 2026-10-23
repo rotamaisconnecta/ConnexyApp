@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useConnections } from "@/hooks/use-connections";
 import { usePresenceContext } from "@/providers/presence/presence-context";
 import { isPublicSupabaseConfigured } from "@/lib/supabase/config";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 
 function formatTimeAgo(iso: string): string {
   const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -111,17 +112,17 @@ export function PresenceLiveFeedReal() {
                 className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors"
               >
                 <div className="relative shrink-0">
-                  {person.photo_url ? (
-                    <img
-                      src={person.photo_url}
-                      alt={person.name}
-                      className="h-9 w-9 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
-                      {person.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <AuthenticatedAvatarImage
+                    profileId={person.id}
+                    legacyUrl={person.photo_url}
+                    alt={person.name}
+                    className="h-9 w-9 rounded-full object-cover"
+                    fallback={
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
+                        {person.name.charAt(0).toUpperCase()}
+                      </div>
+                    }
+                  />
                   <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 border-2 border-surface" />
                 </div>
                 <div className="flex-1 min-w-0">

@@ -39,6 +39,8 @@ test("Fase 1H-2 — Pulse, Perto de você, reserva e carona sobrevivem sem rede"
       "--define",
       'import.meta.env.VITE_APP_DEMO_MODE="true"',
       "--define",
+      'import.meta.env.VITE_CONNEXY_DEMO="true"',
+      "--define",
       'import.meta.env.VITE_APP_SUPABASE_URL=""',
       "--define",
       'import.meta.env.VITE_APP_SUPABASE_PUBLISHABLE_KEY=""',

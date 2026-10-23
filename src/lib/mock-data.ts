@@ -1,3 +1,8 @@
+import { isDemoMode } from "@/lib/demo/demo-config";
+import { getDemoIdentity } from "@/lib/demo/demo-identity";
+import { listDemoSocialPeople } from "@/lib/demo/demo-cast";
+import type { BusinessHoursSlot } from "@/lib/marketplace/business-types";
+
 export const currentUser = {
   id: "lucas",
   name: "Lucas Almeida",
@@ -46,6 +51,7 @@ export type Person = {
   looksFor?: string[];
   stats?: { connections: number; meetups: number; joinedAt: string };
   moments?: Moment[];
+  isDemoUser?: boolean;
 };
 
 export const people: Person[] = [
@@ -386,20 +392,45 @@ export const people: Person[] = [
 ];
 
 export function findPerson(id: string): Person | undefined {
-  return people.find((p) => p.id === id);
+  return listPeople().find((p) => p.id === id);
 }
 
-export function commonGround(person: Person): {
+/** Diretório social: fixtures + elenco demo quando DEMO_ENABLED. */
+export function listPeople(demoEnabled: boolean = isDemoMode()): Person[] {
+  if (!demoEnabled) return people;
+  const extra = listDemoSocialPeople();
+  const seen = new Set(people.map((person) => person.id));
+  seen.add(currentUser.id);
+  const merged = [...people];
+  for (const person of extra) {
+    if (seen.has(person.id)) continue;
+    seen.add(person.id);
+    merged.push(person);
+  }
+  return merged;
+}
+
+export type ActiveViewer = Pick<Person, "id" | "name" | "photo" | "interests"> &
+  Partial<Pick<Person, "vibeTags" | "favoritePlaceIds">>;
+
+export function getActiveViewer(): ActiveViewer {
+  const identityId = getDemoIdentity().id;
+  const viewer = identityId === currentUser.id ? currentUser : findPerson(identityId);
+  return viewer ?? currentUser;
+}
+
+export function commonGround(
+  person: Person,
+  viewer: ActiveViewer = getActiveViewer(),
+): {
   sharedInterests: string[];
   sharedVibe: string[];
   sharedPlaces: string[];
 } {
-  const sharedInterests = person.interests.filter((i) => currentUser.interests.includes(i));
-  const sharedVibe = (person.vibeTags ?? []).filter((v) =>
-    (currentUser.vibeTags ?? []).includes(v),
-  );
+  const sharedInterests = person.interests.filter((i) => viewer.interests.includes(i));
+  const sharedVibe = (person.vibeTags ?? []).filter((v) => (viewer.vibeTags ?? []).includes(v));
   const sharedPlaces = (person.favoritePlaceIds ?? []).filter((p) =>
-    (currentUser.favoritePlaceIds ?? []).includes(p),
+    (viewer.favoritePlaceIds ?? []).includes(p),
   );
   return { sharedInterests, sharedVibe, sharedPlaces };
 }
@@ -466,6 +497,11 @@ export type Place = {
   lat?: number;
   lng?: number;
   address?: string;
+  reference?: string;
+  phone?: string;
+  website?: string;
+  tags?: string[];
+  hoursSlots?: BusinessHoursSlot[];
 };
 
 export const places: Place[] = [
@@ -595,20 +631,24 @@ export const allInterests = [
   "Café",
 ];
 
-export function compatibilityScore(person: Person): number {
-  const shared = person.interests.filter((i) => currentUser.interests.includes(i)).length;
+export function compatibilityScore(
+  person: Person,
+  viewer: ActiveViewer = getActiveViewer(),
+): number {
+  const shared = person.interests.filter((i) => viewer.interests.includes(i)).length;
   const onlineBoost = person.online ? 5 : 0;
   const proximityBoost = person.distanceMeters <= 100 ? 10 : person.distanceMeters <= 500 ? 5 : 0;
   return Math.min(99, 40 + shared * 20 + onlineBoost + proximityBoost);
 }
 
-/** Percentual de interesses em comum com o usuário atual. Reusa o overlap de `commonGround`. */
-export function sharedInterestPercent(person: { interests: readonly string[] }): number | null {
-  if (currentUser.interests.length === 0) return null;
-  const shared = person.interests.filter((interest) =>
-    currentUser.interests.includes(interest),
-  ).length;
-  return Math.round((shared / currentUser.interests.length) * 100);
+/** Percentual de interesses em comum com a identidade ativa. Reusa o overlap de `commonGround`. */
+export function sharedInterestPercent(
+  person: { interests: readonly string[] },
+  viewer: ActiveViewer = getActiveViewer(),
+): number | null {
+  if (viewer.interests.length === 0) return null;
+  const shared = person.interests.filter((interest) => viewer.interests.includes(interest)).length;
+  return Math.round((shared / viewer.interests.length) * 100);
 }
 
 export function compatibilityInfo(score: number): { text: string; className: string } | null {

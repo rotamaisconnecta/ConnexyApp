@@ -1,6 +1,8 @@
 import { demoStorageKey } from "@/lib/demo/demo-config";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
 import type { Place } from "@/lib/mock-data";
+import { formatHoursSummary, isHoursOpenNow } from "@/lib/catalog/catalog-hours";
+import type { CatalogVisibilityValue } from "@/lib/catalog/catalog-options";
 import {
   BusinessCategory,
   DiscountType,
@@ -9,6 +11,8 @@ import {
   type Business,
   type BusinessCategoryValue,
   type BusinessEvent,
+  type BusinessHoursSlot,
+  type PriceRangeValue,
   type Promotion,
 } from "@/lib/marketplace/business-types";
 
@@ -44,7 +48,19 @@ export interface CatalogEvent extends CatalogEntityBase {
   capacity?: number;
   price?: number;
   photo?: string;
+  gallery?: string[];
   businessId?: string;
+  placeId?: string;
+  category?: string;
+  address?: string;
+  reference?: string;
+  lat?: number;
+  lng?: number;
+  free?: boolean;
+  rules?: string;
+  notes?: string;
+  tags?: string[];
+  visibility?: CatalogVisibilityValue;
 }
 
 export interface CatalogPlace extends CatalogEntityBase {
@@ -55,19 +71,36 @@ export interface CatalogPlace extends CatalogEntityBase {
   description: string;
   hours?: string;
   cover?: string;
+  gallery?: string[];
   lat?: number;
   lng?: number;
+  phone?: string;
+  website?: string;
+  reference?: string;
+  tags?: string[];
+  visibility?: CatalogVisibilityValue;
+  hasHours?: boolean;
+  hoursSlots?: BusinessHoursSlot[];
 }
 
 export interface CatalogBusiness extends CatalogEntityBase {
   kind: typeof CatalogKind.BUSINESS;
   name: string;
   category: BusinessCategoryValue;
+  subcategory?: string;
   address: string;
   description: string;
   cover?: string;
+  gallery?: string[];
   lat?: number;
   lng?: number;
+  phone?: string;
+  website?: string;
+  reference?: string;
+  priceRange?: PriceRangeValue;
+  hours?: BusinessHoursSlot[];
+  tags?: string[];
+  visibility?: CatalogVisibilityValue;
 }
 
 export interface CatalogOffer extends CatalogEntityBase {
@@ -278,18 +311,33 @@ export function createCatalogOffer(input: CatalogOfferInput): CatalogOffer {
   });
 }
 
+function catalogPhotoList(id: string, name: string, cover?: string, gallery?: string[]) {
+  const urls = [cover, ...(gallery ?? [])].filter((url, index, all): url is string =>
+    Boolean(url) && all.indexOf(url) === index,
+  );
+  const photos = (urls.length > 0 ? urls : [DEFAULT_COVER]).map((url, index) => ({
+    id: `${id}-photo-${index}`,
+    url,
+    alt: name,
+    isPrimary: index === 0,
+  }));
+  return photos;
+}
+
 export function catalogEventToBusinessEvent(entity: CatalogEvent): BusinessEvent {
+  const extra = [entity.rules, entity.notes].map((item) => item?.trim()).filter(Boolean);
   return {
     id: entity.id,
     businessId: entity.businessId ?? "",
     title: entity.title,
-    description: entity.description,
-    photo: entity.photo || DEFAULT_COVER,
+    description: [entity.description, ...extra].filter(Boolean).join("\n\n"),
+    category: entity.category,
+    photo: entity.photo || entity.gallery?.[0] || DEFAULT_COVER,
     startDate: new Date(entity.startAt),
     endDate: new Date(entity.endAt || entity.startAt),
-    location: entity.location,
+    location: [entity.location, entity.reference?.trim()].filter(Boolean).join(" · "),
     status: EventStatus.UPCOMING,
-    price: entity.price,
+    price: entity.free ? undefined : entity.price,
     capacity: entity.capacity,
     attendeesCount: 0,
     isFeatured: false,
@@ -304,12 +352,22 @@ export function catalogPlaceToPlace(entity: CatalogPlace): Place {
     distanceMeters: 0,
     rating: 0,
     reviews: 0,
-    hours: entity.hours?.trim() || "Horário a confirmar",
-    cover: entity.cover || DEFAULT_COVER,
+    hours:
+      entity.hasHours === false
+        ? "Horário não informado"
+        : entity.hoursSlots?.length
+          ? formatHoursSummary(entity.hoursSlots, true)
+          : entity.hours?.trim() || "Horário a confirmar",
+    cover: entity.cover || entity.gallery?.[0] || DEFAULT_COVER,
     description: entity.description,
     lat: entity.lat ?? DEFAULT_LAT,
     lng: entity.lng ?? DEFAULT_LNG,
     address: entity.address,
+    reference: entity.reference,
+    phone: entity.phone,
+    website: entity.website,
+    tags: entity.tags,
+    hoursSlots: entity.hoursSlots,
   };
 }
 
@@ -340,32 +398,28 @@ export function catalogBusinessToBusiness(
     slug: entity.id,
     description: entity.description,
     category: entity.category,
-    photos: [
-      {
-        id: `${entity.id}-cover`,
-        url: entity.cover || DEFAULT_COVER,
-        alt: entity.name,
-        isPrimary: true,
-      },
-    ],
+    subcategory: entity.subcategory,
+    photos: catalogPhotoList(entity.id, entity.name, entity.cover, entity.gallery),
     location: {
       lat: entity.lat ?? DEFAULT_LAT,
       lng: entity.lng ?? DEFAULT_LNG,
-      label: entity.address,
+      label: entity.reference || entity.address,
     },
     address: entity.address,
+    phone: entity.phone,
+    website: entity.website,
     rating: {
       average: 0,
       totalReviews: 0,
       distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
     },
-    priceRange: PriceRange.MODERATE,
+    priceRange: entity.priceRange ?? PriceRange.MODERATE,
     distanceMeters: 0,
     isFavorite: false,
     isFollowing: false,
-    isOpen: true,
-    hours: [],
-    tags: ["local"],
+    isOpen: entity.hours?.length ? isHoursOpenNow(entity.hours) : true,
+    hours: entity.hours ?? [],
+    tags: entity.tags?.length ? entity.tags : ["local"],
     promotions,
     events: [],
     couponCount: promotions.length,

@@ -5,7 +5,7 @@
    Não toca em Supabase, migrations, RLS ou no Orchestrator.
 ========================================================= */
 
-import { currentUser, findPlace, type Person, type Place } from "@/lib/mock-data";
+import { findPlace, getActiveViewer, type Person, type Place } from "@/lib/mock-data";
 import { getOutgoingPendingRequest, isConnected } from "@/lib/demo/demo-db";
 import { getDemoIdentity } from "@/lib/demo/demo-identity";
 
@@ -29,15 +29,16 @@ export interface PersonCommonalities {
    4) vibe        5) conexões               (nada vazio é exibido) */
 export function getCommonalities(person: Person): PersonCommonalities {
   const items: CommonalityItem[] = [];
+  const viewer = getActiveViewer();
 
-  const userInterests = new Set(currentUser.interests);
+  const userInterests = new Set(viewer.interests);
   for (const interest of person.interests) {
     if (userInterests.has(interest)) {
       items.push({ label: interest, group: "interests" });
     }
   }
 
-  const userPlaces = (currentUser.favoritePlaceIds ?? [])
+  const userPlaces = (viewer.favoritePlaceIds ?? [])
     .map(findPlace)
     .filter((p): p is Place => p != null);
   const personPlaces = (person.favoritePlaceIds ?? [])
@@ -52,7 +53,7 @@ export function getCommonalities(person: Person): PersonCommonalities {
     items.push({ label: category, group: "categories" });
   }
 
-  const userPlaceIds = new Set(currentUser.favoritePlaceIds ?? []);
+  const userPlaceIds = new Set(viewer.favoritePlaceIds ?? []);
   for (const placeId of person.favoritePlaceIds ?? []) {
     if (userPlaceIds.has(placeId)) {
       const place = findPlace(placeId);
@@ -60,7 +61,7 @@ export function getCommonalities(person: Person): PersonCommonalities {
     }
   }
 
-  const userVibe = new Set(currentUser.vibeTags ?? []);
+  const userVibe = new Set(viewer.vibeTags ?? []);
   for (const vibe of person.vibeTags ?? []) {
     if (userVibe.has(vibe)) {
       items.push({ label: vibe, group: "vibe" });

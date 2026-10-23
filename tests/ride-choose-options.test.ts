@@ -124,7 +124,7 @@ describe("escolha da corrida — seleção múltipla de veículos", () => {
     expect(pickCategoryForOptions("moto", fastest)).toBe("moto");
   });
 
-  test("a tela troca o seletor exclusivo por toggles no mesmo espaço", async () => {
+  test("a tela lista todos os veículos e não filtra por carro ou moto", async () => {
     const screen = await source("src/components/mobility/ride/ride-choose-screen.tsx");
     const flow = await source("src/components/mobility/ride/ride-flow.tsx");
     const panels = await source("src/components/mobility/ride/ride-request-panels.tsx");
@@ -132,25 +132,39 @@ describe("escolha da corrida — seleção múltipla de veículos", () => {
     const options = await source("src/lib/mobility/ride-choose-options.ts");
 
     expect(screen).toContain("Escolha sua corrida");
-    expect(screen).toContain("Carro");
-    expect(screen).toContain("Moto");
-    expect(screen).toContain("Tipos de veículo");
-    expect(screen).toContain("grid-cols-2");
+    expect(screen).toContain("RIDE_CHOOSE_SHEET_RATIO");
     expect(screen).toContain("Confirmar corrida");
+    expect(screen).not.toContain("Tipos de veículo");
+    expect(screen).not.toContain("toggleRideVehicleType");
+    expect(screen).not.toContain("Selecione Carro ou Moto");
     expect(screen).not.toContain("Ambos");
     expect(screen).not.toContain("André Silva");
+    expect(screen).not.toContain("Recomendado");
+    expect(screen).not.toContain("Mais rápido");
+    expect(screen).not.toContain("Mais econômico");
+    expect(screen).not.toContain("Premium");
+    expect(screen).not.toContain("Promoções");
+    expect(screen).not.toContain("onPromos");
     expect(options).not.toContain('"ambos"');
     expect(options).toContain("RideVehicleType");
     expect(panels).toContain("RideChooseScreen as CategoryPanel");
-    expect(flow).toContain("onPromos");
+    expect(flow).not.toContain("onPromos");
+    expect(flow).toContain("RIDE_CHOOSE_MAP_FRAME");
     expect(flow).toContain('flowState === "categoria"');
     expect(flow).toContain("acceptedCategories");
     expect(flow).toContain("categoriesFromRideOptions");
-    expect(screen).toContain("toggleRideChooseOption");
-    expect(screen).toContain("selectedOptionIds");
     expect(screen).not.toContain("onCategory");
     expect(context).toContain("label: CURRENT_RIDE_ORIGIN_LABEL");
     expect(CURRENT_RIDE_ORIGIN_LABEL).toBe("Minha localização atual");
+  });
+
+  test("sem filtro de tipo a lista traz carro e moto juntos", () => {
+    const all = listRideChooseOptions({
+      origin: DEMO_ORIGIN,
+      fares,
+      etaMap,
+    });
+    expect(all.map((option) => option.category)).toEqual(["connexy", "conforto", "moto"]);
   });
 });
 

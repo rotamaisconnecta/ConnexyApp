@@ -1,4 +1,5 @@
 import { isDemoMode } from "@/lib/demo/demo-config";
+import { readPublicSupabaseEnv, resolveSupabasePublicConfig } from "@/lib/supabase/external-env";
 
 // Project-owned configuration check. Reads only the external-Supabase env
 // namespace (VITE_APP_* for the browser, APP_* for the server). There is no
@@ -17,7 +18,11 @@ export function isPublicSupabaseConfigured(): boolean {
 
 export function isSupabaseConfigured(): boolean {
   if (isDemoMode()) return false;
-  if (isPublicSupabaseConfigured()) return true;
-  if (typeof window !== "undefined") return false;
-  return Boolean(process.env.APP_SUPABASE_URL && process.env.APP_SUPABASE_PUBLISHABLE_KEY);
+  if (typeof window !== "undefined") return isPublicSupabaseConfigured();
+  try {
+    resolveSupabasePublicConfig(process.env, readPublicSupabaseEnv());
+    return true;
+  } catch {
+    return false;
+  }
 }

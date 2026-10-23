@@ -38,7 +38,7 @@ export function useConnections(userId: string | null) {
             photo_url: profile.photo_url,
             headline: profile.headline,
             conversationId,
-            connectedAt: row.created_at,
+            connectedAt: row.connected_at,
           });
         } catch {
           profiles.push({
@@ -48,7 +48,7 @@ export function useConnections(userId: string | null) {
             photo_url: null,
             headline: null,
             conversationId: null,
-            connectedAt: row.created_at,
+            connectedAt: row.connected_at,
           });
         }
       }

@@ -25,7 +25,7 @@ const DAY_ORDER: DayOfWeekValue[] = [
 
 interface BusinessHoursProps {
   hours: BusinessHoursSlot[];
-  isOpen: boolean;
+  isOpen?: boolean;
 }
 
 export function BusinessHours({ hours, isOpen }: BusinessHoursProps) {
@@ -41,7 +41,9 @@ export function BusinessHours({ hours, isOpen }: BusinessHoursProps) {
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <h3 className="font-semibold text-sm">Horário de funcionamento</h3>
-        <div className={cn("h-2 w-2 rounded-full", isOpen ? "bg-success" : "bg-error")} />
+        {typeof isOpen === "boolean" ? (
+          <div className={cn("h-2 w-2 rounded-full", isOpen ? "bg-success" : "bg-error")} />
+        ) : null}
       </div>
 
       <div className="space-y-1">

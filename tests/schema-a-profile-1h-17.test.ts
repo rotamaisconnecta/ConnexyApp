@@ -232,6 +232,75 @@ describe("1H-17 Remote Profile", () => {
     expect(mapped.photo).toBe("");
   });
 
+  test("saveOwn/loadOwn round-trip profile extras through the port", async () => {
+    const { port } = memoryPort(UUID);
+    const profile = createSchemaAProfile({
+      isEnabled: () => true,
+      getIdentity: async () => ({ userId: UUID }),
+      profiles: port,
+    });
+    const local = {
+      ...sampleLocal(UUID),
+      headline: "Vinil, café e caminhadas",
+      moodEmoji: "🎧",
+      moodText: "modo playlist",
+      nowPlaying: { kind: "music", title: "Blue Train" },
+      looksFor: ["role de quinta"],
+      vibeTags: ["curadora", "corujão"],
+    };
+    const saved = await profile.saveOwn(local);
+    expect(saved.headline).toBe("Vinil, café e caminhadas");
+    expect(saved.moodEmoji).toBe("🎧");
+    expect(saved.moodText).toBe("modo playlist");
+    expect(saved.nowPlaying).toEqual({ kind: "music", title: "Blue Train" });
+    expect(saved.looksFor).toEqual(["role de quinta"]);
+    expect(saved.vibeTags).toEqual(["curadora", "corujão"]);
+
+    const mapped = mappedProfileForRemote(local);
+    expect(mapped.headline).toBe("Vinil, café e caminhadas");
+    expect(mapped.moodEmoji).toBe("🎧");
+    expect(mapped.looksFor).toEqual(["role de quinta"]);
+    expect(mapped.vibeTags).toEqual(["curadora", "corujão"]);
+  });
+
+  test("profile extras stay absent when not stored, without inventing values", async () => {
+    const { port } = memoryPort(UUID);
+    const profile = createSchemaAProfile({
+      isEnabled: () => true,
+      getIdentity: async () => ({ userId: UUID }),
+      profiles: port,
+    });
+    const loaded = await profile.loadOwn();
+    expect(loaded.headline).toBeUndefined();
+    expect(loaded.moodEmoji).toBeUndefined();
+    expect(loaded.nowPlaying).toBeNull();
+    expect(loaded.looksFor).toEqual([]);
+    expect(loaded.vibeTags).toEqual([]);
+  });
+
+  test("empty-string extras survive the port; empty city/bio read back as empty", async () => {
+    const { port } = memoryPort(UUID);
+    const profile = createSchemaAProfile({
+      isEnabled: () => true,
+      getIdentity: async () => ({ userId: UUID }),
+      profiles: port,
+    });
+    const local = {
+      ...sampleLocal(UUID),
+      city: "",
+      bio: "",
+      headline: "",
+      moodEmoji: "",
+      moodText: "",
+    };
+    const saved = await profile.saveOwn(local);
+    expect(saved.headline).toBe("");
+    expect(saved.moodEmoji).toBe("");
+    expect(saved.moodText).toBe("");
+    expect(saved.city).toBe("");
+    expect(saved.bio).toBe("");
+  });
+
   test("logout leaves no remote identity", async () => {
     let session: { userId: string } | null = { userId: UUID };
     const { port, calls } = memoryPort(UUID);

@@ -1,6 +1,15 @@
-import { ChevronLeft, Copy, Download, Phone, Search, Trash2, Video, MoreVertical } from "lucide-react";
+import {
+  ChevronLeft,
+  Copy,
+  Download,
+  Phone,
+  Search,
+  Trash2,
+  Video,
+  MoreVertical,
+} from "lucide-react";
 import { PresenceDot } from "@/components/presence-dot";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AuthenticatedAvatarImage } from "@/components/media/authenticated-avatar-image";
 import { cn } from "@/lib/utils";
 import type { ConversationParticipant } from "@/lib/chat/chat-types";
 import { selectedCountLabel } from "@/lib/chat/chat-selection";
@@ -126,16 +135,17 @@ export function ChatHeader({
         aria-label={`Perfil de ${participant.name}`}
       >
         <div className="relative shrink-0">
-          <Avatar className="h-10 w-10 rounded-full">
-            <AvatarImage
-              src={participant.photo}
-              alt={`Foto de ${participant.name}`}
-              className="rounded-full"
-            />
-            <AvatarFallback className="rounded-full bg-gradient-brand text-[11px] font-bold text-white">
-              {getInitials(participant.name)}
-            </AvatarFallback>
-          </Avatar>
+          <AuthenticatedAvatarImage
+            profileId={participant.id}
+            legacyUrl={participant.photo}
+            alt={`Foto de ${participant.name}`}
+            className="h-10 w-10 rounded-full object-cover"
+            fallback={
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-brand text-[11px] font-bold text-white">
+                {getInitials(participant.name)}
+              </div>
+            }
+          />
           <span className="absolute -bottom-0.5 -right-0.5">
             <PresenceDot online={participant.online} size={8} />
           </span>

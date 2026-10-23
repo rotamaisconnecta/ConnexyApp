@@ -181,7 +181,14 @@ export function ReelRecorder({
       </div>
       <div className="relative min-h-0 flex-1 bg-black">
         {previewUrl && clip ? (
-          <video src={previewUrl} controls playsInline autoPlay className="h-full w-full object-cover" />
+          <video
+            src={previewUrl}
+            controls
+            playsInline
+            autoPlay
+            muted
+            className="h-full w-full object-cover"
+          />
         ) : (
           <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
         )}

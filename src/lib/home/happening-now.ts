@@ -1,4 +1,4 @@
-import { people as mockPeople, type Person } from "@/lib/mock-data";
+import { listPeople, type Person } from "@/lib/mock-data";
 import { getDemoPosts, type DemoPost } from "@/lib/demo/demo-posts";
 import { HOME_EVENTS } from "@/lib/feed/home-premium";
 import { getAllBusinesses } from "@/lib/marketplace/mock-businesses";
@@ -266,7 +266,7 @@ function postCards(posts: DemoPost[], now: Date): RankedHappening[] {
 
 export function listHappeningNowCards(input: HappeningNowInput = {}): HappeningNowCard[] {
   const now = input.now ?? new Date();
-  const people = input.people ?? mockPeople;
+  const people = input.people ?? listPeople();
   const posts = input.posts ?? (typeof window === "undefined" ? [] : getDemoPosts());
 
   let pending: HappeningNowCard | null = null;

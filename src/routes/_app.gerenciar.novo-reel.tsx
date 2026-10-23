@@ -435,7 +435,11 @@ function NovoReel() {
             {caption.length}/{REEL_MAX_CAPTION_LENGTH}
           </p>
           <HashtagInput tags={hashtags} onChange={setHashtags} />
-          <ConnexyAiAssistant mode="media" label="Ideias para a legenda" />
+          <ConnexyAiAssistant
+            mode="media"
+            label="Ideias para a legenda"
+            onInsertSuggestion={(text) => setCaption(text.slice(0, REEL_MAX_CAPTION_LENGTH))}
+          />
         </section>
 
         <section className="rounded-3xl bg-surface border border-border p-4 space-y-3 shadow-soft">

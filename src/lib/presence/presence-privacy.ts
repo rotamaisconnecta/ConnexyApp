@@ -243,3 +243,56 @@ export type PresenceTargetInput = {
   lat?: number;
   lng?: number;
 };
+
+/* ==== Shared activities (profile context) ==== */
+
+export type SharedActivity = {
+  targetId: string;
+  targetName: string;
+  targetType: PresenceTargetType;
+  checkedInAt: string;
+};
+
+export function listSharedActivities(
+  records: PresenceRecord[],
+  viewerId: string,
+  personId: string,
+  friendIds: string[] = [],
+): SharedActivity[] {
+  if (!viewerId || !personId || viewerId === personId) return [];
+
+  const visibleFor = (userId: string): Map<string, PresenceRecord> => {
+    const own = records.filter((record) => record.userId === userId);
+    const { visible } = anonymizePresenceList(own, friendIds, viewerId);
+    const byTarget = new Map<string, PresenceRecord>();
+    for (const record of visible) {
+      const previous = byTarget.get(record.targetId);
+      if (!previous || record.checkedInAt > previous.checkedInAt) {
+        byTarget.set(record.targetId, record);
+      }
+    }
+    return byTarget;
+  };
+
+  const viewerTargets = visibleFor(viewerId);
+  const personTargets = visibleFor(personId);
+  const shared: SharedActivity[] = [];
+
+  for (const [targetId, record] of personTargets) {
+    const viewerRecord = viewerTargets.get(targetId);
+    if (!viewerRecord) continue;
+    const checkedInAt =
+      record.checkedInAt > viewerRecord.checkedInAt ? record.checkedInAt : viewerRecord.checkedInAt;
+    shared.push({
+      targetId,
+      targetName: record.targetName,
+      targetType: record.targetType,
+      checkedInAt,
+    });
+  }
+
+  return shared.sort((a, b) => {
+    if (a.checkedInAt === b.checkedInAt) return 0;
+    return a.checkedInAt > b.checkedInAt ? -1 : 1;
+  });
+}

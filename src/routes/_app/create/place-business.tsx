@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CatalogCreateForm } from "@/components/catalog/catalog-create-form";
-import { CatalogKind } from "@/lib/catalog/local-catalog";
+import { BusinessCreateForm } from "@/components/catalog/business-create-form";
 
 export const Route = createFileRoute("/_app/create/place-business")({
   head: () => ({ meta: [{ title: "Criar negócio" }] }),
@@ -8,5 +7,5 @@ export const Route = createFileRoute("/_app/create/place-business")({
 });
 
 function CreateBusinessPage() {
-  return <CatalogCreateForm kind={CatalogKind.BUSINESS} title="Criar negócio" />;
+  return <BusinessCreateForm />;
 }
